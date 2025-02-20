@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WACC Platform - Cálculo Preciso e Automatizado</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome para ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts - Roboto para corpo e Montserrat para títulos -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Personalizado -->
+    <style>
+        :root {
+            --primary-color: #1a237e;    /* Azul escuro para confiança */
+            --secondary-color: #0d47a1;  /* Azul médio para elementos secundários */
+            --accent-color: #2962ff;     /* Azul brilhante para destaques */
+            --text-color: #212121;       /* Quase preto para texto principal */
+            --light-text: #484848;       /* Cinza escuro para texto secundário */
+            --background: #fafafa;       /* Branco levemente acinzentado para fundo */
+            --error-color: #d32f2f;      /* Vermelho para erros */
+            --success-color: #388e3c;    /* Verde para sucesso */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-color);
+            background-color: var(--background);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255,255,255,0.9) !important;
+        }
+
+        .search-box {
+            max-width: 300px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .btn-outline-primary {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .auth-buttons .btn {
+            margin-left: 8px;
+        }
+
+        .social-login {
+            font-size: 20px;
+        }
+
+        .social-login i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<style>
+    /* Estilos para o formulário WACC */
+    .calculator-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 40px;
+    }
+    
+    .form-floating {
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .tooltip-icon {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        color: var(--secondary-color);
+        cursor: pointer;
+    }
+    
+    .result-section {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    .premium-feature {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #f5f7ff;
+        border-radius: 8px;
+        border-left: 4px solid var(--accent-color);
+    }
+    
+    /* Estilos específicos para o formulário */
+    .combo-box, .faturamento-field {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        height: 50px;
+    }
+    
+    .radio-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 5px;
+    }
+    
+    #calcularWaccButton {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    #calcularWaccButton:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    #calcularWaccButton:disabled {
+        background-color: #b0bec5;
+        cursor: not-allowed;
+    }
+    
+    .parameters-section {
+        margin-top: 30px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+    .parameters-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .parameters-table th,
+    .parameters-table td {
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .parameters-table th {
+        background-color: #f5f7ff;
+        color: var(--primary-color);
+    }
+    
+    /* Estilos para as tabelas de resultados WACC */
+    .wacc-results table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .wacc-results .table {
+        color: #212529;
+    }
+    
+    .wacc-results th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .wacc-results td {
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+    
+    .wacc-results table a {
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+    
+    .wacc-results table a:hover {
+        text-decoration: underline;
+        color: var(--secondary-color);
+    }
+</style>
+<style>    
+    /* Estilo para mensagens de alerta/validação */
+    .feedback-message {
+        display: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .feedback-message.error {
+        background-color: #ffebee;
+        color: var(--error-color);
+        border-left: 4px solid var(--error-color);
+    }
+    
+    .feedback-message.success {
+        background-color: #e8f5e9;
+        color: var(--success-color);
+        border-left: 4px solid var(--success-color);
+    }
+    
+    .feedback-message.warning {
+        background-color: #fff8e1;
+        color: #f57f17;
+        border-left: 4px solid #f57f17;
+    }
+    
+    .form-field-error {
+        color: var(--error-color);
+        font-size: 0.8rem;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .input-error {
+        border-color: var(--error-color) !important;
+    }
+    
+    /* Responsividade para telas pequenas */
+    @media (max-width: 768px) {
+        .calculator-card {
+            padding: 20px 15px;
+        }
+        
+        .radio-group {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .wacc-results th,
+        .wacc-results td {
+            padding: 8px 5px;
+            font-size: 0.85rem;
+        }
+        
+        .wacc-results table {
+            table-layout: fixed;
+        }
+        
+        .result-section h2 {
+            font-size: 2rem;
+        }
+        
+        #calcularWaccButton {
+            padding: 10px;
+        }
+    }
+    
+    /* Animação de loading */
+    .loading-overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        border-radius: 10px;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--accent-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    .loading-text {
+        margin-top: 15px;
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+</head>   
+
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <!-- Logo/Brand -->
+        <a class="navbar-brand" href="/">WACC Platform</a>
+        
+        <!-- Toggle Button for Mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Navigation Links -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/">Início</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/wacc-calculator">Calculadora</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="resourcesDropdown" role="button" data-bs-toggle="dropdown">
+                        Recursos
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/features">Funcionalidades</a></li>
+                        <li><a class="dropdown-item" href="/learning">Centro de Aprendizado</a></li>
+                        <li><a class="dropdown-item" href="/cases">Cases de Sucesso</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pricing">Preços</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="companyDropdown" role="button" data-bs-toggle="dropdown">
+                        Empresa
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/about">Sobre Nós</a></li>
+                        <li><a class="dropdown-item" href="/contact">Contato</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <!-- Search Box -->
+            <form class="d-flex search-box me-3">
+                <div class="input-group">
+                    <input class="form-control" type="search" placeholder="Buscar..." aria-label="Search">
+                    <button class="btn btn-outline-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Auth Buttons -->
+            <div class="auth-buttons d-flex align-items-center">
+                <!-- Social Login Buttons -->
+                <div class="social-login me-2">
+                    <button class="btn btn-outline-light btn-sm" title="Login com Google">
+                        <i class="fab fa-google"></i>
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" title="Login com LinkedIn">
+                        <i class="fab fa-linkedin"></i>
+                    </button>
+                </div>
+                
+                <!-- Traditional Auth Buttons -->
+                <a href="/dashboard" class="btn btn-outline-light btn-sm">Entrar</a>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#signupModal">Cadastrar</button>
+            </div>
+        </div>
+    </div>
+</nav>
+    <!-- Hero Section -->
+    <section class="calculator-section py-5">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">Calculadora WACC</h1>
+            <p class="lead mb-4">Calcule o Custo Médio Ponderado de Capital com precisão e rapidez</p>
+        </div>
+    </section>
+
+    <!-- Calculator Section -->
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="calculator-card position-relative">
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="loading-overlay">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-text">Calculando WACC...</p>
+                    </div>
+                    
+                    <!-- Mensagem de feedback -->
+                    <div id="feedbackMessage" class="feedback-message"></div>
+                    
+                    <!-- Formulário do wacc -->
+                    <form id="waccForm" method="post" action="/api/calcular-wacc" novalidate>
+                        <div class="form-group mb-4">
+                            <label for="atividadeSelect1" class="form-label fw-bold">Atividade Econômica: <span class="text-danger">*</span></label>
+                            <input type="text" id="atividadeSelect1" name="atividade" list="atividadeList1" 
+                                   class="form-control combo-box" 
+                                   placeholder="Selecione a atividade principal"
+                                   aria-describedby="atividadeHelp"
+                                   required>
+                            <datalist id="atividadeList1"></datalist>
+                            <small id="atividadeHelp" class="form-text text-muted">
+                                Selecione a principal atividade econômica da empresa
+                            </small>
+                            <div id="atividadeError" class="form-field-error">
+                                Por favor, selecione uma atividade econômica válida
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="faturamento1" class="form-label fw-bold">Faturamento Anual (R$): <span class="text-danger">*</span></label>
+                            <input type="text" id="faturamento1" name="faturamento" 
+                                   class="form-control faturamento-field" 
+                                   placeholder="Informe o faturamento bruto anual"
+                                   aria-describedby="faturamentoHelp"
+                                   inputmode="numeric"
+                                   required>
+                            <small id="faturamentoHelp" class="form-text text-muted">
+                                Digite o faturamento anual bruto em reais (mínimo R$ 10.000,00)
+                            </small>
+                            <div id="faturamentoError" class="form-field-error">
+                                Por favor, informe um valor válido (mínimo R$ 10.000,00)
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <fieldset>
+                                <legend class="form-label fw-bold">Regime Tributário: <span class="text-danger">*</span></legend>
+                                <div class="radio-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="lucroRealSim" name="lucroReal" value="Sim" checked>
+                                        <label class="form-check-label" for="lucroRealSim">Lucro Real</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="lucroRealNao" name="lucroReal" value="Nao">
+                                        <label class="form-check-label" for="lucroRealNao">Outro Regime</label>
+                                    </div>
+                                </div>
+                                <small id="regimeHelp" class="form-text text-muted">
+                                    Selecione o regime tributário da empresa
+                                </small>
+                            </fieldset>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4" id="calcularWaccButton">
+                            Calcular WACC
+                        </button>
+                    </form>
+
+                    <!-- Result Section -->
+                    <div class="result-section">
+                        <h4>Resultado do WACC</h4>
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h2 id="waccResult" class="display-4 text-primary">--.--%</h2>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="text-muted mb-0">Este é um cálculo padrão para definição de taxa de desconto WACC que poderá ser utilizado na data base <b>31/12/2024</b>.</p>
+                                <p class="text-muted">Para análises detalhadas e outras datas base, considere nossa versão premium.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parameters Section -->
+                    <div id="parametrosCalculo" class="parameters-section" style="display: none;">
+                        <!-- Será preenchido via JavaScript com as três tabelas -->
+                    </div>
+
+                    <!-- Premium Feature Teaser -->
+                    <div class="premium-feature">
+                        <h4>Desbloqueie Recursos Premium</h4>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2" aria-hidden="true"></i> Análises detalhadas por setor</li>
+                            <li><i class="fas fa-check text-success me-2" aria-hidden="true"></i> Comparativos com benchmarks</li>
+                            <li><i class="fas fa-check text-success me-2" aria-hidden="true"></i> Relatórios exportáveis</li>
+                            <li><i class="fas fa-check text-success me-2" aria-hidden="true"></i> Suporte especializado</li>
+                        </ul>
+                        <button class="btn btn-outline-primary mt-3">Experimentar Versão Premium</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Elementos do DOM
+            const waccForm = document.getElementById('waccForm');
+            const atividadeSelect = document.getElementById('atividadeSelect1');
+            const faturamentoInput = document.getElementById('faturamento1');
+            const calcularBtn = document.getElementById('calcularWaccButton');
+            const feedbackMsg = document.getElementById('feedbackMessage');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const atividadeError = document.getElementById('atividadeError');
+            const faturamentoError = document.getElementById('faturamentoError');
+            
+            // Cache de atividades para preenchimento offline
+            let cachedAtividades = null;
+
+            // Carrega as atividades econômicas
+            function carregarAtividades() {
+                // Tenta recuperar do localStorage primeiro
+                const cachedData = localStorage.getItem('atividadesEconomicas');
+                if (cachedData) {
+                    try {
+                        const parsedData = JSON.parse(cachedData);
+                        preencherAtividades(parsedData);
+                        cachedAtividades = parsedData;
+                        console.log('Atividades carregadas do cache local');
+                    } catch (e) {
+                        console.warn('Erro ao carregar cache de atividades:', e);
+                        fetchAtividadesFromServer();
+                    }
+                } else {
+                    fetchAtividadesFromServer();
+                }
+            }
+            
+            // Busca atividades do servidor
+            function fetchAtividadesFromServer() {
+                mostrarFeedback('Carregando atividades econômicas...', 'warning');
+                
+                fetch('/static/Bd_Atividade.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Erro na resposta: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(jsonData => {
+                        preencherAtividades(jsonData);
+                        cachedAtividades = jsonData;
+                        // Armazena no localStorage para uso offline
+                        try {
+                            localStorage.setItem('atividadesEconomicas', JSON.stringify(jsonData));
+                        } catch (e) {
+                            console.warn('Erro ao armazenar atividades no cache:', e);
+                        }
+                        ocultarFeedback();
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar atividades:', error);
+                        mostrarFeedback('Não foi possível carregar a lista de atividades. Verifique sua conexão.', 'error');
+                        
+                        // Dados de fallback para testes
+                        const fallbackData = [
+                            {atividade: "Comércio Varejista"}, 
+                            {atividade: "Indústria de Transformação"},
+                            {atividade: "Serviços Financeiros"},
+                            {atividade: "Tecnologia da Informação"}
+                        ];
+                        preencherAtividades(fallbackData);
+                    });
+            }
+            
+            // Preenche o datalist com as atividades
+            function preencherAtividades(atividades) {
+                const datalist = document.getElementById('atividadeList1');
+                datalist.innerHTML = '';
+                atividades.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = typeof item === 'string' ? item : item.atividade;
+                    datalist.appendChild(option);
+                });
+            }
+
+            // Formata o campo de faturamento
+            faturamentoInput.addEventListener('input', function(e) {
+                // Remove tudo exceto números
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // Converte para número
+                const numericValue = parseInt(value, 10);
+                
+                // Formata com separador de milhares
+                if (!isNaN(numericValue)) {
+                    value = numericValue.toLocaleString('pt-BR');
+                    e.target.value = value;
+                    
+                    // Limpa mensagem de erro se o valor for válido
+                    if (numericValue >= 10000) {
+                        faturamentoInput.classList.remove('input-error');
+                        faturamentoError.style.display = 'none';
+                    }
+                } else {
+                    e.target.value = '';
+                }
+            });
+            
+            // Validação do campo de atividade
+            atividadeSelect.addEventListener('change', function() {
+                validarAtividade();
+            });
+            
+            atividadeSelect.addEventListener('blur', function() {
+                validarAtividade();
+            });
+            
+            // Função para validar atividade
+            function validarAtividade() {
+                const valor = atividadeSelect.value.trim();
+                
+                if (!valor) {
+                    atividadeSelect.classList.add('input-error');
+                    atividadeError.style.display = 'block';
+                    return false;
+                }
+                
+                // Verificar se a atividade existe na lista (se tiver cache disponível)
+                if (cachedAtividades) {
+                    const atividadeExiste = cachedAtividades.some(item => {
+                        const atividadeNome = typeof item === 'string' ? item : item.atividade;
+                        return atividadeNome.toLowerCase() === valor.toLowerCase();
+                    });
+                    
+                    if (!atividadeExiste) {
+                        atividadeSelect.classList.add('input-error');
+                        atividadeError.textContent = 'Por favor, selecione uma atividade da lista';
+                        atividadeError.style.display = 'block';
+                        return false;
+                    }
+                }
+                
+                atividadeSelect.classList.remove('input-error');
+                atividadeError.style.display = 'none';
+                return true;
+            }
+            
+            // Função para validar faturamento
+            function validarFaturamento() {
+                const valorFormatado = faturamentoInput.value;
+                const valorNumerico = parseInt(valorFormatado.replace(/\D/g, ''), 10);
+                
+                if (isNaN(valorNumerico) || valorNumerico < 10000) {
+                    faturamentoInput.classList.add('input-error');
+                    faturamentoError.style.display = 'block';
+                    return false;
+                }
+                
+                faturamentoInput.classList.remove('input-error');
+                faturamentoError.style.display = 'none';
+                return true;
+            }
+
+            // Manipula o envio do formulário com validação
+            waccForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Limpa mensagens anteriores
+                ocultarFeedback();
+                
+                // Realiza validações
+                const atividadeValida = validarAtividade();
+                const faturamentoValido = validarFaturamento();
+                
+                if (!atividadeValida || !faturamentoValido) {
+                    mostrarFeedback('Por favor, corrija os campos destacados antes de continuar.', 'error');
+                    return;
+                }
+                
+                // Mostra overlay de carregamento
+                loadingOverlay.style.display = 'flex';
+                calcularBtn.disabled = true;
+                
+                // Prepara dados do formulário
+                const formData = new FormData(this);
+                
+                // Normaliza o valor de faturamento (remove formatação)
+                const faturamentoFormatado = faturamentoInput.value;
+                const faturamentoNumerico = faturamentoFormatado.replace(/\D/g, '');
+                formData.set('faturamento', faturamentoNumerico);
+                
+                // Determina a URL da API com base no ambiente
+                const isLocalhost = window.location.hostname === 'localhost';
+                const isDevelopment = window.location.port === '5500' || window.location.protocol === 'file:';
+                const urlBase = (isLocalhost || isDevelopment) ? 
+                    '/api/mock-calcular-wacc' : '/api/calcular-wacc';
+                
+                // Configura timeout para evitar requisições infinitas
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
+                
+                // Enviar para o endpoint de cálculo
+                fetch(urlBase, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(formData),
+                    signal: controller.signal,
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro na resposta: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Oculta overlay de carregamento
+                    loadingOverlay.style.display = 'none';
+                    calcularBtn.disabled = false;
+                    
+                    if (data.error) {
+                        mostrarFeedback(data.error, 'error');
+                        return;
+                    }
+                    
+                    // Processar e exibir os resultados
+                    try {
+                        processarResultados(data);
+                        mostrarFeedback('Cálculo concluído com sucesso!', 'success');
+                    } catch (error) {
+                        console.error("Erro ao exibir resultados:", error);
+                        mostrarFeedback("Ocorreu um erro ao processar o resultado. Por favor, tente novamente.", 'error');
+                    }
+                })
+                .catch(error => {
+                    // Oculta overlay de carregamento
+                    loadingOverlay.style.display = 'none';
+                    calcularBtn.disabled = false;
+                    clearTimeout(timeoutId);
+                    
+                    console.error('Erro:', error);
+                    
+                    // Ambiente de desenvolvimento - usar dados mock
+                    if (isLocalhost || isDevelopment) {
+                        const mockData = getMockWaccData();
+                        processarResultados(mockData);
+                        mostrarFeedback('Usando dados de demonstração (modo offline/desenvolvimento)', 'warning');
+                    } else {
+                        if (error.name === 'AbortError') {
+                            mostrarFeedback('A solicitação excedeu o tempo limite. Verifique sua conexão.', 'error');
+                        } else {
+                            mostrarFeedback('Ocorreu um erro ao processar o cálculo. Por favor, tente novamente.', 'error');
+                        }
+                    }
+                });
+            });
+            
+            // Função auxiliar para mostrar mensagens de feedback
+            function mostrarFeedback(mensagem, tipo) {
+                feedbackMsg.textContent = mensagem;
+                feedbackMsg.className = 'feedback-message';
+                feedbackMsg.classList.add(tipo);
+                feedbackMsg.style.display = 'block';
+                
+                // Rola para o topo do formulário se necessário
+                if (tipo === 'error') {
+                    feedbackMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            
+            // Função para ocultar mensagem de feedback
+            function ocultarFeedback() {
+                feedbackMsg.style.display = 'none';
+                feedbackMsg.textContent = '';
+            }
+            
+            // Função para processar e exibir os resultados
+            function processarResultados(data) {
+                // Verificações de segurança para evitar erros
+                if (!data) {
+                    throw new Error('Dados inválidos recebidos do servidor');
+                }
+                
+                // Extrair valores principais com validação
+                const waccNominal = parseFloat(data.wacc_nominal || 0);
+                const waccReal = parseFloat(data.wacc_real || 0);
+                
+                if (isNaN(waccNominal) || isNaN(waccReal)) {
+                    throw new Error('Valores WACC inválidos');
+                }
+                
+                // Formatar valores com segurança
+                const waccNominalFormatted = (waccNominal * 100).toFixed(2);
+                const waccRealFormatted = (waccReal * 100).toFixed(2);
+                
+                // Atualizar o resultado principal
+                document.getElementById('waccResult').textContent = waccNominalFormatted + '%';
+                
+                // Mostrar e preencher tabela de parâmetros
+                const parametrosSection = document.getElementById('parametrosCalculo');
+                parametrosSection.style.display = 'block';
+                
+                // Processamento dos valores vindos do back-end com verificação de segurança
+                const detalhes = data.detalhes || {};
+                
+                // Criar tabelas com o novo formato e cores do Bootstrap padrão
+                const tabelaHTML = `
+                    <div class="wacc-results mt-4">
+                        <!-- Tabela 1: Parâmetros utilizados nos cálculos -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Parâmetros utilizados nos cálculos</h5>
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col" style="width: 5%">Varíavel</th>
+                                        <th scope="col" style="width: 35%">Variável</th>
+                                        <th scope="col" style="width: 30%">Fonte</th>
+                                        <th scope="col" style="width: 15%">Parametro</th>
+                                        <th scope="col" style="width: 15%">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>β</td>
+                                        <td>Beta Desalavancado</td>
+                                        <td>Damodaran</td>
+                                        <td>2025 - Global</td>
+                                        <td>${formatarValor(detalhes.Beta)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DE</td>
+                                        <td>Relação Dívida/Patrimonio Líquido</td>
+                                        <td>Damodaran</td>
+                                        <td>2025 - Global</td>
+                                        <td>${formatarValor(detalhes.DE || 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>RF</td>
+                                        <td>Taxa Livre de Risco</td>
+                                        <td>Fed. Res. Bank St.Louis</td>
+                                        <td>US Bond média 1 ano</td>
+                                        <td>${formatarValor(detalhes.RF || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>RM</td>
+                                        <td>Risco de Mercado</td>
+                                        <td>Damodaran</td>
+                                        <td>Fim de 2024</td>
+                                        <td>${formatarValor(detalhes.RM || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>CR</td>
+                                        <td>Risco País</td>
+                                        <td>Damodaran</td>
+                                        <td>Brasil</td>
+                                        <td>${formatarValor(detalhes.CR || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IA</td>
+                                        <td>Inflação Americana LP</td>
+                                        <td>Fed. Res. Bank St.Louis</td>
+                                        <td>média 1820-2024</td>
+                                        <td>${formatarValor(detalhes.IA || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IB</td>
+                                        <td>Inflação Brasileira LP</td>
+                                        <td>Banco Central Brasil- Boletim Focus</td>
+                                        <td>31/12/2024</td>
+                                        <td>${formatarValor(detalhes.IB || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>CT</td>
+                                        <td>Custo de Capital de Terceiros - Pós Tax</td>
+                                        <td>Banco Central Brasil- Mediana C.Giro.LP</td>
+                                        <td>31/12/2024</td>
+                                        <td>${formatarValor(detalhes.CT || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IR</td>
+                                        <td>Taxa de Imposto sobre o Lucro</td>
+                                        <td>Legislação País</td>
+                                        <td></td>
+                                        <td>${formatarValor(detalhes.IR || 0)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>premio</td>
+                                        <td>Prêmio de Tamanho</td>
+                                        <td>Ibbotson | Kroll</td>
+                                        <td>31/12/2024</td>
+                                        <td>${formatarValor(detalhes.Premio || 0)}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Tabela 2: Custo de Capital -->
+                        <div class="mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col" style="width: 5%">#</th>
+                                        <th scope="col" style="width: 75%">Custo de Capital</th>
+                                        <th scope="col" style="width: 20%">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>KE</td>
+                                        <td>Custo de Capital Próprio</td>
+                                        <td>${formatarValor((detalhes.Custo_Equity || 0) * 100)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>KD</td>
+                                        <td>Custo de Capital Terceiros</td>
+                                        <td>${formatarValor((detalhes.Custo_Debt || 0) * 100)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>partkd</td>
+                                        <td>% Capital Próprio</td>
+                                        <td>${formatarValor((detalhes.partkd || 0) * 100)}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>partke</td>
+                                        <td>% Capital Terceiro</td>
+                                        <td>${formatarValor((detalhes.partke || 0) * 100)}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Tabela 3: WACC -->
+                        <div>
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col" style="width: 5%">#</th>
+                                        <th scope="col" style="width: 75%">WACC</th>
+                                        <th scope="col" style="width: 20%">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td></td>
+                                        <td>WACC Nominal</td>
+                                        <td>${waccNominalFormatted}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>Wacc Real</td>
+                                        <td>${waccRealFormatted}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                // Inserir HTML na seção de parâmetros
+                parametrosSection.innerHTML = tabelaHTML;
+                
+                // Rolar suavemente até os resultados
+                setTimeout(() => {
+                    document.getElementById('waccResult').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }, 300);
+            }
+            
+            // Função auxiliar para formatar valores numéricos
+            function formatarValor(valor) {
+                if (valor === undefined || valor === null) return '—';
+                
+                // Tenta converter strings para números
+                if (typeof valor === 'string') {
+                    // Remove caracteres não numéricos, exceto ponto e vírgula
+                    const cleanValue = valor.replace(/[^0-9.,]/g, '')
+                                    .replace(',', '.');
+                    const parsedValue = parseFloat(cleanValue);
+                    
+                    if (!isNaN(parsedValue)) {
+                        valor = parsedValue;
+                    }
+                }
+                
+                if (typeof valor === 'number') {
+                    // Formata com 2 casas decimais para porcentagens e 4 para índices
+                    return valor >= 1 ? valor.toFixed(2) : valor.toFixed(4);
+                }
+                
+                return valor;
+            }
+            
+            // Função para gerar dados mock para testes em ambiente local
+            function getMockWaccData() {
+                return {
+                    wacc_nominal: 0.1243,
+                    wacc_real: 0.0967,
+                    detalhes: {
+                        Beta: 0.86,
+                        DE: 0.42,
+                        RF: 3.85,
+                        RM: 6.5,
+                        CR: 2.78,
+                        IA: 1.9,
+                        IB: 4.1,
+                        CT: 14.7,
+                        IR: 34,
+                        Premio: 3.2,
+                        Custo_Equity: 0.1372,
+                        Custo_Debt: 0.0970,
+                        partke: 0.704,
+                        partkd: 0.296
+                    }
+                };
+            }
+            
+            // Detect offline mode
+            window.addEventListener('offline', function() {
+                mostrarFeedback('Você está offline. Algumas funcionalidades podem estar limitadas.', 'warning');
+            });
+            
+            // Initialize
+            carregarAtividades();
+        });
+    </script>
+</body>
+</html>

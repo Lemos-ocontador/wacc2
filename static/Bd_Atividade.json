@@ -1,0 +1,3818 @@
+[
+    {
+        "atividade": "Atividades de apoio à agricultura",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Atividades de apoio à agricultura e à pecuária; atividades de pós-colheita",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Atividades de apoio à pecuária",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Horticultura e floricultura",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Criação de aves",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Criação de bovinos",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Cultivo de café",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Cultivo de frutas de lavoura permanente, exceto laranja e uva",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produção de lavouras permanentes",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Cultivo de cana-de-açúcar",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Cultivo de cereais",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Cultivo de soja",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produção de lavouras temporárias",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produtor Rural (Pessoa Física) ",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produção de sementes e mudas certificadas",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Aqüicultura",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Pesca",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Atividades de apoio à produção florestal",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produção florestal - florestas nativas",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Produção florestal - florestas plantadas",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Captação, tratamento e distribuição de água",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Coleta de resíduos",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Coleta de resíduos não-perigosos",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Recuperação de materiais",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Tratamento e disposição de resíduos não-perigosos",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Tratamento e disposição de resíduos perigosos",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Descontaminação e outros serviços de gestão de resíduos",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Atividades relacionadas a esgoto, exceto a gestão de redes",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Gestão de redes de esgoto",
+        "Beta": "0,41",
+        "DE": "0,8671",
+        "xEBITDA": "13,39",
+        "Cash Conversion": "0,169104",
+        "EV/Sales": "3,360940122"
+    },
+    {
+        "atividade": "Restaurantes e outros estabelecimentos de serviços de alimentação e bebidas",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Restaurantes e outros serviços de alimentação e bebidas",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Serviços de catering, bufê e outros serviços de comida preparada",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Hotéis e similares",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Outros tipos de alojamento não especificados anteriormente",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Artes cênicas, espetáculos e atividades complementares",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades artísticas, criativas e de espetáculos",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades de exploração de jogos de azar e apostas",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades de recreação e lazer não especificadas anteriormente",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Parques de diversão e parques temáticos",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades de condicionamento físico",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades esportivas",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades esportivas não especificadas anteriormente",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Clubes sociais, esportivos e similares",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Atividades ligadas ao patrimônio cultural e ambiental",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Fundo Público",
+        "Beta": "0,95",
+        "DE": "0,2227",
+        "xEBITDA": "21,44",
+        "Cash Conversion": "0,043189",
+        "EV/Sales": "3,201155205"
+    },
+    {
+        "atividade": "Agências de viagens",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços de reservas e outros serviços de turismo não especificados anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Aluguel de máquinas e equipamentos não especificados anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Aluguel de máquinas e equipamentos para construção sem operador",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Aluguel de máquinas e equipamentos para escritório",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Aluguel de máquinas e equipamentos sem operador",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Aluguel de objetos pessoais e domésticos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Gestão de ativos intangíveis não-financeiros",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Locação de automóveis sem condutor",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Locação de meios de transporte sem condutor",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de investigação particular",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de monitoramento de sistemas de segurança",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de vigilância e segurança privada",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de vigilância, segurança privada e transporte de valores",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Fornecimento e gestão de recursos humanos para terceiros",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Locação de mão-de-obra temporária",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Seleção e agenciamento de mão-de-obra",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organização de eventos, exceto culturais e esportivos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de teleatendimento",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de cobrança e informações cadastrais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de serviços prestados principalmente às empresas não especificadas anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Outras atividades de serviços prestados principalmente às empresas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Fotocópias, preparação de documentos e outros serviços especializados de apoio administrativo",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços combinados de escritório e apoio administrativo",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de limpeza",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades paisagísticas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Condomínio Edilício ",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços combinados para apoio a edifícios",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades auxiliares dos seguros, da previdência complementar e dos planos de saúde",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Corretores e agentes de seguros, de planos de previdência complementar e de saúde",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Administração de cartões de crédito",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Atividades auxiliares dos serviços financeiros",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Atividades auxiliares dos serviços financeiros não especificadas anteriormente",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Atividades de intermediários em transações de títulos, valores mobiliários e mercadorias",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Atividades de administração de fundos por contrato ou comissão",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Arrendamento mercantil",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Administração de consórcios para aquisição de bens e direitos",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Outras atividades de serviços financeiros não especificadas anteriormente",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Securitização de créditos",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Sociedades de fomento mercantil - factoring",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Holdings de instituições financeiras",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Holdings de instituições não-financeiras",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Outras sociedades de participação, exceto holdings",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Clube/Fundo de Investimento ",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Bancos comerciais",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Bancos múltiplos, com carteira comercial",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Crédito cooperativo",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Agências de fomento",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Bancos de investimento",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Bancos múltiplos, sem carteira comercial",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Crédito imobiliário",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Intermediação não-monetária - outros instrumentos de captação",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Sociedades de crédito, financiamento e investimento - financeiras",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Sociedades de capitalização",
+        "Beta": "0,26",
+        "DE": "3,3451",
+        "xEBITDA": "88,22",
+        "Cash Conversion": "-0,577592",
+        "EV/Sales": "8,802065246"
+    },
+    {
+        "atividade": "Planos de saúde",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Previdência complementar",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Previdência complementar aberta",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Resseguros",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Seguros de vida",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Seguros não-vida",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Seguros-saúde",
+        "Beta": "0,54",
+        "DE": "0,3515",
+        "xEBITDA": "9,56",
+        "Cash Conversion": "0,061767",
+        "EV/Sales": "0,817457"
+    },
+    {
+        "atividade": "Atividades imobiliárias de imóveis próprios",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Gestão e administração da propriedade imobiliária",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Intermediação na compra, venda e aluguel de imóveis",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de consultoria em gestão empresarial",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de contabilidade, consultoria e auditoria contábil e tributária",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades jurídicas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades veterinárias",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades fotográficas e similares",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades profissionais, científicas e técnicas não especificadas anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Design e decoração de interiores",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Pesquisa e desenvolvimento experimental em ciências físicas e naturais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Pesquisa e desenvolvimento experimental em ciências sociais e humanas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Pesquisas de mercado e de opinião pública",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Agenciamento de espaços para publicidade, exceto em veículos de comunicação",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Agências de publicidade",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de publicidade não especificadas anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades técnicas relacionadas à arquitetura e engenharia",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços de arquitetura",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços de engenharia",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Testes e análises técnicas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Comércio de peças e acessórios para veículos automotores",
+        "Beta": "0,68",
+        "DE": "0,6247",
+        "xEBITDA": "13,47",
+        "Cash Conversion": "0,013362",
+        "EV/Sales": "0,505962677"
+    },
+    {
+        "atividade": "Comércio a varejo e por atacado de veículos automotores",
+        "Beta": "0,68",
+        "DE": "0,6247",
+        "xEBITDA": "13,47",
+        "Cash Conversion": "0,013362",
+        "EV/Sales": "0,505962677"
+    },
+    {
+        "atividade": "Comércio de veículos automotores",
+        "Beta": "0,68",
+        "DE": "0,6247",
+        "xEBITDA": "13,47",
+        "Cash Conversion": "0,013362",
+        "EV/Sales": "0,505962677"
+    },
+    {
+        "atividade": "Comércio por atacado e a varejo de motocicletas, peças e acessórios",
+        "Beta": "0,68",
+        "DE": "0,6247",
+        "xEBITDA": "13,47",
+        "Cash Conversion": "0,013362",
+        "EV/Sales": "0,505962677"
+    },
+    {
+        "atividade": "Manutenção e reparação de veículos automotores",
+        "Beta": "0,68",
+        "DE": "0,6247",
+        "xEBITDA": "13,47",
+        "Cash Conversion": "0,013362",
+        "EV/Sales": "0,505962677"
+    },
+    {
+        "atividade": "Comércio atacadista de computadores, periféricos e suprimentos de informática",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio atacadista de equipamentos e produtos de tecnologias de informação e comunicação",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de cimento",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de madeira e produtos derivados",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de madeira, ferragens, ferramentas, material elétrico e material de construção",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de material elétrico",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista especializado de materiais de construção não especificados anteriormente e de materiais de construção em geral",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de máquinas e equipamentos para uso industrial; partes e peças",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de máquinas, aparelhos e equipamentos não especificados anteriormente; partes e peças",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de máquinas, aparelhos e equipamentos para uso agropecuário; partes e peças",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de máquinas, aparelhos e equipamentos, exceto de tecnologias de informação e comunicação",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de animais vivos, alimentos para animais e matérias-primas agrícolas, exceto café e soja",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de café em grão",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de soja",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de artigos de escritório e de papelaria; livros, jornais e outras publicações",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de artigos do vestuário e acessórios",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de cosméticos, produtos de perfumaria e de higiene pessoal",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de equipamentos e artigos de uso pessoal e doméstico não especificados anteriormente",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de instrumentos e materiais para uso médico, cirúrgico, ortopédico e odontológico",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de produtos de consumo não-alimentar",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de produtos farmacêuticos para uso humano e veterinário",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de tecidos, artefatos de tecidos e de armarinho",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de combustíveis sólidos, líquidos e gasosos, exceto gás natural e GLP",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de defensivos agrícolas, adubos, fertilizantes e corretivos do solo",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de produtos químicos e petroquímicos, exceto agroquímicos",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de produtos siderúrgicos e metalúrgicos, exceto para construção",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista especializado de outros produtos intermediários não especificados anteriormente",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista especializado em outros produtos",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de bebidas",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de carnes, produtos da carne e pescado",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de cereais e leguminosas beneficiados, farinhas, amidos e féculas",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de hortifrutigranjeiros",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de produtos alimentícios em geral",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista especializado em produtos alimentícios não especificados anteriormente",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista especializado em produtos alimentícios, bebidas e fumo",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de mercadorias em geral, com predominância de produtos alimentícios",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista de mercadorias em geral, sem predominância de alimentos ou de insumos agropecuários",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Comércio atacadista não-especializado",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Cooperativa ",
+        "Beta": "0,56",
+        "DE": "0,5735",
+        "xEBITDA": "11,84",
+        "Cash Conversion": "-0,028806",
+        "EV/Sales": "0,475823858"
+    },
+    {
+        "atividade": "Representantes comerciais e agentes do comércio de combustíveis, minerais, produtos siderúrgicos e químicos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Representantes comerciais e agentes do comércio de mercadorias em geral não especializado",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Representantes comerciais e agentes do comércio, exceto de veículos automotores e motocicletas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Comércio varejista de artigos culturais, recreativos e esportivos",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de livros, jornais, revistas e papelaria",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de combustíveis para veículos automotores",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de equipamentos de informática e comunicação; equipamentos e artigos de uso doméstico",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista especializado de eletrodomésticos e equipamentos de áudio e vídeo",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista especializado de equipamentos e suprimentos de informática",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista especializado de móveis, colchoaria e artigos de iluminação",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista especializado de tecidos e artigos de cama, mesa e banho",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de ferragens, madeira e materiais de construção",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de material de construção",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos alimentícios em geral ou especializado em produtos alimentícios não especificados anteriormente; produtos do fumo",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos alimentícios, bebidas e fumo",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos de padaria, laticínio, doces, balas e semelhantes",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de artigos de óptica",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de cosméticos, produtos de perfumaria e de higiene pessoal",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos farmacêuticos para uso humano e veterinário",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos farmacêuticos, perfumaria e cosméticos e artigos médicos, ópticos e ortopédicos",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de artigos do vestuário e acessórios",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de outros produtos novos não especificados anteriormente",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de produtos novos não especificados anteriormente e de produtos usados",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - hipermercados e supermercados",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - minimercados, mercearias e armazéns",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Comércio varejista de mercadorias em geral, sem predominância de produtos alimentícios",
+        "Beta": "0,94",
+        "DE": "0,2021",
+        "xEBITDA": "21,21",
+        "Cash Conversion": "0,037854",
+        "EV/Sales": "1,344879277"
+    },
+    {
+        "atividade": "Construção de edifícios",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Incorporação de empreendimentos imobiliários",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Montagem de instalações industriais e de estruturas metálicas",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Obras de engenharia civil não especificadas anteriormente",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Obras portuárias, marítimas e fluviais",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Construção de obras-de-arte especiais",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Construção de rodovias e ferrovias",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Obras de urbanização - ruas, praças e calçadas",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Construção de redes de abastecimento de água, coleta de esgoto e construções correlatas",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Obras de infra-estrutura para energia elétrica, telecomunicações, água, esgoto e transporte por dutos",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Obras para geração e distribuição de energia elétrica e para telecomunicações",
+        "Beta": "0,68",
+        "DE": "0,6705",
+        "xEBITDA": "11,26",
+        "Cash Conversion": "0,007026",
+        "EV/Sales": "0,545924954"
+    },
+    {
+        "atividade": "Demolição e preparação do terreno",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Obras de terraplenagem",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Instalações elétricas",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Instalações elétricas, hidráulicas e outras instalações em construções",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Obras de instalações em construções não especificadas anteriormente",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Obras de acabamento",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Obras de fundações",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Serviços especializados para construção não especificados anteriormente",
+        "Beta": "0,68",
+        "DE": "0,427",
+        "xEBITDA": "10,4",
+        "Cash Conversion": "0,02142",
+        "EV/Sales": "1,299618535"
+    },
+    {
+        "atividade": "Atividades de apoio à educação",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Educação infantil - creche",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Educação infantil - pré-escola",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Ensino fundamental",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Educação profissional de nível técnico",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Educação profissional de nível técnico e tecnológico",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Educação superior",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Ensino médio",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Atividades de ensino não especificadas anteriormente",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Outras atividades de ensino",
+        "Beta": "0,68",
+        "DE": "0,2884",
+        "xEBITDA": "15,26",
+        "Cash Conversion": "0,127236",
+        "EV/Sales": "2,800109029"
+    },
+    {
+        "atividade": "Comércio atacadista de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Distribuição de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Geração de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Transmissão de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Produção de gás; processamento de gás natural; distribuição de combustíveis gasosos por redes urbanas",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Produção e distribuição de vapor, água quente e ar condicionado",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Confecção de artigos do vestuário e acessórios",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Confecção de peças do vestuário, exceto roupas íntimas",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de artigos de malharia e tricotagem",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de bebidas alcoólicas",
+        "Beta": "0,65",
+        "DE": "0,1868",
+        "xEBITDA": "14,43",
+        "Cash Conversion": "0,208038",
+        "EV/Sales": "5,327426902"
+    },
+    {
+        "atividade": "Fabricação de malte, cervejas e chopes",
+        "Beta": "0,65",
+        "DE": "0,1868",
+        "xEBITDA": "14,43",
+        "Cash Conversion": "0,208038",
+        "EV/Sales": "5,327426902"
+    },
+    {
+        "atividade": "Fabricação de bebidas não-alcoólicas",
+        "Beta": "0,63",
+        "DE": "0,1648",
+        "xEBITDA": "19,23",
+        "Cash Conversion": "0,12716",
+        "EV/Sales": "3,996738636"
+    },
+    {
+        "atividade": "Fabricação de refrigerantes e de outras bebidas não-alcoólicas",
+        "Beta": "0,63",
+        "DE": "0,1648",
+        "xEBITDA": "19,23",
+        "Cash Conversion": "0,12716",
+        "EV/Sales": "3,996738636"
+    },
+    {
+        "atividade": "Fabricação de celulose e outras pastas para a fabricação de papel",
+        "Beta": "0,61",
+        "DE": "0,6453",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,012401",
+        "EV/Sales": "1,454841427"
+    },
+    {
+        "atividade": "Fabricação de embalagens de papel, cartolina, papel-cartão e papelão ondulado",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Fabricação de papel",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Fabricação de papel, cartolina e papel-cartão",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Fabricação de produtos diversos de papel, cartolina, papel-cartão e papelão ondulado",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Coquerias",
+        "Beta": "0,88",
+        "DE": "0,1979",
+        "xEBITDA": "3,41",
+        "Cash Conversion": "0,169455",
+        "EV/Sales": "1,235879272"
+    },
+    {
+        "atividade": "Fabricação de álcool",
+        "Beta": "0,58",
+        "DE": "0,6449",
+        "xEBITDA": "16,02",
+        "Cash Conversion": "0,006549",
+        "EV/Sales": "9,961244131"
+    },
+    {
+        "atividade": "Fabricação de biocombustíveis",
+        "Beta": "0,58",
+        "DE": "0,6449",
+        "xEBITDA": "16,02",
+        "Cash Conversion": "0,006549",
+        "EV/Sales": "9,961244131"
+    },
+    {
+        "atividade": "Fabricação de produtos derivados do petróleo",
+        "Beta": "0,75",
+        "DE": "0,4156",
+        "xEBITDA": "7,06",
+        "Cash Conversion": "0,013141",
+        "EV/Sales": "0,811426607"
+    },
+    {
+        "atividade": "Fabricação de aparelhos de recepção, reprodução, gravação e amplificação de áudio e vídeo",
+        "Beta": "1",
+        "DE": "0,1762",
+        "xEBITDA": "20,12",
+        "Cash Conversion": "-0,02952",
+        "EV/Sales": "1,818579457"
+    },
+    {
+        "atividade": "Fabricação de aparelhos e equipamentos de medida, teste e controle",
+        "Beta": "1",
+        "DE": "0,1762",
+        "xEBITDA": "20,12",
+        "Cash Conversion": "-0,02952",
+        "EV/Sales": "1,818579457"
+    },
+    {
+        "atividade": "Fabricação de aparelhos e instrumentos de medida, teste e controle; cronômetros e relógios",
+        "Beta": "1",
+        "DE": "0,1762",
+        "xEBITDA": "20,12",
+        "Cash Conversion": "-0,02952",
+        "EV/Sales": "1,818579457"
+    },
+    {
+        "atividade": "Fabricação de aparelhos eletromédicos e eletroterapêuticos e equipamentos de irradiação",
+        "Beta": "1",
+        "DE": "0,1762",
+        "xEBITDA": "20,12",
+        "Cash Conversion": "-0,02952",
+        "EV/Sales": "1,818579457"
+    },
+    {
+        "atividade": "Fabricação de componentes eletrônicos",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de equipamentos de comunicação",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de equipamentos de informática e periféricos",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de periféricos para equipamentos de informática",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de equipamentos e instrumentos ópticos, fotográficos e cinematográficos",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de mídias virgens, magnéticas e ópticas",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos de uso geral",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos de uso geral não especificados anteriormente",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos de uso industrial específico",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos para uso industrial específico não especificados anteriormente",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos de uso na extração mineral e na construção",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas-ferramenta",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de motores, bombas, compressores e equipamentos de transmissão",
+        "Beta": "0,96",
+        "DE": "0,1535",
+        "xEBITDA": "16,28",
+        "Cash Conversion": "-0,014987",
+        "EV/Sales": "2,3999592"
+    },
+    {
+        "atividade": "Fabricação de máquinas e equipamentos para a agricultura e pecuária, exceto para irrigação",
+        "Beta": "0,84",
+        "DE": "0,2868",
+        "xEBITDA": "9,71",
+        "Cash Conversion": "0,108731",
+        "EV/Sales": "1,541135133"
+    },
+    {
+        "atividade": "Fabricação de tratores e de máquinas e equipamentos para a agricultura e pecuária",
+        "Beta": "0,84",
+        "DE": "0,2868",
+        "xEBITDA": "9,71",
+        "Cash Conversion": "0,108731",
+        "EV/Sales": "1,541135133"
+    },
+    {
+        "atividade": "Fabricação de eletrodomésticos",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de equipamentos e aparelhos elétricos não especificados anteriormente",
+        "Beta": "1,13",
+        "DE": "0,1863",
+        "xEBITDA": "13,8",
+        "Cash Conversion": "0,002965",
+        "EV/Sales": "1,32816638"
+    },
+    {
+        "atividade": "Fabricação de aparelhos e equipamentos para distribuição e controle de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de equipamentos para distribuição e controle de energia elétrica",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de fios, cabos e condutores elétricos isolados",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de geradores, transformadores e motores elétricos",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de lâmpadas e outros equipamentos de iluminação",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de pilhas, baterias e acumuladores elétricos",
+        "Beta": "0,42",
+        "DE": "0,9838",
+        "xEBITDA": "12,71",
+        "Cash Conversion": "0,015161",
+        "EV/Sales": "1,969832639"
+    },
+    {
+        "atividade": "Fabricação de móveis",
+        "Beta": "0,79",
+        "DE": "0,2795",
+        "xEBITDA": "10,31",
+        "Cash Conversion": "0,062057",
+        "EV/Sales": "1,081327977"
+    },
+    {
+        "atividade": "Fabricação de móveis com predominância de madeira",
+        "Beta": "0,79",
+        "DE": "0,2795",
+        "xEBITDA": "10,31",
+        "Cash Conversion": "0,062057",
+        "EV/Sales": "1,081327977"
+    },
+    {
+        "atividade": "Fabricação de móveis com predominância de metal",
+        "Beta": "0,79",
+        "DE": "0,2795",
+        "xEBITDA": "10,31",
+        "Cash Conversion": "0,062057",
+        "EV/Sales": "1,081327977"
+    },
+    {
+        "atividade": "Construção de embarcações",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Construção de embarcações e estruturas flutuantes",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Fabricação de aeronaves",
+        "Beta": "0,85",
+        "DE": "0,2077",
+        "xEBITDA": "19,91",
+        "Cash Conversion": "-0,067096",
+        "EV/Sales": "2,549530532"
+    },
+    {
+        "atividade": "Fabricação de equipamentos de transporte não especificados anteriormente",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Fabricação de veículos ferroviários",
+        "Beta": "0,48",
+        "DE": "0,4212",
+        "xEBITDA": "14,03",
+        "Cash Conversion": "0,125838",
+        "EV/Sales": "3,531642186"
+    },
+    {
+        "atividade": "Abate e fabricação de produtos de carne",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de conservas de frutas, legumes e outros vegetais",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de sucos de frutas, hortaliças e legumes",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de óleos e gorduras vegetais e animais",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de óleos vegetais em bruto, exceto óleo de milho",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de outros produtos alimentícios",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de produtos alimentícios não especificados anteriormente",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de açúcar em bruto",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação e refino de açúcar",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de laticínios",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Laticínios",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Beneficiamento de arroz e fabricação de produtos do arroz",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de alimentos para animais",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Moagem de trigo e fabricação de derivados",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Moagem e fabricação de produtos de origem vegetal não especificados anteriormente",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Moagem, fabricação de produtos amiláceos e de alimentos para animais",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Preservação do pescado e fabricação de produtos do pescado",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Torrefação e moagem de café",
+        "Beta": "0,58",
+        "DE": "0,3351",
+        "xEBITDA": "12,09",
+        "Cash Conversion": "0,01994",
+        "EV/Sales": "1,168715557"
+    },
+    {
+        "atividade": "Fabricação de artefatos de borracha não especificados anteriormente",
+        "Beta": "0,79",
+        "DE": "0,4246",
+        "xEBITDA": "7,54",
+        "Cash Conversion": "0,039743",
+        "EV/Sales": "1,277066386"
+    },
+    {
+        "atividade": "Fabricação de produtos de borracha",
+        "Beta": "0,79",
+        "DE": "0,4246",
+        "xEBITDA": "7,54",
+        "Cash Conversion": "0,039743",
+        "EV/Sales": "1,277066386"
+    },
+    {
+        "atividade": "Fabricação de artefatos de material plástico não especificados anteriormente",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Fabricação de embalagens de material plástico",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Fabricação de produtos de material plástico",
+        "Beta": "0,59",
+        "DE": "0,5263",
+        "xEBITDA": "10,02",
+        "Cash Conversion": "0,010074",
+        "EV/Sales": "1,366511"
+    },
+    {
+        "atividade": "Desdobramento de madeira",
+        "Beta": "0,61",
+        "DE": "0,6453",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,012401",
+        "EV/Sales": "1,454841427"
+    },
+    {
+        "atividade": "Fabricação de madeira laminada e de chapas de madeira compensada, prensada e aglomerada",
+        "Beta": "0,61",
+        "DE": "0,6453",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,012401",
+        "EV/Sales": "1,454841427"
+    },
+    {
+        "atividade": "Fabricação de produtos de madeira, cortiça e material trançado, exceto móveis",
+        "Beta": "0,61",
+        "DE": "0,6453",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,012401",
+        "EV/Sales": "1,454841427"
+    },
+    {
+        "atividade": "Fabricação de artigos de cutelaria, de serralheria e ferramentas",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de equipamento bélico pesado, armas de fogo e munições",
+        "Beta": "0,85",
+        "DE": "0,2077",
+        "xEBITDA": "19,91",
+        "Cash Conversion": "-0,067096",
+        "EV/Sales": "2,549530532"
+    },
+    {
+        "atividade": "Fabricação de estruturas metálicas",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de estruturas metálicas e obras de caldeiraria pesada",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de embalagens metálicas",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de produtos de metal não especificados anteriormente",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de produtos de trefilados de metal",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de tanques, reservatórios metálicos e caldeiras",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Forjaria, estamparia, metalurgia do pó e serviços de tratamento de metais",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Produção de artefatos estampados de metal; metalurgia do pó",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Serviços de usinagem, solda, tratamento e revestimento em metais",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Aparelhamento de pedras e fabricação de outros produtos de minerais não-metálicos",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de produtos de minerais não-metálicos não especificados anteriormente",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de artefatos de concreto, cimento, fibrocimento, gesso e materiais semelhantes",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de cimento",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de produtos cerâmicos",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de produtos cerâmicos não-refratários para uso estrutural na construção",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de vidro e de produtos do vidro",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Fabricação de artefatos para pesca e esporte",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de artigos de joalheria, bijuteria e semelhantes",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de brinquedos e jogos recreativos",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de instrumentos e materiais para uso médico e odontológico e de artigos ópticos",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de instrumentos musicais",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de produtos diversos",
+        "Beta": "0,73",
+        "DE": "0,4629",
+        "xEBITDA": "23,27",
+        "Cash Conversion": "0,079712",
+        "EV/Sales": "3,553937651"
+    },
+    {
+        "atividade": "Fabricação de produtos do fumo",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Processamento industrial do fumo",
+        "Beta": "0,54",
+        "DE": "0,5795",
+        "xEBITDA": "10,23",
+        "Cash Conversion": "0,002657",
+        "EV/Sales": "1,013971633"
+    },
+    {
+        "atividade": "Fabricação de medicamentos para uso humano",
+        "Beta": "0,85",
+        "DE": "0,1542",
+        "xEBITDA": "13,96",
+        "Cash Conversion": "0,037687",
+        "EV/Sales": "2,860342293"
+    },
+    {
+        "atividade": "Fabricação de medicamentos para uso veterinário",
+        "Beta": "0,85",
+        "DE": "0,1542",
+        "xEBITDA": "13,96",
+        "Cash Conversion": "0,037687",
+        "EV/Sales": "2,860342293"
+    },
+    {
+        "atividade": "Fabricação de produtos farmacêuticos",
+        "Beta": "0,85",
+        "DE": "0,1542",
+        "xEBITDA": "13,96",
+        "Cash Conversion": "0,037687",
+        "EV/Sales": "2,860342293"
+    },
+    {
+        "atividade": "Fabricação de produtos farmoquímicos",
+        "Beta": "0,85",
+        "DE": "0,1542",
+        "xEBITDA": "13,96",
+        "Cash Conversion": "0,037687",
+        "EV/Sales": "2,860342293"
+    },
+    {
+        "atividade": "Fabricação de defensivos agrícolas e desinfestantes domissanitários",
+        "Beta": "0,85",
+        "DE": "0,1542",
+        "xEBITDA": "13,96",
+        "Cash Conversion": "0,037687",
+        "EV/Sales": "2,860342293"
+    },
+    {
+        "atividade": "Fabricação de fibras artificiais e sintéticas",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de aditivos de uso industrial",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de produtos e preparados químicos diversos",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de produtos químicos não especificados anteriormente",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de adubos e fertilizantes",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de produtos químicos inorgânicos",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de produtos químicos orgânicos",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de produtos químicos orgânicos não especificados anteriormente",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de resinas e elastômeros",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de resinas termoplásticas",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de cosméticos, produtos de perfumaria e de higiene pessoal",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de sabões, detergentes, produtos de limpeza, cosméticos, produtos de perfumaria e de higiene pessoal",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de tintas, vernizes, esmaltes, lacas e produtos afins",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Acabamentos em fios, tecidos e artefatos têxteis",
+        "Beta": "0,77",
+        "DE": "0,5571",
+        "xEBITDA": "6,37",
+        "Cash Conversion": "0,02236",
+        "EV/Sales": "1,668599524"
+    },
+    {
+        "atividade": "Fabricação de artefatos têxteis, exceto vestuário",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de outros produtos têxteis não especificados anteriormente",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de tecidos de malha",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fiação de fibras artificiais e sintéticas",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Preparação e fiação de fibras de algodão",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Preparação e fiação de fibras têxteis",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Tecelagem, exceto malha",
+        "Beta": "0,74",
+        "DE": "0,1704",
+        "xEBITDA": "14,24",
+        "Cash Conversion": "0,029319",
+        "EV/Sales": "1,290164897"
+    },
+    {
+        "atividade": "Fabricação de automóveis, camionetas e utilitários",
+        "Beta": "0,96",
+        "DE": "0,553",
+        "xEBITDA": "12,23",
+        "Cash Conversion": "0,030394",
+        "EV/Sales": "0,886514399"
+    },
+    {
+        "atividade": "Fabricação de cabines, carrocerias e reboques para veículos automotores",
+        "Beta": "0,96",
+        "DE": "0,553",
+        "xEBITDA": "12,23",
+        "Cash Conversion": "0,030394",
+        "EV/Sales": "0,886514399"
+    },
+    {
+        "atividade": "Fabricação de caminhões e ônibus",
+        "Beta": "0,96",
+        "DE": "0,553",
+        "xEBITDA": "12,23",
+        "Cash Conversion": "0,030394",
+        "EV/Sales": "0,886514399"
+    },
+    {
+        "atividade": "Fabricação de peças e acessórios para veículos automotores",
+        "Beta": "1,06",
+        "DE": "0,3062",
+        "xEBITDA": "9,81",
+        "Cash Conversion": "-0,00763",
+        "EV/Sales": "1,24186586"
+    },
+    {
+        "atividade": "Fabricação de peças e acessórios para veículos automotores não especificados anteriormente",
+        "Beta": "1,06",
+        "DE": "0,3062",
+        "xEBITDA": "9,81",
+        "Cash Conversion": "-0,00763",
+        "EV/Sales": "1,24186586"
+    },
+    {
+        "atividade": "Recondicionamento e recuperação de motores para veículos automotores",
+        "Beta": "1,06",
+        "DE": "0,3062",
+        "xEBITDA": "9,81",
+        "Cash Conversion": "-0,00763",
+        "EV/Sales": "1,24186586"
+    },
+    {
+        "atividade": "Atividade de impressão",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Impressão de materiais para outros usos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Reprodução de materiais gravados em qualquer suporte",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Serviços de pré-impressão e acabamentos gráficos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Instalação de máquinas e equipamentos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Manutenção e reparação de máquinas e equipamentos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Manutenção e reparação de máquinas e equipamentos da indústria mecânica",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Fundição",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Fundição de ferro e aço",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Metalurgia do alumínio e suas ligas",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Metalurgia dos metais não-ferrosos",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Metalurgia dos metais não-ferrosos e suas ligas não especificados anteriormente",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de ferro-gusa e de ferroligas",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de ferroligas",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de tubos de aço com costura",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de tubos de aço, exceto tubos sem costura",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de laminados planos de aço",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Produção de relaminados, trefilados e perfilados de aço",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Siderurgia",
+        "Beta": "0,89",
+        "DE": "0,4141",
+        "xEBITDA": "5,73",
+        "Cash Conversion": "0,025156",
+        "EV/Sales": "0,89710324"
+    },
+    {
+        "atividade": "Curtimento e outras preparações de couro",
+        "Beta": "0,82",
+        "DE": "0,1237",
+        "xEBITDA": "19,04",
+        "Cash Conversion": "0,059898",
+        "EV/Sales": "1,222609798"
+    },
+    {
+        "atividade": "Fabricação de artigos para viagem e de artefatos diversos de couro",
+        "Beta": "0,82",
+        "DE": "0,1237",
+        "xEBITDA": "19,04",
+        "Cash Conversion": "0,059898",
+        "EV/Sales": "1,222609798"
+    },
+    {
+        "atividade": "Fabricação de calçados",
+        "Beta": "0,82",
+        "DE": "0,1237",
+        "xEBITDA": "19,04",
+        "Cash Conversion": "0,059898",
+        "EV/Sales": "1,222609798"
+    },
+    {
+        "atividade": "Fabricação de calçados de couro",
+        "Beta": "0,82",
+        "DE": "0,1237",
+        "xEBITDA": "19,04",
+        "Cash Conversion": "0,059898",
+        "EV/Sales": "1,222609798"
+    },
+    {
+        "atividade": "Atividades de apoio à extração de minerais, exceto petróleo e gás natural",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Atividades de apoio à extração de petróleo e gás natural",
+        "Beta": "0,75",
+        "DE": "0,4156",
+        "xEBITDA": "7,06",
+        "Cash Conversion": "0,013141",
+        "EV/Sales": "0,811426607"
+    },
+    {
+        "atividade": "Extração de carvão mineral",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de minerais metálicos não-ferrosos",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de minério de metais preciosos",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de minério de ferro",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de minerais não-metálicos não especificados anteriormente",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de outros minerais não-metálicos",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de pedra, areia e argila",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Extração de petróleo e gás natural",
+        "Beta": "0,9",
+        "DE": "0,2776",
+        "xEBITDA": "6,8",
+        "Cash Conversion": "0,019985",
+        "EV/Sales": "1,150517618"
+    },
+    {
+        "atividade": "Atividades cinematográficas, produção de vídeos e de programas de televisão",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Atividades de exibição cinematográfica",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Atividades de produção cinematográfica, de vídeos e de programas de televisão",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Atividades de gravação de som e de edição de música",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Outras atividades de prestação de serviços de informação",
+        "Beta": "1,26",
+        "DE": "0,1108",
+        "xEBITDA": "176,02",
+        "Cash Conversion": "-0,004615",
+        "EV/Sales": "1,782420107"
+    },
+    {
+        "atividade": "Serviço Social Autônomo ",
+        "Beta": "1,26",
+        "DE": "0,1108",
+        "xEBITDA": "176,02",
+        "Cash Conversion": "-0,004615",
+        "EV/Sales": "1,782420107"
+    },
+    {
+        "atividade": "Portais, provedores de conteúdo e outros serviços de informação na internet",
+        "Beta": "1,26",
+        "DE": "0,1108",
+        "xEBITDA": "176,02",
+        "Cash Conversion": "-0,004615",
+        "EV/Sales": "1,782420107"
+    },
+    {
+        "atividade": "Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet",
+        "Beta": "1,26",
+        "DE": "0,1108",
+        "xEBITDA": "176,02",
+        "Cash Conversion": "-0,004615",
+        "EV/Sales": "1,782420107"
+    },
+    {
+        "atividade": "Atividades de rádio",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Atividades de televisão aberta",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Programadoras e atividades relacionadas à televisão por assinatura",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Consultoria em tecnologia da informação",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Desenvolvimento de programas de computador sob encomenda",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Desenvolvimento e licenciamento de programas de computador customizáveis",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Desenvolvimento e licenciamento de programas de computador não-customizáveis",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Suporte técnico, manutenção e outros serviços em tecnologia da informação",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Edição de livros",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Edição de livros, jornais, revistas e outras atividades de edição",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Edição integrada à impressão de jornais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Edição integrada à impressão de livros",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Edição integrada à impressão de livros, jornais, revistas e outras publicações",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Operadoras de televisão por assinatura",
+        "Beta": "0,59",
+        "DE": "0,8749",
+        "xEBITDA": "6,93",
+        "Cash Conversion": "-0,01824",
+        "EV/Sales": "1,719615997"
+    },
+    {
+        "atividade": "Outras atividades de telecomunicações",
+        "Beta": "0,52",
+        "DE": "0,8407",
+        "xEBITDA": "7,05",
+        "Cash Conversion": "0,039644",
+        "EV/Sales": "1,847624989"
+    },
+    {
+        "atividade": "Telecomunicações por fio",
+        "Beta": "0,52",
+        "DE": "0,8407",
+        "xEBITDA": "7,05",
+        "Cash Conversion": "0,039644",
+        "EV/Sales": "1,847624989"
+    },
+    {
+        "atividade": "Telecomunicações por satélite",
+        "Beta": "0,52",
+        "DE": "0,8407",
+        "xEBITDA": "7,05",
+        "Cash Conversion": "0,039644",
+        "EV/Sales": "1,847624989"
+    },
+    {
+        "atividade": "Telecomunicações sem fio",
+        "Beta": "0,6",
+        "DE": "0,6679",
+        "xEBITDA": "7,31",
+        "Cash Conversion": "0,138332",
+        "EV/Sales": "1,808969266"
+    },
+    {
+        "atividade": "Atividades de associações de defesa de direitos sociais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades associativas não especificadas anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações associativas ligadas à cultura e à arte",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações associativas não especificadas anteriormente",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações religiosas",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações associativas patronais, empresariais e profissionais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações associativas profissionais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Entidade Sindical ",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de organizações sindicais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades funerárias e serviços relacionados",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Outras atividades de serviços pessoais",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Reparação e manutenção de equipamentos de informática e comunicação",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Reparação e manutenção de objetos e equipamentos pessoais e domésticos",
+        "Beta": "0,91",
+        "DE": "0,1907",
+        "xEBITDA": "16,97",
+        "Cash Conversion": "0,016038",
+        "EV/Sales": "1,74825731"
+    },
+    {
+        "atividade": "Atividades de apoio à gestão de saúde",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de atenção à saúde humana não especificadas anteriormente",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de atenção ambulatorial executadas por médicos e odontólogos",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de atendimento hospitalar",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de profissionais da área de saúde, exceto médicos e odontólogos",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de serviços de complementação diagnóstica e terapêutica",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de assistência a idosos, deficientes físicos, imunodeprimidos e convalescentes prestadas em residências coletivas e particulares",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de assistência a idosos, deficientes físicos, imunodeprimidos e convalescentes, e de infra-estrutura e apoio a pacientes prestadas em residências coletivas e particulares",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de assistência psicossocial e à saúde a portadores de distúrbios psíquicos, deficiência mental e dependência química",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Atividades de assistência social prestadas em residências coletivas e particulares",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Serviços de assistência social sem alojamento",
+        "Beta": "0,56",
+        "DE": "0,4751",
+        "xEBITDA": "14,47",
+        "Cash Conversion": "0,076645",
+        "EV/Sales": "4,644289748"
+    },
+    {
+        "atividade": "Armazenamento",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Carga e descarga",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Atividades auxiliares dos transportes aéreos",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Atividades auxiliares dos transportes aquaviários",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Empresa Pública ",
+        "Beta": "0,69",
+        "DE": "0,5153",
+        "xEBITDA": "16,6",
+        "Cash Conversion": "0,089407",
+        "EV/Sales": "1,539917467"
+    },
+    {
+        "atividade": "Gestão de portos e terminais",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Atividades auxiliares dos transportes terrestres não especificadas anteriormente",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Concessionárias de rodovias, pontes, túneis e serviços relacionados",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Estacionamento de veículos",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Terminais rodoviários e ferroviários",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Atividades relacionadas à organização do transporte de carga",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Atividades de malote e de entrega",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Transporte aéreo de carga",
+        "Beta": "0,72",
+        "DE": "1,0401",
+        "xEBITDA": "17,48",
+        "Cash Conversion": "0,015403",
+        "EV/Sales": "2,279707413"
+    },
+    {
+        "atividade": "Transporte aéreo de passageiros",
+        "Beta": "0,72",
+        "DE": "1,0401",
+        "xEBITDA": "17,48",
+        "Cash Conversion": "0,015403",
+        "EV/Sales": "2,279707413"
+    },
+    {
+        "atividade": "Transporte aéreo de passageiros regular",
+        "Beta": "0,72",
+        "DE": "1,0401",
+        "xEBITDA": "17,48",
+        "Cash Conversion": "0,015403",
+        "EV/Sales": "2,279707413"
+    },
+    {
+        "atividade": "Empresa Binacional ",
+        "Beta": "0,72",
+        "DE": "1,0401",
+        "xEBITDA": "17,48",
+        "Cash Conversion": "0,015403",
+        "EV/Sales": "2,279707413"
+    },
+    {
+        "atividade": "Navegação de apoio",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Outros transportes aquaviários",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Transporte marítimo de cabotagem",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Transporte marítimo de cabotagem e longo curso",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Transporte por navegação interior",
+        "Beta": "0,71",
+        "DE": "0,4464",
+        "xEBITDA": "3",
+        "Cash Conversion": "0,129528",
+        "EV/Sales": "1,869179796"
+    },
+    {
+        "atividade": "Transporte dutoviário",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Transporte ferroviário de carga",
+        "Beta": "0,48",
+        "DE": "0,4212",
+        "xEBITDA": "14,03",
+        "Cash Conversion": "0,125838",
+        "EV/Sales": "3,531642186"
+    },
+    {
+        "atividade": "Transporte metroferroviário de passageiros",
+        "Beta": "0,48",
+        "DE": "0,4212",
+        "xEBITDA": "14,03",
+        "Cash Conversion": "0,125838",
+        "EV/Sales": "3,531642186"
+    },
+    {
+        "atividade": "Transporte rodoviário de carga",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Transporte rodoviário coletivo de passageiros, com itinerário fixo, intermunicipal, interestadual e internacional",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Transporte rodoviário coletivo de passageiros, com itinerário fixo, municipal e em região metropolitana",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    },
+    {
+        "atividade": "Transporte rodoviário de passageiros",
+        "Beta": "0,78",
+        "DE": "0,3054",
+        "xEBITDA": "14,28",
+        "Cash Conversion": "0,040542",
+        "EV/Sales": "1,159063525"
+    }
+]

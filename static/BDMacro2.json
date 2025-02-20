@@ -1,0 +1,737 @@
+[
+    {
+        "indice": "IPCAano1",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Inflação",
+        "[ANO_REFER]": 2024.0,
+        "Valor": " 0,0401 "
+    },
+    {
+        "indice": "IPCAano2",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Inflação",
+        "[ANO_REFER]": 2025.0,
+        "Valor": " 0,0386 "
+    },
+    {
+        "indice": "IPCAano3",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Inflação",
+        "[ANO_REFER]": 2026.0,
+        "Valor": " 0,0365 "
+    },
+    {
+        "indice": "IPCAano4",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Inflação",
+        "[ANO_REFER]": 2027.0,
+        "Valor": " 0,0350 "
+    },
+    {
+        "indice": "IPCAano5",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Inflação",
+        "[ANO_REFER]": 2028.0,
+        "Valor": " 0,0350 "
+    },
+    {
+        "indice": "PIBGERAno1",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Crescimento",
+        "[ANO_REFER]": 2024.0,
+        "Valor": " 0,0207 "
+    },
+    {
+        "indice": "PIBGERAno2",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Crescimento",
+        "[ANO_REFER]": 2025.0,
+        "Valor": " 0,0197 "
+    },
+    {
+        "indice": "PIBGERAno3",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Crescimento",
+        "[ANO_REFER]": 2026.0,
+        "Valor": " 0,0200 "
+    },
+    {
+        "indice": "PIBGERAno4",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Crescimento",
+        "[ANO_REFER]": 2027.0,
+        "Valor": " 0,0200 "
+    },
+    {
+        "indice": "PIBGERAno5",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Crescimento",
+        "[ANO_REFER]": 2028.0,
+        "Valor": " 0,0200 "
+    },
+    {
+        "indice": "SELICAno1",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Custo Capital",
+        "[ANO_REFER]": 2024.0,
+        "Valor": " 0,1050 "
+    },
+    {
+        "indice": "SELICAno2",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Custo Capital",
+        "[ANO_REFER]": 2025.0,
+        "Valor": " 0,0950 "
+    },
+    {
+        "indice": "SELICAno3",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Custo Capital",
+        "[ANO_REFER]": 2026.0,
+        "Valor": " 0,0900 "
+    },
+    {
+        "indice": "SELICAno4",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Custo Capital",
+        "[ANO_REFER]": 2027.0,
+        "Valor": " 0,0900 "
+    },
+    {
+        "indice": "SELICAno5",
+        "Data_macro": "21/06/2024",
+        "Tipo_Macro": "Custo Capital",
+        "[ANO_REFER]": 2028.0,
+        "Valor": " 0,0900 "
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    },
+    {
+        "indice": NaN,
+        "Data_macro": NaN,
+        "Tipo_Macro": NaN,
+        "[ANO_REFER]": NaN,
+        "Valor": NaN
+    }
+]

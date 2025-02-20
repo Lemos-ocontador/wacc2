@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WACC Platform - Cálculo Preciso e Automatizado</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome para ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts - Roboto para corpo e Montserrat para títulos -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Personalizado -->
+    <style>
+        :root {
+            --primary-color: #1a237e;    /* Azul escuro para confiança */
+            --secondary-color: #0d47a1;  /* Azul médio para elementos secundários */
+            --accent-color: #2962ff;     /* Azul brilhante para destaques */
+            --text-color: #212121;       /* Quase preto para texto principal */
+            --light-text: #484848;       /* Cinza escuro para texto secundário */
+            --background: #fafafa;       /* Branco levemente acinzentado para fundo */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-color);
+            background-color: var(--background);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255,255,255,0.9) !important;
+        }
+
+        .search-box {
+            max-width: 300px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .btn-outline-primary {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .auth-buttons .btn {
+            margin-left: 8px;
+        }
+
+        .social-login {
+            font-size: 20px;
+        }
+
+        .social-login i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Logo/Brand -->
+            <a class="navbar-brand" href="#">WACC Platform</a>
+            
+            <!-- Toggle Button for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Navigation Links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="calculator-page.html">Calculadora</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="resourcesDropdown" role="button" data-bs-toggle="dropdown">
+                            Recursos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="features-page.html">Funcionalidades</a></li>
+                            <li><a class="dropdown-item" href="learning-center.html">Centro de Aprendizado</a></li>
+                            <li><a class="dropdown-item" href="cases-page.html">Cases de Sucesso</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pricing-page.html">Preços</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="companyDropdown" role="button" data-bs-toggle="dropdown">
+                            Empresa
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="about-page.html">Sobre Nós</a></li>
+                            <li><a class="dropdown-item" href="contact-page.html">Contato</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <!-- Search Box -->
+                <form class="d-flex search-box me-3">
+                    <div class="input-group">
+                        <input class="form-control" type="search" placeholder="Buscar..." aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Auth Buttons -->
+                <div class="auth-buttons d-flex align-items-center">
+                    <!-- Social Login Buttons -->
+                    <div class="social-login me-2">
+                        <button class="btn btn-outline-light btn-sm" title="Login com Google">
+                            <i class="fab fa-google"></i>
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" title="Login com LinkedIn">
+                            <i class="fab fa-linkedin"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Traditional Auth Buttons -->
+                    <a href="dashboard-page.html" class="btn btn-outline-light btn-sm">Entrar</a>
+                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#signupModal">Cadastrar</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="contact-hero">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">Entre em Contato</h1>
+            <p class="lead mb-4">Estamos aqui para ajudar você!</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="contact-form">
+            <h2>Formulário de Contato</h2>
+            <form>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Mensagem</label>
+                    <textarea class="form-control" id="message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
