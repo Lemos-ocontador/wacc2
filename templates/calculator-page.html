@@ -152,7 +152,6 @@
         background-color: #b0bec5;
         cursor: not-allowed;
     }
-    
     .parameters-section {
         margin-top: 30px;
         background-color: white;
@@ -311,7 +310,6 @@
         font-weight: 500;
         color: var(--secondary-color);
     }
-    
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -400,7 +398,6 @@
             <p class="lead mb-4">Calcule o Custo Médio Ponderado de Capital com precisão e rapidez</p>
         </div>
     </section>
-
     <!-- Calculator Section -->
     <div class="container">
         <div class="row">
@@ -471,7 +468,6 @@
                             Calcular WACC
                         </button>
                     </form>
-
                     <!-- Result Section -->
                     <div class="result-section">
                         <h4>Resultado do WACC</h4>
@@ -510,6 +506,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Determina a base URL para GitHub Pages ou ambiente local
+            const isGitHubPages = window.location.hostname === 'lemos-ocontador.github.io';
+            const baseUrl = isGitHubPages ? '/wacc2' : '';
+            
+            // Ajusta os links de navegação se estiver no GitHub Pages
+            if (isGitHubPages) {
+                document.querySelectorAll('a.nav-link, a.navbar-brand, a.dropdown-item').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('/') && !href.startsWith(baseUrl) && !href.startsWith('//')) {
+                        link.setAttribute('href', `${baseUrl}${href}`);
+                    }
+                });
+                
+                // Ajusta o action do formulário
+                const waccForm = document.getElementById('waccForm');
+                if (waccForm) {
+                    const action = waccForm.getAttribute('action');
+                    if (action && action.startsWith('/') && !action.startsWith(baseUrl)) {
+                        waccForm.setAttribute('action', `${baseUrl}${action}`);
+                    }
+                }
+            }
             // Inicializa tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -552,39 +570,48 @@
             function fetchAtividadesFromServer() {
                 mostrarFeedback('Carregando atividades econômicas...', 'warning');
                 
-                fetch('/static/Bd_Atividade.json')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Erro na resposta: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(jsonData => {
-                        preencherAtividades(jsonData);
-                        cachedAtividades = jsonData;
-                        // Armazena no localStorage para uso offline
-                        try {
-                            localStorage.setItem('atividadesEconomicas', JSON.stringify(jsonData));
-                        } catch (e) {
-                            console.warn('Erro ao armazenar atividades no cache:', e);
-                        }
-                        ocultarFeedback();
-                    })
-                    .catch(error => {
-                        console.error('Erro ao carregar atividades:', error);
-                        mostrarFeedback('Não foi possível carregar a lista de atividades. Verifique sua conexão.', 'error');
-                        
-                        // Dados de fallback para testes
-                        const fallbackData = [
-                            {atividade: "Comércio Varejista"}, 
-                            {atividade: "Indústria de Transformação"},
-                            {atividade: "Serviços Financeiros"},
-                            {atividade: "Tecnologia da Informação"}
-                        ];
-                        preencherAtividades(fallbackData);
-                    });
+                // Usa o caminho correto com a base URL
+                fetch(`${baseUrl}/static/Bd_Atividade.json`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    mode: 'cors'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro na resposta: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(jsonData => {
+                    preencherAtividades(jsonData);
+                    cachedAtividades = jsonData;
+                    // Armazena no localStorage para uso offline
+                    try {
+                        localStorage.setItem('atividadesEconomicas', JSON.stringify(jsonData));
+                    } catch (e) {
+                        console.warn('Erro ao armazenar atividades no cache:', e);
+                    }
+                    ocultarFeedback();
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar atividades:', error);
+                    mostrarFeedback('Não foi possível carregar a lista de atividades. Usando dados de demonstração.', 'warning');
+                    
+                    // Dados de fallback para testes
+                    const fallbackData = [
+                        {atividade: "Comércio Varejista", Beta: "0.84", DE: "0.38", "EV/Sales": "0.85"}, 
+                        {atividade: "Indústria de Transformação", Beta: "0.92", DE: "0.45", "EV/Sales": "1.2"},
+                        {atividade: "Serviços Financeiros", Beta: "1.05", DE: "0.52", "EV/Sales": "2.4"},
+                        {atividade: "Tecnologia da Informação", Beta: "1.15", DE: "0.32", "EV/Sales": "3.8"}
+                    ];
+                    preencherAtividades(fallbackData);
+                    cachedAtividades = fallbackData;
+                });
             }
-            
             // Preenche o datalist com as atividades
             function preencherAtividades(atividades) {
                 const datalist = document.getElementById('atividadeList1');
@@ -657,7 +684,6 @@
                 atividadeError.style.display = 'none';
                 return true;
             }
-            
             // Função para validar faturamento
             function validarFaturamento() {
                 const valorFormatado = faturamentoInput.value;
@@ -702,75 +728,90 @@
                 const faturamentoNumerico = faturamentoFormatado.replace(/\D/g, '');
                 formData.set('faturamento', faturamentoNumerico);
                 
-                // Determina a URL da API com base no ambiente
+                // Verifica se está no GitHub Pages
+                const isGitHubPages = window.location.hostname === 'lemos-ocontador.github.io';
                 const isLocalhost = window.location.hostname === 'localhost';
                 const isDevelopment = window.location.port === '5500' || window.location.protocol === 'file:';
-                const urlBase = (isLocalhost || isDevelopment) ? 
-                    '/api/mock-calcular-wacc' : '/api/calcular-wacc';
                 
-                // Configura timeout para evitar requisições infinitas
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
-                
-                // Enviar para o endpoint de cálculo
-                fetch(urlBase, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams(formData),
-                    signal: controller.signal,
-                    credentials: 'same-origin'
-                })
-                .then(response => {
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`Erro na resposta: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Oculta overlay de carregamento
-                    loadingOverlay.style.display = 'none';
-                    calcularBtn.disabled = false;
-                    
-                    if (data.error) {
-                        mostrarFeedback(data.error, 'error');
-                        return;
-                    }
-                    
-                    // Processar e exibir os resultados
-                    try {
-                        processarResultados(data);
-                        mostrarFeedback('Cálculo concluído com sucesso!', 'success');
-                    } catch (error) {
-                        console.error("Erro ao exibir resultados:", error);
-                        mostrarFeedback("Ocorreu um erro ao processar o resultado. Por favor, tente novamente.", 'error');
-                    }
-                })
-                .catch(error => {
-                    // Oculta overlay de carregamento
-                    loadingOverlay.style.display = 'none';
-                    calcularBtn.disabled = false;
-                    clearTimeout(timeoutId);
-                    
-                    console.error('Erro:', error);
-                    
-                    // Ambiente de desenvolvimento - usar dados mock
-                    if (isLocalhost || isDevelopment) {
+                if (isGitHubPages) {
+                    // Usa sempre dados mock no GitHub Pages
+                    setTimeout(() => {
                         const mockData = getMockWaccData();
                         processarResultados(mockData);
-                        mostrarFeedback('Usando dados de demonstração (modo offline/desenvolvimento)', 'warning');
-                    } else {
-                        if (error.name === 'AbortError') {
-                            mostrarFeedback('A solicitação excedeu o tempo limite. Verifique sua conexão.', 'error');
-                        } else {
-                            mostrarFeedback('Ocorreu um erro ao processar o cálculo. Por favor, tente novamente.', 'error');
+                        mostrarFeedback('Demonstração: cálculo simulado no GitHub Pages', 'warning');
+                        loadingOverlay.style.display = 'none';
+                        calcularBtn.disabled = false;
+                    }, 1000);
+                } else {
+                    // Determina a URL da API com base no ambiente
+                    const urlBase = (isLocalhost || isDevelopment) ? 
+                        `${baseUrl}/api/mock-calcular-wacc` : `${baseUrl}/api/calcular-wacc`;
+                    
+                    // Configura timeout para evitar requisições infinitas
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
+                    
+                    // Enviar para o endpoint de cálculo
+                    fetch(urlBase, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams(formData),
+                        signal: controller.signal,
+                        credentials: 'same-origin',
+                        mode: 'cors'
+                    })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            throw new Error(`Erro na resposta: ${response.status}`);
                         }
-                    }
-                });
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Oculta overlay de carregamento
+                        loadingOverlay.style.display = 'none';
+                        calcularBtn.disabled = false;
+                        
+                        if (data.error) {
+                            mostrarFeedback(data.error, 'error');
+                            return;
+                        }
+                        
+                        // Processar e exibir os resultados
+                        try {
+                            processarResultados(data);
+                            mostrarFeedback('Cálculo concluído com sucesso!', 'success');
+                        } catch (error) {
+                            console.error("Erro ao exibir resultados:", error);
+                            mostrarFeedback("Ocorreu um erro ao processar o resultado. Por favor, tente novamente.", 'error');
+                        }
+                    })
+                    .catch(error => {
+                        // Oculta overlay de carregamento
+                        loadingOverlay.style.display = 'none';
+                        calcularBtn.disabled = false;
+                        clearTimeout(timeoutId);
+                        
+                        console.error('Erro:', error);
+                        
+                        // Ambiente de desenvolvimento - usar dados mock
+                        if (isLocalhost || isDevelopment) {
+                            const mockData = getMockWaccData();
+                            processarResultados(mockData);
+                            mostrarFeedback('Usando dados de demonstração (modo offline/desenvolvimento)', 'warning');
+                        } else {
+                            if (error.name === 'AbortError') {
+                                mostrarFeedback('A solicitação excedeu o tempo limite. Verifique sua conexão.', 'error');
+                            } else {
+                                mostrarFeedback('Ocorreu um erro ao processar o cálculo. Por favor, tente novamente.', 'error');
+                            }
+                        }
+                    });
+                }
             });
             
             // Função auxiliar para mostrar mensagens de feedback
@@ -820,7 +861,6 @@
                 
                 // Processamento dos valores vindos do back-end com verificação de segurança
                 const detalhes = data.detalhes || {};
-                
                 // Criar tabelas com o novo formato e cores do Bootstrap padrão
                 const tabelaHTML = `
                     <div class="wacc-results mt-4">
@@ -973,7 +1013,6 @@
                         </div>
                     </div>
                 `;
-                
                 // Inserir HTML na seção de parâmetros
                 parametrosSection.innerHTML = tabelaHTML;
                 
@@ -1010,14 +1049,35 @@
                 return valor;
             }
             
-            // Função para gerar dados mock para testes em ambiente local
+            // Função para gerar dados mock para testes em ambiente local ou GitHub Pages
             function getMockWaccData() {
+                // Obtém valores da atividade selecionada para personalizar o mock
+                const atividadeSelecionada = atividadeSelect.value;
+                let beta = 0.86;
+                let de = 0.42;
+                
+                // Tenta personalizar com base na atividade selecionada
+                if (cachedAtividades) {
+                    const atividadeEncontrada = cachedAtividades.find(item => {
+                        const atividadeNome = typeof item === 'string' ? item : item.atividade;
+                        return atividadeNome === atividadeSelecionada;
+                    });
+                    
+                    if (atividadeEncontrada) {
+                        beta = parseFloat(atividadeEncontrada.Beta || beta);
+                        de = parseFloat(atividadeEncontrada.DE || de);
+                    }
+                }
+                
+                // Gera valores baseados na atividade
+                const betaRealav = beta * (1 + (de * (1 - (34/100))));
+                
                 return {
                     wacc_nominal: 0.1243,
                     wacc_real: 0.0967,
                     detalhes: {
-                        Beta: 0.86,
-                        DE: 0.42,
+                        Beta: beta,
+                        DE: de,
                         RF: 3.85,
                         RM: 6.5,
                         CR: 2.78,
@@ -1029,14 +1089,20 @@
                         Custo_Equity: 0.1372,
                         Custo_Debt: 0.0970,
                         partke: 0.704,
-                        partkd: 0.296
+                        partkd: 0.296,
+                        Betarealav: betaRealav
                     }
                 };
             }
-            
             // Detect offline mode
             window.addEventListener('offline', function() {
                 mostrarFeedback('Você está offline. Algumas funcionalidades podem estar limitadas.', 'warning');
+            });
+            
+            window.addEventListener('online', function() {
+                ocultarFeedback();
+                mostrarFeedback('Conexão restaurada.', 'success');
+                setTimeout(ocultarFeedback, 3000);
             });
             
             // Initialize
