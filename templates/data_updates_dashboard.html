@@ -530,6 +530,32 @@
                 const badgeClass = s.wacc_component === 'Ki' ? 'badge-ki' :
                     (s.wacc_component === 'Ajuste' ? 'badge-ajuste' : 'badge-ke');
 
+                // Build audit links: prefer audit_links array, fallback to single audit_url
+                let auditLinksHtml = '';
+                if (s.audit_links && s.audit_links.length > 0) {
+                    auditLinksHtml = s.audit_links.map(l =>
+                        `<a href="${l.url}" target="_blank" class="btn-audit" title="${l.label}">
+                            <i class="fas fa-external-link-alt"></i> ${l.label}
+                        </a>`
+                    ).join('');
+                } else {
+                    auditLinksHtml = `<a href="${s.audit_url}" target="_blank" class="btn-audit" title="Verificar fonte original">
+                        <i class="fas fa-external-link-alt"></i> Link de Auditoria
+                    </a>`;
+                }
+
+                // Manual update badge
+                const manualBadge = s.manual_update ?
+                    `<span style="font-size:0.65em; background:rgba(234,179,8,0.15); color:var(--accent-yellow); padding:2px 8px; border-radius:10px; margin-left:6px;" title="${s.update_note || 'Atualização manual'}">
+                        <i class="fas fa-hand-paper"></i> Manual
+                    </span>` : '';
+
+                // Update note for manual sources
+                const updateNote = s.update_note ?
+                    `<div style="font-size:0.7em; color:var(--accent-yellow); margin-top:6px; opacity:0.8;">
+                        <i class="fas fa-info-circle"></i> ${s.update_note}
+                    </div>` : '';
+
                 const card = document.createElement('div');
                 card.className = 'col-lg-6';
                 card.innerHTML = `
@@ -539,7 +565,7 @@
                                 <i class="${s.icon}"></i>
                             </div>
                             <div>
-                                <div class="source-title">${s.name}</div>
+                                <div class="source-title">${s.name}${manualBadge}</div>
                                 <div class="source-provider">${s.provider} • ${s.frequency}</div>
                             </div>
                             <span class="source-badge ${badgeClass}">${s.wacc_component}</span>
@@ -572,11 +598,10 @@
                                 <div class="value" id="records-${s.id}">${records}</div>
                             </div>
                         </div>
+                        ${updateNote}
 
                         <div class="source-actions">
-                            <a href="${s.audit_url}" target="_blank" class="btn-audit" title="Verificar fonte original">
-                                <i class="fas fa-external-link-alt"></i> Link de Auditoria
-                            </a>
+                            <div class="d-flex gap-2 flex-wrap">${auditLinksHtml}</div>
                             <button class="btn-source-update" id="btn-${s.id}" onclick="updateSource('${s.id}')">
                                 <i class="fas fa-sync-alt"></i> Atualizar
                             </button>

@@ -265,6 +265,29 @@ def api_data_update_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/size_premium_data', methods=['GET'])
+def api_size_premium_data():
+    """Retorna dados do BDSize.json para auditoria do Size Premium."""
+    try:
+        import json as _json
+        path = Path("static/BDSize.json")
+        if not path.exists():
+            return jsonify({'success': False, 'error': 'BDSize.json não encontrado'}), 404
+        with open(path, 'r', encoding='utf-8') as f:
+            data = _json.load(f)
+        return jsonify({
+            'success': True,
+            'fonte': 'Kroll / Duff & Phelps Cost of Capital Navigator',
+            'nota': 'Dados atualizados anualmente. Requer input manual do relatório Kroll.',
+            'total_decis': len(data),
+            'ano_referencia': data[0].get('[ANO_REFER]') if data else None,
+            'decis': data,
+        })
+    except Exception as e:
+        logger.error(f'Erro ao carregar BDSize.json: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/calculate_wacc', methods=['POST'])
 def api_calculate_wacc():
     """API endpoint para calcular WACC."""

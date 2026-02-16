@@ -11,6 +11,7 @@ import sqlite3
 import json
 import pandas as pd
 import logging
+import requests
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Generator
 from pathlib import Path
@@ -63,56 +64,94 @@ DATA_SOURCES = [
         "color": "#059669"
     },
     {
-        "id": "sector_betas",
-        "name": "Betas Setoriais + D/E",
-        "description": "Beta alavancado/desalavancado e D/E por setor (~47K empresas)",
+        "id": "sector_betas_global",
+        "name": "Betas Setoriais + D/E (Global)",
+        "description": "Beta, D/E por setor — todas as empresas mundiais (5 regiões)",
         "wacc_component": "Ke / Estrutura",
         "provider": "Damodaran (NYU Stern)",
         "frequency": "Anual",
         "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html",
+        "audit_links": [
+            {"label": "Betas por Setor (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html"},
+            {"label": "Download Excel", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls"}
+        ],
         "data_file": None,
         "db_table": "damodaran_global",
-        "icon": "fas fa-industry",
+        "icon": "fas fa-globe",
         "color": "#7c3aed"
+    },
+    {
+        "id": "sector_betas_emkt",
+        "name": "Betas Setoriais + D/E (Emerg.)",
+        "description": "Beta, D/E por setor — mercados emergentes (broad_group=Emerging Markets)",
+        "wacc_component": "Ke / Estrutura",
+        "provider": "Damodaran (NYU Stern)",
+        "frequency": "Anual",
+        "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html",
+        "audit_links": [
+            {"label": "Betas Emerg. (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html"},
+            {"label": "Download Excel", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls"}
+        ],
+        "data_file": None,
+        "db_table": "damodaran_global",
+        "db_filter": "broad_group = 'Emerging Markets'",
+        "icon": "fas fa-earth-americas",
+        "color": "#9333ea"
     },
     {
         "id": "size_premium",
         "name": "Prêmio de Tamanho (SP)",
-        "description": "Size Premium por decil de Market Cap (Ibbotson/Duff & Phelps)",
+        "description": "Size Premium por decil de Market Cap — atualização anual manual",
         "wacc_component": "Ke",
-        "provider": "Damodaran / Ibbotson",
-        "frequency": "Anual",
-        "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/spearn.html",
+        "provider": "Kroll / Duff & Phelps",
+        "frequency": "Anual (manual)",
+        "audit_url": "https://www.kroll.com/en/cost-of-capital",
+        "audit_links": [
+            {"label": "Kroll Cost of Capital", "url": "https://www.kroll.com/en/cost-of-capital"},
+            {"label": "BDSize.json (local)", "url": "/api/size_premium_data"}
+        ],
         "data_file": "BDSize.json",
         "db_table": "size_premium",
         "icon": "fas fa-expand-arrows-alt",
-        "color": "#ea580c"
+        "color": "#ea580c",
+        "manual_update": True,
+        "update_note": "Dados de Kroll/Duff & Phelps. Requer input manual anual do relatório."
     },
     {
         "id": "selic_rate",
         "name": "Taxa Selic (→ Kd)",
-        "description": "Taxa básica de juros - proxy para custo da dívida (150% Selic)",
+        "description": "Taxa básica de juros — proxy para custo da dívida (Kd = 150% Selic)",
         "wacc_component": "Ki",
-        "provider": "Banco Central do Brasil",
+        "provider": "Banco Central do Brasil (SGS série 432)",
         "frequency": "Diário",
-        "audit_url": "https://www.bcb.gov.br/controleinflacao/taxaselic",
+        "audit_url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json",
+        "audit_links": [
+            {"label": "API BCB Selic (JSON)", "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json"},
+            {"label": "Página BCB Selic", "url": "https://www.bcb.gov.br/controleinflacao/taxaselic"}
+        ],
         "data_file": "BDWACC.json",
         "db_table": None,
         "icon": "fas fa-university",
-        "color": "#374151"
+        "color": "#374151",
+        "bcb_series": 432
     },
     {
         "id": "inflation_brazil",
         "name": "Inflação Brasil (IPCA)",
-        "description": "IPCA acumulado - ajuste de inflação para WACC real",
+        "description": "IPCA acumulado 12 meses — ajuste de inflação para WACC real",
         "wacc_component": "Ajuste",
-        "provider": "Banco Central do Brasil",
+        "provider": "Banco Central do Brasil (SGS série 13522)",
         "frequency": "Mensal",
-        "audit_url": "https://www.bcb.gov.br/controleinflacao/indicadores",
+        "audit_url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json",
+        "audit_links": [
+            {"label": "API BCB IPCA 12m (JSON)", "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json"},
+            {"label": "Página BCB Indicadores", "url": "https://www.bcb.gov.br/controleinflacao/indicadores"}
+        ],
         "data_file": "BDWACC.json",
         "db_table": None,
         "icon": "fas fa-percentage",
-        "color": "#dc2626"
+        "color": "#dc2626",
+        "bcb_series": 13522
     },
 ]
 
@@ -226,12 +265,16 @@ class DataSourceManager:
         return results
 
     def _get_db_record_count(self, conn, source: dict) -> Optional[int]:
-        """Conta registros na tabela do banco para a fonte."""
+        """Conta registros na tabela do banco para a fonte (com filtro opcional)."""
         table = source.get("db_table")
         if not table:
             return None
         try:
-            row = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+            db_filter = source.get("db_filter")
+            if db_filter:
+                row = conn.execute(f"SELECT COUNT(*) FROM {table} WHERE {db_filter}").fetchone()
+            else:
+                row = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
             return row[0] if row else 0
         except Exception:
             return None
@@ -399,103 +442,231 @@ class DataSourceManager:
             },
         }
 
-    def _update_sector_betas(self) -> Dict[str, Any]:
-        """Verifica dados de betas setoriais no SQLite."""
+    def _update_sector_betas_global(self) -> Dict[str, Any]:
+        """Verifica dados de betas setoriais GLOBAIS no SQLite (todas as regiões)."""
         conn = self._get_conn()
 
-        total_companies = conn.execute(
-            "SELECT COUNT(*) FROM damodaran_global"
-        ).fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM damodaran_global").fetchone()[0]
 
-        total_sectors = conn.execute("""
+        sectors = conn.execute("""
             SELECT COUNT(DISTINCT industry) FROM damodaran_global
             WHERE industry IS NOT NULL AND industry != ''
         """).fetchone()[0]
 
-        # Beta médio global
         avg_beta = conn.execute("""
-            SELECT AVG(CAST(beta AS REAL)) 
+            SELECT AVG(CAST(beta AS REAL))
             FROM damodaran_global
             WHERE beta IS NOT NULL AND beta != '' AND beta != 'None'
               AND CAST(beta AS REAL) > 0 AND CAST(beta AS REAL) < 10
         """).fetchone()[0]
 
+        # Distribuição por região
+        regions = conn.execute("""
+            SELECT broad_group, COUNT(*) as cnt
+            FROM damodaran_global
+            WHERE broad_group IS NOT NULL
+            GROUP BY broad_group ORDER BY cnt DESC
+        """).fetchall()
+
         conn.close()
+        regions_detail = {r[0]: r[1] for r in regions}
 
         return {
-            "records_count": total_companies,
-            "last_value": f"{total_sectors} setores, β̄={avg_beta:.3f}" if avg_beta else f"{total_sectors} setores",
+            "records_count": total,
+            "last_value": f"{sectors} setores, {total:,} empresas, β̄={avg_beta:.3f}" if avg_beta else f"{sectors} setores",
             "reference_year": datetime.now().year,
             "reference_date": datetime.now().strftime("%Y-%m-%d"),
             "details": {
-                "total_empresas": total_companies,
-                "total_setores": total_sectors,
-                "beta_medio_global": round(avg_beta, 4) if avg_beta else None,
+                "total_empresas": total,
+                "total_setores": sectors,
+                "beta_medio": round(avg_beta, 4) if avg_beta else None,
+                "regioes": regions_detail,
+            },
+        }
+
+    def _update_sector_betas_emkt(self) -> Dict[str, Any]:
+        """Verifica dados de betas setoriais EMERGING MARKETS no SQLite."""
+        conn = self._get_conn()
+        emkt_filter = "broad_group = 'Emerging Markets'"
+
+        total = conn.execute(
+            f"SELECT COUNT(*) FROM damodaran_global WHERE {emkt_filter}"
+        ).fetchone()[0]
+
+        sectors = conn.execute(f"""
+            SELECT COUNT(DISTINCT industry) FROM damodaran_global
+            WHERE {emkt_filter} AND industry IS NOT NULL AND industry != ''
+        """).fetchone()[0]
+
+        avg_beta = conn.execute(f"""
+            SELECT AVG(CAST(beta AS REAL))
+            FROM damodaran_global
+            WHERE {emkt_filter}
+              AND beta IS NOT NULL AND beta != '' AND beta != 'None'
+              AND CAST(beta AS REAL) > 0 AND CAST(beta AS REAL) < 10
+        """).fetchone()[0]
+
+        countries = conn.execute(f"""
+            SELECT COUNT(DISTINCT country) FROM damodaran_global
+            WHERE {emkt_filter}
+        """).fetchone()[0]
+
+        # Top países por qtd de empresas
+        top_countries = conn.execute(f"""
+            SELECT country, COUNT(*) as cnt
+            FROM damodaran_global
+            WHERE {emkt_filter} AND country IS NOT NULL
+            GROUP BY country ORDER BY cnt DESC LIMIT 10
+        """).fetchall()
+
+        conn.close()
+
+        return {
+            "records_count": total,
+            "last_value": f"{sectors} setores, {total:,} empresas, {countries} países, β̄={avg_beta:.3f}" if avg_beta else f"{sectors} setores, {total:,} empresas",
+            "reference_year": datetime.now().year,
+            "reference_date": datetime.now().strftime("%Y-%m-%d"),
+            "details": {
+                "total_empresas": total,
+                "total_setores": sectors,
+                "total_paises": countries,
+                "beta_medio_emkt": round(avg_beta, 4) if avg_beta else None,
+                "top_paises": {c[0]: c[1] for c in top_countries},
             },
         }
 
     def _update_size_premium(self) -> Dict[str, Any]:
-        """Verifica dados de size premium no SQLite + BDSize.json."""
+        """Verifica dados de size premium — BDSize.json + SQLite. Atualização manual anual."""
         conn = self._get_conn()
-
         try:
-            total = conn.execute("SELECT COUNT(*) FROM size_premium").fetchone()[0]
+            total_db = conn.execute("SELECT COUNT(*) FROM size_premium").fetchone()[0]
         except Exception:
-            total = 0
+            total_db = 0
         conn.close()
 
-        # Ler JSON
         bd_size = self._load_bdsize()
+        ano_ref = bd_size[0].get("[ANO_REFER]") if bd_size else None
+
+        # Montar resumo dos decis
+        decis_resumo = []
+        for d in bd_size:
+            decis_resumo.append({
+                "decil": d.get("Tamanho"),
+                "de": d.get(" De ", "").strip(),
+                "ate": d.get(" até ", "").strip(),
+                "premio": d.get("Premio"),
+            })
 
         return {
-            "records_count": total if total > 0 else len(bd_size),
-            "last_value": f"{total if total > 0 else len(bd_size)} decis",
-            "reference_year": bd_size[0].get("[ANO_REFER]") if bd_size else datetime.now().year,
+            "records_count": len(bd_size),
+            "last_value": f"{len(bd_size)} decis, ano-ref: {ano_ref}",
+            "reference_year": ano_ref,
             "reference_date": datetime.now().strftime("%Y-%m-%d"),
             "details": {
-                "decis_db": total,
                 "decis_json": len(bd_size),
+                "decis_db": total_db,
+                "ano_referencia": ano_ref,
+                "fonte": "Kroll / Duff & Phelps Cost of Capital Navigator",
+                "nota": "Dados atualizados anualmente. Requer input manual do relatório Kroll.",
+                "decis": decis_resumo,
             },
         }
 
     def _update_selic_rate(self) -> Dict[str, Any]:
-        """Verifica/atualiza taxa Selic do BDWACC.json."""
+        """Atualiza taxa Selic consultando API BCB (SGS 432) + BDWACC.json."""
+        api_url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json"
+        bcb_data = None
+        selic_atual = None
+
+        try:
+            resp = requests.get(api_url, timeout=15)
+            if resp.status_code == 200:
+                bcb_data = resp.json()
+                if bcb_data:
+                    ultimo = bcb_data[-1]
+                    selic_atual = float(ultimo['valor'])
+        except Exception as e:
+            logger.warning(f"Falha ao consultar API BCB Selic: {e}")
+
+        # BDWACC.json como referência/backup
         bd = self._load_bdwacc()
         ct_entry = next((x for x in bd if x.get("Campo") == "CT"), None)
-        if not ct_entry:
-            raise ValueError("Campo CT não encontrado no BDWACC.json")
+        ct_valor = ct_entry["Valor"] if ct_entry else "N/A"
+
+        details = {
+            "campo": "CT",
+            "valor_bdwacc": ct_valor,
+            "nota": "Kd = 150% da Selic como proxy para custo da dívida",
+            "api_url": api_url,
+        }
+
+        if selic_atual is not None:
+            details["selic_atual_bcb"] = f"{selic_atual:.2f}%"
+            details["selic_data"] = bcb_data[-1]['data'] if bcb_data else None
+            details["kd_calculado"] = f"{selic_atual * 1.5:.2f}%"
+            details["ultimos_valores"] = [
+                {"data": d["data"], "valor": f"{float(d['valor']):.2f}%"}
+                for d in (bcb_data[-5:] if bcb_data else [])
+            ]
+            last_value = f"Selic: {selic_atual:.2f}% → Kd(150%): {selic_atual*1.5:.2f}%"
+        else:
+            last_value = ct_valor
+            details["aviso"] = "API BCB indisponível, usando BDWACC.json"
 
         return {
             "records_count": 1,
-            "last_value": ct_entry["Valor"],
-            "reference_year": ct_entry.get("[ANO_REFER]"),
+            "last_value": last_value,
+            "reference_year": ct_entry.get("[ANO_REFER]") if ct_entry else datetime.now().year,
             "reference_date": datetime.now().strftime("%Y-%m-%d"),
-            "details": {
-                "campo": "CT",
-                "nome": ct_entry["Nome"],
-                "valor": ct_entry["Valor"],
-                "nota": "150% da Selic como proxy para Kd",
-            },
+            "details": details,
         }
 
     def _update_inflation_brazil(self) -> Dict[str, Any]:
-        """Verifica dados de inflação do BDWACC.json."""
+        """Atualiza inflação Brasil consultando API BCB (SGS 13522) + BDWACC.json."""
+        api_url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json"
+        bcb_data = None
+        ipca_12m = None
+
+        try:
+            resp = requests.get(api_url, timeout=15)
+            if resp.status_code == 200:
+                bcb_data = resp.json()
+                if bcb_data:
+                    ultimo = bcb_data[-1]
+                    ipca_12m = float(ultimo['valor'])
+        except Exception as e:
+            logger.warning(f"Falha ao consultar API BCB IPCA: {e}")
+
         bd = self._load_bdwacc()
         ib_entry = next((x for x in bd if x.get("Campo") == "IB"), None)
         ia_entry = next((x for x in bd if x.get("Campo") == "IA"), None)
-
         ib_val = ib_entry["Valor"] if ib_entry else "N/A"
         ia_val = ia_entry["Valor"] if ia_entry else "N/A"
 
+        details = {
+            "inflacao_brasil_bdwacc": ib_val,
+            "inflacao_eua_bdwacc": ia_val,
+            "api_url": api_url,
+        }
+
+        if ipca_12m is not None:
+            details["ipca_12m_bcb"] = f"{ipca_12m:.2f}%"
+            details["ipca_data"] = bcb_data[-1]['data'] if bcb_data else None
+            details["ultimos_12_meses"] = [
+                {"data": d["data"], "valor": f"{float(d['valor']):.2f}%"}
+                for d in (bcb_data if bcb_data else [])
+            ]
+            last_value = f"IPCA 12m: {ipca_12m:.2f}% (BCB) | BDWACC: {ib_val}"
+        else:
+            last_value = f"IPCA: {ib_val}, CPI-US: {ia_val}"
+            details["aviso"] = "API BCB indisponível, usando BDWACC.json"
+
         return {
             "records_count": 2,
-            "last_value": f"IPCA: {ib_val}, CPI-US: {ia_val}",
+            "last_value": last_value,
             "reference_year": ib_entry.get("[ANO_REFER]") if ib_entry else datetime.now().year,
             "reference_date": datetime.now().strftime("%Y-%m-%d"),
-            "details": {
-                "inflacao_brasil": ib_val,
-                "inflacao_eua": ia_val,
-            },
+            "details": details,
         }
 
     # ──────────────────────────────────────────────────────────────────────
