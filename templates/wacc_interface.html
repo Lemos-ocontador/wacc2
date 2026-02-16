@@ -149,317 +149,337 @@
         </div>
 
         <div class="row">
-            <!-- Parâmetros WACC -->
-            <div class="col-lg-12">
-                
-                <!-- 1. BETA -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
+            <!-- ============================================================ -->
+            <!-- CARD 1: CUSTO DO CAPITAL PRÓPRIO (Ke) -->
+            <!-- ============================================================ -->
+            <div class="col-lg-7">
+                <div class="card mb-4" style="border-left: 4px solid #1e3a5f;">
+                    <div class="card-header" style="background: #1e3a5f; color: white;">
                         <h5 class="mb-0">
-                            <i class="fas fa-trending-up"></i> Beta
-                            <span class="data-quality-indicator quality-medium" id="beta-quality"></span>
+                            <i class="fas fa-chart-line"></i> Custo do Capital Próprio (Ke)
+                            <small class="float-end" style="font-size: 0.7em; opacity: 0.8;">Ke = Rf + β×ERP + Rp + Rs</small>
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Opções de Beta -->
-                        <div class="beta-options">
-                            <h6><i class="fas fa-cogs"></i> Opções de Cálculo:</h6>
+
+                        <!-- SETOR & BETA -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-industry"></i> Setor & Beta
+                                <span class="data-quality-indicator quality-medium" id="beta-quality"></span>
+                            </h6>
+                            <!-- Opções de Beta -->
+                            <div class="beta-options mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="beta-option" 
+                                                   id="beta-sectoral" value="sectoral" checked>
+                                            <label class="form-check-label" for="beta-sectoral">
+                                                <strong>Beta Setorial</strong><br>
+                                                <small class="text-muted">Baseado no setor</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="beta-option" 
+                                                   id="beta-benchmark" value="benchmark" disabled>
+                                            <label class="form-check-label" for="beta-benchmark">
+                                                <strong>Benchmark</strong><br>
+                                                <small class="text-muted">A implementar</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="beta-option" 
+                                                   id="beta-custom" value="custom">
+                                            <label class="form-check-label" for="beta-custom">
+                                                <strong>Personalizado</strong><br>
+                                                <small class="text-muted">Valor manual</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Seleção de Setor -->
+                            <div id="sector-selection" class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="sector-select" class="form-label">Setor:</label>
+                                    <select class="form-select" id="sector-select">
+                                        <option value="">Selecione um setor...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="region-select" class="form-label">Região:</label>
+                                    <select class="form-select" id="region-select">
+                                        <option value="global">Global</option>
+                                        <option value="emkt">Mercados Emergentes (EMKT)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Valores de Beta -->
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="beta-option" 
-                                               id="beta-sectoral" value="sectoral" checked>
-                                        <label class="form-check-label" for="beta-sectoral">
-                                            <strong>Beta Setorial</strong><br>
-                                            <small class="text-muted">Baseado no setor da empresa</small>
-                                        </label>
+                                    <label for="levered-beta" class="form-label">β Alavancado:</label>
+                                    <input type="number" class="form-control form-control-sm" id="levered-beta" 
+                                           step="0.001" min="0" max="5" readonly>
+                                    <div class="source-info" id="beta-companies-info">Baseado em X empresas</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="unlevered-beta" class="form-label">β Desalavancado:</label>
+                                    <input type="number" class="form-control form-control-sm" id="unlevered-beta" 
+                                           step="0.001" min="0" max="5">
+                                    <div class="source-info">Calculado automaticamente</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="debt-equity-ratio" class="form-label">D/E Setor:</label>
+                                    <input type="number" class="form-control form-control-sm" id="debt-equity-ratio" 
+                                           step="0.01" min="0" readonly>
+                                    <div class="source-info">Média setorial</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAXA LIVRE DE RISCO -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-shield-alt"></i> Taxa Livre de Risco (Rf)
+                                <span class="data-quality-indicator quality-high" id="rf-quality"></span>
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="risk-free-type" class="form-label">Tipo de Taxa:</label>
+                                    <select class="form-select form-select-sm" id="risk-free-type">
+                                        <option value="treasury_10y">US Treasury 10 anos</option>
+                                        <option value="treasury_30y">US Treasury 30 anos</option>
+                                        <option value="custom">Taxa personalizada</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="risk-free-rate" class="form-label">Taxa (%):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="risk-free-rate" 
+                                               step="0.01" min="0" max="20" value="4.14">
+                                        <span class="input-group-text">%</span>
+                                        <button class="btn btn-outline-secondary" type="button" id="update-rf-btn">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                    <div class="source-info" id="rf-source">
+                                        FRED API <span class="badge bg-success auto-update-badge">AUTO</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PRÊMIOS DE RISCO -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-globe"></i> Prêmios de Risco
+                                <span class="data-quality-indicator quality-high" id="risk-quality"></span>
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="market-risk-premium" class="form-label">Prêmio Mercado (%):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="market-risk-premium" 
+                                               step="0.01" min="0" max="20" value="4.61" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info">
+                                        Damodaran ERP <span class="badge bg-success auto-update-badge">AUTO</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="beta-option" 
-                                               id="beta-benchmark" value="benchmark" disabled>
-                                        <label class="form-check-label" for="beta-benchmark">
-                                            <strong>Benchmark</strong><br>
-                                            <small class="text-muted">A implementar</small>
-                                        </label>
+                                    <label for="country-select" class="form-label">País:</label>
+                                    <select class="form-select form-select-sm" id="country-select">
+                                        <option value="">Selecione um país...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="country-risk-premium" class="form-label">Risco País (%):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="country-risk-premium" 
+                                               step="0.01" min="0" max="50" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info" id="country-source">
+                                        Damodaran <span class="badge bg-success auto-update-badge">AUTO</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PRÊMIO DE TAMANHO -->
+                        <div class="mb-2">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-expand-arrows-alt"></i> Prêmio de Tamanho (Size Premium)
+                                <span class="data-quality-indicator quality-high" id="size-quality"></span>
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="market-cap-input" class="form-label">Valor de Mercado (US$):</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">US$</span>
+                                        <input type="number" class="form-control" id="market-cap-input" 
+                                               step="1000000" min="0" placeholder="Ex: 500000000">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="beta-option" 
-                                               id="beta-custom" value="custom">
-                                        <label class="form-check-label" for="beta-custom">
-                                            <strong>Personalizado</strong><br>
-                                            <small class="text-muted">Valor manual</small>
-                                        </label>
+                                    <label for="size-decile" class="form-label">Decil:</label>
+                                    <input type="text" class="form-control form-control-sm" id="size-decile" readonly value="--">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="size-premium-value" class="form-label">Prêmio (%):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="size-premium-value" 
+                                               step="0.01" min="-5" max="20" value="0" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info">
+                                        Damodaran / Ibbotson <span class="badge bg-success auto-update-badge">AUTO</span>
                                     </div>
                                 </div>
                             </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#sizeDecileTable">
+                                    <i class="fas fa-table"></i> Ver tabela de decis
+                                </button>
+                                <div class="collapse mt-2" id="sizeDecileTable">
+                                    <table class="table table-sm table-striped" id="decile-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Decil</th>
+                                                <th>Market Cap Mín</th>
+                                                <th>Market Cap Máx</th>
+                                                <th>Prêmio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="decile-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Seleção de Setor -->
-                        <div id="sector-selection" class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="sector-select" class="form-label">Setor:</label>
-                                <select class="form-select" id="sector-select">
-                                    <option value="">Selecione um setor...</option>
-                                    <!-- Opções carregadas dinamicamente -->
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="region-select" class="form-label">Região:</label>
-                                <select class="form-select" id="region-select">
-                                    <option value="global">Global</option>
-                                    <option value="emkt">Mercados Emergentes (EMKT)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Valores de Beta -->
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="levered-beta" class="form-label">Beta Alavancado:</label>
-                                <input type="number" class="form-control" id="levered-beta" 
-                                       step="0.001" min="0" max="5" readonly>
-                                <div class="source-info" id="beta-companies-info">
-                                    Baseado em X empresas
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="unlevered-beta" class="form-label">Beta Desalavancado:</label>
-                                <input type="number" class="form-control" id="unlevered-beta" 
-                                       step="0.001" min="0" max="5">
-                                <div class="source-info">
-                                    Calculado automaticamente
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="debt-equity-ratio" class="form-label">D/E Médio do Setor:</label>
-                                <input type="number" class="form-control" id="debt-equity-ratio" 
-                                       step="0.01" min="0" readonly>
-                                <div class="source-info">
-                                    Média setorial
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                </div>
-
-                <!-- 2. TAXA LIVRE DE RISCO -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-line"></i> Taxa Livre de Risco
-                            <span class="data-quality-indicator quality-high" id="rf-quality"></span>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="risk-free-type" class="form-label">Tipo de Taxa:</label>
-                                <select class="form-select" id="risk-free-type">
-                                    <option value="treasury_10y">US Treasury 10 anos</option>
-                                    <option value="treasury_30y">US Treasury 30 anos</option>
-                                    <option value="custom">Taxa personalizada</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="risk-free-rate" class="form-label">Taxa (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="risk-free-rate" 
-                                           step="0.01" min="0" max="20" value="4.14">
-                                    <span class="input-group-text">%</span>
-                                    <button class="btn btn-outline-secondary" type="button" id="update-rf-btn">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                                <div class="source-info" id="rf-source">
-                                    Fonte: FRED API - Atualizado automaticamente
-                                    <span class="badge bg-success auto-update-badge">AUTO</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. PRÊMIOS DE RISCO -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-globe"></i> Prêmios de Risco
-                            <span class="data-quality-indicator quality-high" id="risk-quality"></span>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="market-risk-premium" class="form-label">Prêmio Risco Mercado (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="market-risk-premium" 
-                                           step="0.01" min="0" max="20" value="4.61" readonly>
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="source-info">
-                                    Damodaran ERP (1928-2020)
-                                    <span class="badge bg-success auto-update-badge">AUTO</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="country-select" class="form-label">País:</label>
-                                <select class="form-select" id="country-select">
-                                    <option value="">Selecione um país...</option>
-                                    <!-- Opções carregadas dinamicamente -->
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="country-risk-premium" class="form-label">Prêmio Risco País (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="country-risk-premium" 
-                                           step="0.01" min="0" max="50" readonly>
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="source-info" id="country-source">
-                                    Damodaran Country Risk
-                                    <span class="badge bg-success auto-update-badge">AUTO</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. PRÊMIO DE TAMANHO (SIZE PREMIUM) -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-expand-arrows-alt"></i> Prêmio de Tamanho (Size Premium)
-                            <span class="data-quality-indicator quality-high" id="size-quality"></span>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="market-cap-input" class="form-label">Valor de Mercado (US$):</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">US$</span>
-                                    <input type="number" class="form-control" id="market-cap-input" 
-                                           step="1000000" min="0" placeholder="Ex: 500000000">
-                                </div>
-                                <div class="source-info">
-                                    Insira o Market Cap em dólares
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="size-decile" class="form-label">Decil:</label>
-                                <input type="text" class="form-control" id="size-decile" readonly value="--">
-                                <div class="source-info">
-                                    Determinado automaticamente
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="size-premium-value" class="form-label">Prêmio de Tamanho (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="size-premium-value" 
-                                           step="0.01" min="-5" max="20" value="0" readonly>
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="source-info">
-                                    Fonte: Damodaran / Ibbotson
-                                    <span class="badge bg-success auto-update-badge">AUTO</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
-                                    data-bs-target="#sizeDecileTable">
-                                <i class="fas fa-table"></i> Ver tabela de decis
-                            </button>
-                            <div class="collapse mt-2" id="sizeDecileTable">
-                                <table class="table table-sm table-striped" id="decile-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Decil</th>
-                                            <th>Market Cap Mín (US$)</th>
-                                            <th>Market Cap Máx (US$)</th>
-                                            <th>Prêmio</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="decile-table-body">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. ESTRUTURA DE CAPITAL E IMPOSTOS -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-balance-scale"></i> Estrutura de Capital e Impostos
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <!-- Indicador de origem D/E -->
-                        <div class="source-info mb-3" id="de-source-info" style="display:none; background:#e8f5e9; padding:8px 12px; border-radius:6px; font-size:0.85em; color:#2e7d32;">
-                        </div>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label for="weight-equity" class="form-label">Peso Patrimônio (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="weight-equity" 
-                                           step="0.1" min="0" max="100" value="70">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="weight-debt" class="form-label">Peso Dívida (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="weight-debt" 
-                                           step="0.1" min="0" max="100" value="30" readonly>
-                                    <span class="input-group-text">%</span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="cost-of-debt" class="form-label">Custo da Dívida (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="cost-of-debt" 
-                                           step="0.1" min="0" max="50" value="13.5">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="source-info">
-                                    150% da Selic (Brasil)
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="tax-rate" class="form-label">Taxa de Imposto (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="tax-rate" 
-                                           step="1" min="0" max="50" value="34">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="source-info">
-                                    IRPJ + CSLL (Brasil)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botões de Ação -->
-                <div class="text-center mb-4">
-                    <button type="button" class="btn btn-primary btn-lg me-3" id="calculate-wacc-btn">
-                        <i class="fas fa-calculator"></i> Calcular WACC
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" id="reset-form-btn">
-                        <i class="fas fa-undo"></i> Limpar
-                    </button>
-                    <button type="button" class="btn btn-outline-info" id="validate-data-btn">
-                        <i class="fas fa-check-circle"></i> Validar Dados
-                    </button>
                 </div>
             </div>
 
+            <!-- ============================================================ -->
+            <!-- CARD 2: CUSTO DO CAPITAL DE TERCEIROS (Ki) -->
+            <!-- ============================================================ -->
+            <div class="col-lg-5">
+                <div class="card mb-4" style="border-left: 4px solid #374151;">
+                    <div class="card-header" style="background: #374151; color: white;">
+                        <h5 class="mb-0">
+                            <i class="fas fa-university"></i> Custo do Capital de Terceiros (Ki)
+                            <small class="float-end" style="font-size: 0.7em; opacity: 0.8;">Ki = Kd × (1 - IR)</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- ESTRUTURA DE CAPITAL -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-balance-scale"></i> Estrutura de Capital (E/D)
+                            </h6>
+                            <!-- Indicador de origem D/E -->
+                            <div class="source-info mb-3" id="de-source-info" style="display:none; background:#e8f5e9; padding:8px 12px; border-radius:6px; font-size:0.85em; color:#2e7d32;">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="weight-equity" class="form-label">Peso Patrimônio (E/V):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="weight-equity" 
+                                               step="0.1" min="0" max="100" value="70">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="weight-debt" class="form-label">Peso Dívida (D/V):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="weight-debt" 
+                                               step="0.1" min="0" max="100" value="30" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Barra visual de proporção E/D -->
+                            <div class="mb-3" style="height:8px; border-radius:4px; overflow:hidden; display:flex;">
+                                <div id="equity-bar" style="background:#1e3a5f; width:70%; transition:width 0.3s;"></div>
+                                <div id="debt-bar" style="background:#6c757d; width:30%; transition:width 0.3s;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between" style="font-size:0.75em; color:#6c757d;">
+                                <span><i class="fas fa-circle" style="color:#1e3a5f;"></i> Equity</span>
+                                <span><i class="fas fa-circle" style="color:#6c757d;"></i> Debt</span>
+                            </div>
+                        </div>
+
+                        <!-- CUSTO DA DÍVIDA -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-percentage"></i> Custo da Dívida (Kd)
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="cost-of-debt" class="form-label">Taxa Bruta (Kd):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="cost-of-debt" 
+                                               step="0.1" min="0" max="50" value="13.5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info">150% da Selic (proxy Brasil)</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="tax-rate" class="form-label">Alíquota IR+CSLL:</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="tax-rate" 
+                                               step="1" min="0" max="50" value="34">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info">IRPJ 25% + CSLL 9%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PREVIEW Ki -->
+                        <div class="p-3 rounded" style="background: #f8f9fa; border: 1px dashed #dee2e6;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted" style="font-size:0.85em;">
+                                    <i class="fas fa-arrow-right"></i> Ki (após IR) = Kd × (1 − IR)
+                                </span>
+                                <strong id="ki-preview" style="font-size: 1.1em; color: #374151;">8.91%</strong>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- FÓRMULA WACC RESUMIDA -->
+                <div class="card mb-4" style="border: 2px solid #1e3a5f;">
+                    <div class="card-body text-center py-3">
+                        <div style="font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.85em; color: #4a4a4a;">
+                            <strong style="color:#1e3a5f;">WACC</strong> = Ke × (E/V) + Ki × (D/V)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-primary btn-lg me-3" id="calculate-wacc-btn">
+                <i class="fas fa-calculator"></i> Calcular WACC
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="reset-form-btn">
+                <i class="fas fa-undo"></i> Limpar
+            </button>
+            <button type="button" class="btn btn-outline-info" id="validate-data-btn">
+                <i class="fas fa-check-circle"></i> Validar Dados
+            </button>
         </div>
 
         <!-- ============================================================ -->
@@ -612,6 +632,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
             setupEventListeners();
+            updateKiPreview();
         });
         
         // Carregar dados iniciais
@@ -736,8 +757,13 @@
             // Mudança de peso do patrimônio
             document.getElementById('weight-equity').addEventListener('input', function() {
                 const equity = parseFloat(this.value) || 0;
-                document.getElementById('weight-debt').value = 100 - equity;
+                document.getElementById('weight-debt').value = (100 - equity).toFixed(1);
+                updateEquityDebtBar(equity, 100 - equity);
             });
+            
+            // Atualizar preview Ki quando mudam Kd ou Tax
+            document.getElementById('cost-of-debt').addEventListener('input', updateKiPreview);
+            document.getElementById('tax-rate').addEventListener('input', updateKiPreview);
             
             // Opções de beta
             document.querySelectorAll('input[name="beta-option"]').forEach(radio => {
@@ -784,6 +810,7 @@
                         const weightEquity = (1 / (1 + deRatio)) * 100;
                         document.getElementById('weight-equity').value = weightEquity.toFixed(1);
                         document.getElementById('weight-debt').value = weightDebt.toFixed(1);
+                        updateEquityDebtBar(weightEquity, weightDebt);
                         // Mostrar indicador de origem
                         const deSourceEl = document.getElementById('de-source-info');
                         if (deSourceEl) {
@@ -1060,6 +1087,25 @@
             if (value >= 1e9) return `${(value/1e9).toFixed(1)}B`;
             if (value >= 1e6) return `${(value/1e6).toFixed(0)}M`;
             return value.toLocaleString('en-US');
+        }
+        
+        // Atualizar barra visual E/D
+        function updateEquityDebtBar(equity, debt) {
+            const eBar = document.getElementById('equity-bar');
+            const dBar = document.getElementById('debt-bar');
+            if (eBar && dBar) {
+                eBar.style.width = equity + '%';
+                dBar.style.width = debt + '%';
+            }
+        }
+        
+        // Atualizar preview do Ki
+        function updateKiPreview() {
+            const kd = parseFloat(document.getElementById('cost-of-debt').value) || 0;
+            const tax = parseFloat(document.getElementById('tax-rate').value) || 0;
+            const ki = kd * (1 - tax / 100);
+            const el = document.getElementById('ki-preview');
+            if (el) el.textContent = ki.toFixed(2) + '%';
         }
         
         function handleBetaOptionChange() {
