@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualização de Bases de Dados — WACC Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .page-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            padding: 28px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--accent-blue);
+        }
+        .page-header h1 { font-size: 1.6em; font-weight: 700; margin: 0; }
+        .page-header .subtitle { font-size: 0.85em; opacity: 0.8; margin-top: 4px; }
+
+        /* NAV */
+        .nav-bar {
+            background: #1e293b;
+            border-bottom: 1px solid var(--card-border);
+            padding: 8px 0;
+            margin-bottom: 20px;
+        }
+        .nav-bar a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        .nav-bar a:hover, .nav-bar a.active {
+            color: white;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* SUMÁRIO */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .num {
+            font-size: 1.8em;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .summary-card .lbl {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* BOTÃO ATUALIZAR TUDO */
+        .btn-update-all {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+        .btn-update-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+            color: white;
+        }
+        .btn-update-all:disabled {
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* PROGRESSO GLOBAL */
+        .global-progress {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .global-progress .progress {
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+        }
+        .global-progress .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.4s ease;
+        }
+        .global-progress .progress-text {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* CARDS DE FONTE */
+        .source-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .source-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 4px;
+            background: var(--source-color, var(--accent-blue));
+        }
+        .source-card:hover {
+            border-color: var(--source-color, var(--accent-blue));
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .source-card.updating {
+            border-color: var(--accent-yellow);
+            animation: pulse-border 1.5s infinite;
+        }
+        .source-card.success { border-color: var(--accent-green); }
+        .source-card.error { border-color: var(--accent-red); }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.2); }
+            50% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0.1); }
+        }
+
+        .source-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .source-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            color: white;
+            flex-shrink: 0;
+        }
+        .source-title {
+            font-weight: 700;
+            font-size: 0.95em;
+            line-height: 1.2;
+        }
+        .source-provider {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+        }
+        .source-badge {
+            margin-left: auto;
+            font-size: 0.7em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge-ke { background: rgba(30, 58, 95, 0.4); color: #93c5fd; }
+        .badge-ki { background: rgba(55, 65, 81, 0.4); color: #d1d5db; }
+        .badge-ajuste { background: rgba(220, 38, 38, 0.2); color: #fca5a5; }
+
+        /* GRID DE INFO */
+        .source-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .info-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+        .info-item .label {
+            font-size: 0.65em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-item .value {
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* STATUS INDICATOR */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.success { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+        .status-dot.error { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+        .status-dot.pending { background: var(--text-secondary); }
+        .status-dot.updating {
+            background: var(--accent-yellow);
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ACTION ROW */
+        .source-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
+        }
+        .btn-audit {
+            font-size: 0.75em;
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-audit:hover { color: #60a5fa; text-decoration: underline; }
+        .btn-source-update {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-source-update:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .btn-source-update:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* TABELA HISTÓRICO */
+        .history-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .history-table {
+            font-size: 0.8em;
+            width: 100%;
+        }
+        .history-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--card-border);
+            padding: 8px;
+        }
+        .history-table td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            vertical-align: middle;
+        }
+
+        /* DATA-BASE INFO */
+        .database-info {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .database-info .icon { font-size: 1.3em; color: var(--accent-purple); }
+        .database-info .text { font-size: 0.85em; color: var(--text-secondary); }
+        .database-info .date-value { font-weight: 700; color: var(--text-primary); }
+
+        /* SPINNER */
+        .spinner-sm {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent-yellow);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .summary-bar { grid-template-columns: repeat(2, 1fr); }
+            .source-info-grid { grid-template-columns: 1fr; }
+        }
+
+        /* PRINT */
+        @media print {
+            body { background: white; color: black; }
+            .nav-bar, .btn-update-all, .btn-source-update, .global-progress { display: none !important; }
+            .source-card { break-inside: avoid; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV BAR -->
+    <div class="nav-bar">
+        <div class="container">
+            <a href="/"><i class="fas fa-home"></i> Início</a>
+            <a href="/wacc"><i class="fas fa-calculator"></i> WACC</a>
+            <a href="/company-analysis"><i class="fas fa-building"></i> Empresas</a>
+            <a href="/data-updates" class="active"><i class="fas fa-database"></i> Bases de Dados</a>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-database"></i> Bases de Dados — Atualização & Auditoria</h1>
+                    <div class="subtitle">Gerenciamento e rastreabilidade de todas as fontes do WACC Calculator</div>
+                </div>
+                <button class="btn btn-update-all" id="btn-update-all" onclick="updateAllSources()">
+                    <i class="fas fa-sync-alt"></i> Atualizar Todas as Bases
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- DATA-BASE INFO (preparação para cálculos históricos) -->
+        <div class="database-info">
+            <div class="icon"><i class="fas fa-calendar-check"></i></div>
+            <div>
+                <div class="text">
+                    Data-Base de Referência: <span class="date-value" id="reference-date-display">--</span>
+                    <span style="opacity:0.5; margin-left:8px;">|</span>
+                    <span style="font-size:0.9em; color: var(--accent-purple); margin-left:8px;">
+                        <i class="fas fa-info-circle"></i> Os cálculos WACC usam os dados desta data-base.
+                        <em style="opacity:0.7;">Suporte a datas históricas será implementado em breve.</em>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMÁRIO -->
+        <div class="summary-bar" id="summary-bar">
+            <div class="summary-card">
+                <div class="num" style="color: var(--accent-blue);" id="sum-total">--</div>
+                <div class="lbl">Fontes de Dados</div>
+            </div>
+            <div class="summary-card">
+                <div class="num" style="color: var(--accent-green);" id="sum-updated">--</div>
+                <div class="lbl">Atualizadas</div>
+            </div>
+            <div class="summary-card">
+                <div class="num" style="color: var(--accent-yellow);" id="sum-pending">--</div>
+                <div class="lbl">Pendentes</div>
+            </div>
+            <div class="summary-card">
+                <div class="num" style="color: var(--accent-red);" id="sum-errors">--</div>
+                <div class="lbl">Com Erro</div>
+            </div>
+            <div class="summary-card">
+                <div class="num" style="color: var(--accent-purple);" id="sum-records">--</div>
+                <div class="lbl">Total Registros</div>
+            </div>
+        </div>
+
+        <!-- PROGRESSO GLOBAL -->
+        <div class="global-progress" id="global-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong style="font-size:0.9em;"><i class="fas fa-sync-alt fa-spin"></i> Atualizando bases...</strong>
+                <span class="progress-text" id="progress-label">0 / 7</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="progress-text mt-2" id="progress-detail">Iniciando...</div>
+        </div>
+
+        <!-- GRID DE FONTES -->
+        <div class="row" id="sources-container">
+            <!-- Preenchido via JS -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-sm" style="width:30px; height:30px; border-width:3px;"></div>
+                <div class="mt-3" style="color: var(--text-secondary);">Carregando fontes de dados...</div>
+            </div>
+        </div>
+
+        <!-- HISTÓRICO -->
+        <div class="history-section" id="history-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-size:1em;"><i class="fas fa-history"></i> Histórico de Atualizações</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadHistory()" style="font-size:0.75em;">
+                    <i class="fas fa-refresh"></i> Atualizar
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Fonte</th>
+                            <th>Status</th>
+                            <th>Registros</th>
+                            <th>Último Valor</th>
+                            <th>Data/Hora</th>
+                            <th>Duração</th>
+                            <th>Auditoria</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <tr><td colspan="7" class="text-center" style="color:var(--text-secondary);">Nenhuma atualização registrada ainda</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ══════════════════════════════════════════════════════════════
+        // INICIALIZAÇÃO
+        // ══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            setReferenceDate();
+            loadSourcesStatus();
+            loadHistory();
+        });
+
+        function setReferenceDate() {
+            const today = new Date();
+            const options = { day: '2-digit', month: 'long', year: 'numeric' };
+            document.getElementById('reference-date-display').textContent =
+                today.toLocaleDateString('pt-BR', options);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // CARREGAR STATUS
+        // ══════════════════════════════════════════════════════════════
+        async function loadSourcesStatus() {
+            try {
+                const resp = await fetch('/api/data_sources_status');
+                const data = await resp.json();
+                if (!data.success) throw new Error(data.error);
+                renderSources(data.sources);
+                updateSummary(data.sources);
+            } catch (err) {
+                console.error('Erro ao carregar status:', err);
+                document.getElementById('sources-container').innerHTML =
+                    `<div class="col-12 text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <div class="mt-2">Erro ao carregar fontes: ${err.message}</div>
+                    </div>`;
+            }
+        }
+
+        function renderSources(sources) {
+            const container = document.getElementById('sources-container');
+            container.innerHTML = '';
+
+            sources.forEach(s => {
+                const hasSuccess = s.last_success;
+                const hasError = s.last_attempt && s.last_attempt.status === 'error';
+                const statusClass = hasSuccess ? 'success' : (hasError ? 'error' : '');
+                const statusDot = hasSuccess ? 'success' : (hasError ? 'error' : 'pending');
+                const statusText = hasSuccess ? 'Atualizado' : (hasError ? 'Erro' : 'Nunca atualizado');
+
+                const completedAt = hasSuccess ? formatDateTime(s.last_success.completed_at) : '--';
+                const lastVal = hasSuccess ? s.last_success.last_value : '--';
+                const refYear = hasSuccess && s.last_success.reference_year ? s.last_success.reference_year : '--';
+                const records = s.db_records || (hasSuccess ? s.last_success.records_count : '--');
+                const duration = hasSuccess && s.last_success.duration_seconds ?
+                    s.last_success.duration_seconds.toFixed(1) + 's' : '--';
+
+                const badgeClass = s.wacc_component === 'Ki' ? 'badge-ki' :
+                    (s.wacc_component === 'Ajuste' ? 'badge-ajuste' : 'badge-ke');
+
+                const card = document.createElement('div');
+                card.className = 'col-lg-6';
+                card.innerHTML = `
+                    <div class="source-card ${statusClass}" id="card-${s.id}" style="--source-color: ${s.color};">
+                        <div class="source-header">
+                            <div class="source-icon" style="background: ${s.color};">
+                                <i class="${s.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="source-title">${s.name}</div>
+                                <div class="source-provider">${s.provider} • ${s.frequency}</div>
+                            </div>
+                            <span class="source-badge ${badgeClass}">${s.wacc_component}</span>
+                        </div>
+
+                        <div style="font-size:0.78em; color:var(--text-secondary); margin-bottom:10px;">
+                            ${s.description}
+                        </div>
+
+                        <div class="source-info-grid">
+                            <div class="info-item">
+                                <div class="label">Status</div>
+                                <div class="value">
+                                    <span class="status-indicator">
+                                        <span class="status-dot ${statusDot}" id="dot-${s.id}"></span>
+                                        <span id="status-text-${s.id}">${statusText}</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Última Atualização</div>
+                                <div class="value" id="updated-at-${s.id}">${completedAt}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Último Valor / Resumo</div>
+                                <div class="value" id="last-val-${s.id}">${lastVal}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Registros</div>
+                                <div class="value" id="records-${s.id}">${records}</div>
+                            </div>
+                        </div>
+
+                        <div class="source-actions">
+                            <a href="${s.audit_url}" target="_blank" class="btn-audit" title="Verificar fonte original">
+                                <i class="fas fa-external-link-alt"></i> Link de Auditoria
+                            </a>
+                            <button class="btn-source-update" id="btn-${s.id}" onclick="updateSource('${s.id}')">
+                                <i class="fas fa-sync-alt"></i> Atualizar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateSummary(sources) {
+            const total = sources.length;
+            const updated = sources.filter(s => s.last_success).length;
+            const errors = sources.filter(s => s.last_attempt && s.last_attempt.status === 'error' && !s.last_success).length;
+            const pending = total - updated - errors;
+            const totalRecords = sources.reduce((sum, s) => sum + (s.db_records || 0), 0);
+
+            document.getElementById('sum-total').textContent = total;
+            document.getElementById('sum-updated').textContent = updated;
+            document.getElementById('sum-pending').textContent = pending;
+            document.getElementById('sum-errors').textContent = errors;
+            document.getElementById('sum-records').textContent = totalRecords > 1000 ?
+                (totalRecords / 1000).toFixed(1) + 'K' : totalRecords;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // ATUALIZAR UMA FONTE
+        // ══════════════════════════════════════════════════════════════
+        async function updateSource(sourceId) {
+            const btn = document.getElementById(`btn-${sourceId}`);
+            const card = document.getElementById(`card-${sourceId}`);
+            const dot = document.getElementById(`dot-${sourceId}`);
+            const statusText = document.getElementById(`status-text-${sourceId}`);
+
+            // UI: updating
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-sm"></span> Atualizando...';
+            card.className = 'source-card updating';
+            dot.className = 'status-dot updating';
+            statusText.textContent = 'Atualizando...';
+
+            try {
+                const resp = await fetch(`/api/update_data_source/${sourceId}`, { method: 'POST' });
+                const data = await resp.json();
+
+                if (data.success) {
+                    card.className = 'source-card success';
+                    dot.className = 'status-dot success';
+                    statusText.textContent = 'Atualizado';
+                    document.getElementById(`updated-at-${sourceId}`).textContent = formatDateTime(new Date().toISOString());
+                    document.getElementById(`last-val-${sourceId}`).textContent = data.last_value || '--';
+                    if (data.records_count) {
+                        document.getElementById(`records-${sourceId}`).textContent = data.records_count;
+                    }
+                } else {
+                    card.className = 'source-card error';
+                    dot.className = 'status-dot error';
+                    statusText.textContent = 'Erro: ' + (data.error || 'desconhecido');
+                }
+            } catch (err) {
+                card.className = 'source-card error';
+                dot.className = 'status-dot error';
+                statusText.textContent = 'Erro de conexão';
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
+            loadHistory();
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // ATUALIZAR TODAS (SSE)
+        // ══════════════════════════════════════════════════════════════
+        function updateAllSources() {
+            const btnAll = document.getElementById('btn-update-all');
+            const progressDiv = document.getElementById('global-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressLabel = document.getElementById('progress-label');
+            const progressDetail = document.getElementById('progress-detail');
+
+            btnAll.disabled = true;
+            btnAll.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
+            progressDiv.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            // Desabilitar todos os botões individuais
+            document.querySelectorAll('.btn-source-update').forEach(b => b.disabled = true);
+
+            const evtSource = new EventSource('/api/update_all_sources');
+
+            evtSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'progress') {
+                    const pct = (data.current - 1) / data.total * 100;
+                    progressBar.style.width = pct + '%';
+                    progressLabel.textContent = `${data.current - 1} / ${data.total}`;
+                    progressDetail.textContent = `Atualizando: ${data.source_name}...`;
+
+                    // Card updating
+                    const card = document.getElementById(`card-${data.source_id}`);
+                    const dot = document.getElementById(`dot-${data.source_id}`);
+                    const st = document.getElementById(`status-text-${data.source_id}`);
+                    if (card) card.className = 'source-card updating';
+                    if (dot) dot.className = 'status-dot updating';
+                    if (st) st.textContent = 'Atualizando...';
+                }
+
+                if (data.type === 'result') {
+                    const pct = data.current / data.total * 100;
+                    progressBar.style.width = pct + '%';
+                    progressLabel.textContent = `${data.current} / ${data.total}`;
+
+                    const card = document.getElementById(`card-${data.source_id}`);
+                    const dot = document.getElementById(`dot-${data.source_id}`);
+                    const st = document.getElementById(`status-text-${data.source_id}`);
+
+                    if (data.success) {
+                        progressDetail.textContent = `✓ ${data.source_name} — OK`;
+                        if (card) card.className = 'source-card success';
+                        if (dot) dot.className = 'status-dot success';
+                        if (st) st.textContent = 'Atualizado';
+                        const updEl = document.getElementById(`updated-at-${data.source_id}`);
+                        if (updEl) updEl.textContent = formatDateTime(new Date().toISOString());
+                        const valEl = document.getElementById(`last-val-${data.source_id}`);
+                        if (valEl) valEl.textContent = data.last_value || '--';
+                        const recEl = document.getElementById(`records-${data.source_id}`);
+                        if (recEl && data.records_count) recEl.textContent = data.records_count;
+                    } else {
+                        progressDetail.textContent = `✗ ${data.source_name} — Erro`;
+                        if (card) card.className = 'source-card error';
+                        if (dot) dot.className = 'status-dot error';
+                        if (st) st.textContent = 'Erro';
+                    }
+                }
+
+                if (data.type === 'complete') {
+                    progressBar.style.width = '100%';
+                    progressLabel.textContent = `${data.total} / ${data.total}`;
+                    progressDetail.innerHTML = '<i class="fas fa-check-circle" style="color:var(--accent-green);"></i> Atualização completa!';
+
+                    evtSource.close();
+                    btnAll.disabled = false;
+                    btnAll.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Todas as Bases';
+                    document.querySelectorAll('.btn-source-update').forEach(b => b.disabled = false);
+
+                    // Atualizar sumário e histórico
+                    setTimeout(() => {
+                        loadSourcesStatus();
+                        loadHistory();
+                    }, 500);
+
+                    // Esconder barra após 5s
+                    setTimeout(() => { progressDiv.style.display = 'none'; }, 5000);
+                }
+            };
+
+            evtSource.onerror = function() {
+                evtSource.close();
+                btnAll.disabled = false;
+                btnAll.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Todas as Bases';
+                progressDetail.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:var(--accent-red);"></i> Conexão perdida';
+                document.querySelectorAll('.btn-source-update').forEach(b => b.disabled = false);
+            };
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // HISTÓRICO
+        // ══════════════════════════════════════════════════════════════
+        async function loadHistory() {
+            try {
+                const resp = await fetch('/api/data_update_history?limit=20');
+                const data = await resp.json();
+                if (!data.success) return;
+
+                const tbody = document.getElementById('history-body');
+
+                if (!data.history || data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:var(--text-secondary);">Nenhuma atualização registrada. Clique em "Atualizar Todas as Bases" para começar.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                data.history.forEach(h => {
+                    const statusIcon = h.status === 'success' ?
+                        '<span style="color:var(--accent-green);"><i class="fas fa-check-circle"></i> OK</span>' :
+                        h.status === 'error' ?
+                        '<span style="color:var(--accent-red);"><i class="fas fa-times-circle"></i> Erro</span>' :
+                        '<span style="color:var(--accent-yellow);"><i class="fas fa-clock"></i> ' + h.status + '</span>';
+
+                    const duration = h.duration_seconds ?
+                        h.duration_seconds.toFixed(1) + 's' : '--';
+
+                    const auditLink = h.audit_url ?
+                        `<a href="${h.audit_url}" target="_blank" class="btn-audit"><i class="fas fa-external-link-alt"></i></a>` :
+                        '--';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${h.source_name}</strong></td>
+                        <td>${statusIcon}</td>
+                        <td>${h.records_count || '--'}</td>
+                        <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${h.last_value || '--'}</td>
+                        <td>${formatDateTime(h.completed_at || h.created_at)}</td>
+                        <td>${duration}</td>
+                        <td>${auditLink}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar histórico:', err);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // HELPERS
+        // ══════════════════════════════════════════════════════════════
+        function formatDateTime(isoStr) {
+            if (!isoStr || isoStr === '--') return '--';
+            try {
+                const d = new Date(isoStr);
+                if (isNaN(d.getTime())) return isoStr;
+                return d.toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                }) + ' ' + d.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            } catch {
+                return isoStr;
+            }
+        }
+    </script>
+</body>
+</html>

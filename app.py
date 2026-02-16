@@ -13,7 +13,7 @@ Autor: Sistema Automatizado WACC
 Data: 2025-09-24
 """
 
-from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, Response, stream_with_context
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -21,11 +21,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
 from typing import Dict, Any, List
+import json as json_module
 
 from wacc_calculator import WACCCalculator, WACCComponents
 from data_extractors import WACCDataManager
 from wacc_data_connector import WACCDataConnector
 from field_categories_manager import FieldCategoriesManager
+from data_source_manager import DataSourceManager
 
 # Configurar aplicação Flask
 app = Flask(__name__)
@@ -45,6 +47,7 @@ calculator = WACCCalculator()
 data_manager = WACCDataManager()
 wacc_connector = WACCDataConnector()
 field_manager = FieldCategoriesManager()
+data_source_mgr = DataSourceManager()
 
 # Configurações globais
 CACHE_DIR = Path("cache")
@@ -204,6 +207,62 @@ def calculator_page():
 def wacc_interface_page():
     """Página da interface WACC aprimorada."""
     return render_template('wacc_interface.html')
+
+
+@app.route('/data-updates')
+def data_updates_page():
+    """Dashboard de atualização de bases de dados."""
+    return render_template('data_updates_dashboard.html')
+
+
+# ===== ROTAS PARA GESTÃO DE FONTES DE DADOS =====
+
+@app.route('/api/data_sources_status', methods=['GET'])
+def api_data_sources_status():
+    """Retorna status de todas as fontes de dados."""
+    try:
+        sources = data_source_mgr.get_all_sources_status()
+        return jsonify({'success': True, 'sources': sources})
+    except Exception as e:
+        logger.error(f'Erro ao obter status das fontes: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/update_data_source/<source_id>', methods=['POST'])
+def api_update_data_source(source_id):
+    """Atualiza uma fonte de dados específica."""
+    try:
+        result = data_source_mgr.update_source(source_id)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f'Erro ao atualizar fonte {source_id}: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/update_all_sources', methods=['GET'])
+def api_update_all_sources_sse():
+    """SSE endpoint — atualiza todas as fontes com progresso em tempo real."""
+    def generate():
+        for event in data_source_mgr.update_all_sources():
+            yield f"data: {json_module.dumps(event, ensure_ascii=False)}\n\n"
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
+    )
+
+
+@app.route('/api/data_update_history', methods=['GET'])
+def api_data_update_history():
+    """Retorna histórico de atualizações."""
+    try:
+        source_id = request.args.get('source_id')
+        limit = int(request.args.get('limit', 20))
+        history = data_source_mgr.get_update_history(source_id, limit)
+        return jsonify({'success': True, 'history': history})
+    except Exception as e:
+        logger.error(f'Erro ao obter histórico: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/calculate_wacc', methods=['POST'])

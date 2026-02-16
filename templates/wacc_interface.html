@@ -139,12 +139,38 @@
 </head>
 <body>
     <div class="container-fluid py-4">
+        <!-- Nav links -->
+        <div class="d-flex justify-content-end mb-2" style="gap:12px; font-size:0.82em;">
+            <a href="/" class="text-decoration-none text-muted"><i class="fas fa-home"></i> Início</a>
+            <a href="/data-updates" class="text-decoration-none text-muted"><i class="fas fa-database"></i> Bases de Dados</a>
+            <a href="/company-analysis" class="text-decoration-none text-muted"><i class="fas fa-building"></i> Empresas</a>
+        </div>
+
         <div class="row">
             <div class="col-12">
-                <h1 class="text-center mb-4">
+                <h1 class="text-center mb-2">
                     <i class="fas fa-calculator"></i> Calculadora WACC Integrada
                 </h1>
-                <p class="text-center text-muted">Interface aprimorada com dados automáticos do Damodaran</p>
+                <p class="text-center text-muted mb-2">Interface aprimorada com dados automáticos do Damodaran</p>
+                
+                <!-- DATA-BASE DE REFERÊNCIA -->
+                <div class="d-flex justify-content-center mb-4">
+                    <div class="d-inline-flex align-items-center px-3 py-2 rounded" 
+                         style="background:#f0f4ff; border:1px solid #c7d2fe; gap:10px; font-size:0.85em;">
+                        <i class="fas fa-calendar-check" style="color:#4f46e5;"></i>
+                        <span class="text-muted">Data-Base:</span>
+                        <input type="date" id="wacc-reference-date" class="form-control form-control-sm" 
+                               style="width:160px; font-weight:600;" title="Data-base de referência do cálculo">
+                        <span class="badge bg-secondary" style="font-size:0.7em;" 
+                              title="Selecionar data-base histórica será habilitado em breve">
+                            <i class="fas fa-lock"></i> Histórico em breve
+                        </span>
+                        <a href="/data-updates" class="text-decoration-none" style="color:#4f46e5; font-size:0.9em;" 
+                           title="Ver status das bases de dados">
+                            <i class="fas fa-database"></i> Ver Bases
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -618,8 +644,8 @@
                             <div class="metric-value" id="rpt-dv-footer">--</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-label">Ano Referência</div>
-                            <div class="metric-value" id="rpt-ano">2025</div>
+                            <div class="metric-label">Data-Base</div>
+                            <div class="metric-value" id="rpt-ano">--</div>
                         </div>
                     </div>
                     
@@ -643,10 +669,21 @@
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
+            initReferenceDate();
             loadInitialData();
             setupEventListeners();
             updateKiPreview();
         });
+        
+        // Inicializar data-base de referência com hoje
+        function initReferenceDate() {
+            const dateInput = document.getElementById('wacc-reference-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            dateInput.max = today; // Não permitir data futura
+            // Por enquanto, desabilitar mudança (histórico será implementado depois)
+            // dateInput.addEventListener('change', onReferenceDateChange);
+        }
         
         // Carregar dados iniciais
         async function loadInitialData() {
@@ -996,7 +1033,14 @@
                 document.getElementById('rpt-beta-u').textContent = beta.toFixed(4);
                 document.getElementById('rpt-ev-footer').textContent = (weightEquity*100).toFixed(2) + '%';
                 document.getElementById('rpt-dv-footer').textContent = (weightDebt*100).toFixed(2) + '%';
-                document.getElementById('rpt-ano').textContent = new Date().getFullYear();
+                // Data-base de referência
+                const refDate = document.getElementById('wacc-reference-date').value;
+                if (refDate) {
+                    const [y, m, d] = refDate.split('-');
+                    document.getElementById('rpt-ano').textContent = `${d}/${m}/${y}`;
+                } else {
+                    document.getElementById('rpt-ano').textContent = new Date().getFullYear();
+                }
                 
                 // Mostrar relatório
                 document.getElementById('wacc-report-section').style.display = 'block';
