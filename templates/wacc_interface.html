@@ -45,13 +45,7 @@
             margin: 10px 0;
         }
         
-        .calculation-result {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-        }
+
         
         /* ========== DESIGN CORPORATIVO WACC OUTPUT V4 ========== */
         .wacc-v4 {
@@ -155,8 +149,8 @@
         </div>
 
         <div class="row">
-            <!-- Coluna Esquerda: Seleção de Parâmetros -->
-            <div class="col-lg-8">
+            <!-- Parâmetros WACC -->
+            <div class="col-lg-12">
                 
                 <!-- 1. TAXA LIVRE DE RISCO -->
                 <div class="card component-card mb-4">
@@ -466,86 +460,6 @@
                 </div>
             </div>
 
-            <!-- Coluna Direita: Resumo Rápido -->
-            <div class="col-lg-4">
-                <!-- Resultado WACC Rápido -->
-                <div class="calculation-result" id="wacc-result" style="display: none;">
-                    <h4 class="text-center mb-3">
-                        <i class="fas fa-trophy"></i> Resultado WACC
-                    </h4>
-                    <div class="text-center">
-                        <h2 class="display-4 mb-3" id="wacc-percentage">--</h2>
-                        <p class="mb-0">Custo Médio Ponderado de Capital</p>
-                    </div>
-                </div>
-
-                <!-- Detalhamento Rápido -->
-                <div class="card mt-4" id="components-detail" style="display: none;">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-list"></i> Detalhamento</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-2">
-                            <div class="col-8">Custo do Patrimônio:</div>
-                            <div class="col-4 text-end" id="cost-of-equity">--</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-8">Custo da Dívida (após IR):</div>
-                            <div class="col-4 text-end" id="after-tax-cost-debt">--</div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-8"><strong>WACC:</strong></div>
-                            <div class="col-4 text-end"><strong id="wacc-detail">--</strong></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status dos Dados -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-database"></i> Status dos Dados</h6>
-                    </div>
-                    <div class="card-body" id="data-status">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>Taxa Livre de Risco:</span>
-                            <span class="badge bg-success">OK</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>Beta Setorial:</span>
-                            <span class="badge bg-warning">Carregando...</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>Risco País:</span>
-                            <span class="badge bg-success">OK</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>Prêmio de Mercado:</span>
-                            <span class="badge bg-success">OK</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informações Adicionais -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Informações</h6>
-                    </div>
-                    <div class="card-body">
-                        <small class="text-muted">
-                            <p><strong>Fontes de Dados:</strong></p>
-                            <ul class="list-unstyled">
-                                <li>• Taxa Livre de Risco: FRED API</li>
-                                <li>• Beta: Damodaran Global (47k+ empresas)</li>
-                                <li>• Risco País: Damodaran (192 países)</li>
-                                <li>• Prêmio de Mercado: Damodaran ERP</li>
-                            </ul>
-                            <p><strong>Última Atualização:</strong><br>
-                            <span id="last-update">Carregando...</span></p>
-                        </small>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- ============================================================ -->
@@ -943,13 +857,7 @@
                 // Calcular WACC
                 const wacc = (weightEquity * costOfEquity) + (weightDebt * afterTaxCostOfDebt);
                 
-                // === Preencher resumo rápido (coluna direita) ===
-                document.getElementById('wacc-percentage').textContent = (wacc * 100).toFixed(2) + '%';
-                document.getElementById('cost-of-equity').textContent = (costOfEquity * 100).toFixed(2) + '%';
-                document.getElementById('after-tax-cost-debt').textContent = (afterTaxCostOfDebt * 100).toFixed(2) + '%';
-                document.getElementById('wacc-detail').textContent = (wacc * 100).toFixed(2) + '%';
-                document.getElementById('wacc-result').style.display = 'block';
-                document.getElementById('components-detail').style.display = 'block';
+                // Resultados exibidos no relatório profissional abaixo
                 
                 // === Preencher relatório profissional (estilo Anloc) ===
                 const sector = document.getElementById('sector-select');
@@ -1059,8 +967,6 @@
         
         function resetForm() {
             // Esconder resultados
-            document.getElementById('wacc-result').style.display = 'none';
-            document.getElementById('components-detail').style.display = 'none';
             document.getElementById('wacc-report-section').style.display = 'none';
             // Resetar pesos padrão
             document.getElementById('weight-equity').value = 70;
