@@ -272,7 +272,10 @@ class WACCDataConnector:
                 'levered_beta': round(levered_beta, 4),
                 'unlevered_beta': round(unlevered_beta, 4),
                 'avg_debt_equity': round(avg_debt_equity, 4),
+                'debt_equity_ratio': round(avg_debt_equity, 4),
+                'companies_count': len(df),
                 'company_count': len(df),
+                'data_quality': 'high' if len(df) >= 30 else ('medium' if len(df) >= 10 else 'low'),
                 'tax_rate_used': tax_rate,
                 'formula': 'βU = βL / [1 + (1 - T) × (D/E)]',
                 'last_updated': pd.Timestamp.now().isoformat()
@@ -312,23 +315,40 @@ class WACCDataConnector:
             df = pd.read_sql_query(query, conn)
             conn.close()
             
-            countries = []
+            # Países principais para destaque
+            principais_list = ['Brazil', 'United States', 'China', 'India', 'Japan',
+                              'Germany', 'United Kingdom', 'France', 'Mexico', 'Argentina',
+                              'Chile', 'Colombia', 'South Korea', 'Canada', 'Australia']
+            
+            principais = []
+            outros = []
             for _, row in df.iterrows():
-                countries.append({
+                premium_pct = round(float(row['risk_premium']) * 100, 2)
+                entry = {
                     'country': row['country'],
-                    'risk_premium_decimal': round(float(row['risk_premium']) / 100, 4),
-                    'risk_premium_percentage': round(float(row['risk_premium']), 2)
-                })
+                    'value': row['country'],
+                    'label': row['country'],
+                    'risk_premium': premium_pct,
+                    'risk_premium_decimal': round(float(row['risk_premium']), 4),
+                    'risk_premium_percentage': premium_pct
+                }
+                if row['country'] in principais_list:
+                    principais.append(entry)
+                else:
+                    outros.append(entry)
             
             result = {
                 'success': True,
-                'countries': countries,
-                'total_countries': len(countries),
+                'countries': {
+                    'principais': sorted(principais, key=lambda x: x['label']),
+                    'outros': sorted(outros, key=lambda x: x['label'])
+                },
+                'total_countries': len(principais) + len(outros),
                 'last_updated': pd.Timestamp.now().isoformat()
             }
             
             self._countries_cache = result
-            logger.info(f"Carregados {len(countries)} países")
+            logger.info(f"Carregados {len(principais) + len(outros)} países")
             return result
             
         except Exception as e:

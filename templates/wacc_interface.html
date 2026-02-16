@@ -245,7 +245,71 @@
                     </div>
                 </div>
 
-                <!-- 4. ESTRUTURA DE CAPITAL E IMPOSTOS -->
+                <!-- 4. PRÊMIO DE TAMANHO (SIZE PREMIUM) -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-expand-arrows-alt"></i> Prêmio de Tamanho (Size Premium)
+                            <span class="data-quality-indicator quality-high" id="size-quality"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="market-cap-input" class="form-label">Valor de Mercado (US$):</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">US$</span>
+                                    <input type="number" class="form-control" id="market-cap-input" 
+                                           step="1000000" min="0" placeholder="Ex: 500000000">
+                                </div>
+                                <div class="source-info">
+                                    Insira o Market Cap em dólares
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="size-decile" class="form-label">Decil:</label>
+                                <input type="text" class="form-control" id="size-decile" readonly value="--">
+                                <div class="source-info">
+                                    Determinado automaticamente
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="size-premium-value" class="form-label">Prêmio de Tamanho (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="size-premium-value" 
+                                           step="0.01" min="-5" max="20" value="0" readonly>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="source-info">
+                                    Fonte: Damodaran / Ibbotson
+                                    <span class="badge bg-success auto-update-badge">AUTO</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#sizeDecileTable">
+                                <i class="fas fa-table"></i> Ver tabela de decis
+                            </button>
+                            <div class="collapse mt-2" id="sizeDecileTable">
+                                <table class="table table-sm table-striped" id="decile-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Decil</th>
+                                            <th>Market Cap Mín (US$)</th>
+                                            <th>Market Cap Máx (US$)</th>
+                                            <th>Prêmio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="decile-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. ESTRUTURA DE CAPITAL E IMPOSTOS -->
                 <div class="card component-card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -420,6 +484,9 @@
                 // Carregar prêmio de risco de mercado
                 await loadMarketRiskPremium();
                 
+                // Carregar tabela de decis de tamanho
+                await loadSizeDeciles();
+                
                 // Validar dados
                 await validateData();
                 
@@ -517,6 +584,10 @@
             // Mudança de país
             document.getElementById('country-select').addEventListener('change', updateCountryRisk);
             
+            // Mudança de market cap (size premium)
+            document.getElementById('market-cap-input').addEventListener('change', updateSizePremium);
+            document.getElementById('market-cap-input').addEventListener('blur', updateSizePremium);
+            
             // Mudança de peso do patrimônio
             document.getElementById('weight-equity').addEventListener('input', function() {
                 const equity = parseFloat(this.value) || 0;
@@ -603,6 +674,7 @@
                 const beta = parseFloat(document.getElementById('unlevered-beta').value);
                 const marketRiskPremium = parseFloat(document.getElementById('market-risk-premium').value) / 100;
                 const countryRiskPremium = parseFloat(document.getElementById('country-risk-premium').value) / 100;
+                const sizePremium = parseFloat(document.getElementById('size-premium-value').value) / 100 || 0;
                 const weightEquity = parseFloat(document.getElementById('weight-equity').value) / 100;
                 const weightDebt = parseFloat(document.getElementById('weight-debt').value) / 100;
                 const costOfDebt = parseFloat(document.getElementById('cost-of-debt').value) / 100;
@@ -614,8 +686,8 @@
                     return;
                 }
                 
-                // Calcular custo do patrimônio líquido
-                const costOfEquity = riskFreeRate + beta * marketRiskPremium + countryRiskPremium;
+                // Calcular custo do patrimônio líquido (Ke = Rf + β×ERP + Rp + SP)
+                const costOfEquity = riskFreeRate + beta * marketRiskPremium + countryRiskPremium + sizePremium;
                 
                 // Calcular custo da dívida após impostos
                 const afterTaxCostOfDebt = costOfDebt * (1 - taxRate);
@@ -692,6 +764,57 @@
             } catch (error) {
                 console.error('Erro ao carregar prêmio de risco de mercado:', error);
             }
+        }
+        
+        // Size Premium
+        async function loadSizeDeciles() {
+            try {
+                const response = await fetch('/api/get_size_deciles');
+                const data = await response.json();
+                if (data.success && data.size_premiums) {
+                    const tbody = document.getElementById('decile-table-body');
+                    tbody.innerHTML = '';
+                    data.size_premiums.forEach(d => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${d.decile}</td>` +
+                            `<td>${formatCurrency(d.market_cap_min)}</td>` +
+                            `<td>${formatCurrency(d.market_cap_max)}</td>` +
+                            `<td>${d.premium_display || (d.premium_percentage.toFixed(2) + '%')}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar decis de tamanho:', error);
+            }
+        }
+        
+        async function updateSizePremium() {
+            const marketCap = parseFloat(document.getElementById('market-cap-input').value);
+            if (!marketCap || marketCap <= 0) {
+                document.getElementById('size-decile').value = '--';
+                document.getElementById('size-premium-value').value = 0;
+                return;
+            }
+            try {
+                const response = await fetch(`/api/get_size_premium?market_cap=${marketCap}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('size-decile').value = `Decil ${data.size_decile}`;
+                    document.getElementById('size-premium-value').value = data.size_premium.percentage.toFixed(2);
+                    updateDataStatus('size', 'success', `Decil ${data.size_decile}`);
+                } else {
+                    document.getElementById('size-decile').value = 'Fora da faixa';
+                    document.getElementById('size-premium-value').value = 0;
+                }
+            } catch (error) {
+                console.error('Erro ao obter size premium:', error);
+            }
+        }
+        
+        function formatCurrency(value) {
+            if (value >= 1e9) return `${(value/1e9).toFixed(1)}B`;
+            if (value >= 1e6) return `${(value/1e6).toFixed(0)}M`;
+            return value.toLocaleString('en-US');
         }
         
         function handleBetaOptionChange() {

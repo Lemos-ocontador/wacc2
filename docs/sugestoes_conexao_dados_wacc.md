@@ -226,22 +226,25 @@ def calculate_unlevered_beta():
 ## 📈 Prioridades de Implementação
 
 ### **Fase 1 - Implementação Imediata (Dados Disponíveis)**
-1. ✅ **Prêmio de Risco País**: Dropdown com 192 países
-2. ✅ **Beta Setorial Global**: 15+ setores com dados robustos
-3. ✅ **Taxa Livre de Risco**: Integração com FRED API
-4. ✅ **Prêmio de Risco de Mercado**: Dados Damodaran
+1. ✅ **Prêmio de Risco País**: Dropdown com 157 países (principais + outros) — IMPLEMENTADO
+2. ✅ **Beta Setorial Global**: 90+ indústrias Damodaran com D/E médio — IMPLEMENTADO
+3. ✅ **Taxa Livre de Risco**: Integração com FRED API/Damodaran — IMPLEMENTADO
+4. ✅ **Prêmio de Risco de Mercado**: Dados Damodaran ERP — IMPLEMENTADO
+5. ✅ **Prêmio de Tamanho (Size Premium)**: 13 decis com faixas de Market Cap — IMPLEMENTADO (Fev/2026)
 
 ### **Fase 2 - Melhorias (Médio Prazo)**
-1. 🔄 **Beta por Mercados Emergentes**: Filtrar dados por região
-2. 🔄 **Beta Desalavancado**: Cálculo automático com D/E ratio
+1. ✅ **Beta por Mercados Emergentes**: Filtrar dados por região (Global/EMKT) — IMPLEMENTADO
+2. ✅ **Beta Desalavancado**: Cálculo automático com D/E ratio — IMPLEMENTADO
 3. 🔄 **Histórico de Dados**: Gráficos de evolução temporal
 4. 🔄 **Validação de Dados**: Alertas para dados desatualizados
+5. 🔄 **Atualização Automática**: Script unificado de atualização (planejado)
 
 ### **Fase 3 - Funcionalidades Avançadas (Longo Prazo)**
 1. 🆕 **Benchmark por Empresa**: Seleção de empresa específica como benchmark
 2. 🆕 **Beta Ajustado**: Ajustes por liquidez, tamanho, etc.
 3. 🆕 **Cenários**: Análise de sensibilidade com diferentes parâmetros
 4. 🆕 **API Externa**: Integração com Bloomberg, Reuters, etc.
+5. 🆕 **GitHub Actions**: Atualização automática de FRED/BCB via workflow CRON
 
 ---
 

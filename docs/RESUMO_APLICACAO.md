@@ -189,3 +189,69 @@ python company_analysis_app.py
 - Existe **sobreposição de responsabilidades** entre `app.py` e `company_analysis_app.py` nas rotas de análise de empresas.
 - A base Damodaran é o núcleo para filtros hierárquicos (geografia e setor) e benchmarks.
 - O projeto já possui boa base para expansão (exportações, análises avançadas e visualizações adicionais).
+
+---
+
+## 8) Correções Recentes (Fev/2026)
+
+### 8.1 Beta Setorial — Indústrias Damodaran
+- Corrigido: dropdown de setores agora carrega corretamente as indústrias Damodaran.
+- Campos `value`, `label`, `companies_count` adicionados à API `/api/get_beta_sectors`.
+
+### 8.2 D/E Médio do Setor
+- Corrigido: campo `debt_equity_ratio` agora é retornado pela API `/api/get_sector_beta`.
+- Campo `data_quality` (high/medium/low) adicionado baseado no número de empresas.
+- Preenchimento automático do campo "D/E Médio do Setor" no frontend.
+
+### 8.3 Seleção de País — Risco País
+- Corrigido: endpoint `/api/get_country_risk_options` agora retorna estrutura correta.
+- Países organizados em grupos: **Principais** (Brasil, EUA, China, etc.) e **Outros**.
+- Cada país com campos `value`, `label`, `risk_premium` (%).
+- Brasil selecionado por padrão.
+
+### 8.4 Prêmio de Tamanho (Size Premium) — NOVO
+- Implementada seção completa no frontend WACC.
+- Input de Market Cap (US$) com cálculo automático do decil e prêmio.
+- Tabela expansível com todos os 13 decis de tamanho.
+- Prêmio de tamanho integrado na fórmula WACC: `Ke = Rf + β×ERP + Rp + SP`.
+- APIs: `/api/get_size_premium?market_cap=X` e `/api/get_size_deciles`.
+
+---
+
+## 9) Plano de Atualização Automática de Dados
+
+### 9.1 Fontes e Frequência
+
+| Fonte | Componente | Frequência Ideal | Método |
+|-------|-----------|-----------------|--------|
+| **FRED API** | Taxa Livre de Risco (10Y/30Y) | Diária | API REST automática |
+| **Damodaran (NYU)** | Betas setoriais, ERP, D/E | Anual (janeiro) | Download Excel + ETL |
+| **Damodaran (NYU)** | Risco-País | Anual (janeiro) | Download Excel + ETL |
+| **Damodaran (NYU)** | Size Premium (Ibbotson) | Anual | Download + ETL |
+| **Yahoo Finance** | About/Descrição empresas | Semestral | Script batch Yahoo API |
+| **BCB API** | Selic, IPCA, câmbio | Diária | API REST automática |
+
+### 9.2 Scripts Existentes para Atualização
+
+- `scripts/extract_global_damodaran.py` — importar Excel Damodaran global
+- `scripts/import_excel_full_fields.py` — importar todos os campos do Excel
+- `scripts/create_country_risk_db.py` — popular tabela `country_risk`
+- `scripts/import_size_premium.py` — popular tabela `size_premium`
+- `scripts/update_company_about_from_yahoo.py` — atualizar "about" via Yahoo
+- `scripts/normalize_company_yahoo_codes.py` — normalizar códigos Yahoo
+
+### 9.3 Plano de Automação (a implementar)
+
+**Fase 1 — Script de atualização unificado:**
+- Criar `scripts/auto_update_all.py` que orquestra as atualizações.
+- Download automático do Excel Damodaran quando nova versão disponível.
+- Atualização da taxa livre de risco via FRED em cada inicialização do app.
+
+**Fase 2 — Agendamento:**
+- GitHub Actions (workflow CRON) para atualização semanal dos dados FRED/BCB.
+- Script local agendado (Task Scheduler / cron) para atualização anual Damodaran.
+
+**Fase 3 — Monitoramento:**
+- Health check expandido (`/api/health`) com idade dos dados.
+- Alerta no dashboard quando dados estiverem desatualizados (>30 dias para FRED, >13 meses para Damodaran).
+
