@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+
+{% block title %}WACC Calculator - Histórico{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-history me-2"></i>
+                Histórico de Cálculos
+            </h2>
+            <div>
+                <button type="button" class="btn btn-outline-secondary" onclick="clearHistory()">
+                    <i class="fas fa-trash me-2"></i>
+                    Limpar Histórico
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="exportHistory()">
+                    <i class="fas fa-download me-2"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtros
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="filter-sector" class="form-label">Setor</label>
+                        <select class="form-select" id="filter-sector">
+                            <option value="">Todos os setores</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="filter-country" class="form-label">País</label>
+                        <select class="form-select" id="filter-country">
+                            <option value="">Todos os países</option>
+                            <option value="Brazil">Brasil</option>
+                            <option value="United States">Estados Unidos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="filter-date-from" class="form-label">Data Inicial</label>
+                        <input type="date" class="form-control" id="filter-date-from">
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="filter-date-to" class="form-label">Data Final</label>
+                        <input type="date" class="form-control" id="filter-date-to">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filter-wacc-min" class="form-label">WACC Mínimo (%)</label>
+                        <input type="number" class="form-control" id="filter-wacc-min" step="0.1">
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="filter-wacc-max" class="form-label">WACC Máximo (%)</label>
+                        <input type="number" class="form-control" id="filter-wacc-max" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-search me-2"></i>
+                        Aplicar Filtros
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times me-2"></i>
+                        Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4 id="total-calculations">-</h4>
+                <p class="mb-0">Total de Cálculos</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4 id="avg-wacc">-</h4>
+                <p class="mb-0">WACC Médio</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4 id="most-common-sector">-</h4>
+                <p class="mb-0">Setor Mais Comum</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4 id="last-calculation">-</h4>
+                <p class="mb-0">Último Cálculo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Cálculos Realizados
+                    </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <label for="page-size" class="form-label me-2 mb-0">Itens por página:</label>
+                            <select class="form-select form-select-sm" id="page-size" style="width: auto;">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <input type="text" class="form-control form-control-sm" id="search-input" placeholder="Buscar..." style="width: 200px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('timestamp')">
+                                        Data/Hora
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('sector')">
+                                        Setor
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('country')">
+                                        País
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('wacc')">
+                                        WACC
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('cost_of_equity')">
+                                        Custo PL
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="sortTable('cost_of_debt')">
+                                        Custo Dívida
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </button>
+                                </th>
+                                <th>Beta</th>
+                                <th>D/E</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Navegação de páginas" class="mt-3">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- Will be populated by JavaScript -->
+                    </ul>
+                </nav>
+                
+                <!-- No results message -->
+                <div id="no-results" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum cálculo encontrado</h5>
+                    <p class="text-muted">Tente ajustar os filtros ou realizar um novo cálculo.</p>
+                    <a href="{{ url_for('calculator_page') }}" class="btn btn-primary">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular WACC
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calculation Detail Modal -->
+<div class="modal fade" id="calculationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calculator me-2"></i>
+                    Detalhes do Cálculo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="calculation-details">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" onclick="duplicateCalculation()">
+                    <i class="fas fa-copy me-2"></i>
+                    Duplicar
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportCalculation()">
+                    <i class="fas fa-download me-2"></i>
+                    Exportar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allCalculations = [];
+let filteredCalculations = [];
+let currentPage = 1;
+let pageSize = 25;
+let sortColumn = 'timestamp';
+let sortDirection = 'desc';
+let selectedCalculation = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHistory();
+});
+
+function initializeHistory() {
+    loadSectors();
+    loadCalculations();
+    setupEventListeners();
+    setDefaultDates();
+}
+
+function loadSectors() {
+    fetch('/api/get_sectors')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.sectors) {
+                const sectorSelect = document.getElementById('filter-sector');
+                data.sectors.forEach(sector => {
+                    const option = document.createElement('option');
+                    option.value = sector;
+                    option.textContent = sector;
+                    sectorSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar setores:', error);
+        });
+}
+
+function loadCalculations() {
+    // Simulated calculation history - in real implementation, this would come from API
+    allCalculations = generateSampleCalculations();
+    filteredCalculations = [...allCalculations];
+    updateStatistics();
+    renderTable();
+}
+
+function generateSampleCalculations() {
+    const sectors = ['Banks', 'Technology', 'Retail', 'Energy', 'Healthcare', 'Utilities', 'Real Estate'];
+    const countries = ['Brazil', 'United States'];
+    const calculations = [];
+    
+    for (let i = 0; i < 100; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+        
+        const sector = sectors[Math.floor(Math.random() * sectors.length)];
+        const country = countries[Math.floor(Math.random() * countries.length)];
+        const wacc = 0.08 + Math.random() * 0.15;
+        const costOfEquity = wacc + 0.02 + Math.random() * 0.05;
+        const costOfDebt = wacc - 0.02 + Math.random() * 0.04;
+        const beta = 0.5 + Math.random() * 1.5;
+        const debtRatio = Math.random() * 0.6;
+        
+        calculations.push({
+            id: `calc_${i + 1}`,
+            timestamp: date.toISOString(),
+            sector: sector,
+            country: country,
+            wacc: wacc,
+            cost_of_equity: costOfEquity,
+            cost_of_debt: costOfDebt,
+            beta: beta,
+            debt_ratio: debtRatio,
+            equity_ratio: 1 - debtRatio,
+            components: {
+                risk_free_rate: 0.045,
+                market_risk_premium: 0.06,
+                country_risk_premium: country === 'Brazil' ? 0.025 : 0,
+                size_premium: 0,
+                tax_rate: 0.34
+            }
+        });
+    }
+    
+    return calculations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+function setupEventListeners() {
+    document.getElementById('page-size').addEventListener('change', function() {
+        pageSize = parseInt(this.value);
+        currentPage = 1;
+        renderTable();
+    });
+    
+    document.getElementById('search-input').addEventListener('input', function() {
+        applyFilters();
+    });
+    
+    // Filter change listeners
+    ['filter-sector', 'filter-country', 'filter-date-from', 'filter-date-to', 'filter-wacc-min', 'filter-wacc-max'].forEach(id => {
+        document.getElementById(id).addEventListener('change', applyFilters);
+    });
+}
+
+function setDefaultDates() {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    document.getElementById('filter-date-to').value = today.toISOString().split('T')[0];
+    document.getElementById('filter-date-from').value = oneMonthAgo.toISOString().split('T')[0];
+}
+
+function applyFilters() {
+    const filters = {
+        sector: document.getElementById('filter-sector').value,
+        country: document.getElementById('filter-country').value,
+        dateFrom: document.getElementById('filter-date-from').value,
+        dateTo: document.getElementById('filter-date-to').value,
+        waccMin: parseFloat(document.getElementById('filter-wacc-min').value) / 100,
+        waccMax: parseFloat(document.getElementById('filter-wacc-max').value) / 100,
+        search: document.getElementById('search-input').value.toLowerCase()
+    };
+    
+    filteredCalculations = allCalculations.filter(calc => {
+        // Sector filter
+        if (filters.sector && calc.sector !== filters.sector) return false;
+        
+        // Country filter
+        if (filters.country && calc.country !== filters.country) return false;
+        
+        // Date filters
+        const calcDate = new Date(calc.timestamp);
+        if (filters.dateFrom && calcDate < new Date(filters.dateFrom)) return false;
+        if (filters.dateTo && calcDate > new Date(filters.dateTo + 'T23:59:59')) return false;
+        
+        // WACC filters
+        if (!isNaN(filters.waccMin) && calc.wacc < filters.waccMin) return false;
+        if (!isNaN(filters.waccMax) && calc.wacc > filters.waccMax) return false;
+        
+        // Search filter
+        if (filters.search) {
+            const searchText = `${calc.sector} ${calc.country}`.toLowerCase();
+            if (!searchText.includes(filters.search)) return false;
+        }
+        
+        return true;
+    });
+    
+    currentPage = 1;
+    updateStatistics();
+    renderTable();
+}
+
+function clearFilters() {
+    document.getElementById('filter-sector').value = '';
+    document.getElementById('filter-country').value = '';
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value = '';
+    document.getElementById('filter-wacc-min').value = '';
+    document.getElementById('filter-wacc-max').value = '';
+    document.getElementById('search-input').value = '';
+    
+    filteredCalculations = [...allCalculations];
+    currentPage = 1;
+    updateStatistics();
+    renderTable();
+}
+
+function updateStatistics() {
+    const totalCalculations = filteredCalculations.length;
+    const avgWacc = totalCalculations > 0 ? 
+        filteredCalculations.reduce((sum, calc) => sum + calc.wacc, 0) / totalCalculations : 0;
+    
+    // Most common sector
+    const sectorCounts = {};
+    filteredCalculations.forEach(calc => {
+        sectorCounts[calc.sector] = (sectorCounts[calc.sector] || 0) + 1;
+    });
+    const mostCommonSector = Object.keys(sectorCounts).reduce((a, b) => 
+        sectorCounts[a] > sectorCounts[b] ? a : b, '');
+    
+    // Last calculation
+    const lastCalculation = filteredCalculations.length > 0 ? 
+        new Date(filteredCalculations[0].timestamp) : null;
+    
+    document.getElementById('total-calculations').textContent = totalCalculations;
+    document.getElementById('avg-wacc').textContent = formatNumber(avgWacc * 100, 1) + '%';
+    document.getElementById('most-common-sector').textContent = mostCommonSector || 'N/A';
+    document.getElementById('last-calculation').textContent = lastCalculation ? 
+        lastCalculation.toLocaleDateString('pt-BR') : 'N/A';
+}
+
+function sortTable(column) {
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    
+    filteredCalculations.sort((a, b) => {
+        let aVal = a[column];
+        let bVal = b[column];
+        
+        if (column === 'timestamp') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+        }
+        
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    renderTable();
+}
+
+function renderTable() {
+    const tableBody = document.getElementById('history-table-body');
+    const noResults = document.getElementById('no-results');
+    
+    if (filteredCalculations.length === 0) {
+        tableBody.innerHTML = '';
+        noResults.style.display = 'block';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+    
+    noResults.style.display = 'none';
+    
+    // Pagination
+    const totalPages = Math.ceil(filteredCalculations.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filteredCalculations.length);
+    const pageCalculations = filteredCalculations.slice(startIndex, endIndex);
+    
+    // Render table rows
+    tableBody.innerHTML = '';
+    pageCalculations.forEach(calc => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${new Date(calc.timestamp).toLocaleString('pt-BR')}</td>
+            <td><span class="badge bg-secondary">${calc.sector}</span></td>
+            <td><span class="badge bg-info">${calc.country}</span></td>
+            <td><strong>${formatNumber(calc.wacc * 100, 2)}%</strong></td>
+            <td>${formatNumber(calc.cost_of_equity * 100, 2)}%</td>
+            <td>${formatNumber(calc.cost_of_debt * 100, 2)}%</td>
+            <td>${formatNumber(calc.beta, 2)}</td>
+            <td>${formatNumber(calc.debt_ratio * 100, 1)}%</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="viewCalculation('${calc.id}')" title="Ver detalhes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-success" onclick="duplicateCalculation('${calc.id}')" title="Duplicar">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteCalculation('${calc.id}')" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+    
+    // Render pagination
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Anterior</a>`;
+    pagination.appendChild(prevLi);
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Próximo</a>`;
+    pagination.appendChild(nextLi);
+}
+
+function changePage(page) {
+    if (page < 1 || page > Math.ceil(filteredCalculations.length / pageSize)) return;
+    currentPage = page;
+    renderTable();
+}
+
+function viewCalculation(calcId) {
+    const calculation = allCalculations.find(calc => calc.id === calcId);
+    if (!calculation) return;
+    
+    selectedCalculation = calculation;
+    
+    const modalBody = document.getElementById('calculation-details');
+    modalBody.innerHTML = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Informações Gerais</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Data/Hora:</strong></td><td>${new Date(calculation.timestamp).toLocaleString('pt-BR')}</td></tr>
+                    <tr><td><strong>Setor:</strong></td><td>${calculation.sector}</td></tr>
+                    <tr><td><strong>País:</strong></td><td>${calculation.country}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Resultado WACC</h6>
+                <div class="alert alert-success text-center">
+                    <h4>${formatNumber(calculation.wacc * 100, 2)}%</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Custo do Patrimônio Líquido</h6>
+                <table class="table table-sm">
+                    <tr><td>Taxa Livre de Risco:</td><td>${formatNumber(calculation.components.risk_free_rate * 100, 2)}%</td></tr>
+                    <tr><td>Beta:</td><td>${formatNumber(calculation.beta, 2)}</td></tr>
+                    <tr><td>Prêmio de Risco de Mercado:</td><td>${formatNumber(calculation.components.market_risk_premium * 100, 2)}%</td></tr>
+                    <tr><td>Prêmio de Risco País:</td><td>${formatNumber(calculation.components.country_risk_premium * 100, 2)}%</td></tr>
+                    <tr><td>Prêmio de Tamanho:</td><td>${formatNumber(calculation.components.size_premium * 100, 2)}%</td></tr>
+                    <tr class="table-success"><td><strong>Total:</strong></td><td><strong>${formatNumber(calculation.cost_of_equity * 100, 2)}%</strong></td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Custo da Dívida</h6>
+                <table class="table table-sm">
+                    <tr><td>Custo da Dívida (antes IR):</td><td>${formatNumber(calculation.cost_of_debt * 100, 2)}%</td></tr>
+                    <tr><td>Taxa de Imposto:</td><td>${formatNumber(calculation.components.tax_rate * 100, 2)}%</td></tr>
+                    <tr class="table-warning"><td><strong>Custo após IR:</strong></td><td><strong>${formatNumber(calculation.cost_of_debt * (1 - calculation.components.tax_rate) * 100, 2)}%</strong></td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6>Estrutura de Capital</h6>
+                <table class="table table-sm">
+                    <tr><td>Proporção da Dívida:</td><td>${formatNumber(calculation.debt_ratio * 100, 1)}%</td></tr>
+                    <tr><td>Proporção do Patrimônio Líquido:</td><td>${formatNumber(calculation.equity_ratio * 100, 1)}%</td></tr>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('calculationModal')).show();
+}
+
+function duplicateCalculation(calcId) {
+    const calculation = allCalculations.find(calc => calc.id === calcId);
+    if (!calculation) return;
+    
+    // Redirect to calculator with pre-filled data
+    const params = new URLSearchParams({
+        sector: calculation.sector,
+        country: calculation.country,
+        beta: calculation.beta,
+        debt_ratio: calculation.debt_ratio * 100,
+        // Add other parameters as needed
+    });
+    
+    window.location.href = `/calculator?${params.toString()}`;
+}
+
+function deleteCalculation(calcId) {
+    if (!confirm('Tem certeza que deseja excluir este cálculo?')) return;
+    
+    // Remove from arrays
+    allCalculations = allCalculations.filter(calc => calc.id !== calcId);
+    filteredCalculations = filteredCalculations.filter(calc => calc.id !== calcId);
+    
+    updateStatistics();
+    renderTable();
+    showToast('Cálculo excluído com sucesso', 'success');
+}
+
+function clearHistory() {
+    if (!confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.')) return;
+    
+    allCalculations = [];
+    filteredCalculations = [];
+    updateStatistics();
+    renderTable();
+    showToast('Histórico limpo com sucesso', 'success');
+}
+
+function exportHistory() {
+    const exportData = {
+        timestamp: new Date().toISOString(),
+        total_calculations: filteredCalculations.length,
+        calculations: filteredCalculations
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wacc_history_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Histórico exportado com sucesso', 'success');
+}
+
+function exportCalculation() {
+    if (!selectedCalculation) return;
+    
+    const blob = new Blob([JSON.stringify(selectedCalculation, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wacc_calculation_${selectedCalculation.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Cálculo exportado com sucesso', 'success');
+}
+</script>
+{% endblock %}

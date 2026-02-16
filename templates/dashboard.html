@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}WACC Calculator - Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Dashboard
+            </h2>
+            <div>
+                <button type="button" class="btn btn-outline-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Atualizar
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportDashboard()">
+                    <i class="fas fa-download me-2"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Taxa Livre de Risco</h6>
+                        <h4 class="mb-0" id="risk-free-rate-card">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </h4>
+                        <small class="opacity-75">Treasury 10Y</small>
+                    </div>
+                    <div>
+                        <i class="fas fa-university fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Taxa Selic</h6>
+                        <h4 class="mb-0" id="selic-rate-card">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </h4>
+                        <small class="opacity-75">Banco Central</small>
+                    </div>
+                    <div>
+                        <i class="fas fa-landmark fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Prêmio de Risco</h6>
+                        <h4 class="mb-0" id="market-risk-premium-card">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </h4>
+                        <small class="opacity-75">ERP Damodaran</small>
+                    </div>
+                    <div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Risco País</h6>
+                        <h4 class="mb-0" id="country-risk-card">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </h4>
+                        <small class="opacity-75">Brasil</small>
+                    </div>
+                    <div>
+                        <i class="fas fa-globe-americas fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Historical Rates Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Evolução das Taxas de Juros
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="rates-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sector Betas Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Betas por Setor
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="betas-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Sources Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Status das Fontes de Dados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="data-sources-status">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Market Data Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Dados de Mercado Atuais
+                    </h5>
+                    <small class="text-muted" id="market-data-timestamp">-</small>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Indicador</th>
+                                <th>Valor Atual</th>
+                                <th>Variação</th>
+                                <th>Última Atualização</th>
+                                <th>Fonte</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="market-data-table">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WACC Components Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>
+                    Composição WACC Médio
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="wacc-composition-chart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-industry me-2"></i>
+                    WACC por Setor
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sector-wacc-chart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Calculations -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Cálculos Recentes
+                    </h5>
+                    <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Setor</th>
+                                <th>País</th>
+                                <th>WACC</th>
+                                <th>Custo PL</th>
+                                <th>Custo Dívida</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-calculations">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ratesChart, betasChart, waccCompositionChart, sectorWaccChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+});
+
+function initializeDashboard() {
+    loadMarketData();
+    loadDataSourcesStatus();
+    loadRecentCalculations();
+    initializeCharts();
+}
+
+function loadMarketData() {
+    fetch('/api/market-data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMarketDataCards(data.data);
+                updateMarketDataTable(data.data);
+            } else {
+                showToast('Erro ao carregar dados de mercado', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados de mercado:', error);
+            showToast('Erro ao carregar dados de mercado', 'error');
+        });
+}
+
+function updateMarketDataCards(data) {
+    // Update status cards
+    const riskFreeRate = data.risk_free_rate;
+    const selicRate = data.selic_rate;
+    const marketRiskPremium = data.market_risk_premium;
+    const countryRisk = data.country_risk_premium;
+    
+    document.getElementById('risk-free-rate-card').textContent = 
+        riskFreeRate ? formatNumber(riskFreeRate * 100, 2) + '%' : 'N/A';
+    
+    document.getElementById('selic-rate-card').textContent = 
+        selicRate ? formatNumber(selicRate * 100, 2) + '%' : 'N/A';
+    
+    document.getElementById('market-risk-premium-card').textContent = 
+        marketRiskPremium ? formatNumber(marketRiskPremium * 100, 2) + '%' : 'N/A';
+    
+    document.getElementById('country-risk-card').textContent = 
+        countryRisk ? formatNumber(countryRisk * 100, 2) + '%' : 'N/A';
+}
+
+function updateMarketDataTable(data) {
+    const tableBody = document.getElementById('market-data-table');
+    tableBody.innerHTML = '';
+    
+    const indicators = [
+        { name: 'Taxa Livre de Risco', value: data.risk_free_rate, source: 'FRED', key: 'risk_free_rate' },
+        { name: 'Taxa Selic', value: data.selic_rate, source: 'BCB', key: 'selic_rate' },
+        { name: 'Prêmio de Risco de Mercado', value: data.market_risk_premium, source: 'Damodaran', key: 'market_risk_premium' },
+        { name: 'Prêmio de Risco País', value: data.country_risk_premium, source: 'Damodaran', key: 'country_risk_premium' },
+        { name: 'IPCA', value: data.inflation_rate, source: 'BCB', key: 'inflation_rate' },
+        { name: 'Taxa de Câmbio (USD/BRL)', value: data.exchange_rate, source: 'BCB', key: 'exchange_rate' }
+    ];
+    
+    indicators.forEach(indicator => {
+        const row = document.createElement('tr');
+        const isAvailable = indicator.value !== null && indicator.value !== undefined;
+        
+        row.innerHTML = `
+            <td>${indicator.name}</td>
+            <td>${isAvailable ? formatNumber(indicator.value * (indicator.key.includes('rate') || indicator.key.includes('premium') ? 100 : 1), 2) + (indicator.key.includes('rate') || indicator.key.includes('premium') ? '%' : '') : 'N/A'}</td>
+            <td><span class="text-muted">-</span></td>
+            <td><span class="text-muted">${new Date().toLocaleString('pt-BR')}</span></td>
+            <td><span class="badge bg-secondary">${indicator.source}</span></td>
+            <td>
+                ${isAvailable ? 
+                    '<span class="badge bg-success"><i class="fas fa-check"></i> OK</span>' : 
+                    '<span class="badge bg-danger"><i class="fas fa-times"></i> Erro</span>'
+                }
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    document.getElementById('market-data-timestamp').textContent = 
+        'Atualizado em: ' + new Date().toLocaleString('pt-BR');
+}
+
+function loadDataSourcesStatus() {
+    fetch('/api/health')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDataSourcesStatus(data.extractors);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar status das fontes:', error);
+        });
+}
+
+function updateDataSourcesStatus(extractors) {
+    const container = document.getElementById('data-sources-status');
+    container.innerHTML = '';
+    
+    const sources = [
+        { name: 'FRED', key: 'fred', icon: 'fas fa-university', color: 'primary' },
+        { name: 'BCB', key: 'bcb', icon: 'fas fa-landmark', color: 'success' },
+        { name: 'Damodaran', key: 'damodaran', icon: 'fas fa-graduation-cap', color: 'warning' },
+        { name: 'Web Scraper', key: 'web_scraper', icon: 'fas fa-globe', color: 'info' }
+    ];
+    
+    sources.forEach(source => {
+        const extractor = extractors[source.key];
+        const isHealthy = extractor && extractor.status === 'healthy';
+        
+        const col = document.createElement('div');
+        col.className = 'col-md-3 mb-3';
+        
+        col.innerHTML = `
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="${source.icon} fa-2x text-${source.color}"></i>
+                    </div>
+                    <h6 class="card-title">${source.name}</h6>
+                    <div class="mb-2">
+                        ${isHealthy ? 
+                            '<span class="badge bg-success"><i class="fas fa-check"></i> Online</span>' : 
+                            '<span class="badge bg-danger"><i class="fas fa-times"></i> Offline</span>'
+                        }
+                    </div>
+                    <small class="text-muted">
+                        ${extractor ? 
+                            `Última verificação: ${new Date(extractor.last_check).toLocaleTimeString('pt-BR')}` : 
+                            'Não verificado'
+                        }
+                    </small>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(col);
+    });
+}
+
+function loadRecentCalculations() {
+    // Simulated recent calculations - in real implementation, this would come from API
+    const recentCalculations = [
+        {
+            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            sector: 'Banks',
+            country: 'Brazil',
+            wacc: 0.165,
+            cost_of_equity: 0.185,
+            cost_of_debt: 0.08
+        },
+        {
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            sector: 'Technology',
+            country: 'Brazil',
+            wacc: 0.142,
+            cost_of_equity: 0.158,
+            cost_of_debt: 0.075
+        }
+    ];
+    
+    updateRecentCalculationsTable(recentCalculations);
+}
+
+function updateRecentCalculationsTable(calculations) {
+    const tableBody = document.getElementById('recent-calculations');
+    tableBody.innerHTML = '';
+    
+    if (calculations.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="7" class="text-center text-muted">Nenhum cálculo recente encontrado</td>';
+        tableBody.appendChild(row);
+        return;
+    }
+    
+    calculations.forEach(calc => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${new Date(calc.timestamp).toLocaleString('pt-BR')}</td>
+            <td><span class="badge bg-secondary">${calc.sector}</span></td>
+            <td><span class="badge bg-info">${calc.country}</span></td>
+            <td><strong>${formatNumber(calc.wacc * 100, 2)}%</strong></td>
+            <td>${formatNumber(calc.cost_of_equity * 100, 2)}%</td>
+            <td>${formatNumber(calc.cost_of_debt * 100, 2)}%</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewCalculation('${calc.timestamp}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+function initializeCharts() {
+    initializeRatesChart();
+    initializeBetasChart();
+    initializeWaccCompositionChart();
+    initializeSectorWaccChart();
+}
+
+function initializeRatesChart() {
+    const ctx = document.getElementById('rates-chart').getContext('2d');
+    
+    // Simulated historical data
+    const labels = [];
+    const riskFreeData = [];
+    const selicData = [];
+    
+    for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        labels.push(date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }));
+        riskFreeData.push(4.5 + Math.random() * 2 - 1);
+        selicData.push(10.5 + Math.random() * 3 - 1.5);
+    }
+    
+    ratesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Taxa Livre de Risco (Treasury 10Y)',
+                    data: riskFreeData,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Taxa Selic',
+                    data: selicData,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(1) + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeBetasChart() {
+    const ctx = document.getElementById('betas-chart').getContext('2d');
+    
+    // Simulated sector betas
+    const sectors = ['Banks', 'Technology', 'Retail', 'Energy', 'Healthcare'];
+    const betas = [1.2, 1.5, 0.9, 1.1, 0.8];
+    
+    betasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sectors,
+            datasets: [{
+                label: 'Beta',
+                data: betas,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 2
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function initializeWaccCompositionChart() {
+    const ctx = document.getElementById('wacc-composition-chart').getContext('2d');
+    
+    waccCompositionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Custo do Patrimônio Líquido', 'Custo da Dívida (após IR)'],
+            datasets: [{
+                data: [70, 30],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeSectorWaccChart() {
+    const ctx = document.getElementById('sector-wacc-chart').getContext('2d');
+    
+    // Simulated sector WACC data
+    const sectors = ['Banks', 'Technology', 'Retail', 'Energy', 'Healthcare'];
+    const waccValues = [16.5, 14.2, 12.8, 15.1, 11.9];
+    
+    sectorWaccChart = new Chart(ctx, {
+        type: 'horizontalBar',
+        data: {
+            labels: sectors,
+            datasets: [{
+                label: 'WACC (%)',
+                data: waccValues,
+                backgroundColor: 'rgba(75, 192, 192, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'WACC: ' + context.parsed.x.toFixed(1) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshData() {
+    showToast('Atualizando dados...', 'info');
+    
+    // Reload all data
+    loadMarketData();
+    loadDataSourcesStatus();
+    loadRecentCalculations();
+    
+    // Update charts with new data
+    // In a real implementation, this would fetch new data and update charts
+    
+    setTimeout(() => {
+        showToast('Dados atualizados com sucesso', 'success');
+    }, 1000);
+}
+
+function exportDashboard() {
+    showToast('Funcionalidade de exportação será implementada', 'info');
+}
+
+function viewCalculation(timestamp) {
+    showToast('Visualização de cálculo específico será implementada', 'info');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{
+  "TSE": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "SZSE": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "OTCPK": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "KOSDAQ": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "NSEI": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 2
+  },
+  "SET": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "KLSE": {
+    "status": "sem_dados",
+    "campo": null
+  },
+  "TWSE": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "IDX": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "KOSE": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "TPEX": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  },
+  "SASE": {
+    "status": "ok",
+    "campo": "longBusinessSummary",
+    "cobertura": 3
+  }
+}

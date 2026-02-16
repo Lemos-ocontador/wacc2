@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil da Empresa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 20px;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .metric {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        th {
+            width: 280px;
+            color: #374151;
+            font-weight: 600;
+            background: #f9fafb;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 4px 10px;
+            margin: 0 6px 6px 0;
+            font-size: 12px;
+        }
+
+        .actions {
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="actions">
+        <a class="btn" href="/">← Voltar para análise</a>
+    </div>
+
+    {% if error %}
+        <div class="card">
+            <div class="error">{{ error }}</div>
+            {% if ticker %}
+                <p class="muted">Ticker consultado: <strong>{{ ticker }}</strong></p>
+            {% endif %}
+        </div>
+    {% elif company %}
+        <div class="card">
+            <h1>{{ company.company_name or 'Empresa' }}</h1>
+            <p class="muted">
+                <strong>Ticker:</strong> {{ company.ticker or '-' }} |
+                <strong>País:</strong> {{ company.country or '-' }} |
+                <strong>Setor:</strong> {{ company.primary_sector or company.industry_group or company.industry or '-' }}
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Sobre a empresa</h2>
+            {% if company.about %}
+                <p>{{ company.about }}</p>
+            {% else %}
+                <p class="muted">Descrição (about) ainda não preenchida para esta empresa.</p>
+            {% endif %}
+
+            {% if etf_sector_list and etf_sector_list|length > 0 %}
+                <div style="margin-top: 12px;">
+                    <div class="muted" style="margin-bottom: 6px;"><strong>ETF sector:</strong></div>
+                    {% for sector in etf_sector_list %}
+                        <span class="tag">{{ sector }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Dados principais</h2>
+            <div class="grid">
+                <div class="metric">
+                    <div class="metric-label">Market Cap</div>
+                    <div class="metric-value">{{ company.market_cap if company.market_cap is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Enterprise Value</div>
+                    <div class="metric-value">{{ company.enterprise_value if company.enterprise_value is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Revenue</div>
+                    <div class="metric-value">{{ company.revenue if company.revenue is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Net Income</div>
+                    <div class="metric-value">{{ company.net_income if company.net_income is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">EBITDA</div>
+                    <div class="metric-value">{{ company.ebitda if company.ebitda is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">PE Ratio</div>
+                    <div class="metric-value">{{ company.pe_ratio if company.pe_ratio is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Beta</div>
+                    <div class="metric-value">{{ company.beta if company.beta is not none else '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">ROE</div>
+                    <div class="metric-value">{{ company.roe if company.roe is not none else '-' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Metadados internos</h2>
+            <table>
+                <tr><th>cod_anloc</th><td>{{ company.cod_anloc or '-' }}</td></tr>
+                <tr><th>yahoo_code</th><td>{{ company.yahoo_code or '-' }}</td></tr>
+                <tr><th>basic_data_updated_at</th><td>{{ company.basic_data_updated_at or '-' }}</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Campos completos (debug)</h2>
+            <table>
+                {% for key, value in company.items() %}
+                    <tr>
+                        <th>{{ key }}</th>
+                        <td>{{ value if value is not none else '-' }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora WACC - Interface Aprimorada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .data-quality-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        .quality-high { background-color: #28a745; }
+        .quality-medium { background-color: #ffc107; }
+        .quality-low { background-color: #dc3545; }
+        
+        .component-card {
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        
+        .component-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .auto-update-badge {
+            font-size: 0.75em;
+            margin-left: 5px;
+        }
+        
+        .source-info {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .beta-options {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .calculation-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-calculator"></i> Calculadora WACC Integrada
+                </h1>
+                <p class="text-center text-muted">Interface aprimorada com dados automáticos do Damodaran</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Coluna Esquerda: Seleção de Parâmetros -->
+            <div class="col-lg-8">
+                
+                <!-- 1. TAXA LIVRE DE RISCO -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line"></i> Taxa Livre de Risco
+                            <span class="data-quality-indicator quality-high" id="rf-quality"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="risk-free-type" class="form-label">Tipo de Taxa:</label>
+                                <select class="form-select" id="risk-free-type">
+                                    <option value="treasury_10y">US Treasury 10 anos</option>
+                                    <option value="treasury_30y">US Treasury 30 anos</option>
+                                    <option value="custom">Taxa personalizada</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="risk-free-rate" class="form-label">Taxa (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="risk-free-rate" 
+                                           step="0.01" min="0" max="20" value="4.14">
+                                    <span class="input-group-text">%</span>
+                                    <button class="btn btn-outline-secondary" type="button" id="update-rf-btn">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="source-info" id="rf-source">
+                                    Fonte: FRED API - Atualizado automaticamente
+                                    <span class="badge bg-success auto-update-badge">AUTO</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. BETA -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-trending-up"></i> Beta
+                            <span class="data-quality-indicator quality-medium" id="beta-quality"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Opções de Beta -->
+                        <div class="beta-options">
+                            <h6><i class="fas fa-cogs"></i> Opções de Cálculo:</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="beta-option" 
+                                               id="beta-sectoral" value="sectoral" checked>
+                                        <label class="form-check-label" for="beta-sectoral">
+                                            <strong>Beta Setorial</strong><br>
+                                            <small class="text-muted">Baseado no setor da empresa</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="beta-option" 
+                                               id="beta-benchmark" value="benchmark" disabled>
+                                        <label class="form-check-label" for="beta-benchmark">
+                                            <strong>Benchmark</strong><br>
+                                            <small class="text-muted">A implementar</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="beta-option" 
+                                               id="beta-custom" value="custom">
+                                        <label class="form-check-label" for="beta-custom">
+                                            <strong>Personalizado</strong><br>
+                                            <small class="text-muted">Valor manual</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seleção de Setor -->
+                        <div id="sector-selection" class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="sector-select" class="form-label">Setor:</label>
+                                <select class="form-select" id="sector-select">
+                                    <option value="">Selecione um setor...</option>
+                                    <!-- Opções carregadas dinamicamente -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="region-select" class="form-label">Região:</label>
+                                <select class="form-select" id="region-select">
+                                    <option value="global">Global</option>
+                                    <option value="emkt">Mercados Emergentes (EMKT)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Valores de Beta -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="levered-beta" class="form-label">Beta Alavancado:</label>
+                                <input type="number" class="form-control" id="levered-beta" 
+                                       step="0.001" min="0" max="5" readonly>
+                                <div class="source-info" id="beta-companies-info">
+                                    Baseado em X empresas
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="unlevered-beta" class="form-label">Beta Desalavancado:</label>
+                                <input type="number" class="form-control" id="unlevered-beta" 
+                                       step="0.001" min="0" max="5">
+                                <div class="source-info">
+                                    Calculado automaticamente
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="debt-equity-ratio" class="form-label">D/E Médio do Setor:</label>
+                                <input type="number" class="form-control" id="debt-equity-ratio" 
+                                       step="0.01" min="0" readonly>
+                                <div class="source-info">
+                                    Média setorial
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. PRÊMIOS DE RISCO -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-globe"></i> Prêmios de Risco
+                            <span class="data-quality-indicator quality-high" id="risk-quality"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="market-risk-premium" class="form-label">Prêmio Risco Mercado (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="market-risk-premium" 
+                                           step="0.01" min="0" max="20" value="4.61" readonly>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="source-info">
+                                    Damodaran ERP (1928-2020)
+                                    <span class="badge bg-success auto-update-badge">AUTO</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="country-select" class="form-label">País:</label>
+                                <select class="form-select" id="country-select">
+                                    <option value="">Selecione um país...</option>
+                                    <!-- Opções carregadas dinamicamente -->
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="country-risk-premium" class="form-label">Prêmio Risco País (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="country-risk-premium" 
+                                           step="0.01" min="0" max="50" readonly>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="source-info" id="country-source">
+                                    Damodaran Country Risk
+                                    <span class="badge bg-success auto-update-badge">AUTO</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ESTRUTURA DE CAPITAL E IMPOSTOS -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-balance-scale"></i> Estrutura de Capital e Impostos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="weight-equity" class="form-label">Peso Patrimônio (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="weight-equity" 
+                                           step="1" min="0" max="100" value="70">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="weight-debt" class="form-label">Peso Dívida (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="weight-debt" 
+                                           step="1" min="0" max="100" value="30" readonly>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="cost-of-debt" class="form-label">Custo da Dívida (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="cost-of-debt" 
+                                           step="0.1" min="0" max="50" value="13.5">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="source-info">
+                                    150% da Selic (Brasil)
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="tax-rate" class="form-label">Taxa de Imposto (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="tax-rate" 
+                                           step="1" min="0" max="50" value="34">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="source-info">
+                                    IRPJ + CSLL (Brasil)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="text-center mb-4">
+                    <button type="button" class="btn btn-primary btn-lg me-3" id="calculate-wacc-btn">
+                        <i class="fas fa-calculator"></i> Calcular WACC
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="reset-form-btn">
+                        <i class="fas fa-undo"></i> Limpar
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="validate-data-btn">
+                        <i class="fas fa-check-circle"></i> Validar Dados
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Resultados -->
+            <div class="col-lg-4">
+                <!-- Resultado WACC -->
+                <div class="calculation-result" id="wacc-result" style="display: none;">
+                    <h4 class="text-center mb-3">
+                        <i class="fas fa-trophy"></i> Resultado WACC
+                    </h4>
+                    <div class="text-center">
+                        <h2 class="display-4 mb-3" id="wacc-percentage">--</h2>
+                        <p class="mb-0">Custo Médio Ponderado de Capital</p>
+                    </div>
+                </div>
+
+                <!-- Detalhamento dos Componentes -->
+                <div class="card mt-4" id="components-detail" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-list"></i> Detalhamento</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-8">Custo do Patrimônio:</div>
+                            <div class="col-4 text-end" id="cost-of-equity">--</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-8">Custo da Dívida (após IR):</div>
+                            <div class="col-4 text-end" id="after-tax-cost-debt">--</div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-8"><strong>WACC:</strong></div>
+                            <div class="col-4 text-end"><strong id="wacc-detail">--</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status dos Dados -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-database"></i> Status dos Dados</h6>
+                    </div>
+                    <div class="card-body" id="data-status">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Taxa Livre de Risco:</span>
+                            <span class="badge bg-success">OK</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Beta Setorial:</span>
+                            <span class="badge bg-warning">Carregando...</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Risco País:</span>
+                            <span class="badge bg-success">OK</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Prêmio de Mercado:</span>
+                            <span class="badge bg-success">OK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações Adicionais -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Informações</h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <p><strong>Fontes de Dados:</strong></p>
+                            <ul class="list-unstyled">
+                                <li>• Taxa Livre de Risco: FRED API</li>
+                                <li>• Beta: Damodaran Global (47k+ empresas)</li>
+                                <li>• Risco País: Damodaran (192 países)</li>
+                                <li>• Prêmio de Mercado: Damodaran ERP</li>
+                            </ul>
+                            <p><strong>Última Atualização:</strong><br>
+                            <span id="last-update">Carregando...</span></p>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variáveis globais
+        let currentComponents = {};
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialData();
+            setupEventListeners();
+        });
+        
+        // Carregar dados iniciais
+        async function loadInitialData() {
+            try {
+                // Carregar setores
+                await loadSectors();
+                
+                // Carregar países
+                await loadCountries();
+                
+                // Carregar dados de taxa livre de risco
+                await loadRiskFreeRate();
+                
+                // Carregar prêmio de risco de mercado
+                await loadMarketRiskPremium();
+                
+                // Validar dados
+                await validateData();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados iniciais:', error);
+                showAlert('Erro ao carregar dados iniciais', 'danger');
+            }
+        }
+        
+        // Carregar setores
+        async function loadSectors() {
+            try {
+                const response = await fetch('/api/get_beta_sectors');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const sectorSelect = document.getElementById('sector-select');
+                    sectorSelect.innerHTML = '<option value="">Selecione um setor...</option>';
+                    
+                    data.sectors.forEach(sector => {
+                        const option = document.createElement('option');
+                        option.value = sector.value;
+                        option.textContent = `${sector.label} (${sector.companies_count} empresas, β=${sector.avg_beta})`;
+                        sectorSelect.appendChild(option);
+                    });
+                    
+                    updateDataStatus('sectors', 'success', `${data.total_sectors} setores`);
+                } else {
+                    updateDataStatus('sectors', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar setores:', error);
+                updateDataStatus('sectors', 'error', 'Erro de conexão');
+            }
+        }
+        
+        // Carregar países
+        async function loadCountries() {
+            try {
+                const response = await fetch('/api/get_country_risk_options');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const countrySelect = document.getElementById('country-select');
+                    countrySelect.innerHTML = '<option value="">Selecione um país...</option>';
+                    
+                    // Adicionar países principais
+                    if (data.countries.principais.length > 0) {
+                        const principaisGroup = document.createElement('optgroup');
+                        principaisGroup.label = 'Principais';
+                        data.countries.principais.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.value;
+                            option.textContent = `${country.label} (${country.risk_premium}%)`;
+                            principaisGroup.appendChild(option);
+                        });
+                        countrySelect.appendChild(principaisGroup);
+                    }
+                    
+                    // Adicionar outros países
+                    if (data.countries.outros.length > 0) {
+                        const outrosGroup = document.createElement('optgroup');
+                        outrosGroup.label = 'Outros';
+                        data.countries.outros.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.value;
+                            option.textContent = `${country.label} (${country.risk_premium}%)`;
+                            outrosGroup.appendChild(option);
+                        });
+                        countrySelect.appendChild(outrosGroup);
+                    }
+                    
+                    // Selecionar Brasil por padrão
+                    countrySelect.value = 'Brazil';
+                    await updateCountryRisk();
+                    
+                    updateDataStatus('countries', 'success', `${data.total_countries} países`);
+                } else {
+                    updateDataStatus('countries', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar países:', error);
+                updateDataStatus('countries', 'error', 'Erro de conexão');
+            }
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Mudança de setor
+            document.getElementById('sector-select').addEventListener('change', updateSectorBeta);
+            
+            // Mudança de região
+            document.getElementById('region-select').addEventListener('change', updateSectorBeta);
+            
+            // Mudança de país
+            document.getElementById('country-select').addEventListener('change', updateCountryRisk);
+            
+            // Mudança de peso do patrimônio
+            document.getElementById('weight-equity').addEventListener('input', function() {
+                const equity = parseFloat(this.value) || 0;
+                document.getElementById('weight-debt').value = 100 - equity;
+            });
+            
+            // Opções de beta
+            document.querySelectorAll('input[name="beta-option"]').forEach(radio => {
+                radio.addEventListener('change', handleBetaOptionChange);
+            });
+            
+            // Botão calcular
+            document.getElementById('calculate-wacc-btn').addEventListener('click', calculateWACC);
+            
+            // Botão limpar
+            document.getElementById('reset-form-btn').addEventListener('click', resetForm);
+            
+            // Botão validar
+            document.getElementById('validate-data-btn').addEventListener('click', validateData);
+        }
+        
+        // Atualizar beta do setor
+        async function updateSectorBeta() {
+            const sector = document.getElementById('sector-select').value;
+            const region = document.getElementById('region-select').value;
+            
+            if (!sector) return;
+            
+            try {
+                const response = await fetch(`/api/get_sector_beta?sector=${encodeURIComponent(sector)}&region=${region}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('levered-beta').value = data.levered_beta;
+                    document.getElementById('unlevered-beta').value = data.unlevered_beta;
+                    document.getElementById('debt-equity-ratio').value = data.debt_equity_ratio;
+                    
+                    document.getElementById('beta-companies-info').textContent = 
+                        `Baseado em ${data.companies_count} empresas (${data.data_quality})`;
+                    
+                    // Atualizar indicador de qualidade
+                    const qualityIndicator = document.getElementById('beta-quality');
+                    qualityIndicator.className = `data-quality-indicator quality-${data.data_quality}`;
+                    
+                    updateDataStatus('beta', 'success', `${data.companies_count} empresas`);
+                } else {
+                    updateDataStatus('beta', 'error', data.error);
+                    // Usar beta padrão
+                    document.getElementById('unlevered-beta').value = data.fallback_beta || 1.0;
+                }
+            } catch (error) {
+                console.error('Erro ao obter beta do setor:', error);
+                updateDataStatus('beta', 'error', 'Erro de conexão');
+            }
+        }
+        
+        // Atualizar risco do país
+        async function updateCountryRisk() {
+            const country = document.getElementById('country-select').value;
+            
+            if (!country) return;
+            
+            try {
+                const response = await fetch(`/api/get_country_risk?country=${encodeURIComponent(country)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('country-risk-premium').value = data.risk_premium_percentage;
+                    document.getElementById('country-source').innerHTML = 
+                        `${data.source} - ${data.last_updated} <span class="badge bg-success auto-update-badge">AUTO</span>`;
+                } else {
+                    document.getElementById('country-risk-premium').value = (data.fallback_premium * 100).toFixed(2);
+                }
+            } catch (error) {
+                console.error('Erro ao obter risco do país:', error);
+            }
+        }
+        
+        // Calcular WACC
+        function calculateWACC() {
+            try {
+                // Obter valores dos campos
+                const riskFreeRate = parseFloat(document.getElementById('risk-free-rate').value) / 100;
+                const beta = parseFloat(document.getElementById('unlevered-beta').value);
+                const marketRiskPremium = parseFloat(document.getElementById('market-risk-premium').value) / 100;
+                const countryRiskPremium = parseFloat(document.getElementById('country-risk-premium').value) / 100;
+                const weightEquity = parseFloat(document.getElementById('weight-equity').value) / 100;
+                const weightDebt = parseFloat(document.getElementById('weight-debt').value) / 100;
+                const costOfDebt = parseFloat(document.getElementById('cost-of-debt').value) / 100;
+                const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+                
+                // Validar inputs
+                if (isNaN(riskFreeRate) || isNaN(beta) || isNaN(marketRiskPremium) || isNaN(countryRiskPremium)) {
+                    showAlert('Por favor, preencha todos os campos obrigatórios', 'warning');
+                    return;
+                }
+                
+                // Calcular custo do patrimônio líquido
+                const costOfEquity = riskFreeRate + beta * marketRiskPremium + countryRiskPremium;
+                
+                // Calcular custo da dívida após impostos
+                const afterTaxCostOfDebt = costOfDebt * (1 - taxRate);
+                
+                // Calcular WACC
+                const wacc = (weightEquity * costOfEquity) + (weightDebt * afterTaxCostOfDebt);
+                
+                // Exibir resultados
+                document.getElementById('wacc-percentage').textContent = (wacc * 100).toFixed(2) + '%';
+                document.getElementById('cost-of-equity').textContent = (costOfEquity * 100).toFixed(2) + '%';
+                document.getElementById('after-tax-cost-debt').textContent = (afterTaxCostOfDebt * 100).toFixed(2) + '%';
+                document.getElementById('wacc-detail').textContent = (wacc * 100).toFixed(2) + '%';
+                
+                // Mostrar cards de resultado
+                document.getElementById('wacc-result').style.display = 'block';
+                document.getElementById('components-detail').style.display = 'block';
+                
+                showAlert('WACC calculado com sucesso!', 'success');
+                
+            } catch (error) {
+                console.error('Erro no cálculo do WACC:', error);
+                showAlert('Erro no cálculo do WACC', 'danger');
+            }
+        }
+        
+        // Funções auxiliares
+        function updateDataStatus(component, status, message) {
+            // Implementar atualização do status dos dados
+            console.log(`${component}: ${status} - ${message}`);
+        }
+        
+        function showAlert(message, type) {
+            // Implementar sistema de alertas
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+        
+        function resetForm() {
+            // Implementar reset do formulário
+            document.getElementById('wacc-result').style.display = 'none';
+            document.getElementById('components-detail').style.display = 'none';
+        }
+        
+        async function validateData() {
+            // Implementar validação dos dados
+            try {
+                const response = await fetch('/api/validate_wacc_data');
+                const data = await response.json();
+                console.log('Validação dos dados:', data);
+            } catch (error) {
+                console.error('Erro na validação:', error);
+            }
+        }
+        
+        // Outras funções auxiliares...
+        async function loadRiskFreeRate() {
+            try {
+                const response = await fetch('/api/get_risk_free_rate?term=10y');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('risk-free-rate').value = data.rate_percentage;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar taxa livre de risco:', error);
+            }
+        }
+        
+        async function loadMarketRiskPremium() {
+            try {
+                const response = await fetch('/api/get_market_risk_premium');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('market-risk-premium').value = data.market_risk_premium_percentage;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar prêmio de risco de mercado:', error);
+            }
+        }
+        
+        function handleBetaOptionChange() {
+            const selectedOption = document.querySelector('input[name="beta-option"]:checked').value;
+            const sectorSelection = document.getElementById('sector-selection');
+            
+            if (selectedOption === 'sectoral') {
+                sectorSelection.style.display = 'block';
+                document.getElementById('unlevered-beta').readOnly = true;
+            } else if (selectedOption === 'custom') {
+                sectorSelection.style.display = 'none';
+                document.getElementById('unlevered-beta').readOnly = false;
+                document.getElementById('unlevered-beta').value = 1.0;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}WACC Calculator - Início{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-calculator me-3"></i>
+                    WACC Calculator
+                </h1>
+                <p class="lead mb-4">
+                    Sistema automatizado para cálculo do Custo Médio Ponderado de Capital (WACC)
+                </p>
+                <p class="mb-4">
+                    Integra dados em tempo real do FRED, Banco Central do Brasil, Damodaran e outras fontes confiáveis
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{{ url_for('calculator_page') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular WACC
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Ver Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Principais Funcionalidades</h2>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-sync-alt fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Dados em Tempo Real</h5>
+                <p class="card-text">
+                    Extração automática de dados do FRED (Federal Reserve), 
+                    Banco Central do Brasil, e Professor Damodaran (NYU Stern).
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-industry fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Análise Setorial</h5>
+                <p class="card-text">
+                    Cálculo específico por setor com betas, estrutura de capital 
+                    e taxas de imposto atualizadas automaticamente.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-cogs fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Personalização</h5>
+                <p class="card-text">
+                    Permite ajustes manuais de qualquer componente do WACC 
+                    para análises específicas e cenários customizados.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WACC Components Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Componentes do WACC</h2>
+        <p class="text-center text-muted mb-4">
+            O sistema calcula automaticamente todos os componentes necessários para o WACC
+        </p>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-percentage me-2"></i>
+                    Custo do Patrimônio Líquido
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Taxa Livre de Risco (Treasury)</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Beta do Setor</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Prêmio de Risco de Mercado</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Prêmio de Risco País</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Prêmio de Tamanho</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    Custo da Dívida
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Taxa Selic (Brasil)</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Spread de Crédito</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Taxa de Imposto</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Estrutura de Capital</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Benefício Fiscal</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Sources Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Fontes de Dados</h2>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-university fa-2x text-primary"></i>
+                </div>
+                <h6 class="card-title">FRED</h6>
+                <p class="card-text small">
+                    Federal Reserve Economic Data
+                    <br>
+                    <small class="text-muted">Treasury, Inflação, PIB</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-landmark fa-2x text-success"></i>
+                </div>
+                <h6 class="card-title">BCB</h6>
+                <p class="card-text small">
+                    Banco Central do Brasil
+                    <br>
+                    <small class="text-muted">Selic, IPCA, Câmbio</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-graduation-cap fa-2x text-warning"></i>
+                </div>
+                <h6 class="card-title">Damodaran</h6>
+                <p class="card-text small">
+                    NYU Stern School
+                    <br>
+                    <small class="text-muted">Betas, Risco País, ERP</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-globe fa-2x text-info"></i>
+                </div>
+                <h6 class="card-title">Web Scraping</h6>
+                <p class="card-text small">
+                    Múltiplas Fontes
+                    <br>
+                    <small class="text-muted">Dados Complementares</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Status do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="d-flex flex-column">
+                            <span class="h4 text-primary mb-1" id="total-extractors">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                            <small class="text-muted">Extratores Ativos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="d-flex flex-column">
+                            <span class="h4 text-success mb-1" id="successful-extractions">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                            <small class="text-muted">Extrações Bem-sucedidas</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="d-flex flex-column">
+                            <span class="h4 text-info mb-1" id="last-update">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                            <small class="text-muted">Última Atualização</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="d-flex flex-column">
+                            <span class="h4 text-warning mb-1" id="system-status">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                            <small class="text-muted">Status Geral</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Getting Started Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-rocket me-2"></i>
+                    Como Começar
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <strong>1</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6>Acesse a Calculadora</h6>
+                                <p class="mb-0 small text-muted">
+                                    Clique em "Calcular WACC" para acessar a interface de cálculo.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <strong>2</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6>Configure os Parâmetros</h6>
+                                <p class="mb-0 small text-muted">
+                                    Selecione o setor, país e ajuste componentes conforme necessário.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <strong>3</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6>Obtenha o Resultado</h6>
+                                <p class="mb-0 small text-muted">
+                                    Visualize o WACC calculado e todos os componentes detalhados.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carregar status do sistema na página inicial
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemStatus();
+});
+
+function loadSystemStatus() {
+    fetch('/api/health')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateSystemStats(data);
+            } else {
+                showSystemError();
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar status:', error);
+            showSystemError();
+        });
+}
+
+function updateSystemStats(data) {
+    const extractors = data.extractors || {};
+    const totalExtractors = Object.keys(extractors).length;
+    const successfulExtractions = Object.values(extractors).filter(e => e.status === 'healthy').length;
+    
+    document.getElementById('total-extractors').textContent = totalExtractors;
+    document.getElementById('successful-extractions').textContent = successfulExtractions;
+    
+    // Última atualização
+    const lastUpdate = new Date(data.timestamp);
+    document.getElementById('last-update').textContent = lastUpdate.toLocaleTimeString('pt-BR');
+    
+    // Status geral
+    const statusElement = document.getElementById('system-status');
+    if (data.status === 'healthy') {
+        statusElement.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+        statusElement.className = 'h4 text-success mb-1';
+    } else {
+        statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i>';
+        statusElement.className = 'h4 text-warning mb-1';
+    }
+}
+
+function showSystemError() {
+    document.getElementById('total-extractors').innerHTML = '<i class="fas fa-times text-danger"></i>';
+    document.getElementById('successful-extractions').innerHTML = '<i class="fas fa-times text-danger"></i>';
+    document.getElementById('last-update').textContent = 'Erro';
+    document.getElementById('system-status').innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+}
+</script>
+{% endblock %}

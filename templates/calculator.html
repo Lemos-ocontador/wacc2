@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block title %}WACC Calculator - Calculadora{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-calculator me-2"></i>
+                Calculadora WACC
+            </h2>
+            <div>
+                <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                    <i class="fas fa-undo me-2"></i>
+                    Limpar
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="loadExample()">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Exemplo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulário de Entrada -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Parâmetros de Entrada
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="wacc-form">
+                    <!-- Configurações Básicas -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-sliders-h me-2"></i>
+                            Configurações Básicas
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sector" class="form-label">Setor</label>
+                                <select class="form-select" id="sector" name="sector">
+                                    <option value="">Selecione um setor...</option>
+                                </select>
+                                <div class="form-text">Setor para obter beta e estrutura de capital</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="country" class="form-label">País</label>
+                                <select class="form-select" id="country" name="country">
+                                    <option value="Brazil">Brasil</option>
+                                    <option value="United States">Estados Unidos</option>
+                                </select>
+                                <div class="form-text">País para risco país e taxa livre de risco</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="use-auto-data" name="use_auto_data" checked>
+                                <label class="form-check-label" for="use-auto-data">
+                                    Usar dados automáticos das fontes externas
+                                </label>
+                                <div class="form-text">Desmarque para inserir valores manualmente</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Componentes do Custo do Patrimônio Líquido -->
+                    <div class="mb-4">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-percentage me-2"></i>
+                            Custo do Patrimônio Líquido
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="risk-free-rate" class="form-label">Taxa Livre de Risco (%)</label>
+                                <input type="number" class="form-control" id="risk-free-rate" name="risk_free_rate" step="0.01" min="0">
+                                <div class="form-text">Treasury 10Y (automático se disponível)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="beta" class="form-label">Beta</label>
+                                <input type="number" class="form-control" id="beta" name="beta" step="0.01" min="0">
+                                <div class="form-text">Beta do setor (automático se disponível)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="market-risk-premium" class="form-label">Prêmio de Risco de Mercado (%)</label>
+                                <input type="number" class="form-control" id="market-risk-premium" name="market_risk_premium" step="0.01" min="0">
+                                <div class="form-text">ERP (automático se disponível)</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="country-risk-premium" class="form-label">Prêmio de Risco País (%)</label>
+                                <input type="number" class="form-control" id="country-risk-premium" name="country_risk_premium" step="0.01" min="0">
+                                <div class="form-text">Risco país (automático se disponível)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="size-premium" class="form-label">Prêmio de Tamanho (%)</label>
+                                <input type="number" class="form-control" id="size-premium" name="size_premium" step="0.01" min="0" value="0">
+                                <div class="form-text">Prêmio adicional para empresas pequenas</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Componentes do Custo da Dívida -->
+                    <div class="mb-4">
+                        <h6 class="text-warning mb-3">
+                            <i class="fas fa-money-bill-wave me-2"></i>
+                            Custo da Dívida
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cost-of-debt" class="form-label">Custo da Dívida (%)</label>
+                                <input type="number" class="form-control" id="cost-of-debt" name="cost_of_debt" step="0.01" min="0">
+                                <div class="form-text">Taxa de juros da dívida</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="tax-rate" class="form-label">Taxa de Imposto (%)</label>
+                                <input type="number" class="form-control" id="tax-rate" name="tax_rate" step="0.01" min="0" max="100">
+                                <div class="form-text">Taxa marginal de imposto</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Estrutura de Capital -->
+                    <div class="mb-4">
+                        <h6 class="text-info mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Estrutura de Capital
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="debt-ratio" class="form-label">Proporção da Dívida (%)</label>
+                                <input type="number" class="form-control" id="debt-ratio" name="debt_ratio" step="0.01" min="0" max="100">
+                                <div class="form-text">D/(D+E) em valor de mercado</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="equity-ratio" class="form-label">Proporção do PL (%)</label>
+                                <input type="number" class="form-control" id="equity-ratio" name="equity_ratio" step="0.01" min="0" max="100" readonly>
+                                <div class="form-text">E/(D+E) - calculado automaticamente</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-calculator me-2"></i>
+                            Calcular WACC
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resultados -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Resultados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="results-container" class="text-center text-muted py-5" style="display: none;">
+                    <i class="fas fa-calculator fa-3x mb-3"></i>
+                    <p>Preencha os parâmetros e clique em "Calcular WACC" para ver os resultados.</p>
+                </div>
+                
+                <div id="loading-container" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Calculando...</span>
+                    </div>
+                    <p>Calculando WACC...</p>
+                </div>
+                
+                <div id="wacc-results" style="display: none;">
+                    <!-- WACC Principal -->
+                    <div class="alert alert-success text-center mb-4">
+                        <h3 class="mb-2">
+                            <i class="fas fa-trophy me-2"></i>
+                            WACC = <span id="wacc-value">-</span>%
+                        </h3>
+                        <p class="mb-0">Custo Médio Ponderado de Capital</p>
+                    </div>
+                    
+                    <!-- Breakdown dos Componentes -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-success">
+                                        <i class="fas fa-percentage me-2"></i>
+                                        Custo do PL
+                                    </h6>
+                                    <h4 id="cost-of-equity-result" class="text-success">-</h4>
+                                    <small class="text-muted">Peso: <span id="equity-weight">-</span>%</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-warning">
+                                        <i class="fas fa-money-bill-wave me-2"></i>
+                                        Custo da Dívida (após IR)
+                                    </h6>
+                                    <h4 id="after-tax-cost-of-debt-result" class="text-warning">-</h4>
+                                    <small class="text-muted">Peso: <span id="debt-weight">-</span>%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detalhamento dos Componentes -->
+                    <div class="accordion" id="components-accordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="equity-heading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#equity-collapse">
+                                    <i class="fas fa-percentage me-2"></i>
+                                    Detalhes do Custo do Patrimônio Líquido
+                                </button>
+                            </h2>
+                            <div id="equity-collapse" class="accordion-collapse collapse" data-bs-parent="#components-accordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Taxa Livre de Risco:</strong><br>
+                                            <span id="rf-detail">-</span>%
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Beta:</strong><br>
+                                            <span id="beta-detail">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <strong>Prêmio de Risco de Mercado:</strong><br>
+                                            <span id="mrp-detail">-</span>%
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Prêmio de Risco País:</strong><br>
+                                            <span id="crp-detail">-</span>%
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <strong>Prêmio de Tamanho:</strong><br>
+                                            <span id="size-detail">-</span>%
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="text-center">
+                                        <strong>Fórmula: Rf + β × (MRP + CRP) + Size Premium</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="debt-heading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#debt-collapse">
+                                    <i class="fas fa-money-bill-wave me-2"></i>
+                                    Detalhes do Custo da Dívida
+                                </button>
+                            </h2>
+                            <div id="debt-collapse" class="accordion-collapse collapse" data-bs-parent="#components-accordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Custo da Dívida (antes IR):</strong><br>
+                                            <span id="debt-before-tax-detail">-</span>%
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Taxa de Imposto:</strong><br>
+                                            <span id="tax-detail">-</span>%
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="text-center">
+                                        <strong>Fórmula: Custo da Dívida × (1 - Taxa de Imposto)</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ações -->
+                    <div class="mt-4 d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-primary" onclick="saveCalculation()">
+                            <i class="fas fa-save me-2"></i>
+                            Salvar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="exportResults()">
+                            <i class="fas fa-download me-2"></i>
+                            Exportar
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="shareResults()">
+                            <i class="fas fa-share me-2"></i>
+                            Compartilhar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// currentCalculation já está declarada em app.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSectors();
+    setupFormHandlers();
+    showInitialState();
+});
+
+function loadSectors() {
+    fetch('/api/get_sectors')
+        .then(response => response.json())
+        .then(data => {
+            const sectorSelect = document.getElementById('sector');
+            sectorSelect.innerHTML = '<option value="">Selecione um setor...</option>';
+            
+            if (data.success && data.sectors) {
+                data.sectors.forEach(sector => {
+                    const option = document.createElement('option');
+                    option.value = sector;
+                    option.textContent = sector;
+                    sectorSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar setores:', error);
+            showToast('Erro ao carregar lista de setores', 'error');
+        });
+}
+
+function setupFormHandlers() {
+    const form = document.getElementById('wacc-form');
+    const useAutoData = document.getElementById('use-auto-data');
+    const debtRatio = document.getElementById('debt-ratio');
+    const equityRatio = document.getElementById('equity-ratio');
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        calculateWACC();
+    });
+    
+    // Auto data toggle
+    useAutoData.addEventListener('change', function() {
+        toggleAutoDataFields(this.checked);
+    });
+    
+    // Debt/Equity ratio sync
+    debtRatio.addEventListener('input', function() {
+        const debt = parseFloat(this.value) || 0;
+        equityRatio.value = (100 - debt).toFixed(2);
+    });
+}
+
+function toggleAutoDataFields(useAuto) {
+    const fields = [
+        'risk-free-rate', 'beta', 'market-risk-premium', 
+        'country-risk-premium', 'cost-of-debt', 'tax-rate', 'debt-ratio'
+    ];
+    
+    fields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (useAuto) {
+            field.setAttribute('placeholder', 'Será preenchido automaticamente');
+            field.removeAttribute('required');
+        } else {
+            field.setAttribute('placeholder', 'Digite o valor');
+            field.setAttribute('required', 'required');
+        }
+    });
+}
+
+function calculateWACC() {
+    showLoading();
+    
+    const formData = new FormData(document.getElementById('wacc-form'));
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox
+    data.use_auto_data = document.getElementById('use-auto-data').checked;
+    
+    fetch('/api/calculate-wacc', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            displayResults(data.result);
+            currentCalculation = data.result;
+        } else {
+            showToast('Erro no cálculo: ' + (data.error || 'Erro desconhecido'), 'error');
+            showInitialState();
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Erro:', error);
+        showToast('Erro ao calcular WACC', 'error');
+        showInitialState();
+    });
+}
+
+function displayResults(result) {
+    // WACC principal
+    document.getElementById('wacc-value').textContent = formatNumber(result.wacc * 100, 2);
+    
+    // Componentes principais
+    document.getElementById('cost-of-equity-result').textContent = formatNumber(result.cost_of_equity * 100, 2) + '%';
+    document.getElementById('after-tax-cost-of-debt-result').textContent = formatNumber(result.after_tax_cost_of_debt * 100, 2) + '%';
+    
+    // Pesos
+    document.getElementById('equity-weight').textContent = formatNumber(result.equity_weight * 100, 1);
+    document.getElementById('debt-weight').textContent = formatNumber(result.debt_weight * 100, 1);
+    
+    // Detalhes do custo do patrimônio líquido
+    document.getElementById('rf-detail').textContent = formatNumber(result.components.risk_free_rate * 100, 2);
+    document.getElementById('beta-detail').textContent = formatNumber(result.components.beta, 2);
+    document.getElementById('mrp-detail').textContent = formatNumber(result.components.market_risk_premium * 100, 2);
+    document.getElementById('crp-detail').textContent = formatNumber(result.components.country_risk_premium * 100, 2);
+    document.getElementById('size-detail').textContent = formatNumber(result.components.size_premium * 100, 2);
+    
+    // Detalhes do custo da dívida
+    document.getElementById('debt-before-tax-detail').textContent = formatNumber(result.components.cost_of_debt * 100, 2);
+    document.getElementById('tax-detail').textContent = formatNumber(result.components.tax_rate * 100, 2);
+    
+    showResults();
+}
+
+function showInitialState() {
+    document.getElementById('results-container').style.display = 'block';
+    document.getElementById('loading-container').style.display = 'none';
+    document.getElementById('wacc-results').style.display = 'none';
+}
+
+function showLoading() {
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('loading-container').style.display = 'block';
+    document.getElementById('wacc-results').style.display = 'none';
+}
+
+function hideLoading() {
+    document.getElementById('loading-container').style.display = 'none';
+}
+
+function showResults() {
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('loading-container').style.display = 'none';
+    document.getElementById('wacc-results').style.display = 'block';
+}
+
+function resetForm() {
+    document.getElementById('wacc-form').reset();
+    document.getElementById('use-auto-data').checked = true;
+    toggleAutoDataFields(true);
+    showInitialState();
+    currentCalculation = null;
+}
+
+function loadExample() {
+    // Exemplo com dados típicos do mercado brasileiro
+    document.getElementById('sector').value = 'Banks';
+    document.getElementById('country').value = 'Brazil';
+    document.getElementById('use-auto-data').checked = false;
+    
+    // Dados de exemplo
+    document.getElementById('risk-free-rate').value = '4.5';
+    document.getElementById('beta').value = '1.2';
+    document.getElementById('market-risk-premium').value = '6.0';
+    document.getElementById('country-risk-premium').value = '2.5';
+    document.getElementById('size-premium').value = '0.0';
+    document.getElementById('cost-of-debt').value = '12.0';
+    document.getElementById('tax-rate').value = '34.0';
+    document.getElementById('debt-ratio').value = '30.0';
+    document.getElementById('equity-ratio').value = '70.0';
+    
+    toggleAutoDataFields(false);
+    showToast('Exemplo carregado com dados típicos do mercado brasileiro', 'success');
+}
+
+function saveCalculation() {
+    if (!currentCalculation) {
+        showToast('Nenhum cálculo para salvar', 'warning');
+        return;
+    }
+    
+    // Implementar salvamento
+    showToast('Funcionalidade de salvamento será implementada', 'info');
+}
+
+function exportResults() {
+    if (!currentCalculation) {
+        showToast('Nenhum resultado para exportar', 'warning');
+        return;
+    }
+    
+    // Criar dados para exportação
+    const exportData = {
+        timestamp: new Date().toISOString(),
+        wacc: currentCalculation.wacc,
+        components: currentCalculation.components,
+        calculation_details: currentCalculation
+    };
+    
+    // Download como JSON
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wacc_calculation_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Resultados exportados com sucesso', 'success');
+}
+
+function shareResults() {
+    if (!currentCalculation) {
+        showToast('Nenhum resultado para compartilhar', 'warning');
+        return;
+    }
+    
+    const shareText = `WACC Calculado: ${formatNumber(currentCalculation.wacc * 100, 2)}%\n` +
+                     `Custo do PL: ${formatNumber(currentCalculation.cost_of_equity * 100, 2)}%\n` +
+                     `Custo da Dívida (após IR): ${formatNumber(currentCalculation.after_tax_cost_of_debt * 100, 2)}%`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Resultado WACC',
+            text: shareText
+        });
+    } else {
+        // Fallback: copiar para clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+            showToast('Resultados copiados para a área de transferência', 'success');
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,190 @@
+{
+  "catalog_info": {
+    "created_date": "2025-09-24T00:19:18.596430",
+    "total_sources": 12,
+    "api_sources": 5,
+    "description": "Catálogo de fontes de dados para automação do cálculo do WACC"
+  },
+  "wacc_formula": {
+    "formula": "WACC = (E/V × Re) + (D/V × Rd × (1-T))",
+    "components": {
+      "Re": {
+        "name": "Cost of Equity (Custo do Capital Próprio)",
+        "formula": "Re = Rf + β × (MRP + CRP) + SP",
+        "subcomponents": {
+          "Rf": "Risk-Free Rate (Taxa Livre de Risco)",
+          "β": "Beta (Risco Sistemático)",
+          "MRP": "Market Risk Premium (Prêmio de Risco de Mercado)",
+          "CRP": "Country Risk Premium (Prêmio de Risco País)",
+          "SP": "Size Premium (Prêmio por Tamanho)"
+        }
+      },
+      "Rd": {
+        "name": "Cost of Debt (Custo do Capital de Terceiros)",
+        "formula": "Rd = Risk-Free Rate + Credit Spread",
+        "notes": "Pode usar múltiplo da Selic (ex: 1.5 × Selic)"
+      },
+      "E/V": {
+        "name": "Equity Weight (Peso do Capital Próprio)",
+        "formula": "E / (E + D)",
+        "source": "Market Cap / Enterprise Value"
+      },
+      "D/V": {
+        "name": "Debt Weight (Peso do Capital de Terceiros)",
+        "formula": "D / (E + D)",
+        "source": "Total Debt / Enterprise Value"
+      },
+      "T": {
+        "name": "Tax Rate (Alíquota de Imposto)",
+        "value": "34% (Brasil - IRPJ + CSLL)",
+        "notes": "Pode variar por país e empresa"
+      }
+    }
+  },
+  "data_sources": [
+    {
+      "name": "US Treasury 10-Year Bond Yield",
+      "url": "https://fred.stlouisfed.org/series/DGS10",
+      "data_type": "Taxa de Juros",
+      "wacc_component": "Risk-Free Rate (Rf)",
+      "update_frequency": "Diário",
+      "extraction_method": "FRED API",
+      "description": "Taxa do título do tesouro americano de 10 anos - proxy para taxa livre de risco",
+      "api_available": true,
+      "requires_auth": true,
+      "notes": "Fonte oficial do Federal Reserve. API gratuita com registro."
+    },
+    {
+      "name": "US Treasury 30-Year Bond Yield",
+      "url": "https://br.investing.com/rates-bonds/u.s.-10-year-bond-yield-historical-data",
+      "data_type": "Taxa de Juros",
+      "wacc_component": "Risk-Free Rate (Rf)",
+      "update_frequency": "Diário",
+      "extraction_method": "Web Scraping",
+      "description": "Taxa do título do tesouro americano de 30 anos - alternativa para Rf",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Backup para dados do Treasury. Requer web scraping."
+    },
+    {
+      "name": "Damodaran Market Risk Premium",
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html",
+      "data_type": "Prêmio de Risco",
+      "wacc_component": "Market Risk Premium (MRP)",
+      "update_frequency": "Anual",
+      "extraction_method": "Web Scraping + Excel Download",
+      "description": "Prêmio de risco de mercado calculado por Damodaran (NYU Stern)",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Fonte acadêmica reconhecida. Dados históricos desde 1928."
+    },
+    {
+      "name": "Damodaran Country Risk Premiums",
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html",
+      "data_type": "Risco País",
+      "wacc_component": "Country Risk Premium (CRP)",
+      "update_frequency": "Anual",
+      "extraction_method": "Web Scraping + Excel Download",
+      "description": "Prêmios de risco por país calculados por Damodaran",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Já implementado no sistema atual. Dados para 200+ países."
+    },
+    {
+      "name": "Damodaran Industry Betas",
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html",
+      "data_type": "Beta Setorial",
+      "wacc_component": "Beta (β)",
+      "update_frequency": "Anual",
+      "extraction_method": "Web Scraping + Excel Download",
+      "description": "Betas por setor de atividade calculados por Damodaran",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Dados globais por setor. Inclui beta alavancado e desalavancado."
+    },
+    {
+      "name": "Damodaran Global Company Data",
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html",
+      "data_type": "Dados Empresariais",
+      "wacc_component": "Beta, D/E Ratio, Tax Rate",
+      "update_frequency": "Anual",
+      "extraction_method": "Web Scraping + Excel Download",
+      "description": "Dados financeiros de empresas globais (globalcompfirms{year}.xlsx)",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Já implementado no sistema atual. Dados de 40,000+ empresas."
+    },
+    {
+      "name": "Damodaran Size Premiums",
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html",
+      "data_type": "Prêmio por Tamanho",
+      "wacc_component": "Size Premium (SP)",
+      "update_frequency": "Anual",
+      "extraction_method": "Web Scraping + Excel Download",
+      "description": "Prêmios de risco baseados no tamanho da empresa",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Dados por faixa de market cap. Usado para ajustar o custo de capital próprio."
+    },
+    {
+      "name": "US Consumer Price Index (CPI)",
+      "url": "https://fred.stlouisfed.org/series/FPCPITOTLZGUSA/",
+      "data_type": "Inflação",
+      "wacc_component": "Inflation Adjustment",
+      "update_frequency": "Mensal",
+      "extraction_method": "FRED API",
+      "description": "Índice de preços ao consumidor americano - inflação",
+      "api_available": true,
+      "requires_auth": true,
+      "notes": "Usado para ajustes de inflação entre países."
+    },
+    {
+      "name": "Philadelphia Fed CPI Expectations",
+      "url": "https://www.philadelphiafed.org/surveys-and-data/cpi-spf",
+      "data_type": "Expectativa de Inflação",
+      "wacc_component": "Inflation Adjustment",
+      "update_frequency": "Trimestral",
+      "extraction_method": "Web Scraping",
+      "description": "Expectativas de inflação do Philadelphia Fed",
+      "api_available": false,
+      "requires_auth": false,
+      "notes": "Dados prospectivos de inflação."
+    },
+    {
+      "name": "IPCA - Banco Central do Brasil",
+      "url": "https://www3.bcb.gov.br/sgspub/",
+      "data_type": "Inflação",
+      "wacc_component": "Inflation Adjustment",
+      "update_frequency": "Mensal",
+      "extraction_method": "BCB API",
+      "description": "Índice de Preços ao Consumidor Amplo - inflação brasileira",
+      "api_available": true,
+      "requires_auth": false,
+      "notes": "API gratuita do Banco Central. Série 433 (IPCA mensal)."
+    },
+    {
+      "name": "Taxa Selic - Banco Central do Brasil",
+      "url": "https://www3.bcb.gov.br/sgspub/",
+      "data_type": "Taxa de Juros",
+      "wacc_component": "Cost of Debt (Kd)",
+      "update_frequency": "Diário",
+      "extraction_method": "BCB API",
+      "description": "Taxa básica de juros da economia brasileira",
+      "api_available": true,
+      "requires_auth": false,
+      "notes": "API gratuita do Banco Central. Série 432 (Selic diária)."
+    },
+    {
+      "name": "Focus - Relatório de Mercado (BCB)",
+      "url": "https://www3.bcb.gov.br/sgspub/",
+      "data_type": "Expectativas Macroeconômicas",
+      "wacc_component": "Economic Projections",
+      "update_frequency": "Semanal",
+      "extraction_method": "BCB API",
+      "description": "Expectativas do mercado para indicadores macroeconômicos",
+      "api_available": true,
+      "requires_auth": false,
+      "notes": "Inclui expectativas de IPCA, PIB, Selic, etc."
+    }
+  ]
+}

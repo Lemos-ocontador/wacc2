@@ -1,0 +1,25 @@
+_old_scripts/
+__pycache__/
+.venv/
+*.pyc
+wacc4/
+
+# Bancos de dados (muito grandes para GitHub)
+*.db
+data/damodaran_data/
+data/*.db
+data/*backup*
+
+# Backups
+backups/
+
+# Cache
+cache/
+
+# Arquivos grandes
+*.xlsx
+*.csv
+*.xls
+
+# Banco na raiz
+damodaran_data_new.db
