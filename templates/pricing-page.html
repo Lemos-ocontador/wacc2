@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WACC Platform - Cálculo Preciso e Automatizado</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome para ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts - Roboto para corpo e Montserrat para títulos -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Personalizado -->
+    <style>
+        :root {
+            --primary-color: #1a237e;    /* Azul escuro para confiança */
+            --secondary-color: #0d47a1;  /* Azul médio para elementos secundários */
+            --accent-color: #2962ff;     /* Azul brilhante para destaques */
+            --text-color: #212121;       /* Quase preto para texto principal */
+            --light-text: #484848;       /* Cinza escuro para texto secundário */
+            --background: #fafafa;       /* Branco levemente acinzentado para fundo */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-color);
+            background-color: var(--background);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255,255,255,0.9) !important;
+        }
+
+        .search-box {
+            max-width: 300px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .btn-outline-primary {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .auth-buttons .btn {
+            margin-left: 8px;
+        }
+
+        .social-login {
+            font-size: 20px;
+        }
+
+        .social-login i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Logo/Brand -->
+            <a class="navbar-brand" href="#">WACC Platform</a>
+            
+            <!-- Toggle Button for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Navigation Links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="calculator-page.html">Calculadora</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="resourcesDropdown" role="button" data-bs-toggle="dropdown">
+                            Recursos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="features-page.html">Funcionalidades</a></li>
+                            <li><a class="dropdown-item" href="learning-center.html">Centro de Aprendizado</a></li>
+                            <li><a class="dropdown-item" href="cases-page.html">Cases de Sucesso</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pricing-page.html">Preços</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="companyDropdown" role="button" data-bs-toggle="dropdown">
+                            Empresa
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="about-page.html">Sobre Nós</a></li>
+                            <li><a class="dropdown-item" href="contact-page.html">Contato</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <!-- Search Box -->
+                <form class="d-flex search-box me-3">
+                    <div class="input-group">
+                        <input class="form-control" type="search" placeholder="Buscar..." aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Auth Buttons -->
+                <div class="auth-buttons d-flex align-items-center">
+                    <!-- Social Login Buttons -->
+                    <div class="social-login me-2">
+                        <button class="btn btn-outline-light btn-sm" title="Login com Google">
+                            <i class="fab fa-google"></i>
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" title="Login com LinkedIn">
+                            <i class="fab fa-linkedin"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Traditional Auth Buttons -->
+                    <a href="dashboard-page.html" class="btn btn-outline-light btn-sm">Entrar</a>
+                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#signupModal">Cadastrar</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pricing-hero">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">Planos para Cada Necessidade</h1>
+            <p class="lead mb-4">Escolha o plano ideal para sua empresa</p>
+            <div class="form-check form-switch d-flex justify-content-center align-items-center mb-4">
+                <label class="form-check-label me-3">Mensal</label>
+                <input class="form-check-input" type="checkbox" id="billingToggle">
+                <label class="form-check-label ms-3">Anual (20% de desconto)</label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <div class="container">
+        <div class="row">
+            <!-- Basic Plan -->
+            <div class="col-lg-4">
+                <div class="pricing-card card h-100">
+                    <div class="card-body p-5">
+                        <h3 class="card-title">Básico</h3>
+                        <div class="price-amount mt-4">
+                            R$ 99<span class="price-period">/mês</span>
+                        </div>
+                        <p class="text-muted">Para profissionais individuais</p>
+                        <hr>
+                        <ul class="feature-list list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Calculadora WACC básica</li>
+                            <li><i class="fas fa-check text-success"></i> 5 cálculos por mês</li>
+                            <li><i class="fas fa-check text-success"></i> Relatórios básicos</li>
+                            <li><i class="fas fa-check text-success"></i> Suporte por email</li>
+                        </ul>
+                        <button class="btn btn-outline-primary btn-lg w-100 mt-4">Começar Grátis</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Plan -->
+            <div class="col-lg-4">
+                <div class="pricing-card card h-100 popular">
+                    <div class="popular-badge">Mais Popular</div>
+                    <div class="card-body p-5">
+                        <h3 class="card-title">Profissional</h3>
+                        <div class="price-amount mt-4">
+                            R$ 199<span class="price-period">/mês</span>
+                        </div>
+                        <p class="text-muted">Para empresas e escritórios</p>
+                        <hr>
+                        <ul class="feature-list list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Tudo do plano Básico</li>
+                            <li><i class="fas fa-check text-success"></i> Cálculos ilimitados</li>
+                            <li><i class="fas fa-check text-success"></i> Análise setorial</li>
+                            <li><i class="fas fa-check text-success"></i> Benchmarks de mercado</li>
+                            <li><i class="fas fa-check text-success"></i> Relatórios personalizados</li>
+                            <li><i class="fas fa-check text-success"></i> Suporte prioritário</li>
+                        </ul>
+                        <button class="btn btn-primary btn-lg w-100 mt-4">Começar Trial Gratuito</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="col-lg-4">
+                <div class="pricing-card card h-100">
+                    <div class="card-body p-5">
+                        <h3 class="card-title">Enterprise</h3>
+                        <div class="price-amount mt-4">
+                            Sob Consulta
+                        </div>
+                        <p class="text-muted">Para grandes empresas</p>
+                        <hr>
+                        <ul class="feature-list list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Tudo do plano Profissional</li>
+                            <li><i class="fas fa-check text-success"></i> API de integração</li>
+                            <li><i class="fas fa-check text-success"></i> Múltiplos usuários</li>
+                            <li><i class="fas fa-check text-success"></i> Personalização total</li>
+                            <li><i class="fas fa-check text-success"></i> Treinamento dedicado</li>
+                            <li><i class="fas fa-check text-success"></i> Gerente de conta</li>
+                        </ul>
+                        <button class="btn btn-outline-primary btn-lg w-100 mt-4">Falar com Consultor</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <div class="container">
+                <h2 class="text-center mb-5">Perguntas Frequentes</h2>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="accordion" id="pricingFAQ">
+                            <!-- FAQ Item 1 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        Como funciona o período de teste?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#pricingFAQ">
+                                    <div class="accordion-body">
+                                        Oferecemos 14 dias de teste gratuito em todos os planos pagos. Durante este período, você terá acesso a todas as funcionalidades do plano escolhido, sem compromisso.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ Item 2 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Posso mudar de plano depois?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#pricingFAQ">
+                                    <div class="accordion-body">
+                                        Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As alterações serão refletidas na próxima cobrança.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ Item 3 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        Quais formas de pagamento são aceitas?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#pricingFAQ">
+                                    <div class="accordion-body">
+                                        Aceitamos cartões de crédito (Visa, Mastercard, American Express), boleto bancário e PIX para pagamentos no Brasil.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <div class="text-center py-5">
+            <h2>Ainda tem dúvidas?</h2>
+            <p class="lead mb-4">Nossa equipe está pronta para ajudar você a escolher o melhor plano</p>
+            <button class="btn btn-lg btn-primary me-3">Falar com Especialista</button>
+            <button class="btn btn-lg btn-outline-primary">Ver Demonstração</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle entre preços mensais e anuais
+        document.getElementById('billingToggle').addEventListener('change', function() {
+            // Aqui vai a lógica para alternar entre preços mensais e anuais
+        });
+    </script>
+</body>
+</html>

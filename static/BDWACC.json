@@ -1,0 +1,44 @@
+[
+    {
+        "Campo": "RF",
+        "Nome": "Remuneração do título livre de risco (T-bond americano 30 anos)",
+        "Valor": "4,14%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "RM",
+        "Nome": "Risco do mercado acionário Americano - Média geométrica de 1928 a 2020",
+        "Valor": "4,61%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "CR",
+        "Nome": "Risco Brasil (Damodaran)",
+        "Valor": "4,54%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "IA",
+        "Nome": "Inflação Americana (média desde 1820)",
+        "Valor": "2,03%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "IB",
+        "Nome": "Inflação Brasileira (media longo prazo)",
+        "Valor": "3,50%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "CT",
+        "Nome": "Custo de capital de terceiros (150% Selic)",
+        "Valor": "13,50%",
+        "[ANO_REFER]": 2024
+    },
+    {
+        "Campo": "IR",
+        "Nome": "Aliquota IR",
+        "Valor": "34,00%",
+        "[ANO_REFER]": 2024
+    }
+]
