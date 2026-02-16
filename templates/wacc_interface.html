@@ -152,44 +152,7 @@
             <!-- Parâmetros WACC -->
             <div class="col-lg-12">
                 
-                <!-- 1. TAXA LIVRE DE RISCO -->
-                <div class="card component-card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-line"></i> Taxa Livre de Risco
-                            <span class="data-quality-indicator quality-high" id="rf-quality"></span>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="risk-free-type" class="form-label">Tipo de Taxa:</label>
-                                <select class="form-select" id="risk-free-type">
-                                    <option value="treasury_10y">US Treasury 10 anos</option>
-                                    <option value="treasury_30y">US Treasury 30 anos</option>
-                                    <option value="custom">Taxa personalizada</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="risk-free-rate" class="form-label">Taxa (%):</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="risk-free-rate" 
-                                           step="0.01" min="0" max="20" value="4.14">
-                                    <span class="input-group-text">%</span>
-                                    <button class="btn btn-outline-secondary" type="button" id="update-rf-btn">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                                <div class="source-info" id="rf-source">
-                                    Fonte: FRED API - Atualizado automaticamente
-                                    <span class="badge bg-success auto-update-badge">AUTO</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. BETA -->
+                <!-- 1. BETA -->
                 <div class="card component-card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -277,6 +240,43 @@
                                        step="0.01" min="0" readonly>
                                 <div class="source-info">
                                     Média setorial
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. TAXA LIVRE DE RISCO -->
+                <div class="card component-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line"></i> Taxa Livre de Risco
+                            <span class="data-quality-indicator quality-high" id="rf-quality"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="risk-free-type" class="form-label">Tipo de Taxa:</label>
+                                <select class="form-select" id="risk-free-type">
+                                    <option value="treasury_10y">US Treasury 10 anos</option>
+                                    <option value="treasury_30y">US Treasury 30 anos</option>
+                                    <option value="custom">Taxa personalizada</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="risk-free-rate" class="form-label">Taxa (%):</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="risk-free-rate" 
+                                           step="0.01" min="0" max="20" value="4.14">
+                                    <span class="input-group-text">%</span>
+                                    <button class="btn btn-outline-secondary" type="button" id="update-rf-btn">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="source-info" id="rf-source">
+                                    Fonte: FRED API - Atualizado automaticamente
+                                    <span class="badge bg-success auto-update-badge">AUTO</span>
                                 </div>
                             </div>
                         </div>
