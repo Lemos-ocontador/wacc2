@@ -176,10 +176,14 @@ class WACCDataConnector:
             
             sectors = []
             for _, row in df.iterrows():
+                avg_beta = round(float(row['avg_beta']), 3) if pd.notna(row['avg_beta']) else None
                 sectors.append({
                     'sector': row['industry'],
+                    'value': row['industry'],
+                    'label': row['industry'],
                     'company_count': int(row['company_count']),
-                    'avg_beta': round(float(row['avg_beta']), 3) if pd.notna(row['avg_beta']) else None,
+                    'companies_count': int(row['company_count']),
+                    'avg_beta': avg_beta,
                     'avg_debt_equity': round(float(row['avg_debt_equity']), 3) if pd.notna(row['avg_debt_equity']) else None
                 })
             
