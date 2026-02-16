@@ -320,11 +320,12 @@
                             </h6>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label for="market-cap-input" class="form-label">Valor de Mercado (US$):</label>
+                                    <label for="market-cap-input" class="form-label">Valor de Mercado:</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">US$</span>
-                                        <input type="number" class="form-control" id="market-cap-input" 
-                                               step="1000000" min="0" placeholder="Ex: 500000000">
+                                        <input type="text" class="form-control" id="market-cap-input" 
+                                               placeholder="Ex: 500.000.000" inputmode="numeric"
+                                               style="font-weight:600; letter-spacing:0.3px;">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -441,6 +442,18 @@
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <div class="source-info">IRPJ 25% + CSLL 9%</div>
+                                    <!-- Lucro Real toggle -->
+                                    <div class="mt-2" style="font-size:0.85em;">
+                                        <span class="text-muted me-2">Lucro Real?</span>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="lucro-real" id="lucro-real-sim" value="sim" checked>
+                                            <label class="form-check-label" for="lucro-real-sim">Sim</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="lucro-real" id="lucro-real-nao" value="nao">
+                                            <label class="form-check-label" for="lucro-real-nao">Não</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -750,20 +763,30 @@
             // Mudança de país
             document.getElementById('country-select').addEventListener('change', updateCountryRisk);
             
-            // Mudança de market cap (size premium)
+            // Mudança de market cap (size premium) com máscara
+            document.getElementById('market-cap-input').addEventListener('input', formatMarketCapInput);
             document.getElementById('market-cap-input').addEventListener('change', updateSizePremium);
             document.getElementById('market-cap-input').addEventListener('blur', updateSizePremium);
             
-            // Mudança de peso do patrimônio
+            // Mudança de peso do patrimônio → recalcula beta alavancado
             document.getElementById('weight-equity').addEventListener('input', function() {
                 const equity = parseFloat(this.value) || 0;
                 document.getElementById('weight-debt').value = (100 - equity).toFixed(1);
                 updateEquityDebtBar(equity, 100 - equity);
+                recalculateReleverBeta();
             });
             
-            // Atualizar preview Ki quando mudam Kd ou Tax
+            // Atualizar preview Ki quando mudam Kd ou Tax + recalcular beta
             document.getElementById('cost-of-debt').addEventListener('input', updateKiPreview);
-            document.getElementById('tax-rate').addEventListener('input', updateKiPreview);
+            document.getElementById('tax-rate').addEventListener('input', function() {
+                updateKiPreview();
+                recalculateReleverBeta();
+            });
+            
+            // Lucro Real toggle
+            document.querySelectorAll('input[name="lucro-real"]').forEach(radio => {
+                radio.addEventListener('change', handleLucroRealChange);
+            });
             
             // Opções de beta
             document.querySelectorAll('input[name="beta-option"]').forEach(radio => {
@@ -875,8 +898,16 @@
                     return;
                 }
                 
-                // Calcular custo do patrimônio líquido (Ke = Rf + β×ERP + Rp + SP)
-                const costOfEquity = riskFreeRate + beta * marketRiskPremium + countryRiskPremium + sizePremium;
+                // Re-alavancar beta pela estrutura D/E atual e alíquota de IR
+                // βL = βU × [1 + (1 - T) × (D/E)]
+                const currentDE = weightDebt > 0 && weightEquity > 0 ? weightDebt / weightEquity : 0;
+                const releveredBeta = beta * (1 + (1 - taxRate) * currentDE);
+                
+                // Atualizar campo levered-beta com o beta re-alavancado
+                document.getElementById('levered-beta').value = releveredBeta.toFixed(4);
+                
+                // Calcular custo do patrimônio líquido (Ke = Rf + βL×ERP + Rp + SP)
+                const costOfEquity = riskFreeRate + releveredBeta * marketRiskPremium + countryRiskPremium + sizePremium;
                 
                 // Calcular custo da dívida após impostos
                 const afterTaxCostOfDebt = costOfDebt * (1 - taxRate);
@@ -919,7 +950,7 @@
                 const capmRows = [
                     ['Taxa Livre de Risco (Rf)', 'FRED API - US Treasury', (riskFreeRate*100).toFixed(2) + '%'],
                     ['Beta Desalavancado (βu)', `Damodaran - ${sectorName}`, beta.toFixed(4)],
-                    ['Beta Alavancado (β)', `D/E: ${deRatio.toFixed(4)}`, leveredBeta.toFixed(4)],
+                    ['Beta Re-alavancado (βL)', `D/E atual: ${currentDE.toFixed(4)} | IR: ${(taxRate*100).toFixed(0)}%`, releveredBeta.toFixed(4)],
                     ['Prêmio Risco Mercado (Rm-Rf)', 'Damodaran Equity Risk Premium', (marketRiskPremium*100).toFixed(2) + '%'],
                     ['Risco País (' + countryName + ')', 'Country Risk Premium', (countryRiskPremium*100).toFixed(2) + '%'],
                     ['Prêmio de Tamanho (Rs)', `Size Premium (${sizeDecile})`, sizePremiumVal.toFixed(2) + '%'],
@@ -1060,8 +1091,35 @@
             }
         }
         
+        // === MÁSCARA DE INPUT: formata Market Cap com separador de milhares ===
+        function formatMarketCapInput() {
+            const input = document.getElementById('market-cap-input');
+            let cursorPos = input.selectionStart;
+            let rawBefore = input.value.replace(/\D/g, '');
+            let dotsBefore = (input.value.substring(0, cursorPos).match(/\./g) || []).length;
+            
+            // Remove tudo que não é dígito
+            let raw = input.value.replace(/\D/g, '');
+            
+            // Formata com pontos de milhar
+            if (raw.length > 0) {
+                input.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+            
+            // Ajusta posição do cursor
+            let dotsAfter = (input.value.substring(0, cursorPos + 1).match(/\./g) || []).length;
+            let newPos = cursorPos + (dotsAfter - dotsBefore);
+            input.setSelectionRange(newPos, newPos);
+        }
+        
+        // Obtem valor numérico puro do campo Market Cap
+        function getMarketCapRawValue() {
+            const raw = document.getElementById('market-cap-input').value.replace(/\D/g, '');
+            return raw ? parseInt(raw) : 0;
+        }
+        
         async function updateSizePremium() {
-            const marketCap = parseFloat(document.getElementById('market-cap-input').value);
+            const marketCap = getMarketCapRawValue();
             if (!marketCap || marketCap <= 0) {
                 document.getElementById('size-decile').value = '--';
                 document.getElementById('size-premium-value').value = 0;
@@ -1120,6 +1178,40 @@
                 document.getElementById('unlevered-beta').readOnly = false;
                 document.getElementById('unlevered-beta').value = 1.0;
             }
+        }
+        
+        // === LUCRO REAL TOGGLE ===
+        function handleLucroRealChange() {
+            const isLucroReal = document.querySelector('input[name="lucro-real"]:checked').value === 'sim';
+            const taxInput = document.getElementById('tax-rate');
+            
+            if (isLucroReal) {
+                taxInput.value = 34;
+                taxInput.readOnly = false;
+                taxInput.style.opacity = '1';
+            } else {
+                taxInput.value = 0;
+                taxInput.readOnly = true;
+                taxInput.style.opacity = '0.5';
+            }
+            updateKiPreview();
+            recalculateReleverBeta();
+        }
+        
+        // === RE-ALAVANCAR BETA pela estrutura D/E atual e IR ===
+        // βL = βU × [1 + (1 - T) × (D/E)]
+        function recalculateReleverBeta() {
+            const betaU = parseFloat(document.getElementById('unlevered-beta').value);
+            if (isNaN(betaU) || betaU === 0) return;
+            
+            const weightEquity = parseFloat(document.getElementById('weight-equity').value) || 0;
+            const weightDebt = parseFloat(document.getElementById('weight-debt').value) || 0;
+            const taxRate = (parseFloat(document.getElementById('tax-rate').value) || 0) / 100;
+            
+            const de = weightEquity > 0 ? weightDebt / weightEquity : 0;
+            const betaL = betaU * (1 + (1 - taxRate) * de);
+            
+            document.getElementById('levered-beta').value = betaL.toFixed(4);
         }
     </script>
 </body>
