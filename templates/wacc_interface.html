@@ -52,6 +52,95 @@
             padding: 20px;
             margin-top: 20px;
         }
+        
+        /* ========== DESIGN CORPORATIVO WACC OUTPUT V4 ========== */
+        .wacc-v4 {
+            --text-dark: #1a1a1a;
+            --text-medium: #4a4a4a;
+            --text-muted: #6b7280;
+            --border-color: #d1d5db;
+            --border-dark: #9ca3af;
+            --bg-section: #f9fafb;
+            --accent-main: #1e3a5f;
+            --accent-secondary: #374151;
+            --highlight-subtle: #f3f4f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        .wacc-v4 .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--accent-main);
+        }
+        
+        .wacc-v4 .section-title { font-size: 18px; font-weight: 700; color: var(--text-dark); margin: 0; }
+        .wacc-v4 .section-subtitle { font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; }
+        
+        .wacc-v4 .wacc-highlight { text-align: right; }
+        .wacc-v4 .wacc-highlight .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px; }
+        .wacc-v4 .wacc-highlight .value { font-size: 32px; font-weight: 800; color: var(--accent-main); line-height: 1; }
+        
+        .wacc-v4 .setor-info {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            margin-bottom: 24px; padding: 16px;
+            background: var(--highlight-subtle); border-radius: 6px; border-left: 3px solid var(--accent-main);
+        }
+        .wacc-v4 .setor-info .info-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+        .wacc-v4 .setor-info .info-item .value { font-size: 12px; font-weight: 600; color: var(--text-dark); line-height: 1.4; }
+        
+        .wacc-v4 .wacc-summary {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
+            background: var(--border-color); border: 1px solid var(--border-color);
+            border-radius: 6px; overflow: hidden; margin-bottom: 24px;
+        }
+        .wacc-v4 .wacc-summary .summary-item { background: white; padding: 16px 12px; text-align: center; }
+        .wacc-v4 .wacc-summary .summary-item.highlight { background: var(--accent-main); }
+        .wacc-v4 .wacc-summary .summary-item.highlight .item-label,
+        .wacc-v4 .wacc-summary .summary-item.highlight .item-value { color: white; }
+        .wacc-v4 .wacc-summary .summary-item.highlight .item-sub { color: rgba(255,255,255,0.7); }
+        .wacc-v4 .wacc-summary .item-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+        .wacc-v4 .wacc-summary .item-value { font-size: 16px; font-weight: 700; color: var(--text-dark); }
+        .wacc-v4 .wacc-summary .item-sub { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+        
+        .wacc-v4 .formula-bar {
+            background: var(--highlight-subtle); border: 1px solid var(--border-color);
+            border-radius: 4px; padding: 12px 20px; margin-bottom: 24px;
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace; font-size: 12px;
+            color: var(--text-medium); text-align: center;
+        }
+        .wacc-v4 .formula-bar strong { color: var(--accent-main); }
+        
+        .wacc-v4 .tables-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px; }
+        
+        .wacc-v4 .pro-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .wacc-v4 .pro-table caption { text-align: left; font-size: 12px; font-weight: 700; color: var(--text-dark); padding: 0 0 10px 0; caption-side: top; }
+        .wacc-v4 .pro-table thead th {
+            background: var(--accent-secondary); color: white; padding: 8px 10px; text-align: left;
+            font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .wacc-v4 .pro-table thead th:last-child { text-align: right; }
+        .wacc-v4 .pro-table tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-medium); }
+        .wacc-v4 .pro-table tbody td.value { text-align: right; font-weight: 600; font-family: 'SF Mono', 'Consolas', monospace; color: var(--text-dark); }
+        .wacc-v4 .pro-table tbody td.source { font-size: 10px; color: var(--text-muted); }
+        .wacc-v4 .pro-table tbody tr:hover { background: var(--highlight-subtle); }
+        .wacc-v4 .pro-table tbody tr.total-row { background: var(--highlight-subtle); font-weight: 700; }
+        .wacc-v4 .pro-table tbody tr.total-row td { border-top: 2px solid var(--accent-main); color: var(--accent-main); padding-top: 10px; }
+        
+        .wacc-v4 .metrics-row {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+            padding-top: 16px; border-top: 1px solid var(--border-color);
+        }
+        .wacc-v4 .metrics-row .metric-item { text-align: center; }
+        .wacc-v4 .metrics-row .metric-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+        .wacc-v4 .metrics-row .metric-value { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+        
+        @media print {
+            .wacc-v4 { padding: 20px !important; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -317,12 +406,15 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <!-- Indicador de origem D/E -->
+                        <div class="source-info mb-3" id="de-source-info" style="display:none; background:#e8f5e9; padding:8px 12px; border-radius:6px; font-size:0.85em; color:#2e7d32;">
+                        </div>
                         <div class="row">
                             <div class="col-md-3">
                                 <label for="weight-equity" class="form-label">Peso Patrimônio (%):</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="weight-equity" 
-                                           step="1" min="0" max="100" value="70">
+                                           step="0.1" min="0" max="100" value="70">
                                     <span class="input-group-text">%</span>
                                 </div>
                             </div>
@@ -330,7 +422,7 @@
                                 <label for="weight-debt" class="form-label">Peso Dívida (%):</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="weight-debt" 
-                                           step="1" min="0" max="100" value="30" readonly>
+                                           step="0.1" min="0" max="100" value="30" readonly>
                                     <span class="input-group-text">%</span>
                                 </div>
                             </div>
@@ -374,9 +466,9 @@
                 </div>
             </div>
 
-            <!-- Coluna Direita: Resultados -->
+            <!-- Coluna Direita: Resumo Rápido -->
             <div class="col-lg-4">
-                <!-- Resultado WACC -->
+                <!-- Resultado WACC Rápido -->
                 <div class="calculation-result" id="wacc-result" style="display: none;">
                     <h4 class="text-center mb-3">
                         <i class="fas fa-trophy"></i> Resultado WACC
@@ -387,7 +479,7 @@
                     </div>
                 </div>
 
-                <!-- Detalhamento dos Componentes -->
+                <!-- Detalhamento Rápido -->
                 <div class="card mt-4" id="components-detail" style="display: none;">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="fas fa-list"></i> Detalhamento</h6>
@@ -452,6 +544,145 @@
                             <span id="last-update">Carregando...</span></p>
                         </small>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- RELATÓRIO WACC PROFISSIONAL (Estilo Anloc) -->
+        <!-- ============================================================ -->
+        <div class="row mt-4" id="wacc-report-section" style="display: none;">
+            <div class="col-12">
+                <div class="wacc-v4" style="background: #ffffff; padding: 30px 40px; border: 1px solid #d1d5db; border-radius: 8px;">
+                    
+                    <!-- HEADER COM WACC EM DESTAQUE -->
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">Estrutura e Custo de Capital</h2>
+                            <p class="section-subtitle">WACC — Weighted Average Cost of Capital</p>
+                        </div>
+                        <div class="wacc-highlight">
+                            <div class="label">WACC Nominal</div>
+                            <div class="value" id="rpt-wacc-main">--</div>
+                        </div>
+                    </div>
+                    
+                    <!-- INFO SETOR -->
+                    <div class="setor-info">
+                        <div class="info-item">
+                            <div class="label">Setor Damodaran (Referência Internacional)</div>
+                            <div class="value" id="rpt-setor">--</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Região de Referência</div>
+                            <div class="value" id="rpt-regiao">Global</div>
+                        </div>
+                    </div>
+                    
+                    <!-- SUMÁRIO WACC - GRID 5 COLUNAS -->
+                    <div class="wacc-summary">
+                        <div class="summary-item">
+                            <div class="item-label">Ke (CAPM)</div>
+                            <div class="item-value" id="rpt-ke">--</div>
+                            <div class="item-sub">Capital Próprio</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="item-label">Peso E/V</div>
+                            <div class="item-value" id="rpt-ev">--</div>
+                            <div class="item-sub">Participação</div>
+                        </div>
+                        <div class="summary-item highlight">
+                            <div class="item-label">WACC</div>
+                            <div class="item-value" id="rpt-wacc-center">--</div>
+                            <div class="item-sub">Custo Ponderado</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="item-label">Peso D/V</div>
+                            <div class="item-value" id="rpt-dv">--</div>
+                            <div class="item-sub">Participação</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="item-label">Ki (após IR)</div>
+                            <div class="item-value" id="rpt-ki">--</div>
+                            <div class="item-sub">Cap. Terceiros</div>
+                        </div>
+                    </div>
+                    
+                    <!-- FÓRMULA -->
+                    <div class="formula-bar" id="rpt-formula">
+                        <strong>WACC</strong> = Ke × (E/V) + Ki × (D/V)
+                    </div>
+                    
+                    <!-- TABELAS PROFISSIONAIS -->
+                    <div class="tables-container">
+                        
+                        <!-- TABELA CAPM (Ke) -->
+                        <table class="pro-table">
+                            <caption>Componentes do CAPM (Custo do Capital Próprio)</caption>
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Fonte</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpt-capm-body">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- TABELA Ki -->
+                        <table class="pro-table">
+                            <caption>Custo do Capital de Terceiros (Ki)</caption>
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Fonte</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpt-ki-body">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                        
+                    </div>
+                    
+                    <!-- MÉTRICAS FOOTER -->
+                    <div class="metrics-row">
+                        <div class="metric-item">
+                            <div class="metric-label">D/E Ratio Setor</div>
+                            <div class="metric-value" id="rpt-de-setor">--</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Beta Desalavancado</div>
+                            <div class="metric-value" id="rpt-beta-u">--</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">D/E utilizado</div>
+                            <div class="metric-value" id="rpt-de-utilizado" style="font-size: 0.85em;">Setor</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">E/V (Equity)</div>
+                            <div class="metric-value" id="rpt-ev-footer">--</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">D/V (Debt)</div>
+                            <div class="metric-value" id="rpt-dv-footer">--</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Ano Referência</div>
+                            <div class="metric-value" id="rpt-ano">2025</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão Imprimir -->
+                    <div class="text-center mt-4 no-print">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                            <i class="fas fa-print"></i> Imprimir / Exportar PDF
+                        </button>
+                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -632,6 +863,21 @@
                     const qualityIndicator = document.getElementById('beta-quality');
                     qualityIndicator.className = `data-quality-indicator quality-${data.data_quality}`;
                     
+                    // === ATUALIZAR PESOS E/D COM BASE NO D/E DO SETOR ===
+                    const deRatio = parseFloat(data.debt_equity_ratio);
+                    if (!isNaN(deRatio) && deRatio > 0) {
+                        const weightDebt = (deRatio / (1 + deRatio)) * 100;
+                        const weightEquity = (1 / (1 + deRatio)) * 100;
+                        document.getElementById('weight-equity').value = weightEquity.toFixed(1);
+                        document.getElementById('weight-debt').value = weightDebt.toFixed(1);
+                        // Mostrar indicador de origem
+                        const deSourceEl = document.getElementById('de-source-info');
+                        if (deSourceEl) {
+                            deSourceEl.innerHTML = `<i class="fas fa-link text-success"></i> Pesos baseados no D/E médio do setor <strong>${sector}</strong> (D/E = ${deRatio.toFixed(4)})`;
+                            deSourceEl.style.display = 'block';
+                        }
+                    }
+                    
                     updateDataStatus('beta', 'success', `${data.companies_count} empresas`);
                 } else {
                     updateDataStatus('beta', 'error', data.error);
@@ -672,6 +918,7 @@
                 // Obter valores dos campos
                 const riskFreeRate = parseFloat(document.getElementById('risk-free-rate').value) / 100;
                 const beta = parseFloat(document.getElementById('unlevered-beta').value);
+                const leveredBeta = parseFloat(document.getElementById('levered-beta').value) || beta;
                 const marketRiskPremium = parseFloat(document.getElementById('market-risk-premium').value) / 100;
                 const countryRiskPremium = parseFloat(document.getElementById('country-risk-premium').value) / 100;
                 const sizePremium = parseFloat(document.getElementById('size-premium-value').value) / 100 || 0;
@@ -679,6 +926,7 @@
                 const weightDebt = parseFloat(document.getElementById('weight-debt').value) / 100;
                 const costOfDebt = parseFloat(document.getElementById('cost-of-debt').value) / 100;
                 const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+                const deRatio = parseFloat(document.getElementById('debt-equity-ratio').value) || 0;
                 
                 // Validar inputs
                 if (isNaN(riskFreeRate) || isNaN(beta) || isNaN(marketRiskPremium) || isNaN(countryRiskPremium)) {
@@ -695,15 +943,100 @@
                 // Calcular WACC
                 const wacc = (weightEquity * costOfEquity) + (weightDebt * afterTaxCostOfDebt);
                 
-                // Exibir resultados
+                // === Preencher resumo rápido (coluna direita) ===
                 document.getElementById('wacc-percentage').textContent = (wacc * 100).toFixed(2) + '%';
                 document.getElementById('cost-of-equity').textContent = (costOfEquity * 100).toFixed(2) + '%';
                 document.getElementById('after-tax-cost-debt').textContent = (afterTaxCostOfDebt * 100).toFixed(2) + '%';
                 document.getElementById('wacc-detail').textContent = (wacc * 100).toFixed(2) + '%';
-                
-                // Mostrar cards de resultado
                 document.getElementById('wacc-result').style.display = 'block';
                 document.getElementById('components-detail').style.display = 'block';
+                
+                // === Preencher relatório profissional (estilo Anloc) ===
+                const sector = document.getElementById('sector-select');
+                const sectorName = sector.options[sector.selectedIndex]?.text?.split(' (')[0] || '--';
+                const regionSelect = document.getElementById('region-select');
+                const regionName = regionSelect.options[regionSelect.selectedIndex]?.text || 'Global';
+                const country = document.getElementById('country-select');
+                const countryName = country.options[country.selectedIndex]?.text?.split(' (')[0] || '--';
+                
+                // Header
+                document.getElementById('rpt-wacc-main').textContent = (wacc * 100).toFixed(2) + '%';
+                document.getElementById('rpt-setor').textContent = sectorName;
+                document.getElementById('rpt-regiao').textContent = regionName;
+                
+                // Sumário grid 5 colunas
+                document.getElementById('rpt-ke').textContent = (costOfEquity * 100).toFixed(2) + '%';
+                document.getElementById('rpt-ev').textContent = (weightEquity * 100).toFixed(1) + '%';
+                document.getElementById('rpt-wacc-center').textContent = (wacc * 100).toFixed(2) + '%';
+                document.getElementById('rpt-dv').textContent = (weightDebt * 100).toFixed(1) + '%';
+                document.getElementById('rpt-ki').textContent = (afterTaxCostOfDebt * 100).toFixed(2) + '%';
+                
+                // Fórmula
+                document.getElementById('rpt-formula').innerHTML = 
+                    `<strong>WACC</strong> = Ke × (E/V) + Ki × (D/V) = ` +
+                    `${(costOfEquity*100).toFixed(2)}% × ${(weightEquity*100).toFixed(1)}% + ` +
+                    `${(afterTaxCostOfDebt*100).toFixed(2)}% × ${(weightDebt*100).toFixed(1)}% = ` +
+                    `<strong>${(wacc*100).toFixed(2)}%</strong>`;
+                
+                // Tabela CAPM
+                const sizePremiumVal = parseFloat(document.getElementById('size-premium-value').value) || 0;
+                const sizeDecile = document.getElementById('size-decile')?.value || '--';
+                const capmRows = [
+                    ['Taxa Livre de Risco (Rf)', 'FRED API - US Treasury', (riskFreeRate*100).toFixed(2) + '%'],
+                    ['Beta Desalavancado (βu)', `Damodaran - ${sectorName}`, beta.toFixed(4)],
+                    ['Beta Alavancado (β)', `D/E: ${deRatio.toFixed(4)}`, leveredBeta.toFixed(4)],
+                    ['Prêmio Risco Mercado (Rm-Rf)', 'Damodaran Equity Risk Premium', (marketRiskPremium*100).toFixed(2) + '%'],
+                    ['Risco País (' + countryName + ')', 'Country Risk Premium', (countryRiskPremium*100).toFixed(2) + '%'],
+                    ['Prêmio de Tamanho (Rs)', `Size Premium (${sizeDecile})`, sizePremiumVal.toFixed(2) + '%'],
+                ];
+                // Linha total
+                capmRows.push(['__total__', 'Ke = Rf + β×ERP + Rp + Rs', (costOfEquity*100).toFixed(2) + '%']);
+                
+                const capmBody = document.getElementById('rpt-capm-body');
+                capmBody.innerHTML = '';
+                capmRows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    if (row[0] === '__total__') {
+                        tr.className = 'total-row';
+                        tr.innerHTML = `<td><strong>Ke (CAPM Nominal)</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    } else {
+                        tr.innerHTML = `<td>${row[0]}</td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    }
+                    capmBody.appendChild(tr);
+                });
+                
+                // Tabela Ki
+                const kiRows = [
+                    ['Custo da Dívida (Kd)', 'Proxy - Taxa informada', (costOfDebt*100).toFixed(2) + '%'],
+                    ['Alíquota IR+CSLL', 'Benefício fiscal', (taxRate*100).toFixed(0) + '%'],
+                ];
+                kiRows.push(['__total__', 'Ki = Kd × (1 - IR)', (afterTaxCostOfDebt*100).toFixed(2) + '%']);
+                
+                const kiBody = document.getElementById('rpt-ki-body');
+                kiBody.innerHTML = '';
+                kiRows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    if (row[0] === '__total__') {
+                        tr.className = 'total-row';
+                        tr.innerHTML = `<td><strong>Ki (Custo após IR)</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    } else {
+                        tr.innerHTML = `<td>${row[0]}</td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    }
+                    kiBody.appendChild(tr);
+                });
+                
+                // Footer metrics
+                document.getElementById('rpt-de-setor').textContent = deRatio.toFixed(4);
+                document.getElementById('rpt-beta-u').textContent = beta.toFixed(4);
+                document.getElementById('rpt-ev-footer').textContent = (weightEquity*100).toFixed(2) + '%';
+                document.getElementById('rpt-dv-footer').textContent = (weightDebt*100).toFixed(2) + '%';
+                document.getElementById('rpt-ano').textContent = new Date().getFullYear();
+                
+                // Mostrar relatório
+                document.getElementById('wacc-report-section').style.display = 'block';
+                
+                // Scroll para relatório
+                document.getElementById('wacc-report-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
                 showAlert('WACC calculado com sucesso!', 'success');
                 
@@ -725,9 +1058,15 @@
         }
         
         function resetForm() {
-            // Implementar reset do formulário
+            // Esconder resultados
             document.getElementById('wacc-result').style.display = 'none';
             document.getElementById('components-detail').style.display = 'none';
+            document.getElementById('wacc-report-section').style.display = 'none';
+            // Resetar pesos padrão
+            document.getElementById('weight-equity').value = 70;
+            document.getElementById('weight-debt').value = 30;
+            const deSource = document.getElementById('de-source-info');
+            if (deSource) deSource.style.display = 'none';
         }
         
         async function validateData() {
