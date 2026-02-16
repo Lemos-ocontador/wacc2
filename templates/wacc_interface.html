@@ -455,10 +455,10 @@
                                     <label for="cost-of-debt" class="form-label">Taxa Bruta (Kd):</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" class="form-control" id="cost-of-debt" 
-                                               step="0.1" min="0" max="50" value="13.5">
+                                               step="0.1" min="0" max="50" value="0" placeholder="Carregando...">
                                         <span class="input-group-text">%</span>
                                     </div>
-                                    <div class="source-info">150% da Selic (proxy Brasil)</div>
+                                    <div class="source-info">Carregando Selic via BCB...</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="tax-rate" class="form-label">Alíquota IR+CSLL:</label>
@@ -688,20 +688,15 @@
         // Carregar dados iniciais
         async function loadInitialData() {
             try {
-                // Carregar setores
-                await loadSectors();
-                
-                // Carregar países
-                await loadCountries();
-                
-                // Carregar dados de taxa livre de risco
-                await loadRiskFreeRate();
-                
-                // Carregar prêmio de risco de mercado
-                await loadMarketRiskPremium();
-                
-                // Carregar tabela de decis de tamanho
-                await loadSizeDeciles();
+                // Carregar em paralelo: setores, países, RF, ERP, SP
+                await Promise.all([
+                    loadSectors(),
+                    loadCountries(),
+                    loadRiskFreeRate(),
+                    loadMarketRiskPremium(),
+                    loadSizeDeciles(),
+                    loadKdSelic(),
+                ]);
                 
                 // Validar dados
                 await validateData();
@@ -1095,6 +1090,9 @@
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('risk-free-rate').value = data.rate_percentage;
+                    if (data.is_fallback) {
+                        console.warn('⚠️ Rf usando FALLBACK ABSURDO! BDWACC.json não carregou.');
+                    }
                 }
             } catch (error) {
                 console.error('Erro ao carregar taxa livre de risco:', error);
@@ -1107,9 +1105,39 @@
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('market-risk-premium').value = data.market_risk_premium_percentage;
+                    if (data.is_fallback) {
+                        console.warn('⚠️ ERP usando FALLBACK ABSURDO! BDWACC.json não carregou.');
+                    }
                 }
             } catch (error) {
                 console.error('Erro ao carregar prêmio de risco de mercado:', error);
+            }
+        }
+
+        // Selic / Kd — carrega ao vivo da API BCB
+        async function loadKdSelic() {
+            try {
+                const response = await fetch('/api/get_kd_selic');
+                const data = await response.json();
+                if (data.success) {
+                    const kdInput = document.getElementById('cost-of-debt');
+                    kdInput.value = data.kd_percentage;
+                    
+                    // Atualizar label de fonte
+                    const sourceInfo = kdInput.closest('.col-md-6').querySelector('.source-info');
+                    if (sourceInfo) {
+                        if (data.is_live) {
+                            sourceInfo.innerHTML = `<span style="color:#22c55e;">●</span> Selic ${data.selic_percentage}% × 150% = Kd ${data.kd_percentage}% <small>(${data.source}, ${data.date})</small>`;
+                        } else {
+                            sourceInfo.innerHTML = `<span style="color:#eab308;">●</span> ${data.source} — Kd ${data.kd_percentage}%`;
+                        }
+                    }
+                    
+                    updateKiPreview();
+                    console.log(`Kd/Selic: ${data.kd_percentage}% — fonte: ${data.source}`);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar Selic/Kd:', error);
             }
         }
         

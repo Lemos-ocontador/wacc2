@@ -1,10 +1,27 @@
 import sqlite3
 import json
 import pandas as pd
+import requests
 from typing import Dict, List, Optional, Any
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# ══════════════════════════════════════════════════════════════════════════
+# FALLBACKS ABSURDOS — se aparecerem na interface, algo está quebrado!
+# ══════════════════════════════════════════════════════════════════════════
+FALLBACK_RF  = 666.66   # Taxa Livre de Risco — impossível
+FALLBACK_RM  = 777.77   # Prêmio de Risco de Mercado — impossível
+FALLBACK_CT  = 888.88   # Custo de Dívida (Selic) — impossível
+FALLBACK_IR  = 999.99   # Alíquota IR — impossível
+FALLBACK_IB  = 555.55   # Inflação Brasil — impossível
+FALLBACK_IA  = 444.44   # Inflação EUA — impossível
+FALLBACK_CR  = 333.33   # Risco País — impossível
+
+# URLs da API do Banco Central do Brasil (SGS)
+BCB_SELIC_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/5?formato=json"
+BCB_IPCA_12M_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/3?formato=json"
 
 class WACCDataConnector:
     """
@@ -16,7 +33,7 @@ class WACCDataConnector:
     def __init__(self, 
                  damodaran_db_path: str = "data/damodaran_data_new.db",
                  country_risk_db_path: str = "data/damodaran_data_new.db",
-                 wacc_json_path: str = "BDWACC.json"):
+                 wacc_json_path: str = "static/BDWACC.json"):
         """
         Inicializar o conector WACC.
         
@@ -33,39 +50,159 @@ class WACCDataConnector:
         self._wacc_components_cache = None
         self._sectors_cache = None
         self._countries_cache = None
+        self._bcb_cache = {}  # Cache para chamadas BCB API
         
         logger.info("WACCDataConnector inicializado")
     
+    # ──────────────────────────────────────────────────────────────────────
+    # PARSING DO BDWACC.JSON (lista→dict) + BCB API
+    # ──────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_br_number(value_str: str) -> float:
+        """Converte '4,14%' ou '13,50%' ou '34,00%' para float numérico."""
+        if not value_str or not isinstance(value_str, str):
+            return 0.0
+        clean = value_str.replace('%', '').replace('.', '').replace(',', '.').strip()
+        try:
+            return float(clean)
+        except ValueError:
+            return 0.0
+
     def _load_wacc_components(self) -> Dict[str, Any]:
         """
         Carregar componentes WACC do arquivo JSON.
+        Converte lista [{Campo: 'RF', Valor: '4,14%'}, ...] em dict {'RF': 4.14, ...}
         
         Returns:
-            Dict com componentes WACC
+            Dict com componentes WACC (campo→valor numérico)
         """
-        if self._wacc_components_cache is None:
-            try:
-                with open(self.wacc_json, 'r', encoding='utf-8') as f:
-                    self._wacc_components_cache = json.load(f)
-                logger.info("Componentes WACC carregados do JSON")
-            except Exception as e:
-                logger.error(f"Erro ao carregar componentes WACC: {e}")
-                self._wacc_components_cache = {}
+        if self._wacc_components_cache is not None:
+            return self._wacc_components_cache
+
+        result = {}
+        paths_to_try = [self.wacc_json, "static/BDWACC.json", "BDWACC.json"]
         
-        return self._wacc_components_cache
+        for path_str in paths_to_try:
+            path = Path(path_str)
+            if path.exists():
+                try:
+                    with open(path, 'r', encoding='utf-8') as f:
+                        raw = json.load(f)
+                    
+                    if isinstance(raw, list):
+                        # Converter lista de dicts para dict {Campo: valor_numerico}
+                        for item in raw:
+                            campo = item.get('Campo', '')
+                            valor = item.get('Valor', '')
+                            if campo:
+                                result[campo] = self._parse_br_number(valor)
+                                # Preservar metadados
+                                result[f'{campo}_raw'] = valor
+                                result[f'{campo}_ano'] = item.get('[ANO_REFER]')
+                        logger.info(f"BDWACC.json carregado de {path}: {list(result.keys())}")
+                    elif isinstance(raw, dict):
+                        result = raw
+                        logger.info(f"BDWACC.json carregado como dict de {path}")
+                    else:
+                        logger.warning(f"BDWACC.json formato inesperado: {type(raw)}")
+                    break
+                except Exception as e:
+                    logger.error(f"Erro ao carregar {path}: {e}")
+                    continue
+        
+        if not result:
+            logger.error("BDWACC.json não encontrado em nenhum caminho! Usando FALLBACKS ABSURDOS.")
+            result = {
+                'RF': FALLBACK_RF, 'RM': FALLBACK_RM, 'CT': FALLBACK_CT,
+                'IR': FALLBACK_IR, 'IB': FALLBACK_IB, 'IA': FALLBACK_IA,
+                'CR': FALLBACK_CR,
+            }
+        
+        self._wacc_components_cache = result
+        return result
+
+    def _fetch_bcb_series(self, url: str, cache_key: str) -> Optional[float]:
+        """Busca o último valor de uma série do BCB SGS. Cache de 30min."""
+        import time
+        cached = self._bcb_cache.get(cache_key)
+        if cached and (time.time() - cached['ts']) < 1800:  # 30 min
+            return cached['value']
+        
+        try:
+            resp = requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data:
+                    value = float(data[-1]['valor'])
+                    self._bcb_cache[cache_key] = {'value': value, 'ts': time.time(), 'data': data[-1]['data']}
+                    logger.info(f"BCB {cache_key}: {value} ({data[-1]['data']})")
+                    return value
+        except Exception as e:
+            logger.warning(f"Falha API BCB {cache_key}: {e}")
+        return None
+
+    def get_selic_live(self) -> Dict[str, Any]:
+        """Obtém Selic ao vivo da API BCB. Fallback para BDWACC.json."""
+        selic = self._fetch_bcb_series(BCB_SELIC_URL, 'selic')
+        
+        if selic is not None:
+            kd_150 = selic * 1.5
+            cached = self._bcb_cache.get('selic', {})
+            return {
+                'success': True,
+                'selic_percentage': round(selic, 2),
+                'kd_percentage': round(kd_150, 2),
+                'source': 'BCB API (série 432)',
+                'date': cached.get('data', ''),
+                'is_live': True,
+            }
+        
+        # Fallback para BDWACC.json
+        wacc = self._load_wacc_components()
+        ct = wacc.get('CT', FALLBACK_CT)
+        return {
+            'success': True,
+            'selic_percentage': round(ct / 1.5, 2),
+            'kd_percentage': round(ct, 2),
+            'source': 'BDWACC.json (fallback)',
+            'date': '',
+            'is_live': False,
+            'warning': 'API BCB indisponível, usando BDWACC.json' if ct != FALLBACK_CT else 'FALLBACK ABSURDO — dados não carregados!',
+        }
+
+    def get_ipca_live(self) -> Dict[str, Any]:
+        """Obtém IPCA 12m ao vivo da API BCB. Fallback para BDWACC.json."""
+        ipca = self._fetch_bcb_series(BCB_IPCA_12M_URL, 'ipca_12m')
+        
+        if ipca is not None:
+            cached = self._bcb_cache.get('ipca_12m', {})
+            return {
+                'success': True,
+                'ipca_percentage': round(ipca, 2),
+                'source': 'BCB API (série 13522)',
+                'date': cached.get('data', ''),
+                'is_live': True,
+            }
+        
+        wacc = self._load_wacc_components()
+        ib = wacc.get('IB', FALLBACK_IB)
+        return {
+            'success': True,
+            'ipca_percentage': round(ib, 2),
+            'source': 'BDWACC.json (fallback)',
+            'date': '',
+            'is_live': False,
+            'warning': 'API BCB indisponível' if ib != FALLBACK_IB else 'FALLBACK ABSURDO!',
+        }
     
     def get_risk_free_rate_options(self) -> Dict[str, Any]:
         """
         Obter opções disponíveis para taxa livre de risco.
-        
-        Returns:
-            Dict com opções de taxa livre de risco
         """
         try:
             wacc_data = self._load_wacc_components()
-            
-            # Extrair taxa livre de risco do JSON
-            rf_rate = wacc_data.get('RF', 4.14)  # Default fallback
+            rf_rate = wacc_data.get('RF', FALLBACK_RF)
             
             return {
                 'success': True,
@@ -75,14 +212,14 @@ class WACCDataConnector:
                         'name': 'US Treasury 10Y',
                         'description': 'Taxa do Tesouro Americano 10 anos',
                         'current_rate': rf_rate,
-                        'source': 'FRED/Damodaran'
+                        'source': 'BDWACC.json' if rf_rate != FALLBACK_RF else 'FALLBACK!'
                     },
                     {
                         'id': '30y',
                         'name': 'US Treasury 30Y',
                         'description': 'Taxa do Tesouro Americano 30 anos',
-                        'current_rate': rf_rate + 0.5,  # Aproximação
-                        'source': 'FRED/Damodaran'
+                        'current_rate': rf_rate + 0.5 if rf_rate != FALLBACK_RF else FALLBACK_RF,
+                        'source': 'BDWACC.json' if rf_rate != FALLBACK_RF else 'FALLBACK!'
                     },
                     {
                         'id': 'custom',
@@ -93,51 +230,39 @@ class WACCDataConnector:
                     }
                 ],
                 'default': '10y',
+                'is_fallback': rf_rate == FALLBACK_RF,
                 'last_updated': pd.Timestamp.now().isoformat()
             }
-            
         except Exception as e:
             logger.error(f"Erro ao obter opções de taxa livre de risco: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
     
     def get_risk_free_rate(self, term: str = '10y') -> Dict[str, Any]:
         """
         Obter taxa livre de risco específica.
-        
-        Args:
-            term: Prazo da taxa (10y, 30y)
-        
-        Returns:
-            Dict com taxa livre de risco
         """
         try:
             wacc_data = self._load_wacc_components()
-            rf_rate = wacc_data.get('RF', 4.14)
+            rf_rate = wacc_data.get('RF', FALLBACK_RF)
             
-            # Ajustar taxa baseado no prazo
             if term == '30y':
-                rate = rf_rate + 0.5  # Aproximação para 30Y
+                rate = rf_rate + 0.5 if rf_rate != FALLBACK_RF else FALLBACK_RF
             else:
-                rate = rf_rate  # 10Y é o padrão
+                rate = rf_rate
             
             return {
                 'success': True,
                 'term': term,
                 'rate_decimal': rate / 100,
                 'rate_percentage': rate,
-                'source': 'FRED/Damodaran',
+                'source': 'BDWACC.json' if rf_rate != FALLBACK_RF else 'FALLBACK ABSURDO!',
+                'is_fallback': rf_rate == FALLBACK_RF,
+                'reference_year': wacc_data.get('RF_ano'),
                 'last_updated': pd.Timestamp.now().isoformat()
             }
-            
         except Exception as e:
             logger.error(f"Erro ao obter taxa livre de risco: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
     
     def get_available_sectors(self) -> Dict[str, Any]:
         """
@@ -411,32 +536,25 @@ class WACCDataConnector:
     
     def get_market_risk_premium(self) -> Dict[str, Any]:
         """
-        Obter prêmio de risco de mercado.
-        
-        Returns:
-            Dict com prêmio de risco de mercado (ERP)
+        Obter prêmio de risco de mercado (ERP).
         """
         try:
             wacc_data = self._load_wacc_components()
-            
-            # Extrair prêmio de risco de mercado do JSON
-            market_risk_premium = wacc_data.get('RM', 4.61)  # Default fallback
+            mrp = wacc_data.get('RM', FALLBACK_RM)
             
             return {
                 'success': True,
-                'market_risk_premium_decimal': round(market_risk_premium / 100, 4),
-                'market_risk_premium_percentage': round(market_risk_premium, 2),
-                'source': 'Damodaran ERP',
-                'methodology': 'Historical US Market Premium',
+                'market_risk_premium_decimal': round(mrp / 100, 4),
+                'market_risk_premium_percentage': round(mrp, 2),
+                'source': 'BDWACC.json' if mrp != FALLBACK_RM else 'FALLBACK ABSURDO!',
+                'is_fallback': mrp == FALLBACK_RM,
+                'reference_year': wacc_data.get('RM_ano'),
+                'methodology': 'Historical US Market Premium (Damodaran)',
                 'last_updated': pd.Timestamp.now().isoformat()
             }
-            
         except Exception as e:
             logger.error(f"Erro ao obter prêmio de risco de mercado: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
     
     def get_wacc_components(self, sector: str, country: str = 'Brazil', region: str = 'global') -> Dict[str, Any]:
         """
@@ -480,9 +598,14 @@ class WACCDataConnector:
             market_risk_premium = market_risk_data['market_risk_premium_percentage']
             country_risk_premium = country_risk_data['risk_premium_percentage']
             
-            # Outros componentes do JSON
-            tax_rate = wacc_data.get('IR', 34.0)
-            cost_of_debt = wacc_data.get('CT', 13.5)
+            # Outros componentes
+            wacc_data = self._load_wacc_components()
+            tax_rate = wacc_data.get('IR', FALLBACK_IR)
+            
+            # Selic: tentar BCB ao vivo, fallback para BDWACC.json
+            selic_data = self.get_selic_live()
+            cost_of_debt = selic_data['kd_percentage']
+            cost_of_debt_source = selic_data['source']
             
             # Calcular custo do patrimônio
             # Ke = Rf + β × (Rm + Rp)
@@ -521,12 +644,14 @@ class WACCDataConnector:
                     'tax_rate': {
                         'value_percentage': tax_rate,
                         'value_decimal': tax_rate / 100,
-                        'source': 'BDWACC.json'
+                        'source': 'BDWACC.json' if tax_rate != FALLBACK_IR else 'FALLBACK ABSURDO!',
+                        'is_fallback': tax_rate == FALLBACK_IR
                     },
                     'cost_of_debt': {
                         'value_percentage': cost_of_debt,
                         'value_decimal': cost_of_debt / 100,
-                        'source': 'BDWACC.json'
+                        'source': cost_of_debt_source,
+                        'is_live': selic_data.get('is_live', False)
                     }
                 },
                 'calculated': {

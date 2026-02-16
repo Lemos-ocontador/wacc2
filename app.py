@@ -752,6 +752,115 @@ def get_market_risk_premium():
         }), 500
 
 
+@app.route('/api/get_kd_selic', methods=['GET'])
+def get_kd_selic():
+    """
+    Obter Selic ao vivo da API BCB → Kd (150% Selic).
+    Fallback para BDWACC.json.
+    """
+    try:
+        result = wacc_connector.get_selic_live()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erro ao obter Selic/Kd: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/get_ipca', methods=['GET'])
+def get_ipca():
+    """
+    Obter IPCA 12m ao vivo da API BCB.
+    Fallback para BDWACC.json.
+    """
+    try:
+        result = wacc_connector.get_ipca_live()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erro ao obter IPCA: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/get_wacc_all_live', methods=['GET'])
+def get_wacc_all_live():
+    """
+    Retorna TODOS os componentes WACC com status de fonte (live vs fallback).
+    Usado para diagnóstico e verificação.
+    """
+    try:
+        wacc_data = wacc_connector._load_wacc_components()
+        selic = wacc_connector.get_selic_live()
+        ipca = wacc_connector.get_ipca_live()
+        
+        from wacc_data_connector import (
+            FALLBACK_RF, FALLBACK_RM, FALLBACK_CT, FALLBACK_IR,
+            FALLBACK_IB, FALLBACK_IA, FALLBACK_CR
+        )
+        
+        components = {
+            'RF': {
+                'value': wacc_data.get('RF'),
+                'raw': wacc_data.get('RF_raw'),
+                'ano': wacc_data.get('RF_ano'),
+                'source': 'BDWACC.json',
+                'is_fallback': wacc_data.get('RF') == FALLBACK_RF,
+            },
+            'RM': {
+                'value': wacc_data.get('RM'),
+                'raw': wacc_data.get('RM_raw'),
+                'ano': wacc_data.get('RM_ano'),
+                'source': 'BDWACC.json',
+                'is_fallback': wacc_data.get('RM') == FALLBACK_RM,
+            },
+            'CR': {
+                'value': wacc_data.get('CR'),
+                'raw': wacc_data.get('CR_raw'),
+                'ano': wacc_data.get('CR_ano'),
+                'source': 'BDWACC.json (referência)',
+                'is_fallback': wacc_data.get('CR') == FALLBACK_CR,
+            },
+            'CT_Selic': {
+                'selic': selic.get('selic_percentage'),
+                'kd': selic.get('kd_percentage'),
+                'source': selic.get('source'),
+                'date': selic.get('date'),
+                'is_live': selic.get('is_live', False),
+                'is_fallback': not selic.get('is_live', False) and selic.get('kd_percentage') == FALLBACK_CT,
+            },
+            'IR': {
+                'value': wacc_data.get('IR'),
+                'raw': wacc_data.get('IR_raw'),
+                'source': 'BDWACC.json',
+                'is_fallback': wacc_data.get('IR') == FALLBACK_IR,
+            },
+            'IB_IPCA': {
+                'ipca_12m': ipca.get('ipca_percentage'),
+                'source': ipca.get('source'),
+                'date': ipca.get('date'),
+                'is_live': ipca.get('is_live', False),
+                'bdwacc_value': wacc_data.get('IB'),
+                'is_fallback': not ipca.get('is_live', False) and wacc_data.get('IB') == FALLBACK_IB,
+            },
+            'IA': {
+                'value': wacc_data.get('IA'),
+                'raw': wacc_data.get('IA_raw'),
+                'source': 'BDWACC.json',
+                'is_fallback': wacc_data.get('IA') == FALLBACK_IA,
+            },
+        }
+        
+        any_fallback = any(c.get('is_fallback') for c in components.values())
+        
+        return jsonify({
+            'success': True,
+            'components': components,
+            'has_fallbacks': any_fallback,
+            'summary': {k: '⚠️ FALLBACK' if v.get('is_fallback') else '✅ OK' for k, v in components.items()},
+        })
+    except Exception as e:
+        logger.error(f"Erro get_wacc_all_live: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== ROTAS PARA SIZE PREMIUM =====
 
 @app.route('/api/get_size_premium', methods=['GET'])
