@@ -837,6 +837,9 @@ def calculate_benchmark():
             avg_de = df['debt_equity'].mean()
             avg_bl = df['beta'].mean()
         
+        # Converter NaN para None (evita NaN no JSON que quebra JSON.parse do browser)
+        df = df.replace({np.nan: None})
+        
         companies_detail = []
         for _, row in df.iterrows():
             companies_detail.append({
