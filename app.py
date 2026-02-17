@@ -684,6 +684,179 @@ def get_sector_beta():
         }), 500
 
 
+@app.route('/api/benchmark_companies', methods=['GET'])
+def get_benchmark_companies():
+    """
+    Retorna empresas para seleção de benchmark com beta e D/E.
+    Filtros: industry, region, country, min_market_cap, max_market_cap, search
+    """
+    try:
+        industry = request.args.get('industry')
+        if not industry:
+            return jsonify({'success': False, 'error': 'Parâmetro industry é obrigatório'}), 400
+        
+        region = request.args.get('region', 'global')
+        countries = request.args.getlist('country')
+        min_mc = request.args.get('min_market_cap', type=float)
+        max_mc = request.args.get('max_market_cap', type=float)
+        search = request.args.get('search', '').strip()
+        
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        
+        query = """
+        SELECT company_name, ticker, exchange, country, broad_group,
+               CAST(beta AS REAL) as beta,
+               CAST(debt_equity AS REAL) as debt_equity,
+               CAST(market_cap AS REAL) as market_cap,
+               CAST(operating_margin AS REAL) as operating_margin,
+               CAST(revenue AS REAL) as revenue
+        FROM damodaran_global
+        WHERE industry = ?
+          AND beta IS NOT NULL AND beta != ''
+          AND CAST(beta AS REAL) > 0
+        """
+        params = [industry]
+        
+        if region == 'emkt':
+            query += " AND broad_group = 'Emerging Markets'"
+        
+        if countries:
+            placeholders = ','.join(['?' for _ in countries])
+            query += f" AND country IN ({placeholders})"
+            params.extend(countries)
+        
+        if min_mc is not None:
+            query += " AND CAST(market_cap AS REAL) >= ?"
+            params.append(min_mc)
+        if max_mc is not None:
+            query += " AND CAST(market_cap AS REAL) <= ?"
+            params.append(max_mc)
+        
+        if search:
+            query += " AND (company_name LIKE ? OR ticker LIKE ?)"
+            params.extend([f'%{search}%', f'%{search}%'])
+        
+        query += " ORDER BY CAST(market_cap AS REAL) DESC"
+        
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        
+        if df.empty:
+            return jsonify({'success': True, 'companies': [], 'stats': {'total': 0}})
+        
+        # Calcular beta desalavancado para cada empresa
+        tax_rate = 0.34
+        df['unlevered_beta'] = df.apply(
+            lambda r: round(r['beta'] / (1 + (1 - tax_rate) * r['debt_equity']), 4)
+            if pd.notna(r['debt_equity']) and r['debt_equity'] >= 0
+            else round(r['beta'], 4), axis=1
+        )
+        
+        df = df.replace({np.nan: None})
+        
+        companies = df.to_dict('records')
+        
+        # Estatísticas gerais
+        valid_betas = df[df['beta'] > 0]['beta']
+        valid_de = df[df['debt_equity'].notna() & (df['debt_equity'] >= 0)]['debt_equity']
+        valid_bu = df[df['unlevered_beta'] > 0]['unlevered_beta']
+        
+        stats = {
+            'total': len(df),
+            'avg_beta': round(valid_betas.mean(), 4) if len(valid_betas) > 0 else None,
+            'median_beta': round(valid_betas.median(), 4) if len(valid_betas) > 0 else None,
+            'avg_de': round(valid_de.mean(), 4) if len(valid_de) > 0 else None,
+            'avg_unlevered_beta': round(valid_bu.mean(), 4) if len(valid_bu) > 0 else None,
+        }
+        
+        return jsonify({'success': True, 'companies': companies, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Erro ao obter empresas benchmark: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/benchmark_calculate', methods=['POST'])
+def calculate_benchmark():
+    """
+    Calcula βU e D/E médios a partir de empresas selecionadas.
+    Body JSON: { tickers: [...], method: 'simple'|'weighted', tax_rate: 0.34 }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'tickers' not in data:
+            return jsonify({'success': False, 'error': 'tickers é obrigatório'}), 400
+        
+        tickers = data['tickers']
+        method = data.get('method', 'simple')
+        tax_rate = data.get('tax_rate', 0.34)
+        
+        if len(tickers) < 1:
+            return jsonify({'success': False, 'error': 'Selecione pelo menos 1 empresa'}), 400
+        
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        placeholders = ','.join(['?' for _ in tickers])
+        query = f"""
+        SELECT company_name, ticker, exchange, country,
+               CAST(beta AS REAL) as beta,
+               CAST(debt_equity AS REAL) as debt_equity,
+               CAST(market_cap AS REAL) as market_cap
+        FROM damodaran_global
+        WHERE ticker IN ({placeholders})
+          AND beta IS NOT NULL AND CAST(beta AS REAL) > 0
+        """
+        df = pd.read_sql_query(query, conn, params=tickers)
+        conn.close()
+        
+        if df.empty:
+            return jsonify({'success': False, 'error': 'Nenhuma empresa encontrada'})
+        
+        # Calcular beta desalavancado
+        df['debt_equity'] = df['debt_equity'].fillna(0).clip(lower=0)
+        df['unlevered_beta'] = df['beta'] / (1 + (1 - tax_rate) * df['debt_equity'])
+        
+        if method == 'weighted' and df['market_cap'].sum() > 0:
+            total_mc = df['market_cap'].sum()
+            df['weight'] = df['market_cap'] / total_mc
+            avg_bu = (df['unlevered_beta'] * df['weight']).sum()
+            avg_de = (df['debt_equity'] * df['weight']).sum()
+            avg_bl = (df['beta'] * df['weight']).sum()
+        else:
+            df['weight'] = 1.0 / len(df)
+            avg_bu = df['unlevered_beta'].mean()
+            avg_de = df['debt_equity'].mean()
+            avg_bl = df['beta'].mean()
+        
+        companies_detail = []
+        for _, row in df.iterrows():
+            companies_detail.append({
+                'company_name': row['company_name'],
+                'ticker': row['ticker'],
+                'exchange': row.get('exchange'),
+                'country': row.get('country'),
+                'beta': round(row['beta'], 4),
+                'debt_equity': round(row['debt_equity'], 4),
+                'unlevered_beta': round(row['unlevered_beta'], 4),
+                'market_cap': row['market_cap'],
+                'weight': round(row['weight'], 4),
+            })
+        
+        return jsonify({
+            'success': True,
+            'benchmark': {
+                'unlevered_beta': round(avg_bu, 4),
+                'levered_beta_avg': round(avg_bl, 4),
+                'debt_equity_avg': round(avg_de, 4),
+                'companies_used': len(df),
+                'method': method,
+                'tax_rate': tax_rate,
+                'companies': companies_detail
+            }
+        })
+    except Exception as e:
+        logger.error(f"Erro ao calcular benchmark: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/get_country_risk_options', methods=['GET'])
 def get_country_risk_options():
     """
