@@ -663,9 +663,22 @@
                     
                     <!-- TABELA BENCHMARK (Empresas selecionadas) -->
                     <div id="rpt-benchmark-section" style="display: none; margin-top: 24px;">
-                        <h6 style="font-weight: 600; color: #1e293b; margin-bottom: 12px; border-bottom: 2px solid #3b82f6; padding-bottom: 6px;">
-                            <i class="fas fa-chart-bar"></i> Empresas do Benchmark (<span id="rpt-bm-count">0</span> selecionadas)
-                        </h6>
+                        <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 12px; border-bottom: 2px solid #3b82f6; padding-bottom: 6px;">
+                            <h6 style="font-weight: 600; color: #1e293b; margin: 0;">
+                                <i class="fas fa-chart-bar"></i> Empresas do Benchmark (<span id="rpt-bm-count">0</span> selecionadas)
+                            </h6>
+                            <div class="no-print">
+                                <button class="btn btn-outline-success btn-sm me-1" onclick="exportBenchmarkCSV()" title="Exportar CSV">
+                                    <i class="fas fa-file-csv"></i> CSV
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm me-1" onclick="exportBenchmarkExcel()" title="Exportar Excel">
+                                    <i class="fas fa-file-excel"></i> Excel
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="exportBenchmarkPDF()" title="Exportar PDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                            </div>
+                        </div>
                         <div style="overflow-x: auto;">
                             <table class="pro-table" style="font-size: 0.78em;">
                                 <thead>
@@ -681,6 +694,7 @@
                                         <th class="text-end">EV/EBITDA</th>
                                         <th class="text-end">EV/EBIT</th>
                                         <th class="text-end">EV/Sales</th>
+                                        <th style="min-width:180px;">About</th>
                                     </tr>
                                 </thead>
                                 <tbody id="rpt-bm-body">
@@ -1839,8 +1853,9 @@
                 const evEbitda = c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) + 'x' : '--';
                 const evEbit = c.ev_ebit != null ? c.ev_ebit.toFixed(2) + 'x' : '--';
                 const evSales = c.ev_sales != null ? c.ev_sales.toFixed(2) + 'x' : '--';
+                const aboutShort = c.about ? c.about.substring(0, 80) + (c.about.length > 80 ? '...' : '') : '';
                 tr.innerHTML = `
-                    <td title="${c.about || ''}">${(c.company_name || '').substring(0, 30)}</td>
+                    <td>${(c.company_name || '').substring(0, 30)}</td>
                     <td><strong>${c.ticker}</strong></td>
                     <td>${c.country || ''}</td>
                     <td class="text-end">${c.beta != null ? c.beta.toFixed(4) : '--'}</td>
@@ -1851,6 +1866,7 @@
                     <td class="text-end">${evEbitda}</td>
                     <td class="text-end">${evEbit}</td>
                     <td class="text-end">${evSales}</td>
+                    <td style="font-size:0.85em;" title="${(c.about||'').replace(/"/g,'&quot;')}">${aboutShort}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1868,6 +1884,7 @@
                 const tr = document.createElement('tr');
                 tr.style.cssText = 'background: #f1f5f9; font-weight: 600; border-top: 2px solid #cbd5e1;';
                 let cells = `<td colspan="3" style="text-align:left;"><em>${statName}</em></td>`;
+                // About não tem estatística, será adicionado como célula vazia no final
                 
                 numFields.forEach(f => {
                     const vals = companies.map(c => c[f.key]).filter(v => v != null && !isNaN(v));
@@ -1879,6 +1896,7 @@
                     }
                 });
                 
+                cells += '<td></td>'; // About (sem estatística)
                 tr.innerHTML = cells;
                 tbody.appendChild(tr);
             });
@@ -1895,6 +1913,128 @@
             return mc.toLocaleString('en-US');
         }
         
+        // === FUNÇÕES DE EXPORTAÇÃO DO BENCHMARK ===
+        function getBenchmarkExportData() {
+            if (!lastBenchmarkResult || !lastBenchmarkResult.companies) return null;
+            const companies = lastBenchmarkResult.companies;
+            const headers = ['Empresa', 'Ticker', 'País', 'β Alav.', 'β Desalav.', 'D/E', 'Market Cap', 'Margem Op.', 'EV/EBITDA', 'EV/EBIT', 'EV/Sales', 'About'];
+            const rows = companies.map(c => [
+                c.company_name || '',
+                c.ticker || '',
+                c.country || '',
+                c.beta != null ? c.beta.toFixed(4) : '',
+                c.unlevered_beta != null ? c.unlevered_beta.toFixed(4) : '',
+                c.debt_equity != null ? c.debt_equity.toFixed(4) : '',
+                c.market_cap != null ? c.market_cap : '',
+                c.operating_margin != null ? (c.operating_margin * 100).toFixed(1) + '%' : '',
+                c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) : '',
+                c.ev_ebit != null ? c.ev_ebit.toFixed(2) : '',
+                c.ev_sales != null ? c.ev_sales.toFixed(2) : '',
+                c.about || ''
+            ]);
+            // Estatísticas
+            const numKeys = ['beta','unlevered_beta','debt_equity','market_cap','operating_margin','ev_ebitda','ev_ebit','ev_sales'];
+            const sfn = {
+                'Média': v => v.reduce((s,x)=>s+x,0)/v.length,
+                'Mediana': v => { const s=[...v].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; },
+                'Máximo': v => Math.max(...v),
+                'Mínimo': v => Math.min(...v),
+            };
+            ['Média','Mediana','Máximo','Mínimo'].forEach(stat => {
+                const row = [stat, '', ''];
+                numKeys.forEach((k,i) => {
+                    const vals = companies.map(c => c[k]).filter(v => v != null && !isNaN(v));
+                    if (vals.length > 0) {
+                        let r = sfn[stat](vals);
+                        if (k === 'operating_margin') row.push((r*100).toFixed(1) + '%');
+                        else if (k === 'market_cap') row.push(r);
+                        else if (['ev_ebitda','ev_ebit','ev_sales'].includes(k)) row.push(r.toFixed(2));
+                        else row.push(r.toFixed(4));
+                    } else row.push('');
+                });
+                row.push(''); // About
+                rows.push(row);
+            });
+            return { headers, rows };
+        }
+
+        function exportBenchmarkCSV() {
+            const data = getBenchmarkExportData();
+            if (!data) return;
+            const escapeCsv = v => { const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g,'""') + '"' : s; };
+            let csv = data.headers.map(escapeCsv).join(',') + '\n';
+            data.rows.forEach(r => { csv += r.map(escapeCsv).join(',') + '\n'; });
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'benchmark_wacc_' + new Date().toISOString().slice(0,10) + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function exportBenchmarkExcel() {
+            const data = getBenchmarkExportData();
+            if (!data) return;
+            // Gera XML Spreadsheet (compatível com Excel sem dependência externa)
+            let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            xml += '<?mso-application progid="Excel.Sheet"?>\n';
+            xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+            xml += '<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/><Interior ss:Color="#D9E1F2" ss:Pattern="Solid"/></Style>';
+            xml += '<Style ss:ID="stat"><Font ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style></Styles>\n';
+            xml += '<Worksheet ss:Name="Benchmark"><Table>\n';
+            // Header
+            xml += '<Row ss:StyleID="hdr">';
+            data.headers.forEach(h => { xml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`; });
+            xml += '</Row>\n';
+            // Dados
+            const totalCompanies = data.rows.length - 4; // 4 stat rows
+            data.rows.forEach((r, idx) => {
+                const isStat = idx >= totalCompanies;
+                xml += isStat ? '<Row ss:StyleID="stat">' : '<Row>';
+                r.forEach((v, ci) => {
+                    const isNum = ci >= 3 && ci <= 10 && v !== '' && !String(v).includes('%');
+                    const tp = isNum ? 'Number' : 'String';
+                    const val = String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    xml += `<Cell><Data ss:Type="${tp}">${val}</Data></Cell>`;
+                });
+                xml += '</Row>\n';
+            });
+            xml += '</Table></Worksheet></Workbook>';
+            const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'benchmark_wacc_' + new Date().toISOString().slice(0,10) + '.xls';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function exportBenchmarkPDF() {
+            // Imprime apenas a seção do benchmark usando CSS print
+            const section = document.getElementById('rpt-benchmark-section');
+            const clone = section.cloneNode(true);
+            // Remove botões do clone
+            clone.querySelectorAll('.no-print').forEach(el => el.remove());
+            const win = window.open('', '_blank');
+            const sectorEl = document.getElementById('rpt-setor');
+            const sectorName = sectorEl ? sectorEl.textContent : '';
+            win.document.write(`<!DOCTYPE html><html><head><title>Benchmark WACC</title>
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #1e293b; }
+                h6 { font-size: 14px; font-weight: 600; border-bottom: 2px solid #3b82f6; padding-bottom: 6px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
+                th { background: #e2e8f0; padding: 6px 8px; text-align: left; border: 1px solid #cbd5e1; }
+                td { padding: 5px 8px; border: 1px solid #e2e8f0; }
+                .text-end { text-align: right; }
+                tr:nth-child(even) { background: #f8fafc; }
+                .header-info { font-size: 12px; color: #475569; margin-bottom: 8px; }
+            </style></head><body>
+            <div class="header-info">Setor: <strong>${sectorName}</strong> — ${new Date().toLocaleDateString('pt-BR')}</div>
+            ${clone.innerHTML}
+            </body></html>`);
+            win.document.close();
+            setTimeout(() => { win.print(); }, 400);
+        }
+
         // Listener para método de média — recalcular stats em tempo real
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('bm-avg-method').addEventListener('change', updateBenchmarkStats);
