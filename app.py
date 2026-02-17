@@ -704,39 +704,44 @@ def get_benchmark_companies():
         conn = sqlite3.connect('data/damodaran_data_new.db')
         
         query = """
-        SELECT company_name, ticker, exchange, country, broad_group,
-               CAST(beta AS REAL) as beta,
-               CAST(debt_equity AS REAL) as debt_equity,
-               CAST(market_cap AS REAL) as market_cap,
-               CAST(operating_margin AS REAL) as operating_margin,
-               CAST(revenue AS REAL) as revenue
-        FROM damodaran_global
-        WHERE industry = ?
-          AND beta IS NOT NULL AND beta != ''
-          AND CAST(beta AS REAL) > 0
+        SELECT dg.company_name, dg.ticker, dg.exchange, dg.country, dg.broad_group,
+               CAST(dg.beta AS REAL) as beta,
+               CAST(dg.debt_equity AS REAL) as debt_equity,
+               CAST(dg.market_cap AS REAL) as market_cap,
+               CAST(dg.operating_margin AS REAL) as operating_margin,
+               CAST(dg.revenue AS REAL) as revenue,
+               CAST(dg.ev_ebitda AS REAL) as ev_ebitda,
+               CAST(dg.ev_ebit AS REAL) as ev_ebit,
+               CAST(dg.ev_revenue AS REAL) as ev_sales,
+               cbd.about
+        FROM damodaran_global dg
+        LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+        WHERE dg.industry = ?
+          AND dg.beta IS NOT NULL AND dg.beta != ''
+          AND CAST(dg.beta AS REAL) > 0
         """
         params = [industry]
         
         if region == 'emkt':
-            query += " AND broad_group = 'Emerging Markets'"
+            query += " AND dg.broad_group = 'Emerging Markets'"
         
         if countries:
             placeholders = ','.join(['?' for _ in countries])
-            query += f" AND country IN ({placeholders})"
+            query += f" AND dg.country IN ({placeholders})"
             params.extend(countries)
         
         if min_mc is not None:
-            query += " AND CAST(market_cap AS REAL) >= ?"
+            query += " AND CAST(dg.market_cap AS REAL) >= ?"
             params.append(min_mc)
         if max_mc is not None:
-            query += " AND CAST(market_cap AS REAL) <= ?"
+            query += " AND CAST(dg.market_cap AS REAL) <= ?"
             params.append(max_mc)
         
         if search:
-            query += " AND (company_name LIKE ? OR ticker LIKE ?)"
+            query += " AND (dg.company_name LIKE ? OR dg.ticker LIKE ?)"
             params.extend([f'%{search}%', f'%{search}%'])
         
-        query += " ORDER BY CAST(market_cap AS REAL) DESC"
+        query += " ORDER BY CAST(dg.market_cap AS REAL) DESC"
         
         df = pd.read_sql_query(query, conn, params=params)
         conn.close()
@@ -796,13 +801,19 @@ def calculate_benchmark():
         conn = sqlite3.connect('data/damodaran_data_new.db')
         placeholders = ','.join(['?' for _ in tickers])
         query = f"""
-        SELECT company_name, ticker, exchange, country,
-               CAST(beta AS REAL) as beta,
-               CAST(debt_equity AS REAL) as debt_equity,
-               CAST(market_cap AS REAL) as market_cap
-        FROM damodaran_global
-        WHERE ticker IN ({placeholders})
-          AND beta IS NOT NULL AND CAST(beta AS REAL) > 0
+        SELECT dg.company_name, dg.ticker, dg.exchange, dg.country,
+               CAST(dg.beta AS REAL) as beta,
+               CAST(dg.debt_equity AS REAL) as debt_equity,
+               CAST(dg.market_cap AS REAL) as market_cap,
+               CAST(dg.operating_margin AS REAL) as operating_margin,
+               CAST(dg.ev_ebitda AS REAL) as ev_ebitda,
+               CAST(dg.ev_ebit AS REAL) as ev_ebit,
+               CAST(dg.ev_revenue AS REAL) as ev_sales,
+               cbd.about
+        FROM damodaran_global dg
+        LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+        WHERE dg.ticker IN ({placeholders})
+          AND dg.beta IS NOT NULL AND CAST(dg.beta AS REAL) > 0
         """
         df = pd.read_sql_query(query, conn, params=tickers)
         conn.close()
@@ -837,6 +848,11 @@ def calculate_benchmark():
                 'debt_equity': round(row['debt_equity'], 4),
                 'unlevered_beta': round(row['unlevered_beta'], 4),
                 'market_cap': row['market_cap'],
+                'operating_margin': row.get('operating_margin'),
+                'ev_ebitda': row.get('ev_ebitda'),
+                'ev_ebit': row.get('ev_ebit'),
+                'ev_sales': row.get('ev_sales'),
+                'about': row.get('about'),
                 'weight': round(row['weight'], 4),
             })
         

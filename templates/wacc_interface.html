@@ -661,6 +661,34 @@
                         
                     </div>
                     
+                    <!-- TABELA BENCHMARK (Empresas selecionadas) -->
+                    <div id="rpt-benchmark-section" style="display: none; margin-top: 24px;">
+                        <h6 style="font-weight: 600; color: #1e293b; margin-bottom: 12px; border-bottom: 2px solid #3b82f6; padding-bottom: 6px;">
+                            <i class="fas fa-chart-bar"></i> Empresas do Benchmark (<span id="rpt-bm-count">0</span> selecionadas)
+                        </h6>
+                        <div style="overflow-x: auto;">
+                            <table class="pro-table" style="font-size: 0.78em;">
+                                <thead>
+                                    <tr>
+                                        <th>Empresa</th>
+                                        <th>Ticker</th>
+                                        <th>País</th>
+                                        <th class="text-end">β Alav.</th>
+                                        <th class="text-end">β Desalav.</th>
+                                        <th class="text-end">D/E</th>
+                                        <th class="text-end">Market Cap</th>
+                                        <th class="text-end">Margem Op.</th>
+                                        <th class="text-end">EV/EBITDA</th>
+                                        <th class="text-end">EV/EBIT</th>
+                                        <th class="text-end">EV/Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rpt-bm-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <!-- MÉTRICAS FOOTER -->
                     <div class="metrics-row">
                         <div class="metric-item">
@@ -765,10 +793,14 @@
                                     <th onclick="sortBenchmarkTable('debt_equity')" style="cursor:pointer;">D/E ↕</th>
                                     <th onclick="sortBenchmarkTable('market_cap')" style="cursor:pointer;">Market Cap ↕</th>
                                     <th onclick="sortBenchmarkTable('operating_margin')" style="cursor:pointer;">Margem Op. ↕</th>
+                                    <th onclick="sortBenchmarkTable('ev_ebitda')" style="cursor:pointer;">EV/EBITDA ↕</th>
+                                    <th onclick="sortBenchmarkTable('ev_ebit')" style="cursor:pointer;">EV/EBIT ↕</th>
+                                    <th onclick="sortBenchmarkTable('ev_sales')" style="cursor:pointer;">EV/Sales ↕</th>
+                                    <th style="min-width:120px;">About</th>
                                 </tr>
                             </thead>
                             <tbody id="bm-table-body">
-                                <tr><td colspan="10" class="text-center text-muted py-4">Selecione um setor e clique em "Selecionar" para carregar empresas</td></tr>
+                                <tr><td colspan="14" class="text-center text-muted py-4">Selecione um setor e clique em "Selecionar" para carregar empresas</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -797,6 +829,7 @@
         let bmSelectedTickers = new Set(); // Tickers selecionados
         let bmSortCol = 'market_cap';
         let bmSortAsc = false;
+        let lastBenchmarkResult = null; // Resultado do benchmark para o relatório
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -1153,6 +1186,9 @@
                     }
                     kiBody.appendChild(tr);
                 });
+                
+                // === TABELA BENCHMARK NO RELATÓRIO ===
+                renderBenchmarkReportTable();
                 
                 // Footer metrics
                 document.getElementById('rpt-de-setor').textContent = deRatio.toFixed(4);
@@ -1547,7 +1583,7 @@
             });
             
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-3">Nenhuma empresa encontrada</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-3">Nenhuma empresa encontrada</td></tr>';
                 return;
             }
             
@@ -1568,6 +1604,10 @@
                 }
                 
                 const om = c.operating_margin != null ? (c.operating_margin * 100).toFixed(1) + '%' : '--';
+                const evEbitda = c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) + 'x' : '--';
+                const evEbit = c.ev_ebit != null ? c.ev_ebit.toFixed(2) + 'x' : '--';
+                const evSales = c.ev_sales != null ? c.ev_sales.toFixed(2) + 'x' : '--';
+                const aboutShort = c.about ? c.about.substring(0, 50) + (c.about.length > 50 ? '...' : '') : '';
                 
                 tr.innerHTML = `
                     <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleBmCompany('${c.ticker}')"></td>
@@ -1580,6 +1620,10 @@
                     <td class="text-end">${c.debt_equity != null ? c.debt_equity.toFixed(4) : '--'}</td>
                     <td class="text-end">${mcStr}</td>
                     <td class="text-end">${om}</td>
+                    <td class="text-end">${evEbitda}</td>
+                    <td class="text-end">${evEbit}</td>
+                    <td class="text-end">${evSales}</td>
+                    <td style="font-size:0.75em;" title="${(c.about||'').replace(/"/g,'&quot;')}">${aboutShort}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1700,6 +1744,9 @@
                 if (data.success) {
                     const bm = data.benchmark;
                     
+                    // Guardar resultado para uso no relatório WACC
+                    lastBenchmarkResult = bm;
+                    
                     // Aplicar βU e D/E no card Ke
                     document.getElementById('unlevered-beta').value = bm.unlevered_beta;
                     document.getElementById('debt-equity-ratio').value = bm.debt_equity_avg;
@@ -1753,6 +1800,99 @@
                 console.error('Erro ao confirmar benchmark:', e);
                 alert('Erro de conexão ao calcular benchmark.');
             }
+        }
+        
+        // Renderizar tabela de benchmark no relatório WACC
+        function renderBenchmarkReportTable() {
+            const section = document.getElementById('rpt-benchmark-section');
+            const tbody = document.getElementById('rpt-bm-body');
+            const betaOption = document.querySelector('input[name="beta-option"]:checked');
+            
+            // Só exibir se modo benchmark ativo e tem dados
+            if (!betaOption || betaOption.value !== 'benchmark' || !lastBenchmarkResult || !lastBenchmarkResult.companies || lastBenchmarkResult.companies.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            const companies = lastBenchmarkResult.companies;
+            document.getElementById('rpt-bm-count').textContent = companies.length;
+            
+            // Campos numéricos para estatísticas
+            const numFields = [
+                { key: 'beta', format: v => v.toFixed(4) },
+                { key: 'unlevered_beta', format: v => v.toFixed(4) },
+                { key: 'debt_equity', format: v => v.toFixed(4) },
+                { key: 'market_cap', format: v => formatMcReport(v) },
+                { key: 'operating_margin', format: v => v != null ? (v * 100).toFixed(1) + '%' : '--' },
+                { key: 'ev_ebitda', format: v => v.toFixed(2) + 'x' },
+                { key: 'ev_ebit', format: v => v.toFixed(2) + 'x' },
+                { key: 'ev_sales', format: v => v.toFixed(2) + 'x' },
+            ];
+            
+            tbody.innerHTML = '';
+            
+            // Linhas de dados
+            companies.forEach(c => {
+                const tr = document.createElement('tr');
+                const mc = formatMcReport(c.market_cap);
+                const om = c.operating_margin != null ? (c.operating_margin * 100).toFixed(1) + '%' : '--';
+                const evEbitda = c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) + 'x' : '--';
+                const evEbit = c.ev_ebit != null ? c.ev_ebit.toFixed(2) + 'x' : '--';
+                const evSales = c.ev_sales != null ? c.ev_sales.toFixed(2) + 'x' : '--';
+                tr.innerHTML = `
+                    <td title="${c.about || ''}">${(c.company_name || '').substring(0, 30)}</td>
+                    <td><strong>${c.ticker}</strong></td>
+                    <td>${c.country || ''}</td>
+                    <td class="text-end">${c.beta != null ? c.beta.toFixed(4) : '--'}</td>
+                    <td class="text-end">${c.unlevered_beta != null ? c.unlevered_beta.toFixed(4) : '--'}</td>
+                    <td class="text-end">${c.debt_equity != null ? c.debt_equity.toFixed(4) : '--'}</td>
+                    <td class="text-end">${mc}</td>
+                    <td class="text-end">${om}</td>
+                    <td class="text-end">${evEbitda}</td>
+                    <td class="text-end">${evEbit}</td>
+                    <td class="text-end">${evSales}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Cálculo de estatísticas (max, min, média, mediana)
+            const statRows = ['Média', 'Mediana', 'Máximo', 'Mínimo'];
+            const statFuncs = {
+                'Média': vals => vals.reduce((s,v) => s+v, 0) / vals.length,
+                'Mediana': vals => { const s = [...vals].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; },
+                'Máximo': vals => Math.max(...vals),
+                'Mínimo': vals => Math.min(...vals),
+            };
+            
+            statRows.forEach(statName => {
+                const tr = document.createElement('tr');
+                tr.style.cssText = 'background: #f1f5f9; font-weight: 600; border-top: 2px solid #cbd5e1;';
+                let cells = `<td colspan="3" style="text-align:left;"><em>${statName}</em></td>`;
+                
+                numFields.forEach(f => {
+                    const vals = companies.map(c => c[f.key]).filter(v => v != null && !isNaN(v));
+                    if (vals.length > 0) {
+                        const result = statFuncs[statName](vals);
+                        cells += `<td class="text-end">${f.format(result)}</td>`;
+                    } else {
+                        cells += `<td class="text-end">--</td>`;
+                    }
+                });
+                
+                tr.innerHTML = cells;
+                tbody.appendChild(tr);
+            });
+            
+            section.style.display = 'block';
+        }
+        
+        // Formatador de Market Cap para o relatório
+        function formatMcReport(mc) {
+            if (mc == null) return '--';
+            if (mc >= 1e12) return (mc/1e12).toFixed(1) + 'T';
+            if (mc >= 1e9) return (mc/1e9).toFixed(1) + 'B';
+            if (mc >= 1e6) return (mc/1e6).toFixed(0) + 'M';
+            return mc.toLocaleString('en-US');
         }
         
         // Listener para método de média — recalcular stats em tempo real
