@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+
+{% block title %}Parâmetros WACC — Metodologia e Auditoria{% endblock %}
+
+{% block extra_css %}
+<style>
+    .param-card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    .param-card:hover {
+        transform: translateY(-3px) !important;
+    }
+    .param-value {
+        font-size: 2rem;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+    }
+    .param-source {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .audit-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .audit-badge:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .audit-badge-primary { background: #e3f2fd; color: #1565c0; }
+    .audit-badge-primary:hover { background: #bbdefb; color: #0d47a1; }
+    .audit-badge-success { background: #e8f5e9; color: #2e7d32; }
+    .audit-badge-success:hover { background: #c8e6c9; color: #1b5e20; }
+    .audit-badge-warning { background: #fff3e0; color: #e65100; }
+    .audit-badge-warning:hover { background: #ffe0b2; color: #bf360c; }
+    .audit-badge-info { background: #e0f7fa; color: #00695c; }
+    .audit-badge-info:hover { background: #b2dfdb; color: #004d40; }
+    
+    .formula-box {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #e0e0e0;
+        border-radius: 12px;
+        padding: 20px 30px;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        text-align: center;
+        margin: 15px 0;
+    }
+    .formula-box .highlight {
+        color: #64b5f6;
+        font-weight: 700;
+    }
+    
+    .methodology-text {
+        background: #f8f9fa;
+        border-left: 3px solid #6c757d;
+        padding: 10px 15px;
+        font-size: 0.85rem;
+        color: #495057;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .status-live { color: #2e7d32; }
+    .status-cached { color: #f57f17; }
+    .status-fallback { color: #c62828; }
+    
+    .section-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        border-radius: 12px;
+        padding: 15px 25px;
+        margin-bottom: 20px;
+    }
+    
+    .section-header h3 {
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .print-btn { position: fixed; bottom: 20px; right: 20px; z-index: 999; }
+    
+    @media print {
+        .navbar, .print-btn, .btn-export { display: none !important; }
+        .param-card { break-inside: avoid; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-file-contract text-primary me-2"></i>
+                Parâmetros WACC — Metodologia e Auditoria
+            </h2>
+            <p class="text-muted mb-0">
+                Documentação dos parâmetros utilizados no cálculo do WACC com links de verificação
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/data-updates" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-sync-alt me-1"></i> Dashboard Dados
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-print me-1"></i> Imprimir
+            </button>
+            <button onclick="exportPDF()" class="btn btn-outline-danger btn-sm btn-export">
+                <i class="fas fa-file-pdf me-1"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Fórmulas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="formula-box">
+                <div class="mb-2" style="font-size:0.85rem; color:#90caf9;">WACC</div>
+                <span class="highlight">WACC</span> = E/(E+D) × <span class="highlight">Ke</span> + D/(E+D) × <span class="highlight">Kd</span> × (1 − T)
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="formula-box">
+                <div class="mb-2" style="font-size:0.85rem; color:#90caf9;">CAPM (Ke)</div>
+                <span class="highlight">Ke</span> = <span class="highlight">Rf</span> + β<sub>L</sub> × <span class="highlight">ERP</span> + <span class="highlight">Rp</span> + <span class="highlight">Rs</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-params" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-2 text-muted">Carregando parâmetros em tempo real...</p>
+    </div>
+
+    <!-- Conteúdo dinâmico -->
+    <div id="params-content" style="display:none;">
+        
+        <!-- ═══ SEÇÃO 1: Custo do Capital Próprio (Ke) ═══ -->
+        <div class="section-header">
+            <h3><i class="fas fa-chart-pie me-2"></i> 1. Custo do Capital Próprio (Ke) — CAPM</h3>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- RF -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #1e3a5f;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-landmark" style="color:#1e3a5f"></i> Rf — Taxa Livre de Risco
+                                </h6>
+                                <small class="text-muted">US Treasury Bond 10Y</small>
+                            </div>
+                            <span id="rf-status" class="badge"></span>
+                        </div>
+                        <div class="param-value text-center my-3" id="rf-value" style="color:#1e3a5f">—</div>
+                        <div class="param-source text-center mb-2" id="rf-source">Fonte: FRED / Federal Reserve</div>
+                        <div class="methodology-text mb-3">
+                            Média aritmética do yield do T-Bond 10Y dos últimos 2 anos. 
+                            Escolhido por não ser instrumento de política monetária (vs T-Bill) 
+                            e ser menos afetado por inflação esperada (vs T-Bond 30Y).
+                        </div>
+                        <div class="d-flex flex-wrap gap-1" id="rf-audit-links">
+                            <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-external-link-alt"></i> FRED DGS10
+                            </a>
+                            <a href="https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10" target="_blank" class="audit-badge audit-badge-success">
+                                <i class="fas fa-download"></i> CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ERP -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #2563eb;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-chart-line" style="color:#2563eb"></i> ERP — Prêmio de Risco de Mercado
+                                </h6>
+                                <small class="text-muted">Equity Risk Premium (Rm − Rf)</small>
+                            </div>
+                            <span id="erp-status" class="badge"></span>
+                        </div>
+                        <div class="param-value text-center my-3" id="erp-value" style="color:#2563eb">—</div>
+                        <div class="param-source text-center mb-2" id="erp-source">Fonte: Damodaran (NYU Stern)</div>
+                        <div class="methodology-text mb-3">
+                            <strong>Média geométrica</strong> de (S&P 500 return − T-Bond return) desde 1928. 
+                            O valor <strong>não aparece</strong> diretamente na página HTML — verificar no 
+                            <strong>Excel, aba resumo</strong>, linha "Geometric Average", coluna "Stocks − T.Bonds".
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-table"></i> Dados Anuais
+                            </a>
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls" target="_blank" class="audit-badge audit-badge-success">
+                                <i class="fas fa-file-excel"></i> Excel (verificar)
+                            </a>
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/implpr.html" target="_blank" class="audit-badge audit-badge-info">
+                                <i class="fas fa-chart-area"></i> ERP Implícito
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beta -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #7c3aed;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-globe" style="color:#7c3aed"></i> β — Beta Setorial
+                                </h6>
+                                <small class="text-muted">Desalavancado → Re-alavancado</small>
+                            </div>
+                            <span class="badge bg-info">Setorial</span>
+                        </div>
+                        <div class="param-value text-center my-3" style="color:#7c3aed; font-size:1.3rem;">
+                            β<sub>L</sub> = β<sub>U</sub> × [1 + (1−T) × D/E]
+                        </div>
+                        <div class="param-source text-center mb-2">Fonte: Damodaran — Betas por Setor</div>
+                        <div class="methodology-text mb-3">
+                            Beta desalavancado (βU) mediano do setor, re-alavancado pela relação D/E 
+                            da empresa. Betas setoriais são mais estáveis que betas individuais em mercados emergentes.
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-globe"></i> Global
+                            </a>
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls" target="_blank" class="audit-badge audit-badge-success">
+                                <i class="fas fa-file-excel"></i> Excel Global
+                            </a>
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html" target="_blank" class="audit-badge audit-badge-warning">
+                                <i class="fas fa-earth-americas"></i> Emergentes
+                            </a>
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls" target="_blank" class="audit-badge audit-badge-success">
+                                <i class="fas fa-file-excel"></i> Excel Emerg.
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Country Risk -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #059669;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-globe-americas" style="color:#059669"></i> Rp — Risco País (CRP)
+                                </h6>
+                                <small class="text-muted">Country Risk Premium</small>
+                            </div>
+                            <span id="crp-status" class="badge"></span>
+                        </div>
+                        <div class="param-value text-center my-3" id="crp-value" style="color:#059669">—</div>
+                        <div class="param-source text-center mb-2" id="crp-source">Fonte: Damodaran (NYU Stern)</div>
+                        <div class="methodology-text mb-3">
+                            Spread de default soberano (Moody's + CDS spread) ajustado pela volatilidade 
+                            relativa equity/bond de mercados emergentes. Brasil (Ba1): coluna "Country Risk Premium".
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-globe-americas"></i> Buscar "Brazil"
+                            </a>
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/ctryprem.xlsx" target="_blank" class="audit-badge audit-badge-success">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Premium -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #ea580c;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-expand-arrows-alt" style="color:#ea580c"></i> Rs — Size Premium
+                                </h6>
+                                <small class="text-muted">Prêmio por Tamanho</small>
+                            </div>
+                            <span class="badge bg-secondary">Manual</span>
+                        </div>
+                        <div class="param-value text-center my-3" style="color:#ea580c; font-size:1.3rem;">
+                            Varia por decil de Market Cap
+                        </div>
+                        <div class="param-source text-center mb-2">Fonte: Kroll / Duff & Phelps</div>
+                        <div class="methodology-text mb-3">
+                            Prêmio por tamanho por decil de Market Cap. Empresas menores exigem retorno 
+                            adicional por menor liquidez e maior risco operacional. Atualização anual manual.
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://www.kroll.com/en/cost-of-capital" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-external-link-alt"></i> Kroll
+                            </a>
+                            <a href="/api/size_premium_data" target="_blank" class="audit-badge audit-badge-info">
+                                <i class="fas fa-database"></i> Dados Locais
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D/E Estrutura -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card param-card h-100" style="border-color: #6366f1;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-balance-scale" style="color:#6366f1"></i> D/E — Estrutura de Capital
+                                </h6>
+                                <small class="text-muted">Pesos Dívida / Capital Próprio</small>
+                            </div>
+                            <span class="badge bg-info">Setorial</span>
+                        </div>
+                        <div class="param-value text-center my-3" style="color:#6366f1; font-size:1.3rem;">
+                            D/E mediano do setor
+                        </div>
+                        <div class="param-source text-center mb-2">Fonte: Damodaran — Dataset de Betas</div>
+                        <div class="methodology-text mb-3">
+                            Relação D/E mediana do setor como padrão. Pode ser substituída pela estrutura real 
+                            da empresa. Disponível no mesmo dataset dos betas setoriais.
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-table"></i> Betas + D/E
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEÇÃO 2: Custo da Dívida (Ki) ═══ -->
+        <div class="section-header" style="background: linear-gradient(135deg, #374151, #6b7280);">
+            <h3><i class="fas fa-university me-2"></i> 2. Custo da Dívida (Ki)</h3>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- Selic / Kd -->
+            <div class="col-md-6">
+                <div class="card param-card h-100" style="border-color: #374151;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-university" style="color:#374151"></i> Kd — Custo da Dívida (via Selic)
+                                </h6>
+                                <small class="text-muted">Kd = 150% × Selic</small>
+                            </div>
+                            <span id="selic-status" class="badge"></span>
+                        </div>
+                        <div class="row text-center my-3">
+                            <div class="col-6">
+                                <div class="param-source">SELIC</div>
+                                <div class="param-value" id="selic-value" style="color:#374151; font-size:1.6rem;">—</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="param-source">Kd (150% Selic)</div>
+                                <div class="param-value" id="kd-value" style="color:#1e3a5f; font-size:1.6rem;">—</div>
+                            </div>
+                        </div>
+                        <div class="param-source text-center mb-2" id="selic-source">Fonte: BCB série 432</div>
+                        <div class="methodology-text mb-3">
+                            Taxa Selic × 150% como proxy para custo médio de captação. O fator reflete o spread 
+                            bancário médio. Dados obtidos em <strong>tempo real</strong> via API do Banco Central.
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-code"></i> API BCB (JSON)
+                            </a>
+                            <a href="https://www.bcb.gov.br/controleinflacao/taxaselic" target="_blank" class="audit-badge audit-badge-info">
+                                <i class="fas fa-external-link-alt"></i> BCB Selic
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IR -->
+            <div class="col-md-6">
+                <div class="card param-card h-100" style="border-color: #dc2626;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-file-invoice-dollar" style="color:#dc2626"></i> T — Alíquota de Impostos
+                                </h6>
+                                <small class="text-muted">IR (25%) + CSLL (9%)</small>
+                            </div>
+                            <span class="badge bg-secondary">Fixo</span>
+                        </div>
+                        <div class="param-value text-center my-3" id="ir-value" style="color:#dc2626">—</div>
+                        <div class="param-source text-center mb-2">Legislação Tributária Brasileira</div>
+                        <div class="methodology-text mb-3">
+                            Alíquota combinada de IRPJ (25%) + CSLL (9%) para empresas do Lucro Real. 
+                            A despesa financeira gera benefício fiscal (tax shield): Ki = Kd × (1 − T).
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/tributos/irpj" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-external-link-alt"></i> Receita Federal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEÇÃO 3: Ajustes de Inflação ═══ -->
+        <div class="section-header" style="background: linear-gradient(135deg, #dc2626, #ef4444);">
+            <h3><i class="fas fa-percentage me-2"></i> 3. Ajustes de Inflação</h3>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- IPCA -->
+            <div class="col-md-6">
+                <div class="card param-card h-100" style="border-color: #dc2626;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-percentage" style="color:#dc2626"></i> IPCA — Inflação Brasil
+                                </h6>
+                                <small class="text-muted">Acumulado 12 meses</small>
+                            </div>
+                            <span id="ipca-status" class="badge"></span>
+                        </div>
+                        <div class="param-value text-center my-3" id="ipca-value" style="color:#dc2626">—</div>
+                        <div class="param-source text-center mb-2" id="ipca-source">Fonte: BCB série 13522</div>
+                        <div class="methodology-text mb-3">
+                            IPCA acumulado 12 meses para converter WACC nominal (USD) em WACC nominal (BRL) 
+                            via diferencial de inflação. Dados em <strong>tempo real</strong> via API BCB.
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-code"></i> API BCB (JSON)
+                            </a>
+                            <a href="https://www.bcb.gov.br/controleinflacao/indicadores" target="_blank" class="audit-badge audit-badge-info">
+                                <i class="fas fa-external-link-alt"></i> BCB Indicadores
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPI USA -->
+            <div class="col-md-6">
+                <div class="card param-card h-100" style="border-color: #f59e0b;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title fw-bold mb-0">
+                                    <i class="fas fa-flag-usa" style="color:#f59e0b"></i> CPI — Inflação EUA
+                                </h6>
+                                <small class="text-muted">Média histórica desde 1820</small>
+                            </div>
+                            <span id="ia-status" class="badge"></span>
+                        </div>
+                        <div class="param-value text-center my-3" id="ia-value" style="color:#f59e0b">—</div>
+                        <div class="param-source text-center mb-2">Fonte: BDWACC.json</div>
+                        <div class="methodology-text mb-3">
+                            Inflação americana média histórica. Usada para converter taxas nominais em USD para 
+                            taxa real, e depois reconverter para taxa nominal em BRL (via diferencial de inflação).
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="https://fred.stlouisfed.org/series/CPIAUCSL" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-external-link-alt"></i> FRED CPI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEÇÃO 4: Tabela Resumo ═══ -->
+        <div class="section-header" style="background: linear-gradient(135deg, #059669, #10b981);">
+            <h3><i class="fas fa-clipboard-list me-2"></i> 4. Resumo — Valores Atuais e Status</h3>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="summary-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Parâmetro</th>
+                                <th>Componente</th>
+                                <th>Valor Atual</th>
+                                <th>Provedor</th>
+                                <th>Frequência</th>
+                                <th>Status</th>
+                                <th>Link de Auditoria</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary-tbody">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(135deg, #6b7280, #9ca3af);">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Notas de Auditoria</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Hierarquia de Dados</h6>
+                        <ol class="small">
+                            <li><span class="status-live fw-bold">API em tempo real</span> — BCB para Selic e IPCA</li>
+                            <li><span class="status-cached fw-bold">Cache local</span> — dados recentes (30 min)</li>
+                            <li><span class="fw-bold">BDWACC.json</span> — valores de referência anual</li>
+                            <li><span class="status-fallback fw-bold">Fallback hardcoded</span> — último recurso</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Outras Verificações</h6>
+                        <ul class="small list-unstyled">
+                            <li>📡 <a href="/api/get_wacc_all_live" target="_blank">/api/get_wacc_all_live</a> — Todos os valores atuais (JSON)</li>
+                            <li>✅ <a href="/api/validate_wacc_data" target="_blank">/api/validate_wacc_data</a> — Validação de dados</li>
+                            <li>📊 <a href="/data-updates" target="_blank">/data-updates</a> — Dashboard de atualizações</li>
+                            <li>📄 <a href="/api/data_sources_status" target="_blank">/api/data_sources_status</a> — Status de fontes (JSON)</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-clock me-1"></i> Última verificação: <span id="last-check">—</span> | 
+                    <i class="fas fa-book me-1"></i> Referência: Damodaran, A. "Valuation: Measuring and Managing the Value of Companies". Wiley.
+                </p>
+            </div>
+        </div>
+
+    </div><!-- /params-content -->
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', loadParameters);
+
+async function loadParameters() {
+    try {
+        const resp = await fetch('/api/get_wacc_all_live');
+        const data = await resp.json();
+        
+        if (!data.success) {
+            showError('Erro ao carregar parâmetros');
+            return;
+        }
+
+        const c = data.components;
+        
+        // RF
+        setParamValue('rf-value', c.RF?.raw || c.RF?.value, '%');
+        setStatus('rf-status', c.RF?.is_fallback ? 'fallback' : 'ok', c.RF?.source);
+        
+        // ERP
+        setParamValue('erp-value', c.RM?.raw || c.RM?.value, '%');
+        setStatus('erp-status', c.RM?.is_fallback ? 'fallback' : 'ok', c.RM?.source);
+        
+        // Country Risk
+        setParamValue('crp-value', c.CR?.raw || c.CR?.value, '%');
+        setStatus('crp-status', c.CR?.is_fallback ? 'fallback' : 'ok', c.CR?.source);
+        
+        // Selic / Kd
+        if (c.CT_Selic) {
+            document.getElementById('selic-value').textContent = formatVal(c.CT_Selic.selic) + '%';
+            document.getElementById('kd-value').textContent = formatVal(c.CT_Selic.kd) + '%';
+            setStatus('selic-status', c.CT_Selic.is_live ? 'live' : (c.CT_Selic.is_fallback ? 'fallback' : 'cached'), 
+                       c.CT_Selic.source + (c.CT_Selic.date ? ` (${c.CT_Selic.date})` : ''));
+            document.getElementById('selic-source').textContent = `Fonte: ${c.CT_Selic.source}` + (c.CT_Selic.date ? ` — ${c.CT_Selic.date}` : '');
+        }
+        
+        // IR
+        setParamValue('ir-value', c.IR?.raw || c.IR?.value, '%');
+        
+        // IPCA
+        if (c.IB_IPCA) {
+            setParamValue('ipca-value', c.IB_IPCA.ipca_12m, '%');
+            setStatus('ipca-status', c.IB_IPCA.is_live ? 'live' : (c.IB_IPCA.is_fallback ? 'fallback' : 'cached'),
+                       c.IB_IPCA.source + (c.IB_IPCA.date ? ` (${c.IB_IPCA.date})` : ''));
+            document.getElementById('ipca-source').textContent = `Fonte: ${c.IB_IPCA.source}` + (c.IB_IPCA.date ? ` — ${c.IB_IPCA.date}` : '');
+        }
+        
+        // IA (inflação americana)
+        setParamValue('ia-value', c.IA?.raw || c.IA?.value, '%');
+        setStatus('ia-status', c.IA?.is_fallback ? 'fallback' : 'ok', c.IA?.source);
+        
+        // Tabela resumo
+        buildSummaryTable(c);
+        
+        // Timestamp
+        document.getElementById('last-check').textContent = new Date().toLocaleString('pt-BR');
+        
+        // Mostrar conteúdo
+        document.getElementById('loading-params').style.display = 'none';
+        document.getElementById('params-content').style.display = 'block';
+        
+    } catch (err) {
+        showError('Erro de conexão: ' + err.message);
+    }
+}
+
+function setParamValue(elemId, value, suffix) {
+    const el = document.getElementById(elemId);
+    if (!el) return;
+    if (value !== null && value !== undefined) {
+        el.textContent = formatVal(value) + (suffix || '');
+    } else {
+        el.textContent = 'N/D';
+        el.style.opacity = '0.5';
+    }
+}
+
+function formatVal(v) {
+    if (v === null || v === undefined) return 'N/D';
+    if (typeof v === 'string') return v.replace('.', ',');
+    if (typeof v === 'number') {
+        return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return String(v);
+}
+
+function setStatus(elemId, status, tooltip) {
+    const el = document.getElementById(elemId);
+    if (!el) return;
+    const map = {
+        'live':     { cls: 'bg-success', text: '🟢 Live', title: tooltip || 'API em tempo real' },
+        'ok':       { cls: 'bg-primary',  text: '✅ OK',   title: tooltip || 'BDWACC.json' },
+        'cached':   { cls: 'bg-warning text-dark', text: '🟡 Cache', title: tooltip || 'Dados em cache' },
+        'fallback': { cls: 'bg-danger',   text: '⚠️ Fallback', title: tooltip || 'Valor de fallback' },
+    };
+    const s = map[status] || map['ok'];
+    el.className = `badge ${s.cls}`;
+    el.textContent = s.text;
+    el.title = s.title;
+}
+
+function buildSummaryTable(c) {
+    const tbody = document.getElementById('summary-tbody');
+    const rows = [
+        { n: 1, param: 'Rf (Taxa Livre de Risco)', comp: 'Ke', value: (c.RF?.raw || c.RF?.value), provider: 'FRED', freq: 'Diário', status: !c.RF?.is_fallback, url: 'https://fred.stlouisfed.org/series/DGS10', urlLabel: 'FRED DGS10' },
+        { n: 2, param: 'ERP (Prêmio de Mercado)', comp: 'Ke', value: (c.RM?.raw || c.RM?.value), provider: 'Damodaran', freq: 'Anual', status: !c.RM?.is_fallback, url: 'https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls', urlLabel: '📥 Excel' },
+        { n: 3, param: 'β (Beta Setorial)', comp: 'Ke', value: 'Varia por setor', provider: 'Damodaran', freq: 'Anual', status: true, url: 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html', urlLabel: 'Betas.html' },
+        { n: 4, param: 'Rp (Risco País)', comp: 'Ke', value: (c.CR?.raw || c.CR?.value), provider: 'Damodaran', freq: 'Anual', status: !c.CR?.is_fallback, url: 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html', urlLabel: 'ctryprem.html' },
+        { n: 5, param: 'Rs (Size Premium)', comp: 'Ke', value: 'Por decil', provider: 'Kroll', freq: 'Anual', status: true, url: 'https://www.kroll.com/en/cost-of-capital', urlLabel: 'Kroll' },
+        { n: 6, param: 'Selic → Kd', comp: 'Ki', value: c.CT_Selic?.kd, provider: 'BCB (432)', freq: 'Diário', status: c.CT_Selic?.is_live, url: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json', urlLabel: 'API BCB' },
+        { n: 7, param: 'T (IR + CSLL)', comp: 'Ki', value: (c.IR?.raw || c.IR?.value), provider: 'Legislação', freq: 'Fixo', status: true, url: 'https://www.gov.br/receitafederal/pt-br', urlLabel: 'Receita Federal' },
+        { n: 8, param: 'IPCA (Inflação BR)', comp: 'Ajuste', value: c.IB_IPCA?.ipca_12m, provider: 'BCB (13522)', freq: 'Mensal', status: c.IB_IPCA?.is_live, url: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json', urlLabel: 'API BCB' },
+        { n: 9, param: 'CPI EUA (Inflação)', comp: 'Ajuste', value: (c.IA?.raw || c.IA?.value), provider: 'FRED', freq: 'Anual', status: !c.IA?.is_fallback, url: 'https://fred.stlouisfed.org/series/CPIAUCSL', urlLabel: 'FRED CPI' },
+    ];
+    
+    tbody.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.n}</td>
+            <td class="fw-bold">${r.param}</td>
+            <td><span class="badge bg-${r.comp === 'Ke' ? 'primary' : r.comp === 'Ki' ? 'dark' : 'warning text-dark'}">${r.comp}</span></td>
+            <td class="fw-bold">${r.value !== null && r.value !== undefined ? formatVal(r.value) + '%' : 'N/D'}</td>
+            <td>${r.provider}</td>
+            <td>${r.freq}</td>
+            <td>${r.status ? '<span class="text-success fw-bold">✅</span>' : '<span class="text-danger fw-bold">⚠️</span>'}</td>
+            <td><a href="${r.url}" target="_blank" class="text-decoration-none">${r.urlLabel} <i class="fas fa-external-link-alt fa-xs"></i></a></td>
+        </tr>
+    `).join('');
+}
+
+function showError(msg) {
+    document.getElementById('loading-params').innerHTML = `
+        <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>${msg}</div>`;
+}
+
+function exportPDF() {
+    window.print();
+}
+</script>
+{% endblock %}

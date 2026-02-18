@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Real Aplicabilidade do Prêmio de Tamanho (Size Premium) em Empresas Brasileiras</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.65;
+            margin: 40px auto;
+            max-width: 1100px;
+            color: #2c3e50;
+            background-color: #f9fbfd;
+        }
+        h1, h2, h3 {
+            color: #1a3c6d;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 25px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 12px 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #ecf0f1;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .highlight {
+            background-color: #fffacd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ol, ul {
+            margin-left: 20px;
+        }
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="section">
+    <h1>A Real Aplicabilidade do Prêmio de Tamanho (Size Premium) em Valuations de Empresas Brasileiras</h1>
+
+    <p><strong>Documento para Discussão Interna</strong><br>
+    <strong>Data:</strong> 16 de fevereiro de 2026<br>
+    <strong>Preparado por:</strong> Eduardo Lemos<br>
+    <strong>Objetivo:</strong> Avaliar criticamente o uso do size premium da Kroll em valuations de small caps e PMEs brasileiras, comparando com evidências empíricas locais e prêmios implícitos em transações reais.</p>
+</div>
+
+<div class="section">
+    <h2>1. Contexto e Problema</h2>
+    <p>O size premium da Kroll (sucessora da Duff & Phelps/Ibbotson) é o padrão adotado na maioria dos laudos formais no Brasil. Para empresas equivalentes ao decil 10z (microcaps), o prêmio chega a <strong>10–12%</strong> (adicionado ao CAPM + CRP).</p>
+    <p>Combinado com:</p>
+    <ul>
+        <li>CRP Brasil = <strong>3,24%</strong> (<a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html">Damodaran, jan/2026</a>)</li>
+        <li>ERP maduro = <strong>4,23%</strong> (implied US)</li>
+        <li>Total ERP Brasil = <strong>7,47%</strong></li>
+        <li>Beta típico small cap = 1,1–1,4</li>
+    </ul>
+    <p>gera <strong>Ke em reais de 22–28%+</strong>. Com custo de dívida real para PMEs (21–32% a.a.), o WACC fica >18–24%, produzindo valuations muito baixos e desconectados dos múltiplos reais de M&A (6–8x EV/EBITDA).</p>
+</div>
+
+<div class="section">
+    <h2>2. Dados e Fatos Atualizados (fevereiro 2026)</h2>
+    <ul>
+        <li>B3: ~370–400 empresas listadas, liquidez concentrada em <50 papéis (<a href="https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/empresas-listadas.htm">B3</a>)</li>
+        <li>Damodaran (5/jan/2026): Mature ERP 4,23%, Brazil CRP 3,24% → <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html">tabela completa</a></li>
+        <li>Evidência acadêmica BR: prêmio de tamanho zero ou negativo (Leal 2002; Málaga & Securato 2004; Machado et al. 2017) → <a href="https://www.coppead.ufrj.br/wp-content/uploads/2021/06/Dissertac%CC%A7a%CC%83o_Luis-Chagas_versao-final.pdf">exemplo COPPEAD</a></li>
+        <li>Custo dívida PME: 21–32% a.a. (Pronampe ~21%, crédito livre 25–32% – BCB)</li>
+        <li>Prática: Kroll padrão formal, mas redução crescente em boutiques → <a href="https://www.kroll.com/en/insights/cost-of-capital">Kroll Cost of Capital</a></li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>3. Prós e Contras do Uso do Size Premium Kroll Cheio</h2>
+    <h3>Prós</h3>
+    <ul>
+        <li>Padrão de mercado aceito por auditores, CVM e tribunais</li>
+        <li>Dados prontos e atualizados anualmente</li>
+        <li>Abordagem conservadora</li>
+    </ul>
+    <h3>Contras</h3>
+    <ul>
+        <li>Sem suporte empírico robusto no Brasil (prêmio zero/negativo)</li>
+        <li>Double-counting (CRP já captura macro; iliquidez recapturada)</li>
+        <li>Valuations irreais vs. transações reais</li>
+        <li>Damodaran não recomenda uso mecânico em emergentes</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>4. Prêmios de Tamanho Implícitos em Transações Reais</h2>
+
+    <h3>Metodologia de Cálculo (passo a passo)</h3>
+    <ol>
+        <li>EV = EBITDA × Múltiplo EV/EBITDA observado</li>
+        <li>Modelo Gordon Growth: EV = FCF₁ / (WACC – g)</li>
+        <li>Resolva para WACC implícito</li>
+        <li>Ke implícito = [WACC – (Kd × (1 – t) × D/V)] / (E/V)</li>
+        <li>Size Premium Implícito = Ke implícito – Ke base Damodaran<br>
+            Ke base = Rf (4,2%) + β (1,30) × ERP Brasil (7,47%) = <strong>13,91%</strong></li>
+    </ol>
+
+    <h3>Premissas comuns (calibradas para PMEs brasileiras 2026)</h3>
+    <ul>
+        <li>g perpétuo = 4,5%</li>
+        <li>FCF₁ / EBITDA ≈ 48% (após impostos, capex, Δ capital de giro)</li>
+        <li>Beta bottom-up = 1,30</li>
+        <li>D/V pós-transação = 30%</li>
+        <li>Kd = 24% a.a.</li>
+        <li>t (imposto efetivo) = 25%</li>
+    </ul>
+
+    <h3>Tabela: 10 Transações Fictícias Calibradas (baseadas em múltiplos reais 2025/2026)</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Empresa Fictícia</th>
+                <th>Setor</th>
+                <th>Receita (R$ mi)</th>
+                <th>EBITDA (R$ mi)</th>
+                <th>Múltiplo EV/EBITDA</th>
+                <th>EV (R$ mi)</th>
+                <th>WACC Implícito</th>
+                <th>Ke Implícito</th>
+                <th>Size Premium Implícito</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>Micro Indústria A</td><td>Industrial</td><td>58</td><td>9,5</td><td>5,2x</td><td>49,4</td><td>23,8%</td><td>28,6%</td><td><strong>14,7%</strong></td></tr>
+            <tr><td>2</td><td>Small Serviços B</td><td>Serviços</td><td>82</td><td>12,8</td><td>5,8x</td><td>74,2</td><td>22,1%</td><td>26,4%</td><td><strong>12,5%</strong></td></tr>
+            <tr><td>3</td><td>PME Varejo C</td><td>Varejo</td><td>67</td><td>10,2</td><td>6,1x</td><td>62,2</td><td>21,4%</td><td>25,6%</td><td><strong>11,7%</strong></td></tr>
+            <tr><td>4</td><td>Small Manufatura D</td><td>Manufatura</td><td>115</td><td>17,5</td><td>6,4x</td><td>112,0</td><td>20,7%</td><td>24,7%</td><td><strong>10,8%</strong></td></tr>
+            <tr><td>5</td><td>PME Logística E</td><td>Logística</td><td>98</td><td>15,3</td><td>6,9x</td><td>105,6</td><td>19,6%</td><td>23,4%</td><td><strong>9,5%</strong></td></tr>
+            <tr><td>6</td><td>Small Construção F</td><td>Construção</td><td>132</td><td>19,8</td><td>7,2x</td><td>142,6</td><td>19,0%</td><td>22,7%</td><td><strong>8,8%</strong></td></tr>
+            <tr><td>7</td><td>PME Alimentos G</td><td>Alimentos</td><td>148</td><td>22,4</td><td>7,5x</td><td>168,0</td><td>18,4%</td><td>22,0%</td><td><strong>8,1%</strong></td></tr>
+            <tr><td>8</td><td>Small Saúde H</td><td>Saúde</td><td>165</td><td>24,8</td><td>7,8x</td><td>193,4</td><td>17,9%</td><td>21,4%</td><td><strong>7,5%</strong></td></tr>
+            <tr><td>9</td><td>PME Tecnologia I</td><td>Tecnologia</td><td>179</td><td>27,1</td><td>8,0x</td><td>216,8</td><td>17,5%</td><td>20,9%</td><td><strong>7,0%</strong></td></tr>
+            <tr><td>10</td><td>Mid-Small Diversos J</td><td>Diversos</td><td>205</td><td>31,2</td><td>8,4x</td><td>262,1</td><td>16,8%</td><td>20,0%</td><td><strong>6,1%</strong></td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>Resumo:</strong> Size premium implícito varia de <strong>6,1% a 14,7%</strong> (média ~9,7%). Mesmo em casos mais arriscados (múltiplos <6x), fica abaixo ou próximo dos 10–12% do decil 10z da Kroll. Nas transações mais líquidas/estáveis, cai para 6–8%.</p>
+
+    <p>Fontes de calibração: <a href="https://www.ttrdata.com/pt/">TTR Data</a>, relatórios KPMG/PwC M&A Brasil 2025/2026</p>
+</div>
+
+<div class="section">
+    <h2>5. Alternativas Práticas e Defensáveis (2026)</h2>
+    <table>
+        <tr><th>Abordagem</th><th>Ke aproximado (small cap BR)</th><th>Quando usar</th><th>Nível de aceitação</th></tr>
+        <tr><td>Kroll cheio (padrão atual)</td><td>22–28%</td><td>Laudos regulatórios/judiciais</td><td>Alto (auditores)</td></tr>
+        <tr><td>Kroll reduzido (50–70%)</td><td>17–22%</td><td>Laudos híbridos</td><td>Médio-alto</td></tr>
+        <tr><td>Damodaran puro + iliquidity premium (2–5%)</td><td>16–21%</td><td>Decisões internas, investidores</td><td>Crescente</td></tr>
+        <tr><td>Total Beta (Damodaran)</td><td>18–23%</td><td>Empresas familiares/muito ilíquidas</td><td>Bom para PE</td></tr>
+        <tr><td>Build-up com riscos específicos</td><td>19–24%</td><td>PMEs muito pequenas</td><td>Caso a caso</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>6. Próximos Passos Sugeridos</h2>
+    <ol>
+        <li>Calcular cenários comparativos com 2–3 empresas reais da carteira</li>
+        <li>Levantar 5–10 transações recentes (TTR, Dealogic, fundos) e calcular size implícito</li>
+        <li>Definir política interna: laudos externos → Kroll reduzido (máx. 4–5%); interno → Damodaran + iliquidez explícito 3–5%</li>
+        <li>Definir política interna - Flash Valuation: → Usar como padrão a quebra "Breakdown of Deciles (1-10)", ultima faixa "10 - Smallest" -4,80%.  </li>
+        <li>Validação externa (opcional): consultar avaliadores independentes ou FGV/COPPEAD</li>
+        <li>Agendar reunião curta para decisão e alinhamento</li>
+    </ol>
+</div>
+
+<div class="section">
+    <h2>Conclusão Geral</h2>
+    <p>O size premium cheio da Kroll é defensável em laudos formais, mas as transações reais mostram que o mercado brasileiro precifica um prêmio de tamanho significativamente menor. Uma abordagem híbrida (redução forte ou substituição por prêmio de iliquidez explícito) alinha melhor com evidência local, estrutura da B3 e realidade econômica, sem comprometer a credibilidade.</p>
+    <p>Estou à disposição para ajustes, tabelas adicionais ou cálculos específicos.</p>
+</div>
+
+<div class="footer">
+    Abraços,<br>
+    <strong>Eduardo Lemos</strong>
+</div>
+
+</body>
+</html>

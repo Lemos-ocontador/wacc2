@@ -1,0 +1,27 @@
+3. Metodologia – taxa de desconto
+Cálculo do WACC (weighted average cost of capital)
+Como parâmetro apropriado para calcular a taxa de desconto a ser aplicada aos fluxos de caixa da empresa, foi utilizado o custo médio ponderado de capital (WACC). O WACC considera os diversos componentes de financiamento da empresa incluindo dívida e capital próprio, considerando as projeções de fluxos de caixa. O WACC (Custo Médio Ponderado de Capital) é calculado pela combinação do custo de capital próprio (Ke) e do custo da dívida (Kd) da empresa analisada, considerando-se uma estrutura de capital com base na média de empresas atuantes nos mercados emergentes. O cálculo se dá por meio da seguinte fórmula: 
+
+WACC = D/(D+E) * Kd * (1-T) + E/(D+E) * Ke
+D= dívida; E= capital próprio; T= alíquota de imposto.
+Capital Próprio (Ke)
+
+O cálculo do custo do capital próprio do acionista baseia-se no modelo Capital Asset Pricing Model (CAPM). Por convenção utilizam-se os dados em bases nominais, que posteriormente são convertidos em bases nominais em moeda local por meio da aplicação de um diferencial de inflação dos Estados Unidos (CPI) médio relativo ao período projetado. Para estimar-se os custos de financiamento de capital próprio (Ke), utilizou-se uma combinação de parâmetros do mercado norte-americano e de mercados emergentes, uma vez que os indicadores nacionais são escassos e isoladamente provocam distorções no modelo. O cálculo se dá por meio da seguinte fórmula:
+
+Taxa de retorno do investimento livre de risco (Rf)
+É a taxa de retorno obtida em uma aplicação considerada sem risco pelo investidor típico. Para fins deste estudo, foi considerado como taxa de retorno livre de risco o bônus americano de longo prazo, o T-Bond com vencimento em 10 anos, por ser considerado internacionalmente como um indicador que apresenta um dos menores graus de risco e por estar lastreado pela maior economia do mundo. Acreditamos que o rendimento dos títulos de dívida do governo norte-americano é a melhor estimativa para a taxa de retorno de um ativo livre de risco. Usamos o T-Bond de 10 anos pelas seguintes razões:
+É um título de renda fixa de longo prazo cujo rendimento reflete expectativas dos investidores quanto a rentabilidades futuras esperadas.
+O T-Bond de 10 anos, diferentemente da T-Bill, não é utilizado como instrumento de política monetária.
+Seu rendimento é menos afetado por mudanças na inflação esperada do que o T-Bond de 30 anos A média aritmética das taxas de retorno (yield) dos últimos 2 anos do título do tesouro do governo norte-americano (US Treasury Bond). (Fonte: FED St. Louis)
+
+Prêmio de risco do mercado (Rm-Rf)
+Representa o retorno adicional exigido por investidores para compensar uma maior volatilidade de um ativo em relação ao ativo livre de risco. Dada a reduzida liquidez e falta de dados históricos regulares do mercado brasileiro, a prática adotada é de se usar dados do mercado norte-americano. Portanto, o prêmio de risco de mercado é calculado com base no retorno histórico da bolsa americana (S&P 500) sobre a remuneração T-Bond de longo prazo. 
+
+Prêmio pelo tamanho da empresa (Rt)
+Representa o montante adicional de retorno (prêmio) exigido pelo investidor institucional conforme o tamanho da empresa (Size Premium). O tamanho pequeno de uma empresa constitui um risco sistemático adicional a ser levado em conta na estimativa do custo de capital próprio. A justificativa para o prêmio por tamanho para empresas de menor capitalização (ou small caps) é a de que tais empresas têm menor liquidez no mercado e os investidores apenas aceitam comprar ações destas empresas com um deságio em relação ao padrão de mercado, que são as grandes empresas cujas ações são bem líquidas e podem ser negociadas facilmente. 
+Beta (ß)
+É o coeficiente que mede o risco de mercado de um ativo pela volatilidade dos retornos deste ativo em relação à dos retornos do mercado. O beta da instituição foi construído tomando-se por base o beta mediano de empresas comparáveis (em termos de atividade). 
+Risco Brasil (Rb)
+É o prêmio adicional por investir no Brasil, independentemente de ser em uma empresa ou em títulos soberanos. Adotamos o Risco Brasil com base em spread entre o título do tesouro do governo norte-americano e o título do governo brasileiro de prazo similar.
+Custo da Dívida (Kd)
+Para fins do custo de capital de terceiros, considerou-se um custo nominal de  dívida antes de impostos, conforme taxas disponíveis na data base e informações fornecidas pela Administração da Zootec. Após o efeito dos impostos foi calculado em termos reais o custo de capital de  terceiros.

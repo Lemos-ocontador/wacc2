@@ -215,6 +215,12 @@ def data_updates_page():
     return render_template('data_updates_dashboard.html')
 
 
+@app.route('/parametros-wacc')
+def wacc_parameters_page():
+    """Página de documentação dos parâmetros WACC com valores dinâmicos e links de auditoria."""
+    return render_template('wacc_parameters.html')
+
+
 # ===== ROTAS PARA GESTÃO DE FONTES DE DADOS =====
 
 @app.route('/api/data_sources_status', methods=['GET'])

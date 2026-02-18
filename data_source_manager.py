@@ -27,11 +27,17 @@ DATA_SOURCES = [
     {
         "id": "risk_free_rate",
         "name": "Taxa Livre de Risco (Rf)",
-        "description": "US Treasury 10-Year Bond Yield",
+        "description": "US Treasury 10-Year Bond Yield — média dos últimos 2 anos",
         "wacc_component": "Ke",
         "provider": "FRED / Federal Reserve",
         "frequency": "Diário",
         "audit_url": "https://fred.stlouisfed.org/series/DGS10",
+        "audit_links": [
+            {"label": "FRED — Série DGS10 (gráfico)", "url": "https://fred.stlouisfed.org/series/DGS10"},
+            {"label": "Download CSV — FRED DGS10", "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10"}
+        ],
+        "methodology": "Média aritmética das taxas de retorno (yield) dos últimos 2 anos do T-Bond 10Y. Fonte: FED St. Louis.",
+        "bdwacc_field": "RF",
         "data_file": "BDWACC.json",
         "db_table": None,
         "icon": "fas fa-landmark",
@@ -40,11 +46,18 @@ DATA_SOURCES = [
     {
         "id": "market_risk_premium",
         "name": "Prêmio de Risco de Mercado (ERP)",
-        "description": "Equity Risk Premium - Média geométrica S&P500 (1928-atual)",
+        "description": "Equity Risk Premium — Média geométrica (Stocks − T.Bonds) 1928–atual",
         "wacc_component": "Ke",
         "provider": "Damodaran (NYU Stern)",
         "frequency": "Anual",
         "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html",
+        "audit_links": [
+            {"label": "Retornos Históricos S&P (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"},
+            {"label": "📥 Download Excel (verificar média geométrica)", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls"},
+            {"label": "ERP Implícito (alternativo)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/implpr.html"}
+        ],
+        "methodology": "Média geométrica da diferença anual (S&P 500 total return − T-Bond return) desde 1928. O valor NÃO aparece diretamente na página HTML — verificar no Excel, aba de resumo, linha 'Geometric Average', coluna 'Stocks - T.Bonds'.",
+        "bdwacc_field": "RM",
         "data_file": "BDWACC.json",
         "db_table": None,
         "icon": "fas fa-chart-line",
@@ -53,11 +66,17 @@ DATA_SOURCES = [
     {
         "id": "country_risk",
         "name": "Risco País (CRP)",
-        "description": "Country Risk Premium - 157 países",
+        "description": "Country Risk Premium — spread soberano + ajuste volatilidade equity/bond",
         "wacc_component": "Ke",
         "provider": "Damodaran (NYU Stern)",
         "frequency": "Anual",
         "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+        "audit_links": [
+            {"label": "Country Risk Premiums (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html"},
+            {"label": "📥 Download Excel — ctryprem.xlsx", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/ctryprem.xlsx"}
+        ],
+        "methodology": "Spread de default soberano (rating Moody's + CDS) ajustado pela volatilidade relativa equity/bond de mercados emergentes. Brasil (Ba1): buscar na coluna 'Country Risk Premium'.",
+        "bdwacc_field": "CR",
         "data_file": None,
         "db_table": "country_risk",
         "icon": "fas fa-globe-americas",
