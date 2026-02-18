@@ -83,10 +83,10 @@ Damodaran também publica um ERP implícito (forward-looking) baseado no fluxo d
 | **Justificativa** | Betas setoriais são mais estáveis e confiáveis que betas de ações individuais, especialmente em mercados emergentes com liquidez limitada |
 
 **Links de Auditoria:**
-- 🔗 [Damodaran — Betas por Setor (Global)](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) — Todos os setores, todas as regiões
-- 📥 [Download Excel — betas.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls)
-- 🔗 [Damodaran — Betas Mercados Emergentes](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html) — Betas específicos para mercados emergentes
-- 📥 [Download Excel — betaemerg.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls)
+- � [Damodaran — Betas Global (Excel)](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls) — Dataset global com todos os setores
+- 🔗 [Damodaran — Betas US Only (HTML)](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) — Apenas empresas americanas
+- 📥 [Download Excel US — betas.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls)
+- 📥 [Download Excel Emergentes — betaemerg.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls)
 - 📄 Banco de dados local: `data/damodaran_data_new.db` → tabela `damodaran_global`
 
 ---
@@ -181,8 +181,8 @@ $$K_i = K_d \times (1 - T)$$
 | **Metodologia** | Por padrão, utiliza-se a relação D/E mediana do setor da empresa (disponível nos datasets de betas). Opcionalmente, pode-se usar a estrutura de capital real da empresa. |
 
 **Links de Auditoria:**
-- 🔗 [Damodaran — Betas por Setor (inclui D/E)](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) — Coluna D/E ratio
-- 📥 [Download Excel — betas.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls)
+- � [Damodaran — Betas Global (inclui D/E)](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls) — Coluna D/E ratio
+- 📥 [Download Excel US — betas.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls)
 
 ---
 
@@ -223,14 +223,14 @@ $$K_i = K_d \times (1 - T)$$
 |---|-----------|-----------|----------|-------------|-------------------|
 | 1 | Rf (Taxa Livre de Risco) | Ke | FRED / Fed | Diário | [FRED DGS10](https://fred.stlouisfed.org/series/DGS10) |
 | 2 | ERP (Prêmio de Mercado) | Ke | Damodaran | Anual | [histretSP.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls) |
-| 3 | Beta (β) | Ke | Damodaran | Anual | [Betas.html](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) |
+| 3 | Beta (β) | Ke | Damodaran | Anual | [🌍 betaGlobal.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls) |
 | 4 | Risco País (CRP) | Ke | Damodaran | Anual | [ctryprem.html](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html) |
 | 5 | Size Premium (Rs) | Ke | Kroll | Anual | [Kroll](https://www.kroll.com/en/cost-of-capital) |
 | 6 | Selic → Kd | Ki | BCB (432) | Diário | [API BCB Selic](https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json) |
 | 7 | IR + CSLL | Ki | Legislação | Fixo | [Receita Federal](https://www.gov.br/receitafederal/pt-br) |
 | 8 | IPCA | Ajuste | BCB (13522) | Mensal | [API BCB IPCA](https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/12?formato=json) |
 | 9 | CPI EUA | Ajuste | FRED | Anual | [FRED CPI](https://fred.stlouisfed.org/series/CPIAUCSL) |
-| 10 | D/E Setorial | Estrutura | Damodaran | Anual | [Betas.html](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html) |
+| 10 | D/E Setorial | Estrutura | Damodaran | Anual | [🌍 betaGlobal.xls](https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls) |
 
 ---
 

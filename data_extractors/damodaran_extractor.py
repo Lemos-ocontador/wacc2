@@ -24,7 +24,7 @@ class DamodaranExtractor(BaseExtractor):
         # URLs específicas dos datasets do Damodaran
         self.data_urls = {
             'country_risk': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html',
-            'industry_betas': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html',
+            'industry_betas': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html',  # US only; Global: betaGlobal.xls
             'market_risk_premium': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html',
             'cost_of_capital': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/wacc.html',
             'size_premium': 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/spearn.html',

@@ -89,10 +89,11 @@ DATA_SOURCES = [
         "wacc_component": "Ke / Estrutura",
         "provider": "Damodaran (NYU Stern)",
         "frequency": "Anual",
-        "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html",
+        "audit_url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls",
         "audit_links": [
-            {"label": "Betas por Setor (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html"},
-            {"label": "Download Excel", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls"}
+            {"label": "🌍 Excel Global", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls"},
+            {"label": "Betas US (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html"},
+            {"label": "Excel US", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls"}
         ],
         "data_file": None,
         "db_table": "damodaran_global",
@@ -106,10 +107,9 @@ DATA_SOURCES = [
         "wacc_component": "Ke / Estrutura",
         "provider": "Damodaran (NYU Stern)",
         "frequency": "Anual",
-        "audit_url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html",
+        "audit_url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls",
         "audit_links": [
-            {"label": "Betas Emerg. (HTML)", "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html"},
-            {"label": "Download Excel", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls"}
+            {"label": "🌎 Excel Emergentes", "url": "https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls"}
         ],
         "data_file": None,
         "db_table": "damodaran_global",

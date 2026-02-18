@@ -262,17 +262,20 @@
                             da empresa. Betas setoriais são mais estáveis que betas individuais em mercados emergentes.
                         </div>
                         <div class="d-flex flex-wrap gap-1">
-                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-primary">
-                                <i class="fas fa-globe"></i> Global
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-file-excel"></i> 🌍 Excel Global
+                            </a>
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-warning">
+                                <i class="fas fa-flag-usa"></i> HTML US Only
                             </a>
                             <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betas.xls" target="_blank" class="audit-badge audit-badge-success">
-                                <i class="fas fa-file-excel"></i> Excel Global
-                            </a>
-                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/betaemerg.html" target="_blank" class="audit-badge audit-badge-warning">
-                                <i class="fas fa-earth-americas"></i> Emergentes
+                                <i class="fas fa-file-excel"></i> Excel US
                             </a>
                             <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betaemerg.xls" target="_blank" class="audit-badge audit-badge-success">
-                                <i class="fas fa-file-excel"></i> Excel Emerg.
+                                <i class="fas fa-file-excel"></i> Excel Emergentes
+                            </a>
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datacurrent.html" target="_blank" class="audit-badge audit-badge-info">
+                                <i class="fas fa-database"></i> Data Page
                             </a>
                         </div>
                     </div>
@@ -365,8 +368,11 @@
                             da empresa. Disponível no mesmo dataset dos betas setoriais.
                         </div>
                         <div class="d-flex flex-wrap gap-1">
-                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-primary">
-                                <i class="fas fa-table"></i> Betas + D/E
+                            <a href="https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls" target="_blank" class="audit-badge audit-badge-primary">
+                                <i class="fas fa-file-excel"></i> 🌍 Excel Global (Betas + D/E)
+                            </a>
+                            <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html" target="_blank" class="audit-badge audit-badge-warning">
+                                <i class="fas fa-flag-usa"></i> HTML US Only
                             </a>
                         </div>
                     </div>
@@ -905,7 +911,7 @@ function buildSummaryTable(c) {
     const rows = [
         { n: 1, param: 'Rf (Taxa Livre de Risco)', comp: 'Ke', value: (c.RF?.raw || c.RF?.value), provider: 'FRED', freq: 'Diário', status: !c.RF?.is_fallback, url: 'https://fred.stlouisfed.org/series/DGS10', urlLabel: 'FRED DGS10' },
         { n: 2, param: 'ERP (Prêmio de Mercado)', comp: 'Ke', value: (c.RM?.raw || c.RM?.value), provider: 'Damodaran', freq: 'Anual', status: !c.RM?.is_fallback, url: 'https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls', urlLabel: '📥 Excel' },
-        { n: 3, param: 'β (Beta Setorial)', comp: 'Ke', value: 'Varia por setor', provider: 'Damodaran', freq: 'Anual', status: true, url: 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html', urlLabel: 'Betas.html' },
+        { n: 3, param: 'β (Beta Setorial)', comp: 'Ke', value: 'Varia por setor', provider: 'Damodaran', freq: 'Anual', status: true, url: 'https://www.stern.nyu.edu/~adamodar/pc/datasets/betaGlobal.xls', urlLabel: '🌍 Excel Global' },
         { n: 4, param: 'Rp (Risco País)', comp: 'Ke', value: (c.CR?.raw || c.CR?.value), provider: 'Damodaran', freq: 'Anual', status: !c.CR?.is_fallback, url: 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html', urlLabel: 'ctryprem.html' },
         { n: 5, param: 'Rs (Size Premium)', comp: 'Ke', value: 'Por decil', provider: 'Kroll', freq: 'Anual', status: true, url: 'https://www.kroll.com/en/cost-of-capital', urlLabel: 'Kroll' },
         { n: 6, param: 'Selic → Kd', comp: 'Ki', value: c.CT_Selic?.kd, provider: 'BCB (432)', freq: 'Diário', status: c.CT_Selic?.is_live, url: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/10?formato=json', urlLabel: 'API BCB' },
