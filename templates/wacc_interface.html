@@ -524,6 +524,33 @@
                             </div>
                         </div>
 
+                        <!-- INFLAÇÃO (IPCA) -->
+                        <div class="mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-chart-area"></i> Inflação (Ajuste Real)
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="ipca-rate" class="form-label">IPCA 12m:</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="ipca-rate" 
+                                               step="0.01" min="0" max="50" value="0" placeholder="Carregando...">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info" id="ipca-source-info">Carregando IPCA via BCB...</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cpi-rate" class="form-label">CPI EUA (inflação):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="cpi-rate" 
+                                               step="0.01" min="0" max="20" value="0" placeholder="Carregando...">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="source-info" id="cpi-source-info">BDWACC.json (IA)</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- PREVIEW Ki -->
                         <div class="p-3 rounded" style="background: #f8f9fa; border: 1px dashed #dee2e6;">
                             <div class="d-flex justify-content-between align-items-center">
@@ -575,8 +602,12 @@
                             <p class="section-subtitle">WACC — Weighted Average Cost of Capital</p>
                         </div>
                         <div class="wacc-highlight">
-                            <div class="label">WACC Nominal</div>
+                            <div class="label">WACC Nominal BRL</div>
                             <div class="value" id="rpt-wacc-main">--</div>
+                            <div style="margin-top:8px; padding-top:8px; border-top:1px solid #d1d5db;">
+                                <div class="label">WACC Real</div>
+                                <div class="value" id="rpt-wacc-real" style="font-size:24px; color:#16a34a;">--</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -605,9 +636,9 @@
                             <div class="item-sub">Participação</div>
                         </div>
                         <div class="summary-item highlight">
-                            <div class="item-label">WACC</div>
+                            <div class="item-label">WACC Nominal</div>
                             <div class="item-value" id="rpt-wacc-center">--</div>
-                            <div class="item-sub">Custo Ponderado</div>
+                            <div class="item-sub" style="color:rgba(255,255,255,0.9); font-weight:600; font-size:12px; margin-top:6px;" id="rpt-wacc-real-center">Real: --</div>
                         </div>
                         <div class="summary-item">
                             <div class="item-label">Peso D/V</div>
@@ -624,6 +655,9 @@
                     <!-- FÓRMULA -->
                     <div class="formula-bar" id="rpt-formula">
                         <strong>WACC</strong> = Ke × (E/V) + Ki × (D/V)
+                    </div>
+                    <div class="formula-bar" id="rpt-formula-real" style="margin-top:-1px; background:#ecfdf5; border-color:#86efac;">
+                        <strong style="color:#16a34a;">WACC Real</strong> = (1 + WACC<sub>nom</sub>) / (1 + IPCA) − 1
                     </div>
                     
                     <!-- TABELAS PROFISSIONAIS -->
@@ -874,6 +908,7 @@
                     loadMarketRiskPremium(),
                     loadSizeDeciles(),
                     loadKdSelic(),
+                    loadInflationData(),
                 ]);
                 
                 // Validar dados
@@ -1122,8 +1157,27 @@
                 // Calcular custo da dívida após impostos
                 const afterTaxCostOfDebt = costOfDebt * (1 - taxRate);
                 
-                // Calcular WACC
+                // Calcular WACC nominal
                 const wacc = (weightEquity * costOfEquity) + (weightDebt * afterTaxCostOfDebt);
+                
+                // Inflação: IPCA e CPI
+                const ipca = parseFloat(document.getElementById('ipca-rate').value) / 100 || 0;
+                const cpiUS = parseFloat(document.getElementById('cpi-rate').value) / 100 || 0;
+                
+                // Fisher: deflacionar Ke (USD nominal) → real → BRL nominal
+                // Ke real = (1 + Ke_USD) / (1 + CPI_US) - 1
+                // Ke BRL  = (1 + Ke_real) × (1 + IPCA) - 1
+                const keReal = (1 + costOfEquity) / (1 + cpiUS) - 1;
+                const keBRL  = (1 + keReal) * (1 + ipca) - 1;
+                
+                // Ki já está em BRL (Selic-based), calcular Ki real
+                const kiReal = (1 + afterTaxCostOfDebt) / (1 + ipca) - 1;
+                
+                // WACC nominal BRL = E/V × Ke_BRL + D/V × Ki
+                const waccNomBRL = (weightEquity * keBRL) + (weightDebt * afterTaxCostOfDebt);
+                
+                // WACC real = (1 + WACC_nom_BRL) / (1 + IPCA) - 1
+                const waccReal = (1 + waccNomBRL) / (1 + ipca) - 1;
                 
                 // Resultados exibidos no relatório profissional abaixo
                 
@@ -1135,24 +1189,32 @@
                 const country = document.getElementById('country-select');
                 const countryName = country.options[country.selectedIndex]?.text?.split(' (')[0] || '--';
                 
-                // Header
-                document.getElementById('rpt-wacc-main').textContent = (wacc * 100).toFixed(2) + '%';
+                // Header — WACC nominal BRL + WACC real
+                document.getElementById('rpt-wacc-main').textContent = (waccNomBRL * 100).toFixed(2) + '%';
+                document.getElementById('rpt-wacc-real').textContent = (waccReal * 100).toFixed(2) + '%';
                 document.getElementById('rpt-setor').textContent = sectorName;
                 document.getElementById('rpt-regiao').textContent = regionName;
                 
                 // Sumário grid 5 colunas
-                document.getElementById('rpt-ke').textContent = (costOfEquity * 100).toFixed(2) + '%';
+                document.getElementById('rpt-ke').textContent = (keBRL * 100).toFixed(2) + '%';
                 document.getElementById('rpt-ev').textContent = (weightEquity * 100).toFixed(1) + '%';
-                document.getElementById('rpt-wacc-center').textContent = (wacc * 100).toFixed(2) + '%';
+                document.getElementById('rpt-wacc-center').textContent = (waccNomBRL * 100).toFixed(2) + '%';
+                document.getElementById('rpt-wacc-real-center').textContent = 'Real: ' + (waccReal * 100).toFixed(2) + '%';
                 document.getElementById('rpt-dv').textContent = (weightDebt * 100).toFixed(1) + '%';
                 document.getElementById('rpt-ki').textContent = (afterTaxCostOfDebt * 100).toFixed(2) + '%';
                 
-                // Fórmula
+                // Fórmula nominal
                 document.getElementById('rpt-formula').innerHTML = 
-                    `<strong>WACC</strong> = Ke × (E/V) + Ki × (D/V) = ` +
-                    `${(costOfEquity*100).toFixed(2)}% × ${(weightEquity*100).toFixed(1)}% + ` +
+                    `<strong>WACC Nominal BRL</strong> = Ke<sub>BRL</sub> × (E/V) + Ki × (D/V) = ` +
+                    `${(keBRL*100).toFixed(2)}% × ${(weightEquity*100).toFixed(1)}% + ` +
                     `${(afterTaxCostOfDebt*100).toFixed(2)}% × ${(weightDebt*100).toFixed(1)}% = ` +
-                    `<strong>${(wacc*100).toFixed(2)}%</strong>`;
+                    `<strong>${(waccNomBRL*100).toFixed(2)}%</strong>`;
+                
+                // Fórmula real (Fisher)
+                document.getElementById('rpt-formula-real').innerHTML = 
+                    `<strong style="color:#16a34a;">WACC Real</strong> = (1 + ${(waccNomBRL*100).toFixed(2)}%) / (1 + ${(ipca*100).toFixed(2)}%) − 1 = ` +
+                    `<strong style="color:#16a34a;">${(waccReal*100).toFixed(2)}%</strong> &nbsp;` +
+                    `<span style="font-size:0.9em; color:#6b7280;">Fisher equation</span>`;
                 
                 // Tabela CAPM
                 const sizePremiumVal = parseFloat(document.getElementById('size-premium-value').value) || 0;
@@ -1165,8 +1227,11 @@
                     ['Risco País (' + countryName + ')', 'Country Risk Premium', (countryRiskPremium*100).toFixed(2) + '%'],
                     ['Prêmio de Tamanho (Rs)', `Size Premium (${sizeDecile})`, sizePremiumVal.toFixed(2) + '%'],
                 ];
-                // Linha total
-                capmRows.push(['__total__', 'Ke = Rf + β×ERP + Rp + Rs', (costOfEquity*100).toFixed(2) + '%']);
+                // Subtotal Ke CAPM nominal USD
+                capmRows.push(['__total__', 'Ke CAPM Nominal USD = Rf + β×ERP + Rp + Rs', (costOfEquity*100).toFixed(2) + '%']);
+                // Conversão real/BRL
+                capmRows.push(['__conversion__', `(−) CPI EUA: ${(cpiUS*100).toFixed(2)}% → Ke Real (Fisher)`, (keReal*100).toFixed(2) + '%']);
+                capmRows.push(['__conversion__', `(+) IPCA: ${(ipca*100).toFixed(2)}% → Ke Nominal BRL (Fisher)`, (keBRL*100).toFixed(2) + '%']);
                 
                 const capmBody = document.getElementById('rpt-capm-body');
                 capmBody.innerHTML = '';
@@ -1174,7 +1239,10 @@
                     const tr = document.createElement('tr');
                     if (row[0] === '__total__') {
                         tr.className = 'total-row';
-                        tr.innerHTML = `<td><strong>Ke (CAPM Nominal)</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                        tr.innerHTML = `<td><strong>Ke CAPM Nominal USD</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    } else if (row[0] === '__conversion__') {
+                        tr.style.background = '#ecfdf5';
+                        tr.innerHTML = `<td style="color:#16a34a; font-weight:600;">${row[1].split('→')[0].trim()}</td><td class="source" style="color:#16a34a;">${row[1].split('→')[1]?.trim() || ''}</td><td class="value" style="color:#16a34a;">${row[2]}</td>`;
                     } else {
                         tr.innerHTML = `<td>${row[0]}</td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
                     }
@@ -1183,10 +1251,11 @@
                 
                 // Tabela Ki
                 const kiRows = [
-                    ['Custo da Dívida (Kd)', 'Proxy - Taxa informada', (costOfDebt*100).toFixed(2) + '%'],
+                    ['Custo da Dívida (Kd bruto)', 'Proxy - Taxa informada', (costOfDebt*100).toFixed(2) + '%'],
                     ['Alíquota IR+CSLL', 'Benefício fiscal', (taxRate*100).toFixed(0) + '%'],
                 ];
                 kiRows.push(['__total__', 'Ki = Kd × (1 - IR)', (afterTaxCostOfDebt*100).toFixed(2) + '%']);
+                kiRows.push(['__conversion__', `(−) IPCA: ${(ipca*100).toFixed(2)}% → Ki Real (Fisher)`, (kiReal*100).toFixed(2) + '%']);
                 
                 const kiBody = document.getElementById('rpt-ki-body');
                 kiBody.innerHTML = '';
@@ -1194,7 +1263,10 @@
                     const tr = document.createElement('tr');
                     if (row[0] === '__total__') {
                         tr.className = 'total-row';
-                        tr.innerHTML = `<td><strong>Ki (Custo após IR)</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                        tr.innerHTML = `<td><strong>Ki Nominal BRL (após IR)</strong></td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
+                    } else if (row[0] === '__conversion__') {
+                        tr.style.background = '#ecfdf5';
+                        tr.innerHTML = `<td style="color:#16a34a; font-weight:600;">${row[1].split('→')[0].trim()}</td><td class="source" style="color:#16a34a;">${row[1].split('→')[1]?.trim() || ''}</td><td class="value" style="color:#16a34a;">${row[2]}</td>`;
                     } else {
                         tr.innerHTML = `<td>${row[0]}</td><td class="source">${row[1]}</td><td class="value">${row[2]}</td>`;
                     }
@@ -1322,6 +1394,46 @@
             }
         }
         
+        // Inflação (IPCA + CPI)
+        async function loadInflationData() {
+            try {
+                // Carregar IPCA e CPI em paralelo
+                const [ipcaRes, allRes] = await Promise.all([
+                    fetch('/api/get_ipca'),
+                    fetch('/api/get_wacc_all_live')
+                ]);
+                const ipcaData = await ipcaRes.json();
+                const allData = await allRes.json();
+
+                // IPCA
+                if (ipcaData.success) {
+                    document.getElementById('ipca-rate').value = ipcaData.ipca_percentage;
+                    const srcEl = document.getElementById('ipca-source-info');
+                    if (srcEl) {
+                        if (ipcaData.is_live) {
+                            srcEl.innerHTML = `<span style="color:#22c55e;">●</span> IPCA 12m: ${ipcaData.ipca_percentage}% <small>(${ipcaData.source}, ${ipcaData.date})</small>`;
+                        } else {
+                            srcEl.innerHTML = `<span style="color:#eab308;">●</span> ${ipcaData.source} — IPCA ${ipcaData.ipca_percentage}%`;
+                        }
+                    }
+                }
+
+                // CPI EUA (campo IA do BDWACC)
+                if (allData.success && allData.components?.IA) {
+                    const cpiVal = allData.components.IA.value;
+                    document.getElementById('cpi-rate').value = cpiVal;
+                    const cpiSrc = document.getElementById('cpi-source-info');
+                    if (cpiSrc) {
+                        cpiSrc.innerHTML = allData.components.IA.is_fallback
+                            ? `<span style="color:#ef4444;">●</span> FALLBACK — CPI ${cpiVal}%`
+                            : `<span style="color:#22c55e;">●</span> CPI EUA: ${cpiVal}% <small>(BDWACC.json)</small>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados de inflação:', error);
+            }
+        }
+
         // Size Premium
         async function loadSizeDeciles() {
             try {
