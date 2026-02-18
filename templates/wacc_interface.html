@@ -1064,10 +1064,16 @@
                     document.getElementById('unlevered-beta').value = data.unlevered_beta;
                     document.getElementById('debt-equity-ratio').value = data.debt_equity_ratio;
                     
-                    // Info: dados direto do Damodaran, não recalculados
-                    const methodLabel = data.methodology === 'damodaran_direct' ? 'Damodaran' : 'calculado';
+                    // Info: dados Damodaran com tax efetiva do setor
+                    const taxPct = data.effective_tax_rate ? (data.effective_tax_rate * 100).toFixed(2) + '%' : '';
                     document.getElementById('beta-companies-info').innerHTML = 
-                        `Baseado em ${data.companies_count} empresas (${data.data_quality}) — <span class="text-success fw-bold">${methodLabel}</span>`;
+                        `Baseado em ${data.companies_count} empresas (${data.data_quality}) — T<sub>eff</sub>: ${taxPct}`;
+                    
+                    // Mostrar info do βU
+                    const buSourceEl = document.getElementById('unlevered-beta-source');
+                    if (buSourceEl) {
+                        buSourceEl.innerHTML = `βU = βL / [1 + (1−T<sub>eff</sub>) × D/E]`;
+                    }
                     
                     // Atualizar indicador de qualidade
                     const qualityIndicator = document.getElementById('beta-quality');
@@ -1150,8 +1156,8 @@
                 const currentDE = weightDebt > 0 && weightEquity > 0 ? weightDebt / weightEquity : 0;
                 const releveredBeta = beta * (1 + (1 - taxRate) * currentDE);
                 
-                // Atualizar campo levered-beta com o beta re-alavancado
-                document.getElementById('levered-beta').value = releveredBeta.toFixed(4);
+                // NÃO sobrescrever o campo levered-beta (que mostra o beta médio do setor Damodaran)
+                // O beta re-alavancado é usado apenas no cálculo do CAPM
                 
                 // Calcular custo do patrimônio líquido (Ke = Rf + βL×ERP + Rp + SP)
                 const costOfEquity = riskFreeRate + releveredBeta * marketRiskPremium + countryRiskPremium + sizePremium;
