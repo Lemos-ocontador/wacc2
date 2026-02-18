@@ -290,20 +290,20 @@
                                 <div class="col-md-4">
                                     <label for="levered-beta" class="form-label">β Alavancado:</label>
                                     <input type="number" class="form-control form-control-sm" id="levered-beta" 
-                                           step="0.001" min="0" max="5" readonly>
+                                           step="0.001" min="-5" max="5" readonly>
                                     <div class="source-info" id="beta-companies-info">Baseado em X empresas</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="unlevered-beta" class="form-label">β Desalavancado:</label>
                                     <input type="number" class="form-control form-control-sm" id="unlevered-beta" 
                                            step="0.001" min="0" max="5">
-                                    <div class="source-info">Calculado automaticamente</div>
+                                    <div class="source-info" id="unlevered-beta-source">Damodaran (bottom-up)</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="debt-equity-ratio" class="form-label">D/E Setor:</label>
                                     <input type="number" class="form-control form-control-sm" id="debt-equity-ratio" 
                                            step="0.01" min="0" readonly>
-                                    <div class="source-info">Média setorial</div>
+                                    <div class="source-info">Pond. por market cap</div>
                                 </div>
                             </div>
                         </div>
@@ -1064,8 +1064,10 @@
                     document.getElementById('unlevered-beta').value = data.unlevered_beta;
                     document.getElementById('debt-equity-ratio').value = data.debt_equity_ratio;
                     
-                    document.getElementById('beta-companies-info').textContent = 
-                        `Baseado em ${data.companies_count} empresas (${data.data_quality})`;
+                    // Info: dados direto do Damodaran, não recalculados
+                    const methodLabel = data.methodology === 'damodaran_direct' ? 'Damodaran' : 'calculado';
+                    document.getElementById('beta-companies-info').innerHTML = 
+                        `Baseado em ${data.companies_count} empresas (${data.data_quality}) — <span class="text-success fw-bold">${methodLabel}</span>`;
                     
                     // Atualizar indicador de qualidade
                     const qualityIndicator = document.getElementById('beta-quality');
@@ -1082,7 +1084,7 @@
                         // Mostrar indicador de origem
                         const deSourceEl = document.getElementById('de-source-info');
                         if (deSourceEl) {
-                            deSourceEl.innerHTML = `<i class="fas fa-link text-success"></i> Pesos baseados no D/E médio do setor <strong>${sector}</strong> (D/E = ${deRatio.toFixed(4)})`;
+                            deSourceEl.innerHTML = `<i class="fas fa-link text-success"></i> Pesos baseados no D/E do setor <strong>${sector}</strong> (D/E = ${(deRatio * 100).toFixed(2)}% — ponderado por market cap)`;
                             deSourceEl.style.display = 'block';
                         }
                     }

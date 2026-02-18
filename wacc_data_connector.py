@@ -267,6 +267,8 @@ class WACCDataConnector:
     def get_available_sectors(self) -> Dict[str, Any]:
         """
         Obter setores disponíveis para cálculo de beta.
+        Usa metodologia Damodaran: beta = média simples (incl. negativos),
+        D/E = média ponderada por market_cap.
         
         Returns:
             Dict com lista de setores
@@ -277,14 +279,21 @@ class WACCDataConnector:
         try:
             conn = sqlite3.connect(self.damodaran_db)
             
+            # Metodologia Damodaran:
+            # - Beta: média simples de TODOS os betas válidos (inclui negativos)
+            # - D/E: média ponderada por market_cap
+            # - Unlevered beta: bottom_up_beta_for_sector (pré-calculado pelo Damodaran)
             query = """
             SELECT 
                 industry,
                 COUNT(*) as company_count,
                 AVG(CASE WHEN beta IS NOT NULL AND beta != '' AND beta != 'None' 
                     THEN CAST(beta as REAL) ELSE NULL END) as avg_beta,
-                AVG(CASE WHEN debt_equity IS NOT NULL AND debt_equity != '' AND debt_equity != 'None' 
-                    THEN CAST(debt_equity as REAL) ELSE NULL END) as avg_debt_equity
+                SUM(CASE WHEN debt_equity IS NOT NULL AND market_cap IS NOT NULL AND market_cap > 0
+                    THEN CAST(debt_equity as REAL) * CAST(market_cap as REAL) ELSE 0 END) /
+                NULLIF(SUM(CASE WHEN debt_equity IS NOT NULL AND market_cap IS NOT NULL AND market_cap > 0
+                    THEN CAST(market_cap as REAL) ELSE 0 END), 0) as avg_debt_equity,
+                AVG(bottom_up_beta_for_sector) as unlevered_beta_damodaran
             FROM damodaran_global 
             WHERE industry IS NOT NULL
                 AND industry != ''
@@ -332,7 +341,14 @@ class WACCDataConnector:
     
     def get_sector_beta(self, sector: str, region: str = 'global') -> Dict[str, Any]:
         """
-        Obter beta de um setor específico.
+        Obter beta de um setor específico DIRETO do Damodaran (sem recalcular).
+        
+        Metodologia Damodaran:
+        - Beta alavancado: média simples de TODAS empresas com beta válido (inclui negativos)
+        - D/E: média ponderada por market_cap
+        - Beta desalavancado: bottom_up_beta_for_sector (pré-calculado pelo Damodaran)
+        - Effective Tax Rate: ponderada por market_cap
+        - Cash/Firm Value: ponderada por market_cap
         
         Args:
             sector: Nome do setor
@@ -344,35 +360,38 @@ class WACCDataConnector:
         try:
             conn = sqlite3.connect(self.damodaran_db)
             
-            # Query base
+            # Query: pegar TODAS as empresas do setor (inclui betas negativos)
             base_query = """
             SELECT 
                 CAST(beta as REAL) as beta,
                 CAST(debt_equity as REAL) as debt_equity,
-                country
+                CAST(market_cap as REAL) as market_cap,
+                CAST(effective_tax_rate as REAL) as effective_tax_rate,
+                CAST(cash_firm_value as REAL) as cash_firm_value,
+                bottom_up_beta_for_sector,
+                country,
+                broad_group
             FROM damodaran_global 
             WHERE industry = ?
                 AND beta IS NOT NULL 
-                AND beta != '' 
-                AND CAST(beta as REAL) > 0
+                AND beta != ''
             """
             
             # Filtrar por região se necessário
             if region == 'emkt':
-                # Países emergentes (lista simplificada)
-                emkt_countries = ['Brazil', 'Mexico', 'Argentina', 'Chile', 'Colombia', 
-                                'India', 'China', 'South Korea', 'Taiwan', 'Thailand',
-                                'Malaysia', 'Indonesia', 'Philippines', 'Turkey', 'Russia',
-                                'South Africa', 'Egypt', 'Poland', 'Czech Republic']
-                
-                placeholders = ','.join(['?' for _ in emkt_countries])
-                query = base_query + f" AND country IN ({placeholders})"
-                params = [sector] + emkt_countries
+                query = base_query + " AND broad_group = 'Emerging Markets'"
             else:
                 query = base_query
-                params = [sector]
             
-            df = pd.read_sql_query(query, conn, params=params)
+            df = pd.read_sql_query(query, conn, params=[sector])
+            
+            # Total de empresas no setor (para info)
+            total_df = pd.read_sql_query(
+                "SELECT COUNT(*) as n FROM damodaran_global WHERE industry = ?",
+                conn, params=[sector]
+            )
+            total_companies = int(total_df['n'].values[0])
+            
             conn.close()
             
             if df.empty:
@@ -381,14 +400,52 @@ class WACCDataConnector:
                     'error': f'Setor "{sector}" não encontrado na região "{region}"'
                 }
             
-            # Calcular estatísticas
-            levered_beta = df['beta'].mean()
-            avg_debt_equity = df['debt_equity'].mean() if df['debt_equity'].notna().any() else 0.3
+            # === DADOS DIRETO DO DAMODARAN (sem recálculo) ===
             
-            # Calcular beta desalavancado
-            # Assumir taxa de imposto padrão de 34%
-            tax_rate = 0.34
-            unlevered_beta = levered_beta / (1 + (1 - tax_rate) * avg_debt_equity)
+            # Beta alavancado: média simples INCLUINDO negativos (metodologia Damodaran)
+            levered_beta = df['beta'].mean()
+            
+            # D/E: média ponderada por market_cap (metodologia Damodaran)
+            mask_de = df['debt_equity'].notna() & df['market_cap'].notna() & (df['market_cap'] > 0)
+            if mask_de.any():
+                import numpy as np
+                avg_debt_equity = np.average(df.loc[mask_de, 'debt_equity'], 
+                                             weights=df.loc[mask_de, 'market_cap'])
+            else:
+                avg_debt_equity = df['debt_equity'].mean() if df['debt_equity'].notna().any() else 0.3
+            
+            # Beta desalavancado: direto do Damodaran (bottom_up_beta_for_sector)
+            # Este é o mesmo valor publicado no Excel do Damodaran
+            bu_col = df['bottom_up_beta_for_sector'].dropna()
+            if len(bu_col) > 0:
+                # Todos os valores são iguais por setor - pegar o primeiro
+                unlevered_beta = float(bu_col.iloc[0])
+            else:
+                # Fallback: calcular manualmente com effective tax ponderada
+                mask_tax = df['effective_tax_rate'].notna() & df['market_cap'].notna() & (df['market_cap'] > 0)
+                if mask_tax.any():
+                    eff_tax = np.average(df.loc[mask_tax, 'effective_tax_rate'],
+                                          weights=df.loc[mask_tax, 'market_cap'])
+                else:
+                    eff_tax = 0.20  # fallback
+                unlevered_beta = levered_beta / (1 + (1 - eff_tax) * avg_debt_equity)
+            
+            # Effective tax rate: ponderada por market_cap
+            import numpy as np
+            mask_tax = df['effective_tax_rate'].notna() & df['market_cap'].notna() & (df['market_cap'] > 0)
+            if mask_tax.any():
+                effective_tax = np.average(df.loc[mask_tax, 'effective_tax_rate'],
+                                           weights=df.loc[mask_tax, 'market_cap'])
+            else:
+                effective_tax = df['effective_tax_rate'].mean() if df['effective_tax_rate'].notna().any() else 0.20
+            
+            # Cash/Firm value: ponderada por market_cap
+            mask_cash = df['cash_firm_value'].notna() & df['market_cap'].notna() & (df['market_cap'] > 0)
+            if mask_cash.any():
+                cash_firm_value = np.average(df.loc[mask_cash, 'cash_firm_value'],
+                                              weights=df.loc[mask_cash, 'market_cap'])
+            else:
+                cash_firm_value = df['cash_firm_value'].mean() if df['cash_firm_value'].notna().any() else 0.0
             
             return {
                 'success': True,
@@ -398,11 +455,15 @@ class WACCDataConnector:
                 'unlevered_beta': round(unlevered_beta, 4),
                 'avg_debt_equity': round(avg_debt_equity, 4),
                 'debt_equity_ratio': round(avg_debt_equity, 4),
+                'effective_tax_rate': round(effective_tax, 4),
+                'cash_firm_value': round(cash_firm_value, 4),
                 'companies_count': len(df),
                 'company_count': len(df),
+                'total_companies_sector': total_companies,
                 'data_quality': 'high' if len(df) >= 30 else ('medium' if len(df) >= 10 else 'low'),
-                'tax_rate_used': tax_rate,
-                'formula': 'βU = βL / [1 + (1 - T) × (D/E)]',
+                'methodology': 'damodaran_direct',
+                'formula': 'βU = bottom_up_beta_for_sector (Damodaran)',
+                'formula_detail': 'Beta: média simples (incl. negativos) | D/E: ponderada por market cap | βU: pré-calculado Damodaran',
                 'last_updated': pd.Timestamp.now().isoformat()
             }
             

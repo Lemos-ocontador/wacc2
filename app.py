@@ -719,12 +719,15 @@ def get_benchmark_companies():
                CAST(dg.ev_ebitda AS REAL) as ev_ebitda,
                CAST(dg.ev_ebit AS REAL) as ev_ebit,
                CAST(dg.ev_revenue AS REAL) as ev_sales,
+               CAST(dg.effective_tax_rate AS REAL) as effective_tax_rate,
+               CAST(dg.marginal_tax_rate AS REAL) as marginal_tax_rate,
+               CAST(dg.cash_firm_value AS REAL) as cash_firm_value,
+               dg.bottom_up_beta_for_sector,
                cbd.about
         FROM damodaran_global dg
         LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
         WHERE dg.industry = ?
           AND dg.beta IS NOT NULL AND dg.beta != ''
-          AND CAST(dg.beta AS REAL) > 0
         """
         params = [industry]
         
@@ -755,10 +758,11 @@ def get_benchmark_companies():
         if df.empty:
             return jsonify({'success': True, 'companies': [], 'stats': {'total': 0}})
         
-        # Calcular beta desalavancado para cada empresa
-        tax_rate = 0.34
+        # Calcular beta desalavancado para cada empresa (metodologia Damodaran)
+        # Usa marginal_tax_rate de cada empresa (como Damodaran faz)
+        df['tax_for_calc'] = df['marginal_tax_rate'].fillna(df['effective_tax_rate']).fillna(0.20)
         df['unlevered_beta'] = df.apply(
-            lambda r: round(r['beta'] / (1 + (1 - tax_rate) * r['debt_equity']), 4)
+            lambda r: round(r['beta'] / (1 + (1 - r['tax_for_calc']) * r['debt_equity']), 4)
             if pd.notna(r['debt_equity']) and r['debt_equity'] >= 0
             else round(r['beta'], 4), axis=1
         )
@@ -799,7 +803,7 @@ def calculate_benchmark():
         
         tickers = data['tickers']
         method = data.get('method', 'simple')
-        tax_rate = data.get('tax_rate', 0.34)
+        # tax_rate agora é por empresa (effective/marginal), não fixo
         
         if len(tickers) < 1:
             return jsonify({'success': False, 'error': 'Selecione pelo menos 1 empresa'}), 400
@@ -815,11 +819,15 @@ def calculate_benchmark():
                CAST(dg.ev_ebitda AS REAL) as ev_ebitda,
                CAST(dg.ev_ebit AS REAL) as ev_ebit,
                CAST(dg.ev_revenue AS REAL) as ev_sales,
+               CAST(dg.effective_tax_rate AS REAL) as effective_tax_rate,
+               CAST(dg.marginal_tax_rate AS REAL) as marginal_tax_rate,
+               CAST(dg.cash_firm_value AS REAL) as cash_firm_value,
+               dg.bottom_up_beta_for_sector,
                cbd.about
         FROM damodaran_global dg
         LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
         WHERE dg.ticker IN ({placeholders})
-          AND dg.beta IS NOT NULL AND CAST(dg.beta AS REAL) > 0
+          AND dg.beta IS NOT NULL
         """
         df = pd.read_sql_query(query, conn, params=tickers)
         conn.close()
@@ -827,9 +835,10 @@ def calculate_benchmark():
         if df.empty:
             return jsonify({'success': False, 'error': 'Nenhuma empresa encontrada'})
         
-        # Calcular beta desalavancado
+        # Calcular beta desalavancado (metodologia Damodaran: marginal_tax_rate por empresa)
         df['debt_equity'] = df['debt_equity'].fillna(0).clip(lower=0)
-        df['unlevered_beta'] = df['beta'] / (1 + (1 - tax_rate) * df['debt_equity'])
+        df['tax_for_calc'] = df['marginal_tax_rate'].fillna(df['effective_tax_rate']).fillna(0.20)
+        df['unlevered_beta'] = df['beta'] / (1 + (1 - df['tax_for_calc']) * df['debt_equity'])
         
         if method == 'weighted' and df['market_cap'].sum() > 0:
             total_mc = df['market_cap'].sum()
@@ -837,11 +846,13 @@ def calculate_benchmark():
             avg_bu = (df['unlevered_beta'] * df['weight']).sum()
             avg_de = (df['debt_equity'] * df['weight']).sum()
             avg_bl = (df['beta'] * df['weight']).sum()
+            avg_tax = (df['tax_for_calc'] * df['weight']).sum()
         else:
             df['weight'] = 1.0 / len(df)
             avg_bu = df['unlevered_beta'].mean()
             avg_de = df['debt_equity'].mean()
             avg_bl = df['beta'].mean()
+            avg_tax = df['tax_for_calc'].mean()
         
         # Converter NaN para None (evita NaN no JSON que quebra JSON.parse do browser)
         df = df.replace({np.nan: None})
@@ -871,9 +882,9 @@ def calculate_benchmark():
                 'unlevered_beta': round(avg_bu, 4),
                 'levered_beta_avg': round(avg_bl, 4),
                 'debt_equity_avg': round(avg_de, 4),
+                'effective_tax_rate': round(avg_tax, 4),
                 'companies_used': len(df),
                 'method': method,
-                'tax_rate': tax_rate,
                 'companies': companies_detail
             }
         })
