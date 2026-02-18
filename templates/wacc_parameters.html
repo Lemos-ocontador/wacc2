@@ -87,6 +87,25 @@
     
     .print-btn { position: fixed; bottom: 20px; right: 20px; z-index: 999; }
     
+    /* Demo WACC Calculation */
+    .calc-table { font-size: 0.88rem; }
+    .calc-table th { font-weight: 700; white-space: nowrap; }
+    .calc-table td { vertical-align: middle; }
+    .calc-table .calc-label { font-weight: 600; color: #1e293b; }
+    .calc-table .calc-criteria { font-size: 0.8rem; color: #6b7280; }
+    .calc-table .calc-source { font-size: 0.78rem; color: #9ca3af; }
+    .calc-table .calc-value { font-weight: 700; font-family: 'Courier New', monospace; text-align: right; white-space: nowrap; }
+    .calc-table .calc-result { background: #f0fdf4; }
+    .calc-table .calc-result .calc-value { color: #15803d; font-size: 1.05rem; }
+    .calc-table .calc-subtotal { background: #eff6ff; border-top: 2px solid #93c5fd; }
+    .calc-table .calc-subtotal .calc-value { color: #1d4ed8; font-size: 1.02rem; }
+    .calc-table .calc-final { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; }
+    .calc-table .calc-final td { color: white; font-weight: 700; font-size: 1.05rem; }
+    .calc-table .calc-formula { font-size: 0.75rem; color: #64748b; font-style: italic; }
+    .calc-section-header td { background: #f1f5f9; font-weight: 700; font-size: 0.85rem; color: #475569; letter-spacing: 0.5px; text-transform: uppercase; }
+    .calc-editable { background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 4px; padding: 2px 8px; text-align: right; width: 90px; font-family: 'Courier New', monospace; font-weight: 700; }
+    .calc-computed { color: #6366f1; }
+
     @media print {
         .navbar, .print-btn, .btn-export { display: none !important; }
         .param-card { break-inside: avoid; }
@@ -525,6 +544,218 @@
             </div>
         </div>
 
+        <!-- ═══ SEÇÃO 5: Demonstração do Cálculo do WACC ═══ -->
+        <div class="section-header" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+            <h3><i class="fas fa-calculator me-2"></i> 5. Demonstração — Cálculo do WACC (Valores Atuais)</h3>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- ── Ke ── -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header" style="background: linear-gradient(135deg, #1e3a5f, #3b82f6);">
+                        <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Custo do Equity — Ke</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table calc-table mb-0">
+                            <thead>
+                                <tr class="table-light">
+                                    <th style="width:35%">Parâmetro</th>
+                                    <th style="width:30%">Critérios</th>
+                                    <th style="width:18%">Fonte</th>
+                                    <th style="width:17%" class="text-end">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="calc-label">Risk free rate (Rf)</td>
+                                    <td class="calc-criteria">US Bond média 1 ano</td>
+                                    <td class="calc-source">Fed. Res. St.Louis</td>
+                                    <td class="calc-value" id="demo-rf">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Beta re-levered (β<sub>L</sub>)</td>
+                                    <td class="calc-criteria">Setor / Damodaran</td>
+                                    <td class="calc-source">Damodaran</td>
+                                    <td class="calc-value">
+                                        <input type="number" class="calc-editable" id="demo-beta" value="0.847" step="0.01" min="0" max="5" onchange="recalcWACC()">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Market risk (ERP)</td>
+                                    <td class="calc-criteria">Geometric avg 1928–atual</td>
+                                    <td class="calc-source">Damodaran</td>
+                                    <td class="calc-value" id="demo-erp">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Country risk (Rp)</td>
+                                    <td class="calc-criteria">Country Risk Premium</td>
+                                    <td class="calc-source">Damodaran</td>
+                                    <td class="calc-value" id="demo-crp">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Size premium (Rs)</td>
+                                    <td class="calc-criteria">Decil de Market Cap</td>
+                                    <td class="calc-source">Kroll</td>
+                                    <td class="calc-value">
+                                        <input type="number" class="calc-editable" id="demo-sp" value="12.12" step="0.01" min="0" max="30" onchange="recalcWACC()">%
+                                    </td>
+                                </tr>
+                                <tr class="calc-subtotal">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-arrow-right me-1"></i> CAPM nominal (U$)
+                                        <div class="calc-formula">= Rf + β×ERP + Rp + Rs</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-capm-usd">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Inflation — USA (CPI)</td>
+                                    <td class="calc-criteria">Média histórica</td>
+                                    <td class="calc-source">BDWACC / FRED</td>
+                                    <td class="calc-value" id="demo-cpi">—</td>
+                                </tr>
+                                <tr class="calc-subtotal">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-arrow-right me-1"></i> CAPM real — Ke
+                                        <div class="calc-formula">= (1 + CAPM<sub>nom</sub>) / (1 + CPI) − 1</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-ke-real">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Inflation — Brazil (IPCA)</td>
+                                    <td class="calc-criteria">LP projetado / BCB</td>
+                                    <td class="calc-source">BACEN</td>
+                                    <td class="calc-value" id="demo-ipca">—</td>
+                                </tr>
+                                <tr class="calc-result">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-check-circle me-1"></i> <strong>CAPM nominal (R$) — Ke</strong>
+                                        <div class="calc-formula">= (1 + Ke<sub>real</sub>) × (1 + IPCA) − 1</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-ke-brl">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Kd ── -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header" style="background: linear-gradient(135deg, #374151, #6b7280);">
+                        <h6 class="mb-0"><i class="fas fa-university me-2"></i> Custo da Dívida — Kd</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table calc-table mb-0">
+                            <thead>
+                                <tr class="table-light">
+                                    <th style="width:35%">Parâmetro</th>
+                                    <th style="width:30%">Critérios</th>
+                                    <th style="width:18%">Fonte</th>
+                                    <th style="width:17%" class="text-end">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="calc-label">Custo nominal da dívida</td>
+                                    <td class="calc-criteria">
+                                        <input type="number" class="calc-editable" id="demo-kd-mult" value="150" step="10" min="100" max="300" style="width:60px" onchange="recalcWACC()">% Selic
+                                    </td>
+                                    <td class="calc-source">BACEN</td>
+                                    <td class="calc-value" id="demo-kd-bruto">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Inflação LP — Brasil</td>
+                                    <td class="calc-criteria">IPCA projetado</td>
+                                    <td class="calc-source">BACEN</td>
+                                    <td class="calc-value" id="demo-kd-ipca">—</td>
+                                </tr>
+                                <tr class="calc-subtotal">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-arrow-right me-1"></i> Custo real da dívida (bruto)
+                                        <div class="calc-formula">= (1 + Kd<sub>nom</sub>) / (1 + IPCA) − 1</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-kd-real-bruto">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Tax Benefit (IR+CSLL)</td>
+                                    <td class="calc-criteria">Alíquota IRPJ + CSLL</td>
+                                    <td class="calc-source">Legislação</td>
+                                    <td class="calc-value" id="demo-tax">—</td>
+                                </tr>
+                                <tr class="calc-result">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-check-circle me-1"></i> <strong>Kd nominal (after-tax)</strong>
+                                        <div class="calc-formula">= Kd<sub>bruto</sub> × (1 − T)</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-kd-nom-after">—</td>
+                                </tr>
+                                <tr class="calc-result">
+                                    <td class="calc-label" colspan="2">
+                                        <i class="fas fa-check-circle me-1"></i> <strong>Kd real (after-tax)</strong>
+                                        <div class="calc-formula">= Kd<sub>real bruto</sub> × (1 − T)</div>
+                                    </td>
+                                    <td></td>
+                                    <td class="calc-value" id="demo-kd-real-after">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── WACC ── -->
+                    <div class="card-header mt-0" style="background: linear-gradient(135deg, #7c3aed, #a855f7); border-radius: 0;">
+                        <h6 class="mb-0"><i class="fas fa-bullseye me-2"></i> WACC — Resultado Final</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table calc-table mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="calc-label" style="width:55%">% Equity (E / E+D)</td>
+                                    <td class="calc-value" style="width:45%">
+                                        <input type="number" class="calc-editable" id="demo-pct-equity" value="51.53" step="0.5" min="0" max="100" onchange="recalcWACC()">%
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">% Dívida (D / E+D)</td>
+                                    <td class="calc-value" id="demo-pct-debt">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Cost of equity — Ke real</td>
+                                    <td class="calc-value calc-computed" id="demo-wacc-ke-real">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Cost of debt — Kd real</td>
+                                    <td class="calc-value calc-computed" id="demo-wacc-kd-real">—</td>
+                                </tr>
+                                <tr class="calc-final">
+                                    <td><i class="fas fa-star me-1"></i> WACC Real</td>
+                                    <td class="text-end" id="demo-wacc-real" style="font-size:1.2rem;">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Cost of equity — Ke nominal (R$)</td>
+                                    <td class="calc-value calc-computed" id="demo-wacc-ke-nom">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="calc-label">Cost of debt — Kd nominal</td>
+                                    <td class="calc-value calc-computed" id="demo-wacc-kd-nom">—</td>
+                                </tr>
+                                <tr class="calc-final">
+                                    <td><i class="fas fa-star me-1"></i> WACC Nominal (R$)</td>
+                                    <td class="text-end" id="demo-wacc-nominal" style="font-size:1.2rem;">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Notas -->
         <div class="card mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, #6b7280, #9ca3af);">
@@ -619,6 +850,9 @@ async function loadParameters() {
         // Tabela resumo
         buildSummaryTable(c);
         
+        // Demo cálculo WACC
+        populateDemo(c);
+        
         // Timestamp
         document.getElementById('last-check').textContent = new Date().toLocaleString('pt-BR');
         
@@ -701,6 +935,106 @@ function showError(msg) {
 
 function exportPDF() {
     window.print();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DEMO WACC CALCULATOR
+// ═══════════════════════════════════════════════════════════════
+
+// Store live values for recalc
+let liveData = { rf: 0, erp: 0, crp: 0, cpi: 0, ipca: 0, selic: 0, ir: 0 };
+
+function populateDemo(c) {
+    // Extract numeric values
+    liveData.rf   = parseNum(c.RF?.value);
+    liveData.erp  = parseNum(c.RM?.value);
+    liveData.crp  = parseNum(c.CR?.value);
+    liveData.cpi  = parseNum(c.IA?.value);
+    liveData.ipca = parseNum(c.IB_IPCA?.ipca_12m || c.IB_IPCA?.bdwacc_value);
+    liveData.selic= parseNum(c.CT_Selic?.selic);
+    liveData.ir   = parseNum(c.IR?.value);
+
+    // Fill static cells
+    setDemoVal('demo-rf',   liveData.rf,  '%');
+    setDemoVal('demo-erp',  liveData.erp, '%');
+    setDemoVal('demo-crp',  liveData.crp, '%');
+    setDemoVal('demo-cpi',  liveData.cpi, '%');
+    setDemoVal('demo-ipca', liveData.ipca,'%');
+    setDemoVal('demo-tax',  liveData.ir,  '%');
+    setDemoVal('demo-kd-ipca', liveData.ipca, '%');
+
+    recalcWACC();
+}
+
+function recalcWACC() {
+    const rf   = liveData.rf   / 100;
+    const erp  = liveData.erp  / 100;
+    const crp  = liveData.crp  / 100;
+    const cpi  = liveData.cpi  / 100;
+    const ipca = liveData.ipca / 100;
+    const ir   = liveData.ir   / 100;
+    const selic= liveData.selic/ 100;
+
+    const beta = parseFloat(document.getElementById('demo-beta').value) || 0;
+    const sp   = (parseFloat(document.getElementById('demo-sp').value) || 0) / 100;
+    const kdMult = (parseFloat(document.getElementById('demo-kd-mult').value) || 150) / 100;
+    const pctEq  = (parseFloat(document.getElementById('demo-pct-equity').value) || 50) / 100;
+    const pctDbt = 1 - pctEq;
+
+    // ── Ke ──
+    const capmUSD = rf + beta * erp + crp + sp;
+    const keReal  = (1 + capmUSD) / (1 + cpi) - 1;
+    const keBRL   = (1 + keReal) * (1 + ipca) - 1;
+
+    setDemoVal('demo-capm-usd', capmUSD * 100, '%');
+    setDemoVal('demo-ke-real',  keReal * 100,  '%');
+    setDemoVal('demo-ke-brl',   keBRL * 100,   '%');
+
+    // ── Kd ──
+    const kdBruto     = selic * kdMult;
+    const kdRealBruto = (1 + kdBruto) / (1 + ipca) - 1;
+    const kdNomAfter  = kdBruto * (1 - ir);
+    const kdRealAfter = kdRealBruto * (1 - ir);
+
+    setDemoVal('demo-kd-bruto',      kdBruto * 100,     '%');
+    setDemoVal('demo-kd-real-bruto',  kdRealBruto * 100, '%');
+    setDemoVal('demo-kd-nom-after',   kdNomAfter * 100,  '%');
+    setDemoVal('demo-kd-real-after',  kdRealAfter * 100, '%');
+
+    // ── WACC ──
+    document.getElementById('demo-pct-debt').textContent = fmtPct(pctDbt * 100);
+
+    setDemoVal('demo-wacc-ke-real', keReal * 100, '%');
+    setDemoVal('demo-wacc-kd-real', kdRealAfter * 100, '%');
+    setDemoVal('demo-wacc-ke-nom',  keBRL * 100, '%');
+    setDemoVal('demo-wacc-kd-nom',  kdNomAfter * 100, '%');
+
+    const waccReal    = pctEq * keReal + pctDbt * kdRealAfter;
+    const waccNominal = pctEq * keBRL  + pctDbt * kdNomAfter;
+
+    document.getElementById('demo-wacc-real').textContent    = fmtPct(waccReal * 100);
+    document.getElementById('demo-wacc-nominal').textContent = fmtPct(waccNominal * 100);
+}
+
+function parseNum(v) {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') {
+        // Handle "4,61%" or "4.61%"
+        let s = v.replace('%', '').replace(',', '.').trim();
+        return parseFloat(s) || 0;
+    }
+    return 0;
+}
+
+function setDemoVal(elemId, val, suffix) {
+    const el = document.getElementById(elemId);
+    if (!el) return;
+    el.textContent = fmtPct(val) + (suffix || '');
+}
+
+function fmtPct(v) {
+    return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 </script>
 {% endblock %}
