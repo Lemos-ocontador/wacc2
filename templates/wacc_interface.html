@@ -491,16 +491,28 @@
                                 <i class="fas fa-percentage"></i> Custo da Dívida (Kd)
                             </h6>
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label for="selic-multiplier" class="form-label">Proxy Kd:</label>
+                                    <select class="form-select form-select-sm" id="selic-multiplier">
+                                        <option value="1.0">100% Selic</option>
+                                        <option value="1.2">120% Selic</option>
+                                        <option value="1.5" selected>150% Selic (ANEEL)</option>
+                                        <option value="1.8">180% Selic (Mercado)</option>
+                                        <option value="2.0">200% Selic</option>
+                                        <option value="custom">Personalizado</option>
+                                    </select>
+                                    <div class="source-info" id="selic-multiplier-info">Spread corporativo s/ Selic</div>
+                                </div>
+                                <div class="col-md-4">
                                     <label for="cost-of-debt" class="form-label">Taxa Bruta (Kd):</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" class="form-control" id="cost-of-debt" 
                                                step="0.1" min="0" max="50" value="0" placeholder="Carregando...">
                                         <span class="input-group-text">%</span>
                                     </div>
-                                    <div class="source-info">Carregando Selic via BCB...</div>
+                                    <div class="source-info" id="kd-source-info">Carregando Selic via BCB...</div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label for="tax-rate" class="form-label">Alíquota IR+CSLL:</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" class="form-control" id="tax-rate" 
@@ -1021,11 +1033,22 @@
                 recalculateReleverBeta();
             });
             
-            // Atualizar preview Ki quando mudam Kd ou Tax + recalcular beta
-            document.getElementById('cost-of-debt').addEventListener('input', updateKiPreview);
+            // Atualizar preview Ki quando mudam Kd, Tax ou multiplicador
+            document.getElementById('cost-of-debt').addEventListener('input', function() {
+                // Se mudou manualmente, marcar como custom
+                document.getElementById('selic-multiplier').value = 'custom';
+                updateKiPreview();
+            });
             document.getElementById('tax-rate').addEventListener('input', function() {
                 updateKiPreview();
                 recalculateReleverBeta();
+            });
+            document.getElementById('selic-multiplier').addEventListener('change', function() {
+                const mult = this.value;
+                if (mult !== 'custom') {
+                    recalcKdFromMultiplier(parseFloat(mult));
+                }
+                updateKiPreview();
             });
             
             // Lucro Real toggle
@@ -1257,9 +1280,13 @@
                     capmBody.appendChild(tr);
                 });
                 
-                // Tabela Ki
+                // Tabela Ki — incluir info do multiplicador Selic
+                const multSelect = document.getElementById('selic-multiplier');
+                const multLabel = multSelect.value === 'custom' ? 'Personalizado' : 
+                    multSelect.options[multSelect.selectedIndex]?.text || '';
+                const selicBase = _selicCache ? `Selic ${_selicCache.selic}% × ${multLabel}` : 'Proxy - Taxa informada';
                 const kiRows = [
-                    ['Custo da Dívida (Kd bruto)', 'Proxy - Taxa informada', (costOfDebt*100).toFixed(2) + '%'],
+                    ['Custo da Dívida (Kd bruto)', selicBase, (costOfDebt*100).toFixed(2) + '%'],
                     ['Alíquota IR+CSLL', 'Benefício fiscal', (taxRate*100).toFixed(0) + '%'],
                 ];
                 kiRows.push(['__total__', 'Ki = Kd × (1 - IR)', (afterTaxCostOfDebt*100).toFixed(2) + '%']);
@@ -1375,27 +1402,57 @@
             }
         }
 
+        // Cache da Selic para recálculo com diferentes multiplicadores
+        let _selicCache = null;
+        
+        function recalcKdFromMultiplier(mult) {
+            if (!_selicCache) return;
+            const kd = (_selicCache.selic * mult).toFixed(2);
+            document.getElementById('cost-of-debt').value = kd;
+            const srcEl = document.getElementById('kd-source-info');
+            if (srcEl) {
+                srcEl.innerHTML = `<span style="color:#22c55e;">●</span> Selic ${_selicCache.selic}% × ${(mult*100).toFixed(0)}% = Kd ${kd}% <small>(${_selicCache.source})</small>`;
+            }
+            const multInfo = document.getElementById('selic-multiplier-info');
+            if (multInfo) {
+                const labels = {'1': 'Taxa básica', '1.2': 'Spread conservador', '1.5': 'Proxy ANEEL/ANATEL', '1.8': 'Spread corporativo médio', '2': 'Alto risco'};
+                multInfo.textContent = labels[String(mult)] || 'Spread corporativo s/ Selic';
+            }
+        }
+        
         // Selic / Kd — carrega ao vivo da API BCB
         async function loadKdSelic() {
             try {
                 const response = await fetch('/api/get_kd_selic');
                 const data = await response.json();
                 if (data.success) {
-                    const kdInput = document.getElementById('cost-of-debt');
-                    kdInput.value = data.kd_percentage;
+                    // Salvar Selic base para recálculos
+                    _selicCache = {
+                        selic: data.selic_percentage,
+                        source: data.source + (data.date ? ', ' + data.date : ''),
+                        is_live: data.is_live
+                    };
                     
-                    // Atualizar label de fonte
-                    const sourceInfo = kdInput.closest('.col-md-6').querySelector('.source-info');
-                    if (sourceInfo) {
-                        if (data.is_live) {
-                            sourceInfo.innerHTML = `<span style="color:#22c55e;">●</span> Selic ${data.selic_percentage}% × 150% = Kd ${data.kd_percentage}% <small>(${data.source}, ${data.date})</small>`;
-                        } else {
-                            sourceInfo.innerHTML = `<span style="color:#eab308;">●</span> ${data.source} — Kd ${data.kd_percentage}%`;
+                    // Aplicar o multiplicador selecionado
+                    const multSelect = document.getElementById('selic-multiplier');
+                    const mult = multSelect.value === 'custom' ? null : parseFloat(multSelect.value);
+                    
+                    if (mult) {
+                        const kd = (data.selic_percentage * mult).toFixed(2);
+                        document.getElementById('cost-of-debt').value = kd;
+                        
+                        const srcEl = document.getElementById('kd-source-info');
+                        if (srcEl) {
+                            if (data.is_live) {
+                                srcEl.innerHTML = `<span style="color:#22c55e;">●</span> Selic ${data.selic_percentage}% × ${(mult*100).toFixed(0)}% = Kd ${kd}% <small>(${data.source}, ${data.date})</small>`;
+                            } else {
+                                srcEl.innerHTML = `<span style="color:#eab308;">●</span> ${data.source} — Kd ${kd}%`;
+                            }
                         }
                     }
                     
                     updateKiPreview();
-                    console.log(`Kd/Selic: ${data.kd_percentage}% — fonte: ${data.source}`);
+                    console.log(`Selic: ${data.selic_percentage}% × ${mult || 'custom'} — fonte: ${data.source}`);
                 }
             } catch (error) {
                 console.error('Erro ao carregar Selic/Kd:', error);
