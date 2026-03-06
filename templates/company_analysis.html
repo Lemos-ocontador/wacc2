@@ -110,6 +110,9 @@
                         case 'industry':
                             cellValue = company.industry || '';
                             break;
+                        case 'atividade_anloc':
+                            cellValue = company.atividade_anloc || '';
+                            break;
                         case 'about':
                             cellValue = company.about || '';
                             break;
@@ -1002,6 +1005,13 @@
             'ticker': true,
             'country': true,
             'industry': true,
+            'yahoo_sector': false,
+            'yahoo_industry': false,
+            'yahoo_country': false,
+            'yahoo_city': false,
+            'currency': false,
+            'yahoo_website': false,
+            'atividade_anloc': true,
             'about': true,
             'market_cap': true,
             'revenue': true,
@@ -1009,13 +1019,20 @@
             'pe_ratio': true,
             'actions': true
         };
-        let columnOrder = ['select', 'company_name', 'ticker', 'country', 'industry', 'about', 'market_cap', 'revenue', 'roe', 'pe_ratio', 'actions'];
+        let columnOrder = ['select', 'company_name', 'ticker', 'country', 'industry', 'yahoo_sector', 'yahoo_industry', 'yahoo_country', 'yahoo_city', 'currency', 'yahoo_website', 'atividade_anloc', 'about', 'market_cap', 'revenue', 'roe', 'pe_ratio', 'actions'];
         const columnLabels = {
             'select': 'Selecionar',
             'company_name': 'Empresa',
             'ticker': 'Ticker',
             'country': 'País',
-            'industry': 'Setor',
+            'industry': 'Setor (Damodaran)',
+            'yahoo_sector': 'Setor (Yahoo)',
+            'yahoo_industry': 'Indústria (Yahoo)',
+            'yahoo_country': 'País (Yahoo)',
+            'yahoo_city': 'Cidade (Yahoo)',
+            'currency': 'Moeda',
+            'yahoo_website': 'Website',
+            'atividade_anloc': 'Atividade Anloc',
             'about': 'Sobre a empresa',
             'market_cap': 'Market Cap (USD)',
             'revenue': 'Receita (USD)',
@@ -1617,6 +1634,28 @@
                                 break;
                             case 'industry':
                                 html += `<td>${company.industry || 'N/A'}</td>`;
+                                break;
+                            case 'yahoo_sector':
+                                html += `<td>${company.yahoo_sector || ''}</td>`;
+                                break;
+                            case 'yahoo_industry':
+                                html += `<td>${company.yahoo_industry || ''}</td>`;
+                                break;
+                            case 'yahoo_country':
+                                html += `<td>${company.yahoo_country || ''}</td>`;
+                                break;
+                            case 'yahoo_city':
+                                html += `<td>${company.yahoo_city || ''}</td>`;
+                                break;
+                            case 'currency':
+                                html += `<td>${company.currency || ''}</td>`;
+                                break;
+                            case 'yahoo_website':
+                                const url = company.yahoo_website || '';
+                                html += url ? `<td><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#3498db;">🔗</a></td>` : `<td></td>`;
+                                break;
+                            case 'atividade_anloc':
+                                html += `<td>${company.atividade_anloc || 'N/A'}</td>`;
                                 break;
                             case 'about':
                                 const aboutText = company.about || '';

@@ -101,10 +101,16 @@ class CompanyAnalyzer:
             # Query base
             query = """
             SELECT 
-                company_name, ticker, country, industry, market_cap, enterprise_value,
-                revenue, net_income, ebitda, pe_ratio, beta, debt_equity, roe, roa,
-                dividend_yield, revenue_growth, operating_margin
-            FROM damodaran_global 
+                dg.company_name, dg.ticker, dg.country, dg.industry, dg.market_cap, dg.enterprise_value,
+                dg.revenue, dg.net_income, dg.ebitda, dg.pe_ratio, dg.beta, dg.debt_equity, dg.roe, dg.roa,
+                dg.dividend_yield, dg.revenue_growth, dg.operating_margin,
+                cbd.about, cbd.yahoo_sector, cbd.yahoo_industry,
+                cbd.yahoo_city, cbd.yahoo_country, cbd.yahoo_state, cbd.yahoo_website,
+                cbd.currency, cbd.yahoo_code,
+                COALESCE(cbd.enterprise_value, dg.enterprise_value) AS enterprise_value_yahoo,
+                COALESCE(cbd.market_cap, dg.market_cap) AS market_cap_yahoo
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
             WHERE 1=1
             """
             
@@ -113,7 +119,7 @@ class CompanyAnalyzer:
             if filters:
                 # Filtro por país específico
                 if filters.get('country'):
-                    query += " AND country = ?"
+                    query += " AND dg.country = ?"
                     params.append(filters['country'])
                 
                 # Filtro por região geográfica
@@ -127,7 +133,7 @@ class CompanyAnalyzer:
                     
                     if region_countries:
                         placeholders = ','.join(['?' for _ in region_countries])
-                        query += f" AND country IN ({placeholders})"
+                        query += f" AND dg.country IN ({placeholders})"
                         params.extend(region_countries)
                 
                 # Filtro por sub-região geográfica
@@ -142,12 +148,12 @@ class CompanyAnalyzer:
                     
                     if subregion_countries:
                         placeholders = ','.join(['?' for _ in subregion_countries])
-                        query += f" AND country IN ({placeholders})"
+                        query += f" AND dg.country IN ({placeholders})"
                         params.extend(subregion_countries)
                 
                 # Filtro por indústria específica
                 if filters.get('industry'):
-                    query += " AND industry = ?"
+                    query += " AND dg.industry = ?"
                     params.append(filters['industry'])
                 
                 # Filtro por setor
@@ -161,7 +167,7 @@ class CompanyAnalyzer:
                     
                     if sector_industries:
                         placeholders = ','.join(['?' for _ in sector_industries])
-                        query += f" AND industry IN ({placeholders})"
+                        query += f" AND dg.industry IN ({placeholders})"
                         params.extend(sector_industries)
                 
                 # Filtro por subsetor
@@ -176,19 +182,19 @@ class CompanyAnalyzer:
                     
                     if subsector_industries:
                         placeholders = ','.join(['?' for _ in subsector_industries])
-                        query += f" AND industry IN ({placeholders})"
+                        query += f" AND dg.industry IN ({placeholders})"
                         params.extend(subsector_industries)
                 
                 # Filtros de market cap
                 if filters.get('min_market_cap'):
-                    query += " AND market_cap >= ?"
+                    query += " AND dg.market_cap >= ?"
                     params.append(float(filters['min_market_cap']))
                 
                 if filters.get('max_market_cap'):
-                    query += " AND market_cap <= ?"
+                    query += " AND dg.market_cap <= ?"
                     params.append(float(filters['max_market_cap']))
             
-            query += " ORDER BY market_cap DESC LIMIT 1000"
+            query += " ORDER BY dg.market_cap DESC LIMIT 1000"
             
             conn = self.get_connection()
             df = pd.read_sql_query(query, conn, params=params)
@@ -307,7 +313,19 @@ def company_profile(ticker):
             cbd.yahoo_code,
             cbd.about,
             cbd.etf_sector,
-            cbd.updated_at AS basic_data_updated_at
+            cbd.updated_at AS basic_data_updated_at,
+            cbd.yahoo_sector,
+            cbd.yahoo_sector_key,
+            cbd.yahoo_industry,
+            cbd.yahoo_industry_key,
+            cbd.yahoo_city,
+            cbd.yahoo_country,
+            cbd.yahoo_state,
+            cbd.yahoo_website,
+            cbd.currency AS yahoo_currency,
+            cbd.enterprise_value AS yahoo_enterprise_value,
+            cbd.market_cap AS yahoo_market_cap,
+            cbd.dta_referencia
         FROM damodaran_global dg
         LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
         WHERE dg.ticker = ? OR dg.ticker LIKE ?

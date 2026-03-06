@@ -740,6 +740,7 @@
                                         <th class="text-end">EV/EBITDA</th>
                                         <th class="text-end">EV/EBIT</th>
                                         <th class="text-end">EV/Sales</th>
+                                        <th style="min-width:150px;">Atividade Anloc</th>
                                         <th style="min-width:180px;">About</th>
                                     </tr>
                                 </thead>
@@ -856,11 +857,12 @@
                                     <th onclick="sortBenchmarkTable('ev_ebitda')" style="cursor:pointer;">EV/EBITDA ↕</th>
                                     <th onclick="sortBenchmarkTable('ev_ebit')" style="cursor:pointer;">EV/EBIT ↕</th>
                                     <th onclick="sortBenchmarkTable('ev_sales')" style="cursor:pointer;">EV/Sales ↕</th>
+                                    <th style="min-width:150px;">Atividade Anloc</th>
                                     <th style="min-width:120px;">About</th>
                                 </tr>
                             </thead>
                             <tbody id="bm-table-body">
-                                <tr><td colspan="14" class="text-center text-muted py-4">Selecione um setor e clique em "Selecionar" para carregar empresas</td></tr>
+                                <tr><td colspan="15" class="text-center text-muted py-4">Selecione um setor e clique em "Selecionar" para carregar empresas</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1774,7 +1776,7 @@
             });
             
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-3">Nenhuma empresa encontrada</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-3">Nenhuma empresa encontrada</td></tr>';
                 return;
             }
             
@@ -1814,6 +1816,7 @@
                     <td class="text-end">${evEbitda}</td>
                     <td class="text-end">${evEbit}</td>
                     <td class="text-end">${evSales}</td>
+                    <td style="font-size:0.75em;" title="${(c.atividade_anloc||'').replace(/"/g,'&quot;')}">${(c.atividade_anloc || '').substring(0, 40)}${(c.atividade_anloc||'').length > 40 ? '...' : ''}</td>
                     <td style="font-size:0.75em;" title="${(c.about||'').replace(/"/g,'&quot;')}">${aboutShort}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2043,6 +2046,7 @@
                     <td class="text-end">${evEbitda}</td>
                     <td class="text-end">${evEbit}</td>
                     <td class="text-end">${evSales}</td>
+                    <td style="font-size:0.85em;" title="${(c.atividade_anloc||'').replace(/"/g,'&quot;')}">${(c.atividade_anloc || '').substring(0, 50)}${(c.atividade_anloc||'').length > 50 ? '...' : ''}</td>
                     <td style="font-size:0.85em;" title="${(c.about||'').replace(/"/g,'&quot;')}">${aboutShort}</td>
                 `;
                 tbody.appendChild(tr);

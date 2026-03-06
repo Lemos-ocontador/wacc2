@@ -136,7 +136,11 @@
             <p class="muted">
                 <strong>Ticker:</strong> {{ company.ticker or '-' }} |
                 <strong>País:</strong> {{ company.country or '-' }} |
-                <strong>Setor:</strong> {{ company.primary_sector or company.industry_group or company.industry or '-' }}
+                <strong>Setor:</strong> {{ company.primary_sector or company.industry_group or company.industry or '-' }} |
+                <strong>Atividade Anloc:</strong> {{ company.atividade_anloc or '-' }}
+                {% if company.yahoo_website %}
+                    | <a href="{{ company.yahoo_website }}" target="_blank" rel="noopener noreferrer" style="color:#3498db;">🔗 Website</a>
+                {% endif %}
             </p>
         </div>
 
@@ -156,6 +160,36 @@
                     {% endfor %}
                 </div>
             {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Classificação Yahoo Finance</h2>
+            <div class="grid">
+                <div class="metric">
+                    <div class="metric-label">Setor</div>
+                    <div class="metric-value">{{ company.yahoo_sector or '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Indústria</div>
+                    <div class="metric-value">{{ company.yahoo_industry or '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">País</div>
+                    <div class="metric-value">{{ company.yahoo_country or '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Estado</div>
+                    <div class="metric-value">{{ company.yahoo_state or '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Cidade</div>
+                    <div class="metric-value">{{ company.yahoo_city or '-' }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Moeda</div>
+                    <div class="metric-value">{{ company.yahoo_currency or '-' }}</div>
+                </div>
+            </div>
         </div>
 
         <div class="card">

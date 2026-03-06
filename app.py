@@ -723,6 +723,9 @@ def get_benchmark_companies():
                CAST(dg.marginal_tax_rate AS REAL) as marginal_tax_rate,
                CAST(dg.cash_firm_value AS REAL) as cash_firm_value,
                dg.bottom_up_beta_for_sector,
+               dg.sic_desc,
+               dg.sic_round,
+               dg.atividade_anloc,
                cbd.about
         FROM damodaran_global dg
         LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
@@ -823,6 +826,9 @@ def calculate_benchmark():
                CAST(dg.marginal_tax_rate AS REAL) as marginal_tax_rate,
                CAST(dg.cash_firm_value AS REAL) as cash_firm_value,
                dg.bottom_up_beta_for_sector,
+               dg.sic_desc,
+               dg.sic_round,
+               dg.atividade_anloc,
                cbd.about
         FROM damodaran_global dg
         LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
@@ -873,6 +879,9 @@ def calculate_benchmark():
                 'ev_ebit': row.get('ev_ebit'),
                 'ev_sales': row.get('ev_sales'),
                 'about': row.get('about'),
+                'sic_desc': row.get('sic_desc'),
+                'sic_round': row.get('sic_round'),
+                'atividade_anloc': row.get('atividade_anloc'),
                 'weight': round(row['weight'], 4),
             })
         
@@ -1683,6 +1692,10 @@ def get_filters():
             if industry not in industry_hierarchy[primary_sector][industry_group]:
                 industry_hierarchy[primary_sector][industry_group].append(industry)
         
+        # Atividades Anloc
+        cursor.execute("SELECT DISTINCT atividade_anloc FROM damodaran_global WHERE atividade_anloc IS NOT NULL AND atividade_anloc != '' ORDER BY atividade_anloc")
+        atividades_anloc = [row[0] for row in cursor.fetchall()]
+
         conn.close()
         
         return jsonify({
@@ -1690,7 +1703,8 @@ def get_filters():
             'countries': countries,
             'industries': industries,
             'geographic_hierarchy': geographic_hierarchy,
-            'industry_hierarchy': industry_hierarchy
+            'industry_hierarchy': industry_hierarchy,
+            'atividades_anloc': atividades_anloc
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1868,7 +1882,7 @@ def api_get_field_categories():
         }), 500
 
 
-@app.route('/api/get_category_fields/<category_id>')
+@app.route('/api/get_category_fields/<path:category_id>')
 def api_get_category_fields(category_id):
     """API endpoint para obter campos de uma categoria específica."""
     try:
@@ -1917,6 +1931,276 @@ def api_get_field_info(field_name):
             'success': False,
             'error': str(e)
         }), 500
+
+
+# ===== EXPORTAÇÃO DE DADOS =====
+
+@app.route('/exporta-data')
+def exporta_data_page():
+    """Página de exportação de dados para Excel."""
+    return render_template('exporta_data.html')
+
+
+@app.route('/api/export_excel', methods=['POST'])
+def api_export_excel():
+    """API endpoint para exportar dados filtrados para Excel."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Dados não fornecidos'}), 400
+
+        fields = data.get('fields', [])
+        filters = data.get('filters', {})
+
+        if not fields:
+            return jsonify({'success': False, 'error': 'Nenhum campo selecionado'}), 400
+
+        # Sanitizar nomes de colunas (prevenir SQL injection)
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(damodaran_global)")
+        valid_columns = {row[1] for row in cursor.fetchall()}
+
+        # Adicionar colunas de company_basic_data
+        valid_columns.add('about')
+
+        safe_fields = [f for f in fields if f in valid_columns or f == 'about']
+        if not safe_fields:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Nenhum campo válido selecionado'}), 400
+
+        # Construir SELECT
+        select_parts = []
+        need_cbd_join = False
+        for f in safe_fields:
+            if f == 'about':
+                select_parts.append('cbd.about')
+                need_cbd_join = True
+            else:
+                select_parts.append(f'dg.{f}')
+
+        select_clause = ', '.join(select_parts)
+        query = f"SELECT {select_clause} FROM damodaran_global dg"
+
+        if need_cbd_join:
+            query += " LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker"
+
+        query += " WHERE 1=1"
+        params = []
+
+        # Aplicar filtros
+        if filters.get('countries'):
+            placeholders = ','.join(['?' for _ in filters['countries']])
+            query += f" AND dg.country IN ({placeholders})"
+            params.extend(filters['countries'])
+        elif filters.get('subregions'):
+            placeholders = ','.join(['?' for _ in filters['subregions']])
+            query += f" AND dg.sub_group IN ({placeholders})"
+            params.extend(filters['subregions'])
+        elif filters.get('regions'):
+            placeholders = ','.join(['?' for _ in filters['regions']])
+            query += f" AND dg.broad_group IN ({placeholders})"
+            params.extend(filters['regions'])
+
+        if filters.get('industries'):
+            placeholders = ','.join(['?' for _ in filters['industries']])
+            query += f" AND dg.industry IN ({placeholders})"
+            params.extend(filters['industries'])
+        elif filters.get('subsectors'):
+            placeholders = ','.join(['?' for _ in filters['subsectors']])
+            query += f" AND dg.industry_group IN ({placeholders})"
+            params.extend(filters['subsectors'])
+        elif filters.get('sectors'):
+            placeholders = ','.join(['?' for _ in filters['sectors']])
+            query += f" AND dg.primary_sector IN ({placeholders})"
+            params.extend(filters['sectors'])
+
+        if filters.get('atividades_anloc'):
+            placeholders = ','.join(['?' for _ in filters['atividades_anloc']])
+            query += f" AND dg.atividade_anloc IN ({placeholders})"
+            params.extend(filters['atividades_anloc'])
+
+        if filters.get('min_market_cap'):
+            query += " AND dg.market_cap >= ?"
+            params.append(float(filters['min_market_cap']))
+        if filters.get('max_market_cap'):
+            query += " AND dg.market_cap <= ?"
+            params.append(float(filters['max_market_cap']))
+
+        query += " ORDER BY dg.market_cap DESC"
+
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+
+        if df.empty:
+            return jsonify({'success': False, 'error': 'Nenhum dado encontrado com os filtros aplicados'}), 404
+
+        # Gerar labels para colunas (usar field_categories_manager)
+        col_labels = {}
+        all_cats = field_manager.get_all_categories()
+        for cat_data in all_cats.values():
+            for fname, fdata in cat_data.get('fields', {}).items():
+                col_labels[fname] = fdata.get('label', fname)
+        col_labels['about'] = 'Sobre a Empresa'
+
+        # Renomear colunas para labels
+        rename_map = {}
+        for col in df.columns:
+            rename_map[col] = col_labels.get(col, col)
+        df = df.rename(columns=rename_map)
+
+        # Gerar Excel em memória
+        from io import BytesIO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Dados Exportados')
+
+            # Ajustar largura das colunas
+            worksheet = writer.sheets['Dados Exportados']
+            for idx, col in enumerate(df.columns):
+                col_letter = worksheet.cell(row=1, column=idx+1).column_letter
+                max_length = max(
+                    df[col].astype(str).str.len().max() if len(df) > 0 else 0,
+                    len(str(col))
+                )
+                worksheet.column_dimensions[col_letter].width = min(max_length + 2, 50)
+
+        output.seek(0)
+
+        from flask import send_file
+        from datetime import datetime as dt
+        filename = f"exportacao_dados_{dt.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        logger.error(f"Erro na exportação Excel: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/export_preview', methods=['POST'])
+def api_export_preview():
+    """API para preview dos dados que serão exportados."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Dados não fornecidos'}), 400
+
+        fields = data.get('fields', [])
+        filters = data.get('filters', {})
+
+        if not fields:
+            return jsonify({'success': False, 'error': 'Nenhum campo selecionado'}), 400
+
+        # Sanitizar nomes de colunas
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(damodaran_global)")
+        valid_columns = {row[1] for row in cursor.fetchall()}
+        valid_columns.add('about')
+
+        safe_fields = [f for f in fields if f in valid_columns or f == 'about']
+        if not safe_fields:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Nenhum campo válido'}), 400
+
+        # Construir query
+        select_parts = []
+        need_cbd_join = False
+        for f in safe_fields:
+            if f == 'about':
+                select_parts.append('cbd.about')
+                need_cbd_join = True
+            else:
+                select_parts.append(f'dg.{f}')
+
+        select_clause = ', '.join(select_parts)
+        query = f"SELECT {select_clause} FROM damodaran_global dg"
+        if need_cbd_join:
+            query += " LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker"
+        query += " WHERE 1=1"
+        params = []
+
+        # Filtros
+        if filters.get('countries'):
+            placeholders = ','.join(['?' for _ in filters['countries']])
+            query += f" AND dg.country IN ({placeholders})"
+            params.extend(filters['countries'])
+        elif filters.get('subregions'):
+            placeholders = ','.join(['?' for _ in filters['subregions']])
+            query += f" AND dg.sub_group IN ({placeholders})"
+            params.extend(filters['subregions'])
+        elif filters.get('regions'):
+            placeholders = ','.join(['?' for _ in filters['regions']])
+            query += f" AND dg.broad_group IN ({placeholders})"
+            params.extend(filters['regions'])
+
+        if filters.get('industries'):
+            placeholders = ','.join(['?' for _ in filters['industries']])
+            query += f" AND dg.industry IN ({placeholders})"
+            params.extend(filters['industries'])
+        elif filters.get('subsectors'):
+            placeholders = ','.join(['?' for _ in filters['subsectors']])
+            query += f" AND dg.industry_group IN ({placeholders})"
+            params.extend(filters['subsectors'])
+        elif filters.get('sectors'):
+            placeholders = ','.join(['?' for _ in filters['sectors']])
+            query += f" AND dg.primary_sector IN ({placeholders})"
+            params.extend(filters['sectors'])
+
+        if filters.get('atividades_anloc'):
+            placeholders = ','.join(['?' for _ in filters['atividades_anloc']])
+            query += f" AND dg.atividade_anloc IN ({placeholders})"
+            params.extend(filters['atividades_anloc'])
+
+        if filters.get('min_market_cap'):
+            query += " AND dg.market_cap >= ?"
+            params.append(float(filters['min_market_cap']))
+        if filters.get('max_market_cap'):
+            query += " AND dg.market_cap <= ?"
+            params.append(float(filters['max_market_cap']))
+
+        # Contar total
+        count_query = query.replace(f"SELECT {select_clause}", "SELECT COUNT(*)")
+        cursor.execute(count_query, params)
+        total_count = cursor.fetchone()[0]
+
+        # Buscar preview (primeiras 20 linhas)
+        preview_query = query + " ORDER BY dg.market_cap DESC LIMIT 20"
+        df = pd.read_sql_query(preview_query, conn, params=params)
+        conn.close()
+
+        df = df.replace({np.nan: None})
+
+        # Labels
+        col_labels = {}
+        all_cats = field_manager.get_all_categories()
+        for cat_data in all_cats.values():
+            for fname, fdata in cat_data.get('fields', {}).items():
+                col_labels[fname] = fdata.get('label', fname)
+        col_labels['about'] = 'Sobre a Empresa'
+
+        columns = [{'field': f, 'label': col_labels.get(f, f)} for f in safe_fields]
+        rows = df.to_dict('records')
+
+        return jsonify({
+            'success': True,
+            'total_count': total_count,
+            'preview_count': len(rows),
+            'columns': columns,
+            'rows': rows
+        })
+
+    except Exception as e:
+        logger.error(f"Erro no preview de exportação: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 if __name__ == '__main__':

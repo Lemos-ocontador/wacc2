@@ -100,7 +100,10 @@ class FieldCategoriesManager:
                     "ticker": {"label": "Ticker", "type": "text"},
                     "exchange": {"label": "Bolsa", "type": "text"},
                     "country": {"label": "País", "type": "text"},
-                    "sic_code": {"label": "Código SIC", "type": "text"}
+                    "sic_code": {"label": "Código SIC", "type": "text"},
+                    "sic_desc": {"label": "Descrição SIC", "type": "text"},
+                    "sic_round": {"label": "SIC Arredondado", "type": "text"},
+                    "atividade_anloc": {"label": "Atividade Anloc", "type": "text"}
                 }
             },
             
@@ -247,7 +250,31 @@ class FieldCategoriesManager:
         csv_categories = self._load_categories_from_csv()
         if csv_categories:
             self.field_categories = csv_categories
+
+        # Garantir que campos SIC e atividade_anloc estejam em DADOS INSTITUCIONAIS
+        self._ensure_sic_fields()
     
+    def _ensure_sic_fields(self):
+        """Garante que sic_desc, sic_round e atividade_anloc estejam em DADOS INSTITUCIONAIS"""
+        cat_name = 'DADOS INSTITUCIONAIS'
+        if cat_name not in self.field_categories:
+            self.field_categories[cat_name] = {
+                'icon': '🏢',
+                'description': 'Dados básicos de identificação da empresa',
+                'fields': {}
+            }
+
+        extra_fields = {
+            'sic_code': {'label': 'Código SIC', 'type': 'text', 'decimals': 2},
+            'sic_desc': {'label': 'Descrição SIC', 'type': 'text', 'decimals': 2},
+            'sic_round': {'label': 'SIC Arredondado', 'type': 'text', 'decimals': 2},
+            'atividade_anloc': {'label': 'Atividade Anloc', 'type': 'text', 'decimals': 2},
+        }
+
+        for field_name, field_info in extra_fields.items():
+            if field_name not in self.field_categories[cat_name]['fields']:
+                self.field_categories[cat_name]['fields'][field_name] = field_info
+
     def get_all_categories(self) -> Dict[str, Any]:
         """Retorna todas as categorias com seus campos"""
         return self.field_categories
