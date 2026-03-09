@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anloc - Dashboard Dados Yahoo Finance</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f1923;
+            --bg2: #1a2733;
+            --bg3: #243447;
+            --accent: #3498db;
+            --accent2: #2ecc71;
+            --accent3: #e74c3c;
+            --accent4: #f39c12;
+            --accent5: #9b59b6;
+            --text: #ecf0f1;
+            --text2: #95a5a6;
+            --border: #2c3e50;
+            --positive: #2ecc71;
+            --negative: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); }
+
+        .container { max-width: 1600px; margin: 0 auto; padding: 15px; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a5276, #2980b9, #1a8a6e);
+            padding: 18px 25px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+        .header-actions { display: flex; gap: 8px; }
+        .btn-nav {
+            padding: 8px 16px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            background: rgba(255,255,255,0.15); color: white;
+            text-decoration: none; transition: background 0.2s;
+        }
+        .btn-nav:hover { background: rgba(255,255,255,0.25); }
+
+        /* KPI Row */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .kpi-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+        .kpi-card .value { font-size: 26px; font-weight: 700; color: var(--accent); }
+        .kpi-card .label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+        .kpi-card.green .value { color: var(--accent2); }
+        .kpi-card.orange .value { color: var(--accent4); }
+        .kpi-card.purple .value { color: var(--accent5); }
+
+        /* Coverage bar */
+        .coverage-bar {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 15px;
+        }
+        .coverage-items { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+        .coverage-item { flex: 1; min-width: 120px; }
+        .coverage-item .cov-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+        .coverage-item .cov-bar-bg {
+            height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden;
+        }
+        .coverage-item .cov-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+        .coverage-item .cov-pct { font-size: 12px; font-weight: 600; margin-top: 2px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 15px;
+            background: var(--bg2); border-radius: 10px; padding: 4px;
+            border: 1px solid var(--border);
+        }
+        .tab-btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            background: transparent; color: var(--text2); transition: all 0.2s;
+        }
+        .tab-btn:hover { color: var(--text); background: var(--bg3); }
+        .tab-btn.active { background: var(--accent); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Card */
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-header h3 { font-size: 15px; font-weight: 600; }
+        .card-body { padding: 15px 18px; }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
+        .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; }
+
+        /* Chart container */
+        .chart-container { position: relative; width: 100%; }
+        .chart-container.h300 { height: 300px; }
+        .chart-container.h350 { height: 350px; }
+        .chart-container.h400 { height: 400px; }
+
+        /* Tables */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th {
+            background: var(--bg3); color: var(--text2); padding: 8px 10px;
+            text-align: left; font-weight: 600; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            position: sticky; top: 0; z-index: 5; cursor: pointer; user-select: none;
+        }
+        .data-table th:hover { color: var(--accent); }
+        .data-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+        .data-table tr:hover td { background: rgba(52,152,219,0.08); }
+        .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .data-table .positive { color: var(--positive); }
+        .data-table .negative { color: var(--negative); }
+        .table-scroll { max-height: 500px; overflow-y: auto; }
+
+        /* Metric comparison cards */
+        .metric-compare {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px; margin-bottom: 15px;
+        }
+        .metric-box {
+            background: var(--bg3); border-radius: 8px; padding: 12px 15px;
+        }
+        .metric-box .m-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; }
+        .metric-box .m-value { font-size: 22px; font-weight: 700; }
+        .metric-box .m-detail { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+        /* Filter */
+        .filter-bar {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        }
+        .filter-bar select, .filter-bar input {
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+            padding: 8px 12px; border-radius: 6px; font-size: 13px;
+        }
+        .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: var(--accent); }
+        .filter-bar label { font-size: 12px; color: var(--text2); }
+
+        /* Search */
+        .search-input {
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+            padding: 8px 14px; border-radius: 6px; font-size: 13px; width: 250px;
+        }
+        .search-input:focus { outline: none; border-color: var(--accent); }
+        .search-input::placeholder { color: #555; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge-blue { background: rgba(52,152,219,0.2); color: var(--accent); }
+
+        /* Loading */
+        .loading-spinner {
+            display: flex; align-items: center; justify-content: center; padding: 40px;
+            color: var(--text2); gap: 10px;
+        }
+        .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Future-ready section */
+        .future-section {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            color: var(--text2);
+            margin-bottom: 15px;
+        }
+        .future-section h4 { color: var(--accent4); margin-bottom: 8px; }
+
+        /* Responsive */
+        @media (max-width: 1100px) { .grid-2, .grid-3, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; } }
+        @media (max-width: 700px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } .tabs { flex-wrap: wrap; } }
+
+        /* Drill-Down Modal */
+        .drill-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000; backdrop-filter: blur(2px);
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .drill-overlay.active { display: flex; align-items: center; justify-content: center; opacity: 1; }
+        .drill-overlay.opening { display: flex; }
+        .drill-modal {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+            width: 90%; max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: translateY(20px) scale(0.97); transition: transform 0.25s ease;
+        }
+        .drill-overlay.active .drill-modal { transform: translateY(0) scale(1); }
+        .drill-header {
+            padding: 16px 22px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
+        .drill-header h2 { font-size: 17px; font-weight: 700; }
+        .drill-header .drill-subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+        .drill-breadcrumb {
+            display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); margin-top: 4px;
+        }
+        .drill-breadcrumb a { color: var(--accent); cursor: pointer; text-decoration: none; }
+        .drill-breadcrumb a:hover { text-decoration: underline; }
+        .drill-breadcrumb .sep { color: var(--text2); opacity: 0.5; }
+        .drill-close {
+            background: none; border: none; color: var(--text2); font-size: 22px;
+            cursor: pointer; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;
+        }
+        .drill-close:hover { background: var(--bg3); color: var(--accent3); }
+        .drill-export {
+            background: var(--accent2, #2ecc71); color: #fff; border: none; border-radius: 6px;
+            padding: 6px 12px; font-size: 12px; cursor: pointer; transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .drill-export:hover { opacity: 0.85; }
+        .drill-body {
+            padding: 18px 22px; overflow-y: auto; flex: 1;
+        }
+        .drill-search {
+            width: 100%; background: var(--bg3); border: 1px solid var(--border);
+            color: var(--text); padding: 10px 14px; border-radius: 8px;
+            font-size: 13px; margin-bottom: 14px;
+        }
+        .drill-search:focus { outline: none; border-color: var(--accent); }
+        .drill-search::placeholder { color: #555; }
+        .drill-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .drill-table th {
+            background: var(--bg3); color: var(--text2); padding: 8px 10px;
+            text-align: left; font-size: 11px; text-transform: uppercase;
+            letter-spacing: 0.5px; position: sticky; top: 0; z-index: 2;
+            cursor: pointer; user-select: none;
+        }
+        .drill-table th:hover { color: var(--accent); }
+        .drill-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+        .drill-table tr:hover td { background: rgba(52,152,219,0.08); }
+        .drill-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .drill-table .positive { color: var(--positive); }
+        .drill-table .negative { color: var(--negative); }
+        .drill-table tr.clickable-row { cursor: pointer; }
+        .drill-table tr.clickable-row:hover td { background: rgba(52,152,219,0.15); }
+        .drill-pagination {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; padding: 14px 0 4px; flex-shrink: 0;
+        }
+        .drill-pagination button {
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;
+        }
+        .drill-pagination button:hover { border-color: var(--accent); }
+        .drill-pagination button:disabled { opacity: 0.4; cursor: default; }
+        .drill-pagination .page-info { font-size: 12px; color: var(--text2); }
+
+        /* Drill-Down Stats row */
+        .drill-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px; margin-bottom: 16px;
+        }
+        .drill-stat {
+            background: var(--bg3); border-radius: 8px; padding: 10px 12px; text-align: center;
+        }
+        .drill-stat .ds-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+        .drill-stat .ds-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; text-transform: uppercase; }
+
+        /* Histogram in drill-down */
+        .drill-chart-container { position: relative; width: 100%; height: 250px; margin-bottom: 16px; }
+
+        /* KPI / Coverage clickable */
+        .kpi-card.clickable { cursor: pointer; transition: all 0.2s; }
+        .kpi-card.clickable:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(52,152,219,0.2); }
+        .coverage-item.clickable { cursor: pointer; }
+        .coverage-item.clickable:hover .cov-label { color: var(--accent); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>Dashboard Dados Yahoo Finance</h1>
+            <div class="subtitle">Análise agregada por Setor, Indústria, Atividade Anloc e Localização | ~43.000 empresas globais</div>
+        </div>
+        <div class="header-actions">
+            <a href="/data-yahoo-historico" class="btn-nav">📊 Históricos</a>
+            <a href="/" class="btn-nav">Início</a>
+            <a href="/company-analysis" class="btn-nav">Empresas</a>
+            <a href="/exporta-data" class="btn-nav">Exportar</a>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-row" id="kpi-row">
+        <div class="kpi-card clickable" onclick="drillCompanies({})"><div class="value" id="kpi-total">—</div><div class="label">Empresas</div></div>
+        <div class="kpi-card green clickable" onclick="drillSectorsList()"><div class="value" id="kpi-sectors">—</div><div class="label">Setores Yahoo</div></div>
+        <div class="kpi-card orange clickable" onclick="drillIndustriesList()"><div class="value" id="kpi-industries">—</div><div class="label">Indústrias</div></div>
+        <div class="kpi-card purple clickable" onclick="drillCountriesList()"><div class="value" id="kpi-countries">—</div><div class="label">Países</div></div>
+        <div class="kpi-card clickable" onclick="drillCurrencies()"><div class="value" id="kpi-currencies">—</div><div class="label">Moedas</div></div>
+        <div class="kpi-card green clickable" onclick="drillAtividadesList()"><div class="value" id="kpi-atividades">—</div><div class="label">Atividades Anloc</div></div>
+    </div>
+
+    <!-- Coverage Bars -->
+    <div class="coverage-bar" id="coverage-bar">
+        <div class="coverage-items" id="coverage-items"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('sectors')">Setores</button>
+        <button class="tab-btn" onclick="switchTab('industries')">Indústrias</button>
+        <button class="tab-btn" onclick="switchTab('countries')">Países</button>
+        <button class="tab-btn" onclick="switchTab('atividades')">Atividades Anloc</button>
+        <button class="tab-btn" onclick="switchTab('cross')">Análise Cruzada</button>
+        <button class="tab-btn" onclick="switchTab('multiples')">Múltiplos</button>
+    </div>
+
+    <!-- ============ TAB: SETORES ============ -->
+    <div class="tab-content active" id="tab-sectors">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><h3>Empresas por Setor</h3></div>
+                <div class="card-body"><div class="chart-container h350"><canvas id="chart-sector-count"></canvas></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Múltiplos Médios por Setor</h3></div>
+                <div class="card-body"><div class="chart-container h350"><canvas id="chart-sector-multiples"></canvas></div></div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><h3>Margens por Setor</h3></div>
+                <div class="card-body"><div class="chart-container h300"><canvas id="chart-sector-margins"></canvas></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Risco e Retorno por Setor</h3></div>
+                <div class="card-body"><div class="chart-container h300"><canvas id="chart-sector-risk"></canvas></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3>Tabela Detalhada por Setor</h3></div>
+            <div class="card-body">
+                <div class="table-scroll" id="sector-table-container">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TAB: INDÚSTRIAS ============ -->
+    <div class="tab-content" id="tab-industries">
+        <div class="card">
+            <div class="card-header">
+                <h3>Análise por Indústria</h3>
+                <div class="filter-bar">
+                    <label>Setor:</label>
+                    <select id="industry-sector-filter" onchange="loadIndustries()">
+                        <option value="">Todos os setores</option>
+                    </select>
+                    <input type="text" class="search-input" id="industry-search" placeholder="Buscar indústria..." oninput="filterIndustryTable()">
+                </div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><h3>Top 20 Indústrias por Quantidade</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-industry-count"></canvas></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Múltiplos por Indústria (Top 20)</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-industry-multiples"></canvas></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3>Todas as Indústrias</h3><span class="badge badge-blue" id="industry-count-badge">0</span></div>
+            <div class="card-body">
+                <div class="table-scroll" id="industry-table-container">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TAB: PAÍSES ============ -->
+    <div class="tab-content" id="tab-countries">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><h3>Top 20 Países por Quantidade de Empresas</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-country-count"></canvas></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Múltiplos por País (Top 15)</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-country-multiples"></canvas></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3>Tabela por País</h3>
+                <input type="text" class="search-input" id="country-search" placeholder="Buscar país..." oninput="filterCountryTable()">
+            </div>
+            <div class="card-body">
+                <div class="table-scroll" id="country-table-container">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TAB: ATIVIDADES ANLOC ============ -->
+    <div class="tab-content" id="tab-atividades">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><h3>Top 20 Atividades por Quantidade</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-atividade-count"></canvas></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Múltiplos por Atividade (Top 15)</h3></div>
+                <div class="card-body"><div class="chart-container h400"><canvas id="chart-atividade-multiples"></canvas></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3>Tabela de Atividades Anloc</h3>
+                <input type="text" class="search-input" id="atividade-search" placeholder="Buscar atividade..." oninput="filterAtividadeTable()">
+            </div>
+            <div class="card-body">
+                <div class="table-scroll" id="atividade-table-container">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TAB: ANÁLISE CRUZADA ============ -->
+    <div class="tab-content" id="tab-cross">
+        <div class="card">
+            <div class="card-header">
+                <h3>Análise Cruzada: Setor × País</h3>
+                <div class="filter-bar">
+                    <label>Setor:</label>
+                    <select id="cross-sector-filter" onchange="loadCross()"><option value="">Todos</option></select>
+                    <label>País:</label>
+                    <select id="cross-country-filter" onchange="loadCross()"><option value="">Todos</option></select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-scroll" id="cross-table-container">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3>Mapa de Calor: EV/EBITDA (Setor × País)</h3></div>
+            <div class="card-body"><div class="chart-container h400"><canvas id="chart-cross-heatmap"></canvas></div></div>
+        </div>
+    </div>
+
+    <!-- ============ TAB: MÚLTIPLOS (FUTURO) ============ -->
+    <div class="tab-content" id="tab-multiples">
+        <div class="future-section">
+            <h4>Evolução Temporal de Múltiplos e Margens</h4>
+            <p style="margin-bottom:12px;">Esta seção será expandida com dados históricos de múltiplos por data-base.<br>
+            Planejamento: 5 períodos de EV/EBITDA, P/E, EV/Revenue, Margens Operacional/Líquida/Bruta.</p>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:15px;">
+                <div class="metric-box" style="text-align:center;min-width:160px;">
+                    <div class="m-label">Períodos Planejados</div>
+                    <div class="m-value" style="color:var(--accent4);">5</div>
+                    <div class="m-detail">Datas-base trimestrais/anuais</div>
+                </div>
+                <div class="metric-box" style="text-align:center;min-width:160px;">
+                    <div class="m-label">Múltiplos</div>
+                    <div class="m-value" style="color:var(--accent);">6</div>
+                    <div class="m-detail">P/E, EV/EBITDA, EV/Revenue, P/B, EV/EBIT, Div Yield</div>
+                </div>
+                <div class="metric-box" style="text-align:center;min-width:160px;">
+                    <div class="m-label">Margens</div>
+                    <div class="m-value" style="color:var(--accent2);">3</div>
+                    <div class="m-detail">Bruta, Operacional, Líquida</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview with current data / single period -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Múltiplos Atuais por Setor (período único — dados correntes)</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid-3">
+                    <div class="chart-container h300"><canvas id="chart-multiples-pe"></canvas></div>
+                    <div class="chart-container h300"><canvas id="chart-multiples-ev-ebitda"></canvas></div>
+                    <div class="chart-container h300"><canvas id="chart-multiples-pb"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3>Margens Atuais por Setor</h3></div>
+            <div class="card-body">
+                <div class="chart-container h350"><canvas id="chart-multiples-margins"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drill-Down Modal -->
+<div class="drill-overlay" id="drill-overlay" onclick="if(event.target===this)closeDrillDown()">
+    <div class="drill-modal">
+        <div class="drill-header">
+            <div>
+                <h2 id="drill-title">Drill-Down</h2>
+                <div class="drill-subtitle" id="drill-subtitle"></div>
+                <div class="drill-breadcrumb" id="drill-breadcrumb"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button class="drill-export" onclick="exportDrillCSV()" title="Exportar dados em CSV">📥 CSV</button>
+                <button class="drill-close" onclick="closeDrillDown()">&times;</button>
+            </div>
+        </div>
+        <div class="drill-body" id="drill-body">
+            <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+        </div>
+        <div class="drill-pagination" id="drill-pagination" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+// ===== GLOBALS =====
+let sectorData = [];
+let industryData = [];
+let countryData = [];
+let atividadeData = [];
+let charts = {};
+
+const COLORS = [
+    '#3498db','#2ecc71','#e74c3c','#f39c12','#9b59b6',
+    '#1abc9c','#e67e22','#3498db','#e91e63','#00bcd4',
+    '#ff9800','#8bc34a','#ff5722','#607d8b','#795548',
+    '#4caf50','#2196f3','#ff4081','#7c4dff','#00e676'
+];
+const ALPHA_COLORS = COLORS.map(c => c + '99');
+
+// ===== UTILITIES =====
+function fmt(v, dec=1) {
+    if (v == null || v === '' || !isFinite(v)) return '—';
+    return Number(v).toFixed(dec);
+}
+function fmtPct(v) {
+    if (v == null || v === '' || !isFinite(v)) return '—';
+    return (Number(v) * 100).toFixed(1) + '%';
+}
+function fmtInt(v) {
+    if (v == null) return '—';
+    return Number(v).toLocaleString('pt-BR');
+}
+function colorClass(v, invert=false) {
+    if (v == null || !isFinite(v)) return '';
+    return (invert ? v < 0 : v > 0) ? 'positive' : (v < 0 ? 'negative' : '');
+}
+function truncate(s, max=40) {
+    if (!s) return '—';
+    return s.length > max ? s.substring(0, max-1) + '…' : s;
+}
+
+function destroyChart(id) {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function createChart(canvasId, config) {
+    destroyChart(canvasId);
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return null;
+    config.options = config.options || {};
+    config.options.maintainAspectRatio = false;
+    config.options.responsive = true;
+    config.options.plugins = config.options.plugins || {};
+    config.options.plugins.legend = config.options.plugins.legend || { labels: { color: '#95a5a6', font: { size: 11 } } };
+    if (!config.options.scales) config.options.scales = {};
+    ['x','y'].forEach(axis => {
+        if (config.options.scales[axis]) {
+            config.options.scales[axis].ticks = config.options.scales[axis].ticks || {};
+            config.options.scales[axis].ticks.color = '#666';
+            config.options.scales[axis].grid = { color: 'rgba(255,255,255,0.05)' };
+        }
+    });
+    charts[canvasId] = new Chart(ctx, config);
+    return charts[canvasId];
+}
+
+// ===== TABS =====
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
+    event.target.classList.add('active');
+
+    // Lazy-load
+    if (tabName === 'industries' && industryData.length === 0) loadIndustries();
+    if (tabName === 'countries' && countryData.length === 0) loadCountries();
+    if (tabName === 'atividades' && atividadeData.length === 0) loadAtividades();
+    if (tabName === 'cross') loadCross();
+    if (tabName === 'multiples') renderMultiplesTab();
+}
+
+// ===== LOAD SUMMARY =====
+async function loadSummary() {
+    try {
+        const res = await fetch('/api/yahoo_dashboard_summary');
+        const data = await res.json();
+        if (!data.success) return;
+        const s = data.stats;
+        document.getElementById('kpi-total').textContent = fmtInt(s.total_companies);
+        document.getElementById('kpi-sectors').textContent = s.distinct_sectors;
+        document.getElementById('kpi-industries').textContent = s.distinct_industries;
+        document.getElementById('kpi-countries').textContent = s.distinct_countries;
+        document.getElementById('kpi-currencies').textContent = s.distinct_currencies;
+        document.getElementById('kpi-atividades').textContent = s.distinct_atividades;
+
+        // Coverage bars
+        const coverages = [
+            { label: 'About', value: s.with_about, color: '#3498db', field: 'about' },
+            { label: 'Setor', value: s.with_sector, color: '#2ecc71', field: 'yahoo_sector' },
+            { label: 'Indústria', value: s.with_industry, color: '#27ae60', field: 'yahoo_industry' },
+            { label: 'País', value: s.with_country, color: '#f39c12', field: 'yahoo_country' },
+            { label: 'Enterprise Value', value: s.with_ev, color: '#e74c3c', field: 'enterprise_value' },
+            { label: 'Market Cap', value: s.with_mcap, color: '#9b59b6', field: 'market_cap' },
+            { label: 'Website', value: s.with_website, color: '#1abc9c', field: 'yahoo_website' },
+        ];
+        const container = document.getElementById('coverage-items');
+        container.innerHTML = coverages.map(c => {
+            const pct = ((c.value / s.total_companies) * 100).toFixed(0);
+            return `<div class="coverage-item clickable" onclick="drillCoverage('${c.field}')">
+                <div class="cov-label">${c.label}</div>
+                <div class="cov-bar-bg"><div class="cov-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
+                <div class="cov-pct" style="color:${c.color}">${pct}% (${fmtInt(c.value)})</div>
+            </div>`;
+        }).join('');
+    } catch (e) { console.error('Summary error:', e); }
+}
+
+// ===== LOAD SECTORS =====
+async function loadSectors() {
+    try {
+        const res = await fetch('/api/yahoo_dashboard_sectors');
+        const data = await res.json();
+        if (!data.success) return;
+        sectorData = data.sectors;
+        renderSectorCharts();
+        renderSectorTable();
+        populateSectorFilters();
+    } catch (e) { console.error('Sectors error:', e); }
+}
+
+function renderSectorCharts() {
+    const labels = sectorData.map(s => s.sector);
+    const counts = sectorData.map(s => s.count);
+
+    // Count bar chart
+    createChart('chart-sector-count', {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ label: 'Empresas', data: counts, backgroundColor: ALPHA_COLORS, borderColor: COLORS, borderWidth: 1 }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 11 } } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Multiples grouped bar
+    createChart('chart-sector-multiples', {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'P/E', data: sectorData.map(s => s.avg_pe), backgroundColor: COLORS[0] + '88' },
+                { label: 'EV/EBITDA', data: sectorData.map(s => s.avg_ev_ebitda), backgroundColor: COLORS[1] + '88' },
+                { label: 'EV/Revenue', data: sectorData.map(s => s.avg_ev_revenue), backgroundColor: COLORS[3] + '88' },
+                { label: 'P/B', data: sectorData.map(s => s.avg_pb), backgroundColor: COLORS[4] + '88' },
+            ]
+        },
+        options: {
+            scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } },
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+
+    // Margins radar
+    createChart('chart-sector-margins', {
+        type: 'radar',
+        data: {
+            labels: ['Margem Bruta', 'Margem Operacional', 'Margem Líquida'],
+            datasets: sectorData.slice(0, 6).map((s, i) => ({
+                label: s.sector,
+                data: [(s.avg_gross_margin||0)*100, (s.avg_op_margin||0)*100, (s.avg_net_margin||0)*100],
+                borderColor: COLORS[i],
+                backgroundColor: COLORS[i] + '22',
+                pointRadius: 3,
+            }))
+        },
+        options: {
+            scales: {
+                r: {
+                    ticks: { color: '#666', backdropColor: 'transparent' },
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    pointLabels: { color: '#95a5a6', font: { size: 11 } }
+                }
+            },
+            plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } }
+        }
+    });
+
+    // Risk/return scatter
+    createChart('chart-sector-risk', {
+        type: 'bubble',
+        data: {
+            datasets: sectorData.map((s, i) => ({
+                label: s.sector,
+                data: [{ x: s.avg_beta || 0, y: (s.avg_roe || 0) * 100, r: Math.min(Math.sqrt(s.count) * 1.5, 25) }],
+                backgroundColor: COLORS[i] + 'aa',
+            }))
+        },
+        options: {
+            scales: {
+                x: { title: { display: true, text: 'Beta Médio', color: '#95a5a6' } },
+                y: { title: { display: true, text: 'ROE Médio (%)', color: '#95a5a6' } }
+            },
+            plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } }
+        }
+    });
+
+    // Add click handlers to sector charts
+    addBarClickHandler('chart-sector-count', (idx) => ({
+        type: 'companies', params: { sector: sectorData[idx]?.sector }
+    }));
+    addBarClickHandler('chart-sector-multiples', (idx, dsIdx) => {
+        const metrics = ['pe_ratio', 'ev_ebitda', 'ev_revenue', 'pb_ratio'];
+        const labels = ['P/E', 'EV/EBITDA', 'EV/Revenue', 'P/B'];
+        return { type: 'distribution', metric: metrics[dsIdx], params: { sector: sectorData[idx]?.sector },
+            label: `${labels[dsIdx]} — ${sectorData[idx]?.sector}` };
+    });
+    // Bubble chart - click to list sector companies
+    const riskChart = charts['chart-sector-risk'];
+    if (riskChart) {
+        riskChart.canvas.style.cursor = 'pointer';
+        riskChart.canvas.onclick = function(evt) {
+            const points = riskChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length > 0) {
+                const dsIdx = points[0].datasetIndex;
+                drillCompanies({ sector: sectorData[dsIdx]?.sector });
+            }
+        };
+    }
+}
+
+function renderSectorTable() {
+    const html = `<table class="data-table" id="sector-table">
+        <thead><tr>
+            <th onclick="sortSectorTable('sector')">Setor</th>
+            <th class="num" onclick="sortSectorTable('count')">Empresas</th>
+            <th class="num" onclick="sortSectorTable('avg_pe')">P/E</th>
+            <th class="num" onclick="sortSectorTable('avg_ev_ebitda')">EV/EBITDA</th>
+            <th class="num" onclick="sortSectorTable('avg_ev_revenue')">EV/Revenue</th>
+            <th class="num" onclick="sortSectorTable('avg_pb')">P/B</th>
+            <th class="num" onclick="sortSectorTable('avg_roe')">ROE</th>
+            <th class="num" onclick="sortSectorTable('avg_op_margin')">Marg.Oper.</th>
+            <th class="num" onclick="sortSectorTable('avg_net_margin')">Marg.Líq.</th>
+            <th class="num" onclick="sortSectorTable('avg_gross_margin')">Marg.Bruta</th>
+            <th class="num" onclick="sortSectorTable('avg_rev_growth')">Cresc.Rec.</th>
+            <th class="num" onclick="sortSectorTable('avg_beta')">Beta</th>
+            <th class="num" onclick="sortSectorTable('avg_div_yield')">Div.Yield</th>
+            <th class="num" onclick="sortSectorTable('avg_debt_equity')">D/E</th>
+        </tr></thead>
+        <tbody>${sectorData.map(s => `<tr class="clickable-row" onclick="drillCompanies({sector:'${(s.sector||'').replace(/'/g,"\\'")}'})" title="Clique para ver empresas deste setor">
+            <td><strong>${s.sector}</strong></td>
+            <td class="num">${fmtInt(s.count)}</td>
+            <td class="num">${fmt(s.avg_pe)}</td>
+            <td class="num">${fmt(s.avg_ev_ebitda)}</td>
+            <td class="num">${fmt(s.avg_ev_revenue)}</td>
+            <td class="num">${fmt(s.avg_pb)}</td>
+            <td class="num ${colorClass(s.avg_roe)}">${fmtPct(s.avg_roe)}</td>
+            <td class="num ${colorClass(s.avg_op_margin)}">${fmtPct(s.avg_op_margin)}</td>
+            <td class="num ${colorClass(s.avg_net_margin)}">${fmtPct(s.avg_net_margin)}</td>
+            <td class="num ${colorClass(s.avg_gross_margin)}">${fmtPct(s.avg_gross_margin)}</td>
+            <td class="num ${colorClass(s.avg_rev_growth)}">${fmtPct(s.avg_rev_growth)}</td>
+            <td class="num">${fmt(s.avg_beta, 2)}</td>
+            <td class="num">${fmtPct(s.avg_div_yield)}</td>
+            <td class="num">${fmt(s.avg_debt_equity, 2)}</td>
+        </tr>`).join('')}</tbody></table>`;
+    document.getElementById('sector-table-container').innerHTML = html;
+}
+
+let sectorSortCol = null, sectorSortDir = 1;
+function sortSectorTable(col) {
+    if (sectorSortCol === col) sectorSortDir *= -1; else { sectorSortCol = col; sectorSortDir = 1; }
+    sectorData.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (va == null) return 1; if (vb == null) return -1;
+        return (va < vb ? -1 : va > vb ? 1 : 0) * sectorSortDir;
+    });
+    renderSectorTable();
+}
+
+function populateSectorFilters() {
+    const sectors = sectorData.map(s => s.sector).sort();
+    ['industry-sector-filter', 'cross-sector-filter'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const current = sel.value;
+        sel.innerHTML = '<option value="">Todos os setores</option>' +
+            sectors.map(s => `<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
+    });
+}
+
+// ===== LOAD INDUSTRIES =====
+async function loadIndustries() {
+    const sector = document.getElementById('industry-sector-filter').value;
+    const container = document.getElementById('industry-table-container');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Carregando...</div>';
+
+    try {
+        const params = sector ? `?sector=${encodeURIComponent(sector)}` : '';
+        const res = await fetch('/api/yahoo_dashboard_industries' + params);
+        const data = await res.json();
+        if (!data.success) return;
+        industryData = data.industries;
+        document.getElementById('industry-count-badge').textContent = industryData.length + ' indústrias';
+        renderIndustryCharts();
+        renderIndustryTable();
+    } catch (e) { console.error('Industries error:', e); }
+}
+
+function renderIndustryCharts() {
+    const top20 = industryData.slice(0, 20);
+    createChart('chart-industry-count', {
+        type: 'bar',
+        data: {
+            labels: top20.map(i => truncate(i.industry, 28)),
+            datasets: [{ label: 'Empresas', data: top20.map(i => i.count), backgroundColor: ALPHA_COLORS }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 10 } } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const top15 = industryData.slice(0, 15);
+    createChart('chart-industry-multiples', {
+        type: 'bar',
+        data: {
+            labels: top15.map(i => truncate(i.industry, 20)),
+            datasets: [
+                { label: 'EV/EBITDA', data: top15.map(i => i.avg_ev_ebitda), backgroundColor: COLORS[1] + '88' },
+                { label: 'P/E', data: top15.map(i => i.avg_pe), backgroundColor: COLORS[0] + '88' },
+            ]
+        },
+        options: {
+            scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } },
+        }
+    });
+
+    // Add click handlers to industry charts
+    addBarClickHandler('chart-industry-count', (idx) => {
+        const top20 = industryData.slice(0, 20);
+        return { type: 'companies', params: { industry: top20[idx]?.industry } };
+    });
+    addBarClickHandler('chart-industry-multiples', (idx, dsIdx) => {
+        const top15 = industryData.slice(0, 15);
+        const metrics = ['ev_ebitda', 'pe_ratio'];
+        const labels = ['EV/EBITDA', 'P/E'];
+        return { type: 'distribution', metric: metrics[dsIdx], params: { industry: top15[idx]?.industry },
+            label: `${labels[dsIdx]} — ${top15[idx]?.industry}` };
+    });
+}
+
+function renderIndustryTable(filtered) {
+    const rows = filtered || industryData;
+    const html = `<table class="data-table" id="industry-table">
+        <thead><tr>
+            <th onclick="sortIndustryTable('industry')">Indústria</th>
+            <th onclick="sortIndustryTable('sector')">Setor</th>
+            <th class="num" onclick="sortIndustryTable('count')">Qtd</th>
+            <th class="num" onclick="sortIndustryTable('avg_pe')">P/E</th>
+            <th class="num" onclick="sortIndustryTable('avg_ev_ebitda')">EV/EBITDA</th>
+            <th class="num" onclick="sortIndustryTable('avg_ev_revenue')">EV/Rev</th>
+            <th class="num" onclick="sortIndustryTable('avg_pb')">P/B</th>
+            <th class="num" onclick="sortIndustryTable('avg_roe')">ROE</th>
+            <th class="num" onclick="sortIndustryTable('avg_op_margin')">Marg.Op.</th>
+            <th class="num" onclick="sortIndustryTable('avg_net_margin')">Marg.Líq.</th>
+            <th class="num" onclick="sortIndustryTable('avg_gross_margin')">Marg.Bruta</th>
+            <th class="num" onclick="sortIndustryTable('avg_beta')">Beta</th>
+        </tr></thead>
+        <tbody>${rows.map(s => `<tr class="clickable-row" onclick="drillCompanies({industry:'${(s.industry||'').replace(/'/g,"\\'")}'})" title="Clique para ver empresas desta indústria">
+            <td>${truncate(s.industry, 45)}</td>
+            <td><span class="badge badge-blue">${s.sector||'—'}</span></td>
+            <td class="num">${fmtInt(s.count)}</td>
+            <td class="num">${fmt(s.avg_pe)}</td>
+            <td class="num">${fmt(s.avg_ev_ebitda)}</td>
+            <td class="num">${fmt(s.avg_ev_revenue)}</td>
+            <td class="num">${fmt(s.avg_pb)}</td>
+            <td class="num ${colorClass(s.avg_roe)}">${fmtPct(s.avg_roe)}</td>
+            <td class="num ${colorClass(s.avg_op_margin)}">${fmtPct(s.avg_op_margin)}</td>
+            <td class="num ${colorClass(s.avg_net_margin)}">${fmtPct(s.avg_net_margin)}</td>
+            <td class="num ${colorClass(s.avg_gross_margin)}">${fmtPct(s.avg_gross_margin)}</td>
+            <td class="num">${fmt(s.avg_beta, 2)}</td>
+        </tr>`).join('')}</tbody></table>`;
+    document.getElementById('industry-table-container').innerHTML = html;
+}
+
+let industrySortCol = null, industrySortDir = 1;
+function sortIndustryTable(col) {
+    if (industrySortCol === col) industrySortDir *= -1; else { industrySortCol = col; industrySortDir = 1; }
+    industryData.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (va == null) return 1; if (vb == null) return -1;
+        return (va < vb ? -1 : va > vb ? 1 : 0) * industrySortDir;
+    });
+    renderIndustryTable();
+}
+
+function filterIndustryTable() {
+    const term = document.getElementById('industry-search').value.toLowerCase();
+    if (!term) { renderIndustryTable(); return; }
+    renderIndustryTable(industryData.filter(i => (i.industry||'').toLowerCase().includes(term)));
+}
+
+// ===== LOAD COUNTRIES =====
+async function loadCountries() {
+    try {
+        const res = await fetch('/api/yahoo_dashboard_countries');
+        const data = await res.json();
+        if (!data.success) return;
+        countryData = data.countries;
+        renderCountryCharts();
+        renderCountryTable();
+        populateCountryFilter();
+    } catch (e) { console.error('Countries error:', e); }
+}
+
+function renderCountryCharts() {
+    const top20 = countryData.slice(0, 20);
+    createChart('chart-country-count', {
+        type: 'bar',
+        data: {
+            labels: top20.map(c => c.country),
+            datasets: [{ label: 'Empresas', data: top20.map(c => c.count), backgroundColor: ALPHA_COLORS }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 11 } } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const top15 = countryData.slice(0, 15);
+    createChart('chart-country-multiples', {
+        type: 'bar',
+        data: {
+            labels: top15.map(c => c.country),
+            datasets: [
+                { label: 'P/E', data: top15.map(c => c.avg_pe), backgroundColor: COLORS[0] + '88' },
+                { label: 'EV/EBITDA', data: top15.map(c => c.avg_ev_ebitda), backgroundColor: COLORS[1] + '88' },
+            ]
+        },
+        options: {
+            scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { beginAtZero: true } },
+        }
+    });
+
+    // Add click handlers to country charts
+    addBarClickHandler('chart-country-count', (idx) => {
+        const top20 = countryData.slice(0, 20);
+        return { type: 'companies', params: { country: top20[idx]?.country } };
+    });
+    addBarClickHandler('chart-country-multiples', (idx, dsIdx) => {
+        const top15 = countryData.slice(0, 15);
+        const metrics = ['pe_ratio', 'ev_ebitda'];
+        const labels = ['P/E', 'EV/EBITDA'];
+        return { type: 'distribution', metric: metrics[dsIdx], params: { country: top15[idx]?.country },
+            label: `${labels[dsIdx]} — ${top15[idx]?.country}` };
+    });
+}
+
+function renderCountryTable(filtered) {
+    const rows = filtered || countryData;
+    const html = `<table class="data-table" id="country-table">
+        <thead><tr>
+            <th onclick="sortCountryTable('country')">País</th>
+            <th class="num" onclick="sortCountryTable('count')">Empresas</th>
+            <th class="num" onclick="sortCountryTable('sectors_count')">Setores</th>
+            <th class="num" onclick="sortCountryTable('industries_count')">Indústrias</th>
+            <th class="num" onclick="sortCountryTable('avg_pe')">P/E</th>
+            <th class="num" onclick="sortCountryTable('avg_ev_ebitda')">EV/EBITDA</th>
+            <th class="num" onclick="sortCountryTable('avg_roe')">ROE</th>
+            <th class="num" onclick="sortCountryTable('avg_op_margin')">Marg.Op.</th>
+            <th class="num" onclick="sortCountryTable('avg_beta')">Beta</th>
+            <th class="num" onclick="sortCountryTable('avg_rev_growth')">Cresc.Rec.</th>
+        </tr></thead>
+        <tbody>${rows.map(s => `<tr class="clickable-row" onclick="drillCompanies({country:'${(s.country||'').replace(/'/g,"\\'")}'})" title="Clique para ver empresas deste país">
+            <td><strong>${s.country}</strong></td>
+            <td class="num">${fmtInt(s.count)}</td>
+            <td class="num">${s.sectors_count||'—'}</td>
+            <td class="num">${s.industries_count||'—'}</td>
+            <td class="num">${fmt(s.avg_pe)}</td>
+            <td class="num">${fmt(s.avg_ev_ebitda)}</td>
+            <td class="num ${colorClass(s.avg_roe)}">${fmtPct(s.avg_roe)}</td>
+            <td class="num ${colorClass(s.avg_op_margin)}">${fmtPct(s.avg_op_margin)}</td>
+            <td class="num">${fmt(s.avg_beta, 2)}</td>
+            <td class="num ${colorClass(s.avg_rev_growth)}">${fmtPct(s.avg_rev_growth)}</td>
+        </tr>`).join('')}</tbody></table>`;
+    document.getElementById('country-table-container').innerHTML = html;
+}
+
+let countrySortCol = null, countrySortDir = 1;
+function sortCountryTable(col) {
+    if (countrySortCol === col) countrySortDir *= -1; else { countrySortCol = col; countrySortDir = 1; }
+    countryData.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (va == null) return 1; if (vb == null) return -1;
+        return (va < vb ? -1 : va > vb ? 1 : 0) * countrySortDir;
+    });
+    renderCountryTable();
+}
+
+function filterCountryTable() {
+    const term = document.getElementById('country-search').value.toLowerCase();
+    if (!term) { renderCountryTable(); return; }
+    renderCountryTable(countryData.filter(c => (c.country||'').toLowerCase().includes(term)));
+}
+
+function populateCountryFilter() {
+    const sel = document.getElementById('cross-country-filter');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Todos os países</option>' +
+        countryData.map(c => `<option value="${c.country}">${c.country} (${c.count})</option>`).join('');
+}
+
+// ===== LOAD ATIVIDADES =====
+async function loadAtividades() {
+    try {
+        const res = await fetch('/api/yahoo_dashboard_atividades');
+        const data = await res.json();
+        if (!data.success) return;
+        atividadeData = data.atividades;
+        renderAtividadeCharts();
+        renderAtividadeTable();
+    } catch (e) { console.error('Atividades error:', e); }
+}
+
+function renderAtividadeCharts() {
+    const top20 = atividadeData.slice(0, 20);
+    createChart('chart-atividade-count', {
+        type: 'bar',
+        data: {
+            labels: top20.map(a => truncate(a.atividade, 35)),
+            datasets: [{ label: 'Empresas', data: top20.map(a => a.count), backgroundColor: ALPHA_COLORS }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 9 } } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const top15 = atividadeData.slice(0, 15);
+    createChart('chart-atividade-multiples', {
+        type: 'bar',
+        data: {
+            labels: top15.map(a => truncate(a.atividade, 22)),
+            datasets: [
+                { label: 'EV/EBITDA', data: top15.map(a => a.avg_ev_ebitda), backgroundColor: COLORS[1] + '88' },
+                { label: 'P/E', data: top15.map(a => a.avg_pe), backgroundColor: COLORS[0] + '88' },
+                { label: 'P/B', data: top15.map(a => a.avg_pb), backgroundColor: COLORS[4] + '88' },
+            ]
+        },
+        options: {
+            scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } },
+        }
+    });
+
+    // Add click handlers to atividade charts
+    addBarClickHandler('chart-atividade-count', (idx) => {
+        const top20 = atividadeData.slice(0, 20);
+        return { type: 'companies', params: { atividade: top20[idx]?.atividade } };
+    });
+    addBarClickHandler('chart-atividade-multiples', (idx, dsIdx) => {
+        const top15 = atividadeData.slice(0, 15);
+        const metrics = ['ev_ebitda', 'pe_ratio', 'pb_ratio'];
+        const labels = ['EV/EBITDA', 'P/E', 'P/B'];
+        return { type: 'distribution', metric: metrics[dsIdx], params: { atividade: top15[idx]?.atividade },
+            label: `${labels[dsIdx]} — ${top15[idx]?.atividade}` };
+    });
+}
+
+function renderAtividadeTable(filtered) {
+    const rows = filtered || atividadeData;
+    const html = `<table class="data-table" id="atividade-table">
+        <thead><tr>
+            <th onclick="sortAtividadeTable('atividade')">Atividade Anloc</th>
+            <th class="num" onclick="sortAtividadeTable('count')">Qtd</th>
+            <th class="num" onclick="sortAtividadeTable('avg_pe')">P/E</th>
+            <th class="num" onclick="sortAtividadeTable('avg_ev_ebitda')">EV/EBITDA</th>
+            <th class="num" onclick="sortAtividadeTable('avg_ev_revenue')">EV/Rev</th>
+            <th class="num" onclick="sortAtividadeTable('avg_pb')">P/B</th>
+            <th class="num" onclick="sortAtividadeTable('avg_roe')">ROE</th>
+            <th class="num" onclick="sortAtividadeTable('avg_op_margin')">Marg.Op.</th>
+            <th class="num" onclick="sortAtividadeTable('avg_net_margin')">Marg.Líq.</th>
+            <th class="num" onclick="sortAtividadeTable('avg_gross_margin')">Marg.Bruta</th>
+            <th class="num" onclick="sortAtividadeTable('avg_beta')">Beta</th>
+            <th class="num" onclick="sortAtividadeTable('avg_debt_equity')">D/E</th>
+        </tr></thead>
+        <tbody>${rows.map(s => `<tr class="clickable-row" onclick="drillCompanies({atividade:'${(s.atividade||'').replace(/'/g,"\\'")}'})" title="Clique para ver empresas desta atividade">
+            <td title="${s.atividade||''}">${truncate(s.atividade, 55)}</td>
+            <td class="num">${fmtInt(s.count)}</td>
+            <td class="num">${fmt(s.avg_pe)}</td>
+            <td class="num">${fmt(s.avg_ev_ebitda)}</td>
+            <td class="num">${fmt(s.avg_ev_revenue)}</td>
+            <td class="num">${fmt(s.avg_pb)}</td>
+            <td class="num ${colorClass(s.avg_roe)}">${fmtPct(s.avg_roe)}</td>
+            <td class="num ${colorClass(s.avg_op_margin)}">${fmtPct(s.avg_op_margin)}</td>
+            <td class="num ${colorClass(s.avg_net_margin)}">${fmtPct(s.avg_net_margin)}</td>
+            <td class="num ${colorClass(s.avg_gross_margin)}">${fmtPct(s.avg_gross_margin)}</td>
+            <td class="num">${fmt(s.avg_beta, 2)}</td>
+            <td class="num">${fmt(s.avg_debt_equity, 2)}</td>
+        </tr>`).join('')}</tbody></table>`;
+    document.getElementById('atividade-table-container').innerHTML = html;
+}
+
+let atividadeSortCol = null, atividadeSortDir = 1;
+function sortAtividadeTable(col) {
+    if (atividadeSortCol === col) atividadeSortDir *= -1; else { atividadeSortCol = col; atividadeSortDir = 1; }
+    atividadeData.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (va == null) return 1; if (vb == null) return -1;
+        return (va < vb ? -1 : va > vb ? 1 : 0) * atividadeSortDir;
+    });
+    renderAtividadeTable();
+}
+
+function filterAtividadeTable() {
+    const term = document.getElementById('atividade-search').value.toLowerCase();
+    if (!term) { renderAtividadeTable(); return; }
+    renderAtividadeTable(atividadeData.filter(a => (a.atividade||'').toLowerCase().includes(term)));
+}
+
+// ===== LOAD CROSS =====
+async function loadCross() {
+    const sector = document.getElementById('cross-sector-filter').value;
+    const country = document.getElementById('cross-country-filter').value;
+    const container = document.getElementById('cross-table-container');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Carregando...</div>';
+
+    try {
+        const params = new URLSearchParams();
+        if (sector) params.append('sector', sector);
+        if (country) params.append('country', country);
+        const res = await fetch('/api/yahoo_dashboard_cross?' + params);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const rows = data.cross;
+        container.innerHTML = `<table class="data-table">
+            <thead><tr>
+                <th>Setor</th><th>País</th>
+                <th class="num">Empresas</th>
+                <th class="num">P/E</th>
+                <th class="num">EV/EBITDA</th>
+                <th class="num">ROE</th>
+                <th class="num">Marg.Op.</th>
+            </tr></thead>
+            <tbody>${rows.map(r => `<tr class="clickable-row" onclick="drillCompanies({sector:'${(r.sector||'').replace(/'/g,"\\'")}',country:'${(r.country||'').replace(/'/g,"\\'")}'})" title="Clique para ver empresas">
+                <td><span class="badge badge-blue">${r.sector}</span></td>
+                <td>${r.country}</td>
+                <td class="num">${fmtInt(r.count)}</td>
+                <td class="num">${fmt(r.avg_pe)}</td>
+                <td class="num">${fmt(r.avg_ev_ebitda)}</td>
+                <td class="num ${colorClass(r.avg_roe)}">${fmtPct(r.avg_roe)}</td>
+                <td class="num ${colorClass(r.avg_op_margin)}">${fmtPct(r.avg_op_margin)}</td>
+            </tr>`).join('')}</tbody></table>`;
+
+        // Heatmap chart - pivot sectors vs top countries
+        renderCrossHeatmap(rows);
+    } catch (e) { console.error('Cross error:', e); }
+}
+
+function renderCrossHeatmap(crossData) {
+    // Build pivot: rows = sectors, cols = top countries
+    const countryCounts = {};
+    crossData.forEach(r => { countryCounts[r.country] = (countryCounts[r.country]||0) + r.count; });
+    const topCountries = Object.entries(countryCounts).sort((a,b) => b[1]-a[1]).slice(0, 12).map(e => e[0]);
+    const sectors = [...new Set(crossData.map(r => r.sector))];
+
+    const lookup = {};
+    crossData.forEach(r => { lookup[r.sector + '|' + r.country] = r.avg_ev_ebitda; });
+
+    const datasets = sectors.map((sector, i) => ({
+        label: sector,
+        data: topCountries.map(country => lookup[sector + '|' + country] || null),
+        backgroundColor: COLORS[i % COLORS.length] + '88',
+    }));
+
+    createChart('chart-cross-heatmap', {
+        type: 'bar',
+        data: { labels: topCountries, datasets },
+        options: {
+            scales: {
+                x: { ticks: { font: { size: 10 } }, stacked: false },
+                y: { beginAtZero: true, title: { display: true, text: 'EV/EBITDA', color: '#95a5a6' } }
+            },
+            plugins: { legend: { position: 'top', labels: { font: { size: 9 } } } }
+        }
+    });
+}
+
+// ===== MULTIPLES TAB =====
+function renderMultiplesTab() {
+    if (sectorData.length === 0) return;
+
+    const labels = sectorData.map(s => s.sector);
+
+    createChart('chart-multiples-pe', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ label: 'P/E Ratio', data: sectorData.map(s => s.avg_pe), backgroundColor: COLORS[0] + '88' }]
+        },
+        options: {
+            plugins: { title: { display: true, text: 'P/E Ratio por Setor', color: '#95a5a6' }, legend: { display: false } },
+            scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } }
+        }
+    });
+
+    createChart('chart-multiples-ev-ebitda', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ label: 'EV/EBITDA', data: sectorData.map(s => s.avg_ev_ebitda), backgroundColor: COLORS[1] + '88' }]
+        },
+        options: {
+            plugins: { title: { display: true, text: 'EV/EBITDA por Setor', color: '#95a5a6' }, legend: { display: false } },
+            scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } }
+        }
+    });
+
+    createChart('chart-multiples-pb', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ label: 'P/B', data: sectorData.map(s => s.avg_pb), backgroundColor: COLORS[4] + '88' }]
+        },
+        options: {
+            plugins: { title: { display: true, text: 'P/B Ratio por Setor', color: '#95a5a6' }, legend: { display: false } },
+            scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } }
+        }
+    });
+
+    createChart('chart-multiples-margins', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Margem Bruta', data: sectorData.map(s => (s.avg_gross_margin||0)*100), backgroundColor: COLORS[1] + '88' },
+                { label: 'Margem Operacional', data: sectorData.map(s => (s.avg_op_margin||0)*100), backgroundColor: COLORS[0] + '88' },
+                { label: 'Margem Líquida', data: sectorData.map(s => (s.avg_net_margin||0)*100), backgroundColor: COLORS[3] + '88' },
+            ]
+        },
+        options: {
+            scales: {
+                x: { ticks: { font: { size: 10 } } },
+                y: { title: { display: true, text: '%', color: '#95a5a6' } }
+            },
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+
+    // Add click handlers to multiples charts
+    addBarClickHandler('chart-multiples-pe', (idx) => ({
+        type: 'distribution', metric: 'pe_ratio', params: { sector: sectorData[idx]?.sector },
+        label: `P/E — ${sectorData[idx]?.sector}`
+    }));
+    addBarClickHandler('chart-multiples-ev-ebitda', (idx) => ({
+        type: 'distribution', metric: 'ev_ebitda', params: { sector: sectorData[idx]?.sector },
+        label: `EV/EBITDA — ${sectorData[idx]?.sector}`
+    }));
+    addBarClickHandler('chart-multiples-pb', (idx) => ({
+        type: 'distribution', metric: 'pb_ratio', params: { sector: sectorData[idx]?.sector },
+        label: `P/B — ${sectorData[idx]?.sector}`
+    }));
+    addBarClickHandler('chart-multiples-margins', (idx, dsIdx) => {
+        const metrics = ['gross_margin', 'operating_margin', 'net_profit_margin'];
+        const labels = ['Margem Bruta', 'Margem Operacional', 'Margem Líquida'];
+        return { type: 'distribution', metric: metrics[dsIdx], params: { sector: sectorData[idx]?.sector },
+            label: `${labels[dsIdx]} — ${sectorData[idx]?.sector}` };
+    });
+}
+
+// ===== CSV HELPER =====
+function downloadCSV(csv, filename) {
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportDrillCSV() {
+    // If paginated drill-down, fetch ALL pages from API
+    if (_drillExportEndpoint && _drillCurrentParams) {
+        exportDrillAllPages();
+        return;
+    }
+    // Fallback: export from DOM
+    exportDrillFromDOM();
+}
+
+function exportDrillFromDOM() {
+    const body = document.getElementById('drill-body');
+    const tables = body.querySelectorAll('table.drill-table');
+    if (!tables.length) return;
+    const rows = [];
+    const stats = body.querySelectorAll('.drill-stats .drill-stat');
+    if (stats.length) {
+        const labels = [], values = [];
+        stats.forEach(s => {
+            labels.push('"' + (s.querySelector('.ds-lbl')?.textContent.trim() || '').replace(/"/g, '""') + '"');
+            values.push('"' + (s.querySelector('.ds-val')?.textContent.trim() || '').replace(/"/g, '""') + '"');
+        });
+        rows.push(labels.join(';'));
+        rows.push(values.join(';'));
+        rows.push('');
+    }
+    tables.forEach((table, idx) => {
+        if (idx > 0) rows.push('');
+        const headerCells = table.querySelectorAll('thead th');
+        if (headerCells.length) {
+            rows.push(Array.from(headerCells).map(th => '"' + th.textContent.trim().replace(/"/g, '""') + '"').join(';'));
+        }
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            if (tr.style.display === 'none') return;
+            const cells = tr.querySelectorAll('td');
+            rows.push(Array.from(cells).map(td => '"' + td.textContent.trim().replace(/"/g, '""') + '"').join(';'));
+        });
+    });
+    const title = document.getElementById('drill-title').textContent || 'drill-down';
+    const filename = 'drilldown_' + title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '.csv';
+    downloadCSV(rows.join('\n'), filename);
+}
+
+async function exportDrillAllPages() {
+    const btn = document.querySelector('.drill-export');
+    const origText = btn.textContent;
+    btn.textContent = '⏳ Exportando...';
+    btn.disabled = true;
+    try {
+        const allItems = [];
+        let page = 1, totalPages = 1;
+        const baseParams = { ..._drillCurrentParams };
+        delete baseParams.page;
+        baseParams.per_page = 100;
+        do {
+            const qs = new URLSearchParams();
+            Object.entries(baseParams).forEach(([k, v]) => { if (v != null && v !== '') qs.append(k, v); });
+            qs.set('page', page);
+            const res = await fetch(_drillExportEndpoint + '?' + qs);
+            const data = await res.json();
+            if (!data.success) break;
+            totalPages = data.pages || 1;
+            const items = data.companies || data.items || [];
+            allItems.push(...items);
+            btn.textContent = `⏳ ${Math.min(page, totalPages)}/${totalPages}...`;
+            page++;
+        } while (page <= totalPages);
+        if (!allItems.length) { btn.textContent = origText; btn.disabled = false; return; }
+        // Build CSV from API data - convert decimals for pt-BR Excel
+        const cols = Object.keys(allItems[0]);
+        const rows = [cols.map(c => '"' + c + '"').join(';')];
+        allItems.forEach(item => {
+            rows.push(cols.map(c => {
+                let v = item[c];
+                if (v == null) v = '';
+                if (typeof v === 'number') return String(v).replace('.', ',');
+                return '"' + String(v).replace(/"/g, '""') + '"';
+            }).join(';'));
+        });
+        const title = document.getElementById('drill-title').textContent || 'drill-down';
+        const filename = 'drilldown_' + title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '.csv';
+        downloadCSV(rows.join('\n'), filename);
+    } catch(e) {
+        console.error('Export error:', e);
+    }
+    btn.textContent = origText;
+    btn.disabled = false;
+}
+
+// ===== DRILL-DOWN SYSTEM =====
+let _drillCurrentParams = {};
+let _drillChart = null;
+let _drillBreadcrumbs = [];
+let _drillExportEndpoint = null;
+
+function openDrillDown(title, subtitle, breadcrumbEntry) {
+    document.getElementById('drill-title').textContent = title;
+    document.getElementById('drill-subtitle').textContent = subtitle || '';
+    document.getElementById('drill-body').innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Carregando...</div>';
+    document.getElementById('drill-pagination').style.display = 'none';
+    if (breadcrumbEntry) _drillBreadcrumbs.push(breadcrumbEntry);
+    renderDrillBreadcrumb();
+    _drillExportEndpoint = null;
+    const overlay = document.getElementById('drill-overlay');
+    overlay.classList.add('opening');
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => overlay.classList.add('active'));
+    });
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDrillDown() {
+    const overlay = document.getElementById('drill-overlay');
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.classList.remove('opening'), 250);
+    document.body.style.overflow = '';
+    if (_drillChart) { _drillChart.destroy(); _drillChart = null; }
+    _drillBreadcrumbs = [];
+}
+
+function renderDrillBreadcrumb() {
+    const el = document.getElementById('drill-breadcrumb');
+    if (_drillBreadcrumbs.length <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    _drillBreadcrumbs.forEach((b, i) => {
+        if (i > 0) html += '<span class="sep">›</span>';
+        if (i < _drillBreadcrumbs.length - 1) {
+            html += `<a onclick="_drillBreadcrumbs.length=${i+1};${b.fn}">${b.label}</a>`;
+        } else {
+            html += `<span>${b.label}</span>`;
+        }
+    });
+    el.innerHTML = html;
+}
+
+// ESC key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrillDown(); });
+
+// Drill: Company list (paginated)
+async function drillCompanies(params, page = 1) {
+    const p = { ...params, page, per_page: 50 };
+    const filterParts = [];
+    if (p.sector) filterParts.push(`Setor: ${p.sector}`);
+    if (p.industry) filterParts.push(`Indústria: ${p.industry}`);
+    if (p.country) filterParts.push(`País: ${p.country}`);
+    if (p.atividade) filterParts.push(`Atividade: ${p.atividade}`);
+    if (p.has_field) filterParts.push(`Campo: ${p.has_field} = ${p.has_value === '1' ? 'COM' : 'SEM'} dados`);
+
+    if (page === 1) {
+        openDrillDown('Empresas', filterParts.join(' | ') || 'Todas as empresas',
+            { label: filterParts.join(' | ') || 'Empresas', fn: `drillCompanies(${JSON.stringify(params)})` });
+    }
+    _drillCurrentParams = p;
+
+    try {
+        const qs = new URLSearchParams();
+        Object.entries(p).forEach(([k, v]) => { if (v != null && v !== '') qs.append(k, v); });
+        _drillExportEndpoint = '/api/yahoo_drill/companies';
+        const res = await fetch('/api/yahoo_drill/companies?' + qs);
+        const data = await res.json();
+        if (!data.success) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro: ' + (data.error||'') + '</p>'; return; }
+
+        const body = document.getElementById('drill-body');
+        let html = `<input type="text" class="drill-search" placeholder="Buscar por nome ou ticker..." 
+            oninput="drillSearchCompanies(this.value)" id="drill-search-input">`;
+        html += `<div class="drill-stats">
+            <div class="drill-stat"><div class="ds-val">${fmtInt(data.total)}</div><div class="ds-lbl">Total</div></div>
+            <div class="drill-stat"><div class="ds-val">${data.page}</div><div class="ds-lbl">Página</div></div>
+            <div class="drill-stat"><div class="ds-val">${data.pages}</div><div class="ds-lbl">Páginas</div></div>
+        </div>`;
+        html += renderDrillCompanyTable(data.companies);
+        body.innerHTML = html;
+
+        // Pagination
+        const pag = document.getElementById('drill-pagination');
+        if (data.pages > 1) {
+            pag.style.display = 'flex';
+            pag.innerHTML = `
+                <button ${data.page <= 1 ? 'disabled' : ''} onclick="drillCompanies(_drillCurrentParams, ${data.page - 1})">← Anterior</button>
+                <span class="page-info">Página ${data.page} de ${data.pages}</span>
+                <button ${data.page >= data.pages ? 'disabled' : ''} onclick="drillCompanies(_drillCurrentParams, ${data.page + 1})">Próxima →</button>
+            `;
+        } else {
+            pag.style.display = 'none';
+        }
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro de conexão</p>';
+    }
+}
+
+let _drillSearchTimer = null;
+function drillSearchCompanies(term) {
+    clearTimeout(_drillSearchTimer);
+    _drillSearchTimer = setTimeout(() => {
+        _drillCurrentParams.search = term;
+        drillCompanies(_drillCurrentParams, 1);
+    }, 400);
+}
+
+function renderDrillCompanyTable(companies) {
+    if (!companies.length) return '<p style="color:var(--text2);padding:20px;text-align:center;">Nenhuma empresa encontrada</p>';
+    return `<div style="max-height:400px;overflow-y:auto;">
+    <table class="drill-table">
+        <thead><tr>
+            <th>Empresa</th><th>Ticker</th><th>Setor</th><th>País</th>
+            <th class="num">P/E</th><th class="num">EV/EBITDA</th>
+            <th class="num">Marg.Op.</th><th class="num">Beta</th><th></th>
+        </tr></thead>
+        <tbody>${companies.map(c => `<tr class="clickable-row" onclick="window.open('/company-analysis?company=${encodeURIComponent(c.ticker||'')}','_blank')">
+            <td title="${c.company_name||''}">${truncate(c.company_name, 35)}</td>
+            <td><strong>${c.ticker||'—'}</strong></td>
+            <td><span class="badge badge-blue">${truncate(c.yahoo_sector, 20)||'—'}</span></td>
+            <td>${c.yahoo_country||'—'}</td>
+            <td class="num">${fmt(c.pe_ratio)}</td>
+            <td class="num">${fmt(c.ev_ebitda)}</td>
+            <td class="num ${colorClass(c.operating_margin)}">${fmtPct(c.operating_margin)}</td>
+            <td class="num">${fmt(c.beta, 2)}</td>
+            <td>${c.has_historico ? `<a href="/data-yahoo-historico" onclick="event.stopPropagation();localStorage.setItem('hist_search','${(c.yahoo_code||c.ticker||'').replace(/'/g,"\\'")}');" title="Ver dados históricos" style="color:var(--accent2);font-size:14px;">📈</a>` : ''}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+// Drill: Distribution (histogram + stats)
+async function drillDistribution(metric, filterParams, filterLabel) {
+    openDrillDown('Distribuição', filterLabel || '',
+        { label: 'Distribuição: ' + (filterLabel || metric), fn: `drillDistribution('${metric}',${JSON.stringify(filterParams)},'${(filterLabel||'').replace(/'/g,"\\'")}')` });
+
+    try {
+        const qs = new URLSearchParams({ metric });
+        if (filterParams) Object.entries(filterParams).forEach(([k, v]) => { if (v) qs.append(k, v); });
+        const res = await fetch('/api/yahoo_drill/distribution?' + qs);
+        const data = await res.json();
+        if (!data.success || !data.stats) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--text2)">Sem dados suficientes</p>'; return; }
+
+        const s = data.stats;
+        let html = `<div class="drill-stats">
+            <div class="drill-stat"><div class="ds-val">${fmtInt(s.count)}</div><div class="ds-lbl">Empresas</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.mean, 2)}</div><div class="ds-lbl">Média</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.median, 2)}</div><div class="ds-lbl">Mediana</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.p25, 2)}</div><div class="ds-lbl">P25</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.p75, 2)}</div><div class="ds-lbl">P75</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.min, 2)}</div><div class="ds-lbl">Mín</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.max, 2)}</div><div class="ds-lbl">Máx</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmt(s.std, 2)}</div><div class="ds-lbl">Desvio</div></div>
+        </div>`;
+
+        // Histogram
+        if (data.histogram && data.histogram.length > 0) {
+            html += '<div class="drill-chart-container"><canvas id="drill-histogram"></canvas></div>';
+        }
+
+        // Top 10 / Bottom 10
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">';
+        html += '<div><h4 style="font-size:13px;margin-bottom:8px;color:var(--accent2);">Top 10 (maiores)</h4>';
+        html += renderMiniTable(data.top10, data.label);
+        html += '</div><div><h4 style="font-size:13px;margin-bottom:8px;color:var(--accent3);">Bottom 10 (menores)</h4>';
+        html += renderMiniTable(data.bottom10, data.label);
+        html += '</div></div>';
+
+        document.getElementById('drill-body').innerHTML = html;
+
+        // Render histogram chart
+        if (data.histogram && data.histogram.length > 0) {
+            const ctx = document.getElementById('drill-histogram');
+            if (ctx) {
+                if (_drillChart) _drillChart.destroy();
+                _drillChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.histogram.map(h => `${h.bin_start} – ${h.bin_end}`),
+                        datasets: [{ label: data.label, data: data.histogram.map(h => h.count), backgroundColor: '#3498db88', borderColor: '#3498db', borderWidth: 1 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, title: { display: true, text: `Distribuição: ${data.label}`, color: '#95a5a6' } },
+                        scales: { x: { ticks: { color: '#666', font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true, ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro de conexão</p>';
+    }
+}
+
+function renderMiniTable(rows, label) {
+    if (!rows || !rows.length) return '<p style="color:var(--text2);font-size:12px;">—</p>';
+    return `<table class="drill-table" style="font-size:11px;">
+        <thead><tr><th>Empresa</th><th>Ticker</th><th class="num">${label}</th></tr></thead>
+        <tbody>${rows.map(r => `<tr class="clickable-row" onclick="window.open('/company-analysis?company=${encodeURIComponent(r.ticker||'')}','_blank')">
+            <td>${truncate(r.company_name, 25)}</td><td>${r.ticker||'—'}</td>
+            <td class="num">${fmt(r.value, 2)}</td>
+        </tr>`).join('')}</tbody></table>`;
+}
+
+// Drill: Coverage detail
+async function drillCoverage(field) {
+    openDrillDown('Cobertura de Dados', '',
+        { label: 'Cobertura: ' + field, fn: `drillCoverage('${field}')` });
+
+    try {
+        const res = await fetch('/api/yahoo_drill/coverage?field=' + encodeURIComponent(field));
+        const data = await res.json();
+        if (!data.success) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>'; return; }
+
+        let html = `<div class="drill-stats">
+            <div class="drill-stat"><div class="ds-val">${fmtInt(data.total)}</div><div class="ds-lbl">Total</div></div>
+            <div class="drill-stat"><div class="ds-val" style="color:var(--accent2)">${fmtInt(data.with_data)}</div><div class="ds-lbl">Com ${data.label}</div></div>
+            <div class="drill-stat"><div class="ds-val" style="color:var(--accent3)">${fmtInt(data.without_data)}</div><div class="ds-lbl">Sem ${data.label}</div></div>
+            <div class="drill-stat"><div class="ds-val">${data.pct}%</div><div class="ds-lbl">Cobertura</div></div>
+        </div>`;
+
+        // Chart: donut
+        html += '<div class="drill-chart-container" style="height:200px;"><canvas id="drill-coverage-chart"></canvas></div>';
+
+        // Buttons to see companies
+        html += `<div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button class="btn-nav" style="background:var(--accent2);color:#fff;" onclick="drillCompanies({has_field:'${field}',has_value:'1'})">
+                📋 Ver ${fmtInt(data.with_data)} com dados
+            </button>
+            <button class="btn-nav" style="background:var(--accent3);color:#fff;" onclick="drillCompanies({has_field:'${field}',has_value:'0'})">
+                📋 Ver ${fmtInt(data.without_data)} sem dados
+            </button>
+        </div>`;
+
+        // Sample without data
+        if (data.sample_without && data.sample_without.length > 0) {
+            html += '<h4 style="font-size:13px;margin-bottom:8px;color:var(--accent4);">Amostra — Maiores empresas sem ' + data.label + '</h4>';
+            html += `<table class="drill-table" style="font-size:11px;">
+                <thead><tr><th>Empresa</th><th>Ticker</th><th>Setor</th><th>País</th></tr></thead>
+                <tbody>${data.sample_without.map(r => `<tr class="clickable-row" onclick="window.open('/company-analysis?company=${encodeURIComponent(r.ticker||'')}','_blank')">
+                    <td>${truncate(r.company_name, 30)}</td><td>${r.ticker||'—'}</td>
+                    <td>${truncate(r.yahoo_sector, 20)||'—'}</td><td>${r.yahoo_country||'—'}</td>
+                </tr>`).join('')}</tbody></table>`;
+        }
+
+        document.getElementById('drill-body').innerHTML = html;
+
+        // Donut chart
+        const ctx = document.getElementById('drill-coverage-chart');
+        if (ctx) {
+            if (_drillChart) _drillChart.destroy();
+            _drillChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Com dados', 'Sem dados'],
+                    datasets: [{ data: [data.with_data, data.without_data], backgroundColor: ['#2ecc7188', '#e74c3c88'], borderColor: ['#2ecc71', '#e74c3c'], borderWidth: 1 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#95a5a6' } } }
+                }
+            });
+        }
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro de conexão</p>';
+    }
+}
+
+// Drill: Currencies
+async function drillCurrencies() {
+    openDrillDown('Moedas', 'Distribuição por moeda',
+        { label: 'Moedas', fn: 'drillCurrencies()' });
+
+    try {
+        const res = await fetch('/api/yahoo_drill/currencies');
+        const data = await res.json();
+        if (!data.success) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>'; return; }
+
+        const currencies = data.currencies;
+        let html = `<div class="drill-stats">
+            <div class="drill-stat"><div class="ds-val">${currencies.length}</div><div class="ds-lbl">Moedas</div></div>
+            <div class="drill-stat"><div class="ds-val">${fmtInt(currencies.reduce((s,c) => s + c.company_count, 0))}</div><div class="ds-lbl">Empresas</div></div>
+        </div>`;
+
+        // Chart top 15
+        html += '<div class="drill-chart-container"><canvas id="drill-currency-chart"></canvas></div>';
+
+        // Table
+        html += `<div style="max-height:350px;overflow-y:auto;">
+        <table class="drill-table">
+            <thead><tr><th>Moeda</th><th class="num">Empresas</th><th class="num">Países</th><th>Países (amostra)</th></tr></thead>
+            <tbody>${currencies.map(c => `<tr>
+                <td><strong>${c.currency}</strong></td>
+                <td class="num">${fmtInt(c.company_count)}</td>
+                <td class="num">${c.country_count}</td>
+                <td style="font-size:11px;color:var(--text2)">${c.countries.slice(0, 5).join(', ')}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+
+        document.getElementById('drill-body').innerHTML = html;
+
+        // Bar chart
+        const top15 = currencies.slice(0, 15);
+        const ctx = document.getElementById('drill-currency-chart');
+        if (ctx) {
+            if (_drillChart) _drillChart.destroy();
+            _drillChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top15.map(c => c.currency),
+                    datasets: [{ label: 'Empresas', data: top15.map(c => c.company_count), backgroundColor: ALPHA_COLORS }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: '#666' } }, y: { beginAtZero: true, ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+                }
+            });
+        }
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro de conexão</p>';
+    }
+}
+
+// Drill: Sectors list (from KPI click)
+function drillSectorsList() {
+    if (!sectorData.length) return;
+    openDrillDown('Setores Yahoo', sectorData.length + ' setores',
+        { label: 'Setores', fn: 'drillSectorsList()' });
+
+    let html = `<div style="max-height:500px;overflow-y:auto;">
+    <table class="drill-table">
+        <thead><tr><th>Setor</th><th class="num">Empresas</th><th class="num">P/E</th>
+        <th class="num">EV/EBITDA</th><th class="num">Marg.Op.</th><th class="num">Beta</th></tr></thead>
+        <tbody>${sectorData.map(s => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({sector:'${(s.sector||'').replace(/'/g,"\\'")}'})" >
+            <td><strong>${s.sector}</strong></td>
+            <td class="num">${fmtInt(s.count)}</td>
+            <td class="num">${fmt(s.avg_pe)}</td>
+            <td class="num">${fmt(s.avg_ev_ebitda)}</td>
+            <td class="num ${colorClass(s.avg_op_margin)}">${fmtPct(s.avg_op_margin)}</td>
+            <td class="num">${fmt(s.avg_beta, 2)}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+    document.getElementById('drill-body').innerHTML = html;
+}
+
+// Drill: Industries list (from KPI click)
+async function drillIndustriesList() {
+    openDrillDown('Indústrias', 'Todas as indústrias',
+        { label: 'Indústrias', fn: 'drillIndustriesList()' });
+    try {
+        const res = await fetch('/api/yahoo_dashboard_industries');
+        const data = await res.json();
+        if (!data.success) return;
+        const inds = data.industries;
+        document.getElementById('drill-subtitle').textContent = inds.length + ' indústrias';
+
+        let html = `<input type="text" class="drill-search" placeholder="Buscar indústria..." 
+            oninput="drillFilterList(this.value, 'drill-ind-tbody', 0)">`;
+        html += `<div style="max-height:450px;overflow-y:auto;">
+        <table class="drill-table">
+            <thead><tr><th>Indústria</th><th>Setor</th><th class="num">Empresas</th>
+            <th class="num">EV/EBITDA</th><th class="num">P/E</th></tr></thead>
+            <tbody id="drill-ind-tbody">${inds.map(i => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({industry:'${(i.industry||'').replace(/'/g,"\\'")}'})" >
+                <td>${truncate(i.industry, 40)}</td>
+                <td><span class="badge badge-blue">${i.sector||'—'}</span></td>
+                <td class="num">${fmtInt(i.count)}</td>
+                <td class="num">${fmt(i.avg_ev_ebitda)}</td>
+                <td class="num">${fmt(i.avg_pe)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+        document.getElementById('drill-body').innerHTML = html;
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
+    }
+}
+
+// Drill: Countries list (from KPI click)
+async function drillCountriesList() {
+    openDrillDown('Países', 'Todos os países',
+        { label: 'Países', fn: 'drillCountriesList()' });
+    try {
+        const res = await fetch('/api/yahoo_dashboard_countries');
+        const data = await res.json();
+        if (!data.success) return;
+        const cs = data.countries;
+        document.getElementById('drill-subtitle').textContent = cs.length + ' países';
+
+        let html = `<input type="text" class="drill-search" placeholder="Buscar país..." 
+            oninput="drillFilterList(this.value, 'drill-country-tbody', 0)">`;
+        html += `<div style="max-height:450px;overflow-y:auto;">
+        <table class="drill-table">
+            <thead><tr><th>País</th><th class="num">Empresas</th><th class="num">Setores</th>
+            <th class="num">P/E</th><th class="num">EV/EBITDA</th></tr></thead>
+            <tbody id="drill-country-tbody">${cs.map(c => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({country:'${(c.country||'').replace(/'/g,"\\'")}'})" >
+                <td><strong>${c.country}</strong></td>
+                <td class="num">${fmtInt(c.count)}</td>
+                <td class="num">${c.sectors_count||'—'}</td>
+                <td class="num">${fmt(c.avg_pe)}</td>
+                <td class="num">${fmt(c.avg_ev_ebitda)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+        document.getElementById('drill-body').innerHTML = html;
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
+    }
+}
+
+// Drill: Atividades list (from KPI click)
+async function drillAtividadesList() {
+    openDrillDown('Atividades Anloc', 'Todas as atividades',
+        { label: 'Atividades', fn: 'drillAtividadesList()' });
+    try {
+        const res = await fetch('/api/yahoo_dashboard_atividades');
+        const data = await res.json();
+        if (!data.success) return;
+        const ats = data.atividades;
+        document.getElementById('drill-subtitle').textContent = ats.length + ' atividades';
+
+        let html = `<input type="text" class="drill-search" placeholder="Buscar atividade..." 
+            oninput="drillFilterList(this.value, 'drill-ativ-tbody', 0)">`;
+        html += `<div style="max-height:450px;overflow-y:auto;">
+        <table class="drill-table">
+            <thead><tr><th>Atividade</th><th class="num">Empresas</th>
+            <th class="num">EV/EBITDA</th><th class="num">P/E</th><th class="num">Marg.Op.</th></tr></thead>
+            <tbody id="drill-ativ-tbody">${ats.map(a => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({atividade:'${(a.atividade||'').replace(/'/g,"\\'")}'})" >
+                <td title="${a.atividade||''}">${truncate(a.atividade, 50)}</td>
+                <td class="num">${fmtInt(a.count)}</td>
+                <td class="num">${fmt(a.avg_ev_ebitda)}</td>
+                <td class="num">${fmt(a.avg_pe)}</td>
+                <td class="num ${colorClass(a.avg_op_margin)}">${fmtPct(a.avg_op_margin)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+        document.getElementById('drill-body').innerHTML = html;
+    } catch (e) {
+        document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
+    }
+}
+
+// Helper: filter table rows by text
+function drillFilterList(term, tbodyId, colIndex) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    const t = term.toLowerCase();
+    rows.forEach(r => {
+        const cell = r.cells[colIndex];
+        r.style.display = !t || (cell && cell.textContent.toLowerCase().includes(t)) ? '' : 'none';
+    });
+}
+
+// Helper: add chart click handler for bar charts
+function addBarClickHandler(chartId, getFilterFn) {
+    const chart = charts[chartId];
+    if (!chart) return;
+    const canvas = chart.canvas;
+    canvas.style.cursor = 'pointer';
+    canvas.onclick = function(evt) {
+        const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+        if (points.length > 0) {
+            const idx = points[0].index;
+            const datasetIdx = points[0].datasetIndex;
+            const filter = getFilterFn(idx, datasetIdx);
+            if (filter) {
+                if (filter.type === 'companies') drillCompanies(filter.params);
+                else if (filter.type === 'distribution') drillDistribution(filter.metric, filter.params, filter.label);
+            }
+        }
+    };
+}
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+    loadSummary();
+    loadSectors();
+});
+</script>
+</body>
+</html>

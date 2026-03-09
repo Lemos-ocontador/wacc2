@@ -1,257 +1,346 @@
-# Resumo da Aplicação (WACC + Benchmarking)
+# Resumo da Aplicação — WACC Hub + Benchmarking Financeiro
+
+> Última atualização: Março/2026
 
 ## 1) Visão Geral
 
-Este projeto implementa uma plataforma Flask para **análise financeira e valuation**, com dois focos principais:
+Plataforma Flask para **análise financeira e valuation** com dois focos:
 
-- **Cálculo automatizado de WACC** (Weighted Average Cost of Capital).
-- **Benchmarking de empresas** usando base Damodaran global.
+- **Cálculo automatizado de WACC** (Weighted Average Cost of Capital)
+- **Benchmarking global de empresas** usando base Damodaran (~47 mil empresas)
 
-Há dois aplicativos Flask no repositório:
+### Aplicações Flask
 
-- `app.py` → app principal e mais completo (porta **5000**).
-- `company_analysis_app.py` → app dedicado à análise de empresas (porta **5001**), com escopo mais enxuto/paralelo.
+| App | Arquivo | Porta | Foco |
+|-----|---------|-------|------|
+| Principal | `app.py` | 5000 | WACC + Dashboard + Dados Yahoo + Análises |
+| Análise | `company_analysis_app.py` | 5001 | Análise/benchmarking de empresas (escopo enxuto) |
 
 ---
 
-## 2) Arquitetura Principal
+## 2) Arquitetura
 
 ### Backend
 
-- **Flask** para rotas web e APIs.
-- **Pandas/Numpy** para processamento estatístico.
-- **SQLite** (`data/damodaran_data_new.db`) para dados de empresas e hierarquias.
-- **JSON/Cache** para componentes e histórico de cálculos.
+- **Flask** — rotas web + APIs REST (80 rotas no app principal)
+- **SQLite** — `data/damodaran_data_new.db` (~47k empresas, ~157k registros históricos)
+- **Pandas/NumPy** — processamento estatístico e agregações
+- **yfinance** — coleta de dados financeiros do Yahoo Finance
+- **Extratores** — FRED, BCB, Damodaran, web scraping
 
-### Módulos-chave
+### Módulos Core
 
-- `wacc_calculator.py`:
-  - Estrutura `WACCComponents`.
-  - Classe `WACCCalculator` para cálculo completo do WACC.
-  - Prioridade de entrada dos componentes: **customizados > extraídos > defaults**.
+| Módulo | Função |
+|--------|--------|
+| `wacc_calculator.py` | Motor de cálculo WACC (`WACCComponents` + `WACCCalculator`) |
+| `wacc_data_connector.py` | Acesso a componentes WACC (JSON + SQLite) |
+| `data_source_manager.py` | Gerenciamento de fontes de dados com status/auditoria |
+| `field_categories_manager.py` | Organização de campos em categorias p/ frontend |
+| `geographic_mappings.py` | Classificação geográfica ONU M49 (país → região → sub-região) |
+| `data_extractors/` | Pacote de extratores (FRED, BCB, Damodaran, web scraper) |
 
-- `wacc_data_connector.py`:
-  - Acesso a componentes WACC (JSON + SQLite).
-  - Endpoints de taxa livre de risco, beta setorial, risco-país, prêmio de mercado e size premium.
+### Base de Dados (SQLite)
 
-- `data_extractors/`:
-  - Conjunto de extratores (`FRED`, `BCB`, `Damodaran`, scraper web) orquestrados por `WACCDataManager`.
+| Tabela | Registros | Função |
+|--------|-----------|--------|
+| `company_basic_data` | ~42.878 | Dados cadastrais e financeiros atuais (Yahoo) |
+| `company_financials_historical` | ~156.585 | Séries históricas (2021-2026) de 37k+ empresas |
+| `damodaran_global` | ~47.000 | Dados originais do Excel Damodaran |
+| `country_risk` | ~200 | Prêmios de risco por país |
+| `size_premium` | 13 | Decis de size premium |
 
-- `field_categories_manager.py`:
-  - Organização de campos em categorias para consumo no frontend.
+### Frontend
 
-### Frontend (templates)
-
-Páginas principais em `templates/`:
-
-- `main_dashboard.html`
-- `wacc_interface.html`
-- `company_analysis.html`
-- `dashboard.html`
-- `calculator.html`
-- `history.html`
-- `error.html`
-
----
-
-## 3) Fluxo Funcional (WACC)
-
-1. Frontend solicita componentes/cálculo via API.
-2. `WACCCalculator` coleta dados via `WACCDataManager` e/ou `WACCDataConnector`.
-3. Componentes são normalizados (taxas, beta, D/E, prêmio de risco etc.).
-4. São calculados:
-   - custo do capital próprio,
-   - pesos de dívida/equity,
-   - WACC final.
-5. Resultado pode ser persistido no diretório `cache/`.
+- Templates HTML/Jinja2 (16 páginas)
+- **Chart.js 4.4.4** — gráficos interativos
+- Tema escuro nativo
+- Responsivo com CSS Grid
 
 ---
 
-## 4) Mapa de Rotas — `app.py` (App Principal)
+## 3) Estrutura de Diretórios
 
-## 4.1 Páginas Web
+```
+bd_damodaran/
+├── app.py                        # App Flask principal (3740 linhas, 80 rotas)
+├── company_analysis_app.py       # App de análise de empresas
+├── wacc_calculator.py            # Motor de cálculo WACC
+├── wacc_data_connector.py        # Conector de dados WACC
+├── data_source_manager.py        # Gerenciador de fontes
+├── field_categories_manager.py   # Categorias de campos
+├── geographic_mappings.py        # Mapeamentos geográficos ONU
+├── requirements.txt              # Dependências Python
+├── README.md                     # Documentação principal
+├── atualizar_github.bat          # Script de push GitHub
+│
+├── data_extractors/              # Extratores de dados financeiros
+│   ├── base_extractor.py         # Classe base abstrata
+│   ├── bcb_extractor.py          # Banco Central do Brasil
+│   ├── fred_extractor.py         # FRED (US Treasury)
+│   ├── damodaran_extractor.py    # Dados Damodaran
+│   ├── wacc_data_manager.py      # Orquestrador dos extratores
+│   └── web_scraper.py            # Scraper web genérico
+│
+├── scripts/                      # Scripts de ETL e manutenção (22 scripts)
+│   ├── fetch_historical_financials.py   # Download de históricos via Yahoo
+│   ├── extract_global_damodaran.py      # Importar Excel Damodaran
+│   ├── sync_company_basic_data.py       # Sincronizar company_basic_data
+│   └── ...
+│
+├── templates/                    # Templates HTML/Jinja2 (16 templates)
+│   ├── main_dashboard.html       # Dashboard principal
+│   ├── wacc_interface.html       # Interface WACC
+│   ├── data_yahoo.html           # Dashboard dados Yahoo
+│   ├── data_yahoo_historico.html # Dados históricos com consolidado
+│   ├── analise_setor.html        # Análise por setor
+│   └── ...
+│
+├── static/                       # Assets estáticos
+│   ├── css/style.css
+│   ├── js/app.js
+│   ├── BDWACC.json               # Dados WACC (Damodaran)
+│   └── BDSize.json               # Size Premium (Ibbotson)
+│
+├── data/                         # Dados (gitignored)
+│   ├── damodaran_data_new.db     # BD SQLite principal
+│   ├── wacc_data_sources_catalog.json
+│   └── mapeamento_campos_bolsas.json
+│
+└── docs/                         # Documentação
+    ├── RESUMO_APLICACAO.md       # Este arquivo
+    ├── README_company_analysis.md
+    ├── metodologias.md
+    ├── oportunidades_melhorias.md
+    └── documentacao/             # Docs técnicos
+```
 
-- `GET /` → dashboard principal (`main_dashboard.html`).
-- `GET /wacc` → interface WACC.
-- `GET /company-analysis` → página de análise de empresas.
-- `GET /test_filter_debug.html` → página de debug de filtros.
-- `GET /dashboard` → visão consolidada de saúde + dados recentes + WACC padrão.
-- `GET /calculator` → calculadora interativa.
-- `GET /wacc_interface` → interface WACC aprimorada.
-- `GET /history` → histórico dos últimos cálculos salvos.
+---
 
-## 4.2 API — Cálculo WACC
+## 4) Mapa de Rotas — `app.py`
 
-- `POST /api/calculate_wacc`
-  - Calcula WACC com parâmetros de entrada (`sector`, `country`, valores de mercado e componentes customizados).
-  - Retorna WACC, componentes, fontes e resumo.
+### 4.1 Páginas Web (14 rotas)
 
-- `GET /api/get_wacc_components`
-  - Retorna pacote consolidado de componentes WACC por setor/país/região.
+| Rota | Template | Descrição |
+|------|----------|-----------|
+| `GET /` | `main_dashboard.html` | Dashboard principal |
+| `GET /wacc` | `wacc_interface.html` | Calculadora WACC |
+| `GET /company-analysis` | `company_analysis.html` | Análise de empresas |
+| `GET /dashboard` | `dashboard.html` | Dashboard de saúde WACC |
+| `GET /calculator` | `calculator.html` | Calculadora interativa |
+| `GET /wacc_interface` | `wacc_interface.html` | Interface WACC aprimorada |
+| `GET /data-updates` | `data_updates_dashboard.html` | Dashboard de atualizações |
+| `GET /parametros-wacc` | `wacc_parameters.html` | Documentação parâmetros |
+| `GET /history` | `history.html` | Histórico de cálculos |
+| `GET /data-yahoo` | `data_yahoo.html` | Dashboard dados Yahoo |
+| `GET /exporta-data` | `exporta_data.html` | Exportação de dados |
+| `GET /data-yahoo-historico` | `data_yahoo_historico.html` | Dados históricos Yahoo |
+| `GET /analise-setor` | `analise_setor.html` | Análise por setor/localidade |
 
-- `POST /api/calculate_unlevered_beta`
-  - Calcula beta desalavancado usando:
-  - fórmula: `βU = βL / [1 + (1 - T) × (D/E)]`.
+### 4.2 API — Cálculo WACC (23 rotas)
 
-- `GET /api/validate_wacc_data`
-  - Verifica disponibilidade dos componentes críticos e status geral (`healthy/degraded`).
+| Rota | Descrição |
+|------|-----------|
+| `POST /api/calculate_wacc` | Calcula WACC completo |
+| `GET /api/get_wacc_components` | Todos componentes WACC |
+| `POST /api/calculate_unlevered_beta` | Beta desalavancado: βU = βL / [1 + (1-T) × (D/E)] |
+| `GET /api/validate_wacc_data` | Validação de dados WACC |
+| `GET /api/get_risk_free_options` | Opções de RF (10y/30y) |
+| `GET /api/get_risk_free_rate` | Taxa livre de risco |
+| `GET /api/get_beta_sectors` | Setores disponíveis p/ beta |
+| `GET /api/get_sector_beta` | Beta de um setor específico |
+| `GET /api/get_country_risk_options` | Países com risco-país |
+| `GET /api/get_country_risk` | Prêmio de risco-país |
+| `GET /api/get_market_risk_premium` | Prêmio de risco de mercado (ERP) |
+| `GET /api/get_kd_selic` | Selic live / Kd (150% Selic) |
+| `GET /api/get_ipca` | IPCA 12m (BCB) |
+| `GET /api/get_wacc_all_live` | Componentes WACC live |
+| `GET /api/get_size_premium` | Size premium por market cap |
+| `GET /api/get_size_deciles` | Decis de tamanho (Ibbotson) |
+| `GET /api/get_market_data` | Dados de mercado |
+| `GET /api/get_sectors` | Lista de setores |
+| `GET /api/get_countries` | Lista de países |
+| `GET /api/get_history` | Histórico de cálculos |
+| `GET /api/health` | Health check |
+| `GET /api/size_premium_data` | Dados BDSize.json |
+| `POST /api/benchmark_calculate` | Benchmark β e D/E médios |
 
-## 4.3 API — Componentes de Mercado
+### 4.3 API — Hierarquias e Filtros (7 rotas)
 
-- `GET /api/get_risk_free_options` → opções de RF (10y/30y/custom).
-- `GET /api/get_risk_free_rate?term=10y|30y` → taxa livre de risco.
-- `GET /api/get_beta_sectors` → lista de setores com métricas.
-- `GET /api/get_sector_beta?sector=...&region=global|emkt` → beta setorial.
-- `GET /api/get_country_risk_options` → países disponíveis para risco-país.
-- `GET /api/get_country_risk?country=...` → prêmio de risco-país.
-- `GET /api/get_market_risk_premium` → ERP/prêmio de risco de mercado.
-- `GET /api/get_size_premium?market_cap=...` → size premium por faixa de market cap.
-- `GET /api/get_size_deciles` → decis/faixas de size premium.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/get_broad_groups` | Grupos geográficos amplos |
+| `GET /api/get_sub_groups` | Subgrupos regionais |
+| `GET /api/get_primary_sectors` | Setores primários |
+| `GET /api/get_industry_groups` | Grupos de indústria |
+| `GET /api/get_subdivision_hierarchy` | Hierarquia completa de subdivisões |
+| `GET /api/hierarchy` | Hierarquia p/ filtros frontend |
+| `GET /api/filters` | Opções de filtros (países, indústrias) |
 
-## 4.4 API — Catálogos, Histórico e Saúde
+### 4.4 API — Análise de Empresas (7 rotas)
 
-- `GET /api/get_market_data` → snapshot de dados de mercado extraídos.
-- `GET /api/get_sectors` → lista de setores suportados.
-- `GET /api/get_countries` → lista de países suportados.
-- `GET /api/get_history` → histórico de cálculos + estatísticas.
-- `GET /api/download_calculation/<filename>` → download de cálculo em cache.
-- `GET /api/health` → health check da aplicação/extratores.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/companies` | Lista empresas c/ filtros hierárquicos |
+| `GET /api/benchmarks` | Benchmarks estatísticos por grupo |
+| `GET /api/company/<name>/analysis` | Análise detalhada com rankings |
+| `GET /api/benchmark_companies` | Empresas p/ seleção de benchmark |
+| `GET /api/get_field_categories` | Categorias de campos |
+| `GET /api/get_category_fields/<id>` | Campos de uma categoria |
+| `GET /api/get_field_info/<field>` | Metadados de um campo |
 
-## 4.5 API — Hierarquias e Filtros (Damodaran)
+### 4.5 API — Dashboard Yahoo (6 rotas)
 
-- `GET /api/get_broad_groups` → grupos geográficos amplos.
-- `GET /api/get_sub_groups?broad_group=...` → subgrupos regionais.
-- `GET /api/get_primary_sectors` → setores primários.
-- `GET /api/get_industry_groups` → grupos de indústria.
-- `GET /api/get_subdivision_hierarchy` → hierarquia geográfica + setorial completa.
-- `GET /api/hierarchy` → hierarquias para popular filtros no frontend.
-- `GET /api/filters` → países, indústrias e estruturas hierárquicas.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/yahoo_dashboard_summary` | Resumo geral (KPIs) |
+| `GET /api/yahoo_dashboard_sectors` | Métricas por setor Yahoo |
+| `GET /api/yahoo_dashboard_industries` | Métricas por indústria |
+| `GET /api/yahoo_dashboard_countries` | Métricas por país |
+| `GET /api/yahoo_dashboard_atividades` | Métricas por atividade Anloc |
+| `GET /api/yahoo_dashboard_cross` | Cruzamento setor × país |
 
-## 4.6 API — Empresas e Benchmarking
+### 4.6 API — Drill-Down (6 rotas)
 
-- `GET /api/companies`
-  - Lista empresas com filtros hierárquicos:
-    - geografia (`country`, `subregion`, `region`),
-    - setor (`industry`, `subsector`, `sector`),
-    - faixa de `market_cap`.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/yahoo_drill/companies` | Empresas paginadas c/ filtros |
+| `GET /api/yahoo_drill/distribution` | Distribuição de indicador |
+| `GET /api/yahoo_drill/coverage` | Cobertura de campos |
+| `GET /api/yahoo_drill/currencies` | Moedas + contagem |
+| `GET /api/historico_drill/companies` | Drill-down empresas históricas |
+| `GET /api/historico_drill/year_detail` | Detalhe por ano/métrica |
 
-- `GET /api/benchmarks`
-  - Gera benchmarks estatísticos por agrupamento (`group_by`).
+### 4.7 API — Dados Históricos (7 rotas)
 
-- `GET /api/company/<company_name>/analysis`
-  - Retorna análise da empresa selecionada.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/historico/summary` | Resumo geral |
+| `GET /api/historico/search` | Busca empresas c/ dados históricos |
+| `GET /api/historico/company/<code>` | Dados históricos de uma empresa |
+| `GET /api/historico/sector_evolution` | Evolução temporal por setor |
+| `GET /api/historico/compare` | Comparar múltiplas empresas |
+| `GET /api/historico/sectors_list` | Setores com dados históricos |
+| `POST /api/historico/consolidated` | Consolidado + detalhado por empresa |
 
-## 4.7 API — Catálogo de Campos
+### 4.8 API — Análise por Setor (3 rotas)
 
-- `GET /api/get_field_categories` → categorias de campos disponíveis.
-- `GET /api/get_category_fields/<category_id>` → campos de uma categoria.
-- `GET /api/get_field_info/<field_name>` → metadados de um campo.
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/analise_setor/filters` | Filtros: setores, regiões, países, anos |
+| `GET /api/analise_setor/data` | Dados agregados por setor/localidade |
+| `GET /api/analise_setor/detail` | Dados individuais p/ tabela/export |
+
+### 4.9 API — Exportação (2 rotas)
+
+| Rota | Descrição |
+|------|-----------|
+| `POST /api/export_excel` | Exportar p/ Excel (.xlsx) |
+| `POST /api/export_preview` | Preview dos dados a exportar |
+
+### 4.10 API — Gestão de Fontes (4 rotas)
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/data_sources_status` | Status de todas as fontes |
+| `POST /api/update_data_source/<id>` | Atualizar fonte específica |
+| `GET /api/update_all_sources` | Atualizar todas (SSE streaming) |
+| `GET /api/data_update_history` | Histórico de atualizações |
 
 ---
 
 ## 5) Mapa de Rotas — `company_analysis_app.py`
 
-App focado apenas em análise de empresas, com rotas principais:
+App focado em análise de empresas (porta 5001):
 
-- `GET /` → `company_analysis.html`.
-- `GET /api/filters` → países e indústrias.
-- `GET /api/companies` → consulta de empresas com filtros hierárquicos + market cap.
-- `GET /api/benchmarks` → benchmarks por grupo (`industry`, `country` etc.).
-- `GET /api/company/<company_name>/analysis` → análise detalhada da empresa:
-  - dados da empresa,
-  - benchmark setorial/país,
-  - rankings por métricas (setor, país, global).
+| Rota | Descrição |
+|------|-----------|
+| `GET /` | Página principal (`company_analysis.html`) |
+| `GET /api/filters` | Países e indústrias disponíveis |
+| `GET /api/companies` | Consulta empresas c/ filtros |
+| `GET /api/benchmarks` | Benchmarks por grupo (setor/país) |
+| `GET /api/company/<name>/analysis` | Análise detalhada + rankings |
 
 ---
 
-## 6) Como Executar
+## 6) Funcionalidades Principais
 
-### App principal
+### WACC Calculator
+- Cálculo automatizado com componentes: Rf, β, ERP, Risco-País, Size Premium, Kd, D/E
+- Fontes live: FRED (US T-bonds), BCB (Selic, IPCA), Damodaran (β, ERP)
+- Fórmula: `Ke = Rf + β × ERP + Rp + SP`
+- WACC: `WACC = Ke × E/(D+E) + Kd × (1-T) × D/(D+E)`
+
+### Dashboard Yahoo Finance
+- 42.878 empresas com dados atuais do Yahoo Finance
+- Agregações por setor, indústria, país, atividade Anloc
+- Drill-down paginado com exportação CSV
+- Análise cruzada setor × país
+
+### Dados Históricos
+- 156.585 registros históricos (2021-2026) de 37k+ empresas
+- 4 abas: Empresa, Consolidado, Comparar, Setores
+- Consolidado: KPIs, 6 gráficos, tabela estatística, ranking
+- Toggle Consolidado/Detalhado com multi-select de métricas
+- 26 métricas: margens, múltiplos, alavancagem, eficiência, valores USD
+- Exportação CSV formatada p/ Excel pt-BR (`;` delimitador, `,` decimal)
+
+### Análise por Setor
+- Filtros multi-select: setores, regiões, países, anos
+- 3 abas: Agregado, Evolução, Detalhes
+- Exportação CSV
+
+### Exportação de Dados
+- Exportação Excel (.xlsx) com filtros e preview
+- Exportações CSV em todas as tabelas de dados
+
+---
+
+## 7) Scripts de Manutenção (`scripts/`)
+
+| Script | Função | Frequência |
+|--------|--------|------------|
+| `fetch_historical_financials.py` | Download de históricos via Yahoo | Trimestral |
+| `extract_global_damodaran.py` | Importar Excel Damodaran | Anual |
+| `import_excel_full_fields.py` | Importar campos completos | Anual |
+| `sync_company_basic_data.py` | Sincronizar dados básicos | Sob demanda |
+| `update_company_data_from_yahoo.py` | Atualizar dados via Yahoo | Mensal |
+| `update_company_data_from_yahoo_fast.py` | Versão rápida do acima | Mensal |
+| `update_company_about_from_yahoo.py` | Atualizar "about" | Semestral |
+| `fix_yahoo_codes.py` | Corrigir códigos Yahoo | Sob demanda |
+| `create_country_risk_db.py` | Popular risco-país | Anual |
+| `import_size_premium.py` | Popular size premium | Anual |
+
+---
+
+## 8) Como Executar
 
 ```bash
+# Instalar dependências
+pip install -r requirements.txt
+
+# App principal (porta 5000)
 python app.py
-```
 
-- URL padrão: `http://localhost:5000`
-
-### App de análise (alternativo)
-
-```bash
+# App de análise (porta 5001) — opcional
 python company_analysis_app.py
 ```
 
-- URL padrão: `http://localhost:5001`
+Acessar: `http://localhost:5000`
 
 ---
 
-## 7) Observações Técnicas
+## 9) Dependências
 
-- Existe **sobreposição de responsabilidades** entre `app.py` e `company_analysis_app.py` nas rotas de análise de empresas.
-- A base Damodaran é o núcleo para filtros hierárquicos (geografia e setor) e benchmarks.
-- O projeto já possui boa base para expansão (exportações, análises avançadas e visualizações adicionais).
-
----
-
-## 8) Correções Recentes (Fev/2026)
-
-### 8.1 Beta Setorial — Indústrias Damodaran
-- Corrigido: dropdown de setores agora carrega corretamente as indústrias Damodaran.
-- Campos `value`, `label`, `companies_count` adicionados à API `/api/get_beta_sectors`.
-
-### 8.2 D/E Médio do Setor
-- Corrigido: campo `debt_equity_ratio` agora é retornado pela API `/api/get_sector_beta`.
-- Campo `data_quality` (high/medium/low) adicionado baseado no número de empresas.
-- Preenchimento automático do campo "D/E Médio do Setor" no frontend.
-
-### 8.3 Seleção de País — Risco País
-- Corrigido: endpoint `/api/get_country_risk_options` agora retorna estrutura correta.
-- Países organizados em grupos: **Principais** (Brasil, EUA, China, etc.) e **Outros**.
-- Cada país com campos `value`, `label`, `risk_premium` (%).
-- Brasil selecionado por padrão.
-
-### 8.4 Prêmio de Tamanho (Size Premium) — NOVO
-- Implementada seção completa no frontend WACC.
-- Input de Market Cap (US$) com cálculo automático do decil e prêmio.
-- Tabela expansível com todos os 13 decis de tamanho.
-- Prêmio de tamanho integrado na fórmula WACC: `Ke = Rf + β×ERP + Rp + SP`.
-- APIs: `/api/get_size_premium?market_cap=X` e `/api/get_size_deciles`.
-
----
-
-## 9) Plano de Atualização Automática de Dados
-
-### 9.1 Fontes e Frequência
-
-| Fonte | Componente | Frequência Ideal | Método |
-|-------|-----------|-----------------|--------|
-| **FRED API** | Taxa Livre de Risco (10Y/30Y) | Diária | API REST automática |
-| **Damodaran (NYU)** | Betas setoriais, ERP, D/E | Anual (janeiro) | Download Excel + ETL |
-| **Damodaran (NYU)** | Risco-País | Anual (janeiro) | Download Excel + ETL |
-| **Damodaran (NYU)** | Size Premium (Ibbotson) | Anual | Download + ETL |
-| **Yahoo Finance** | About/Descrição empresas | Semestral | Script batch Yahoo API |
-| **BCB API** | Selic, IPCA, câmbio | Diária | API REST automática |
-
-### 9.2 Scripts Existentes para Atualização
-
-- `scripts/extract_global_damodaran.py` — importar Excel Damodaran global
-- `scripts/import_excel_full_fields.py` — importar todos os campos do Excel
-- `scripts/create_country_risk_db.py` — popular tabela `country_risk`
-- `scripts/import_size_premium.py` — popular tabela `size_premium`
-- `scripts/update_company_about_from_yahoo.py` — atualizar "about" via Yahoo
-- `scripts/normalize_company_yahoo_codes.py` — normalizar códigos Yahoo
-
-### 9.3 Plano de Automação (a implementar)
-
-**Fase 1 — Script de atualização unificado:**
-- Criar `scripts/auto_update_all.py` que orquestra as atualizações.
-- Download automático do Excel Damodaran quando nova versão disponível.
-- Atualização da taxa livre de risco via FRED em cada inicialização do app.
-
-**Fase 2 — Agendamento:**
-- GitHub Actions (workflow CRON) para atualização semanal dos dados FRED/BCB.
-- Script local agendado (Task Scheduler / cron) para atualização anual Damodaran.
-
-**Fase 3 — Monitoramento:**
-- Health check expandido (`/api/health`) com idade dos dados.
-- Alerta no dashboard quando dados estiverem desatualizados (>30 dias para FRED, >13 meses para Damodaran).
+```
+Flask==3.1.2
+pandas==3.0.0
+numpy==2.4.2
+openpyxl==3.1.5
+requests==2.32.5
+beautifulsoup4==4.14.3
+yfinance==1.1.0
+selenium==4.40.0
+wikipedia==1.4.0
+curl_cffi==0.13.0
+```
 

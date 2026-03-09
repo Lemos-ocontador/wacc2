@@ -28,6 +28,7 @@ from data_extractors import WACCDataManager
 from wacc_data_connector import WACCDataConnector
 from field_categories_manager import FieldCategoriesManager
 from data_source_manager import DataSourceManager
+from geographic_mappings import GEOGRAPHIC_MAPPING, get_country_region
 
 # Configurar aplicação Flask
 app = Flask(__name__)
@@ -1933,6 +1934,568 @@ def api_get_field_info(field_name):
         }), 500
 
 
+# ===== DASHBOARD DADOS YAHOO ===== 
+
+@app.route('/data-yahoo')
+def data_yahoo_page():
+    """Dashboard analítico dos dados obtidos do Yahoo Finance."""
+    return render_template('data_yahoo.html')
+
+
+@app.route('/api/yahoo_dashboard_summary')
+def api_yahoo_dashboard_summary():
+    """Retorna resumo geral dos dados Yahoo para os KPI cards."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.cursor()
+
+        stats = {}
+        cur.execute("SELECT COUNT(*) FROM company_basic_data")
+        stats['total_companies'] = cur.fetchone()[0]
+
+        for col, key in [
+            ('about', 'with_about'), ('yahoo_sector', 'with_sector'),
+            ('yahoo_industry', 'with_industry'), ('yahoo_country', 'with_country'),
+            ('enterprise_value', 'with_ev'), ('market_cap', 'with_mcap'),
+            ('currency', 'with_currency'), ('yahoo_website', 'with_website'),
+        ]:
+            cur.execute(f"SELECT COUNT(*) FROM company_basic_data WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS TEXT)) != ''")
+            stats[key] = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(DISTINCT yahoo_sector) FROM company_basic_data WHERE yahoo_sector IS NOT NULL")
+        stats['distinct_sectors'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT yahoo_industry) FROM company_basic_data WHERE yahoo_industry IS NOT NULL")
+        stats['distinct_industries'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT yahoo_country) FROM company_basic_data WHERE yahoo_country IS NOT NULL")
+        stats['distinct_countries'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT currency) FROM company_basic_data WHERE currency IS NOT NULL")
+        stats['distinct_currencies'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT atividade_anloc) FROM damodaran_global WHERE atividade_anloc IS NOT NULL")
+        stats['distinct_atividades'] = cur.fetchone()[0]
+
+        conn.close()
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_sectors')
+def api_yahoo_dashboard_sectors():
+    """Métricas agregadas por setor Yahoo."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = """
+            SELECT 
+                cbd.yahoo_sector AS sector,
+                COUNT(*) AS count,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.ev_revenue AS REAL)) AS avg_ev_revenue,
+                AVG(CAST(dg.pb_ratio AS REAL)) AS avg_pb,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin,
+                AVG(CAST(dg.net_profit_margin AS REAL)) AS avg_net_margin,
+                AVG(CAST(dg.gross_margin AS REAL)) AS avg_gross_margin,
+                AVG(CAST(dg.revenue_growth AS REAL)) AS avg_rev_growth,
+                AVG(CAST(dg.beta AS REAL)) AS avg_beta,
+                AVG(CAST(dg.dividend_yield AS REAL)) AS avg_div_yield,
+                AVG(CAST(dg.debt_equity AS REAL)) AS avg_debt_equity,
+                MEDIAN(CAST(dg.pe_ratio AS REAL)) AS med_pe
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            WHERE cbd.yahoo_sector IS NOT NULL
+            GROUP BY cbd.yahoo_sector
+            ORDER BY COUNT(*) DESC
+        """
+        # SQLite doesn't have MEDIAN, use a simpler approach
+        query = query.replace("MEDIAN(CAST(dg.pe_ratio AS REAL)) AS med_pe", "0 AS med_pe")
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'sectors': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_industries')
+def api_yahoo_dashboard_industries():
+    """Métricas agregadas por indústria Yahoo, filtrável por setor."""
+    try:
+        sector = request.args.get('sector', '')
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        where = "WHERE cbd.yahoo_industry IS NOT NULL"
+        if sector:
+            where += " AND cbd.yahoo_sector = ?"
+            params.append(sector)
+
+        query = f"""
+            SELECT 
+                cbd.yahoo_industry AS industry,
+                cbd.yahoo_sector AS sector,
+                COUNT(*) AS count,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.ev_revenue AS REAL)) AS avg_ev_revenue,
+                AVG(CAST(dg.pb_ratio AS REAL)) AS avg_pb,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin,
+                AVG(CAST(dg.net_profit_margin AS REAL)) AS avg_net_margin,
+                AVG(CAST(dg.gross_margin AS REAL)) AS avg_gross_margin,
+                AVG(CAST(dg.revenue_growth AS REAL)) AS avg_rev_growth,
+                AVG(CAST(dg.beta AS REAL)) AS avg_beta,
+                AVG(CAST(dg.dividend_yield AS REAL)) AS avg_div_yield,
+                AVG(CAST(dg.debt_equity AS REAL)) AS avg_debt_equity
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+            GROUP BY cbd.yahoo_industry
+            HAVING COUNT(*) >= 3
+            ORDER BY COUNT(*) DESC
+        """
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'industries': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_countries')
+def api_yahoo_dashboard_countries():
+    """Métricas agregadas por país Yahoo."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = """
+            SELECT 
+                cbd.yahoo_country AS country,
+                COUNT(*) AS count,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin,
+                AVG(CAST(dg.beta AS REAL)) AS avg_beta,
+                AVG(CAST(dg.revenue_growth AS REAL)) AS avg_rev_growth,
+                COUNT(DISTINCT cbd.yahoo_sector) AS sectors_count,
+                COUNT(DISTINCT cbd.yahoo_industry) AS industries_count
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            WHERE cbd.yahoo_country IS NOT NULL
+            GROUP BY cbd.yahoo_country
+            HAVING COUNT(*) >= 3
+            ORDER BY COUNT(*) DESC
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'countries': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_atividades')
+def api_yahoo_dashboard_atividades():
+    """Métricas agregadas por atividade Anloc."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = """
+            SELECT 
+                dg.atividade_anloc AS atividade,
+                COUNT(*) AS count,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.ev_revenue AS REAL)) AS avg_ev_revenue,
+                AVG(CAST(dg.pb_ratio AS REAL)) AS avg_pb,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin,
+                AVG(CAST(dg.net_profit_margin AS REAL)) AS avg_net_margin,
+                AVG(CAST(dg.gross_margin AS REAL)) AS avg_gross_margin,
+                AVG(CAST(dg.revenue_growth AS REAL)) AS avg_rev_growth,
+                AVG(CAST(dg.beta AS REAL)) AS avg_beta,
+                AVG(CAST(dg.debt_equity AS REAL)) AS avg_debt_equity
+            FROM damodaran_global dg
+            WHERE dg.atividade_anloc IS NOT NULL AND dg.atividade_anloc != ''
+            GROUP BY dg.atividade_anloc
+            HAVING COUNT(*) >= 3
+            ORDER BY COUNT(*) DESC
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'atividades': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_cross')
+def api_yahoo_dashboard_cross():
+    """Análise cruzada setor x país."""
+    try:
+        sector = request.args.get('sector', '')
+        country = request.args.get('country', '')
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        where = "WHERE cbd.yahoo_sector IS NOT NULL AND cbd.yahoo_country IS NOT NULL"
+        if sector:
+            where += " AND cbd.yahoo_sector = ?"
+            params.append(sector)
+        if country:
+            where += " AND cbd.yahoo_country = ?"
+            params.append(country)
+
+        query = f"""
+            SELECT 
+                cbd.yahoo_sector AS sector,
+                cbd.yahoo_country AS country,
+                COUNT(*) AS count,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+            GROUP BY cbd.yahoo_sector, cbd.yahoo_country
+            HAVING COUNT(*) >= 3
+            ORDER BY COUNT(*) DESC
+            LIMIT 200
+        """
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'cross': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ===== DRILL-DOWN APIs =====
+
+@app.route('/api/yahoo_drill/companies')
+def api_yahoo_drill_companies():
+    """Lista paginada de empresas com filtros múltiplos."""
+    try:
+        sector = request.args.get('sector', '')
+        industry = request.args.get('industry', '')
+        country = request.args.get('country', '')
+        atividade = request.args.get('atividade', '')
+        search = request.args.get('search', '')
+        sort = request.args.get('sort', 'company_name')
+        order = request.args.get('order', 'asc')
+        page = max(1, int(request.args.get('page', 1)))
+        per_page = min(100, max(10, int(request.args.get('per_page', 50))))
+        # Filtro especial: campo com/sem dados
+        has_field = request.args.get('has_field', '')  # ex: 'about', 'yahoo_sector'
+        has_value = request.args.get('has_value', '')   # '1' = com dados, '0' = sem dados
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        conditions = []
+
+        if sector:
+            conditions.append("cbd.yahoo_sector = ?")
+            params.append(sector)
+        if industry:
+            conditions.append("cbd.yahoo_industry = ?")
+            params.append(industry)
+        if country:
+            conditions.append("cbd.yahoo_country = ?")
+            params.append(country)
+        if atividade:
+            conditions.append("dg.atividade_anloc = ?")
+            params.append(atividade)
+        if search:
+            conditions.append("(dg.company_name LIKE ? OR dg.ticker LIKE ? OR cbd.yahoo_code LIKE ?)")
+            s = f"%{search}%"
+            params.extend([s, s, s])
+        if has_field and has_value in ('0', '1'):
+            field_map = {
+                'about': 'cbd.about',
+                'yahoo_sector': 'cbd.yahoo_sector',
+                'yahoo_industry': 'cbd.yahoo_industry',
+                'yahoo_country': 'cbd.yahoo_country',
+                'enterprise_value': 'cbd.enterprise_value',
+                'market_cap': 'cbd.market_cap',
+                'yahoo_website': 'cbd.yahoo_website'
+            }
+            col = field_map.get(has_field)
+            if col:
+                if has_value == '1':
+                    conditions.append(f"{col} IS NOT NULL AND {col} != ''")
+                else:
+                    conditions.append(f"({col} IS NULL OR {col} = '')")
+
+        where = "WHERE " + " AND ".join(conditions) if conditions else ""
+
+        # Validar sort column
+        valid_sorts = {
+            'company_name': 'dg.company_name',
+            'ticker': 'dg.ticker',
+            'yahoo_sector': 'cbd.yahoo_sector',
+            'yahoo_industry': 'cbd.yahoo_industry',
+            'yahoo_country': 'cbd.yahoo_country',
+            'market_cap': 'cbd.market_cap',
+            'enterprise_value': 'cbd.enterprise_value',
+            'pe_ratio': 'dg.pe_ratio',
+            'ev_ebitda': 'dg.ev_ebitda',
+            'operating_margin': 'dg.operating_margin'
+        }
+        sort_col = valid_sorts.get(sort, 'dg.company_name')
+        sort_dir = 'DESC' if order.lower() == 'desc' else 'ASC'
+
+        # Count total
+        count_query = f"""
+            SELECT COUNT(*) FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+        """
+        count_df = pd.read_sql_query(count_query, conn, params=params)
+        total = int(count_df.iloc[0, 0])
+
+        # Paginated data
+        offset = (page - 1) * per_page
+        query = f"""
+            SELECT 
+                dg.company_name, dg.ticker, cbd.yahoo_code,
+                cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                cbd.market_cap, cbd.enterprise_value,
+                CAST(dg.pe_ratio AS REAL) AS pe_ratio,
+                CAST(dg.ev_ebitda AS REAL) AS ev_ebitda,
+                CAST(dg.ev_revenue AS REAL) AS ev_revenue,
+                CAST(dg.operating_margin AS REAL) AS operating_margin,
+                CAST(dg.beta AS REAL) AS beta,
+                dg.atividade_anloc,
+                CASE WHEN EXISTS(SELECT 1 FROM company_financials_historical cfh WHERE cfh.yahoo_code = cbd.yahoo_code LIMIT 1) THEN 1 ELSE 0 END AS has_historico
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+            ORDER BY {sort_col} {sort_dir}
+            LIMIT ? OFFSET ?
+        """
+        params.extend([per_page, offset])
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+
+        return jsonify({
+            'success': True,
+            'companies': df.to_dict('records'),
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_drill/distribution')
+def api_yahoo_drill_distribution():
+    """Distribuição de um indicador para um grupo (setor, indústria, país)."""
+    try:
+        metric = request.args.get('metric', 'pe_ratio')
+        sector = request.args.get('sector', '')
+        industry = request.args.get('industry', '')
+        country = request.args.get('country', '')
+        atividade = request.args.get('atividade', '')
+
+        # Validar metric
+        valid_metrics = {
+            'pe_ratio': ('dg.pe_ratio', 'P/E'),
+            'ev_ebitda': ('dg.ev_ebitda', 'EV/EBITDA'),
+            'ev_revenue': ('dg.ev_revenue', 'EV/Revenue'),
+            'pb_ratio': ('dg.pb_ratio', 'P/B'),
+            'operating_margin': ('dg.operating_margin', 'Margem Oper.'),
+            'net_profit_margin': ('dg.net_profit_margin', 'Margem Líq.'),
+            'gross_margin': ('dg.gross_margin', 'Margem Bruta'),
+            'roe': ('dg.roe', 'ROE'),
+            'beta': ('dg.beta', 'Beta'),
+            'debt_equity': ('dg.debt_equity', 'D/E'),
+            'market_cap': ('cbd.market_cap', 'Market Cap')
+        }
+        if metric not in valid_metrics:
+            return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
+
+        col_expr, label = valid_metrics[metric]
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        conditions = [f"CAST({col_expr} AS REAL) IS NOT NULL"]
+
+        if sector:
+            conditions.append("cbd.yahoo_sector = ?")
+            params.append(sector)
+        if industry:
+            conditions.append("cbd.yahoo_industry = ?")
+            params.append(industry)
+        if country:
+            conditions.append("cbd.yahoo_country = ?")
+            params.append(country)
+        if atividade:
+            conditions.append("dg.atividade_anloc = ?")
+            params.append(atividade)
+
+        where = "WHERE " + " AND ".join(conditions)
+
+        query = f"""
+            SELECT 
+                dg.company_name, dg.ticker,
+                CAST({col_expr} AS REAL) AS value
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+            ORDER BY value
+        """
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+
+        if df.empty:
+            return jsonify({'success': True, 'label': label, 'stats': None, 'histogram': [], 'top10': [], 'bottom10': []})
+
+        values = df['value'].dropna()
+
+        # Stats
+        stats = {
+            'count': int(len(values)),
+            'mean': float(values.mean()),
+            'median': float(values.median()),
+            'std': float(values.std()) if len(values) > 1 else 0,
+            'min': float(values.min()),
+            'max': float(values.max()),
+            'p25': float(values.quantile(0.25)),
+            'p75': float(values.quantile(0.75))
+        }
+
+        # Histogram (10 bins, excluir outliers extremos)
+        q01 = values.quantile(0.01)
+        q99 = values.quantile(0.99)
+        trimmed = values[(values >= q01) & (values <= q99)]
+        if len(trimmed) > 0:
+            counts, bin_edges = np.histogram(trimmed, bins=min(15, max(5, len(trimmed) // 10)))
+            histogram = []
+            for i in range(len(counts)):
+                histogram.append({
+                    'bin_start': round(float(bin_edges[i]), 2),
+                    'bin_end': round(float(bin_edges[i + 1]), 2),
+                    'count': int(counts[i])
+                })
+        else:
+            histogram = []
+
+        # Top 10 and Bottom 10
+        df_sorted = df.dropna(subset=['value']).sort_values('value', ascending=False)
+        top10 = df_sorted.head(10).replace({np.nan: None, np.inf: None, -np.inf: None}).to_dict('records')
+        bottom10 = df_sorted.tail(10).replace({np.nan: None, np.inf: None, -np.inf: None}).to_dict('records')
+
+        return jsonify({
+            'success': True,
+            'label': label,
+            'metric': metric,
+            'stats': stats,
+            'histogram': histogram,
+            'top10': top10,
+            'bottom10': bottom10
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_drill/coverage')
+def api_yahoo_drill_coverage():
+    """Detalhamento de cobertura: empresas com/sem dados de um campo."""
+    try:
+        field = request.args.get('field', 'about')
+        field_map = {
+            'about': ('cbd.about', 'About'),
+            'yahoo_sector': ('cbd.yahoo_sector', 'Setor'),
+            'yahoo_industry': ('cbd.yahoo_industry', 'Indústria'),
+            'yahoo_country': ('cbd.yahoo_country', 'País'),
+            'enterprise_value': ('cbd.enterprise_value', 'Enterprise Value'),
+            'market_cap': ('cbd.market_cap', 'Market Cap'),
+            'yahoo_website': ('cbd.yahoo_website', 'Website')
+        }
+        if field not in field_map:
+            return jsonify({'success': False, 'error': f'Campo inválido: {field}'}), 400
+
+        col, label = field_map[field]
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+
+        # Total
+        total_df = pd.read_sql_query("""
+            SELECT COUNT(*) AS total FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+        """, conn)
+        total = int(total_df.iloc[0, 0])
+
+        # Com dados
+        with_df = pd.read_sql_query(f"""
+            SELECT COUNT(*) AS c FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            WHERE {col} IS NOT NULL AND {col} != ''
+        """, conn)
+        with_data = int(with_df.iloc[0, 0])
+        without_data = total - with_data
+
+        # Amostra sem dados (top 20)
+        sample_df = pd.read_sql_query(f"""
+            SELECT dg.company_name, dg.ticker, cbd.yahoo_code,
+                   cbd.yahoo_sector, cbd.yahoo_country
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            WHERE ({col} IS NULL OR {col} = '')
+            ORDER BY cbd.market_cap DESC
+            LIMIT 20
+        """, conn)
+        conn.close()
+        sample_df = sample_df.replace({np.nan: None})
+
+        return jsonify({
+            'success': True,
+            'field': field,
+            'label': label,
+            'total': total,
+            'with_data': with_data,
+            'without_data': without_data,
+            'pct': round(with_data / total * 100, 1) if total > 0 else 0,
+            'sample_without': sample_df.to_dict('records')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_drill/currencies')
+def api_yahoo_drill_currencies():
+    """Lista de moedas com contagem de empresas e países."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = """
+            SELECT 
+                cbd.currency,
+                COUNT(*) AS company_count,
+                GROUP_CONCAT(DISTINCT cbd.yahoo_country) AS countries
+            FROM company_basic_data cbd
+            WHERE cbd.currency IS NOT NULL AND cbd.currency != ''
+            GROUP BY cbd.currency
+            ORDER BY COUNT(*) DESC
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        df = df.replace({np.nan: None})
+
+        currencies = []
+        for _, row in df.iterrows():
+            countries_str = row['countries'] or ''
+            countries_list = [c.strip() for c in countries_str.split(',') if c.strip()]
+            currencies.append({
+                'currency': row['currency'],
+                'company_count': int(row['company_count']),
+                'country_count': len(countries_list),
+                'countries': countries_list[:10]  # Top 10 países
+            })
+
+        return jsonify({'success': True, 'currencies': currencies})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== EXPORTAÇÃO DE DADOS =====
 
 @app.route('/exporta-data')
@@ -2200,6 +2763,965 @@ def api_export_preview():
 
     except Exception as e:
         logger.error(f"Erro no preview de exportação: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==========================================================================
+# DADOS FINANCEIROS HISTÓRICOS
+# ==========================================================================
+
+@app.route('/data-yahoo-historico')
+def data_yahoo_historico_page():
+    """Dashboard de dados financeiros históricos do Yahoo Finance."""
+    return render_template('data_yahoo_historico.html')
+
+
+@app.route('/api/historico/summary')
+def api_historico_summary():
+    """Resumo geral dos dados históricos para KPI cards."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.cursor()
+        stats = {}
+        cur.execute("SELECT COUNT(*) FROM company_financials_historical")
+        stats['total_records'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical")
+        stats['total_companies'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='annual'")
+        stats['annual_companies'] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='quarterly'")
+        stats['quarterly_companies'] = cur.fetchone()[0]
+        cur.execute("SELECT MIN(fiscal_year), MAX(fiscal_year) FROM company_financials_historical WHERE period_type='annual'")
+        r = cur.fetchone()
+        stats['min_year'] = r[0]
+        stats['max_year'] = r[1]
+        cur.execute("SELECT COUNT(DISTINCT original_currency) FROM company_financials_historical WHERE original_currency IS NOT NULL")
+        stats['distinct_currencies'] = cur.fetchone()[0]
+        cur.execute("""
+            SELECT COUNT(DISTINCT cfh.yahoo_code) 
+            FROM company_financials_historical cfh
+            WHERE cfh.enterprise_value_estimated IS NOT NULL
+        """)
+        stats['with_ev'] = cur.fetchone()[0]
+        # Cobertura por setor
+        cur.execute("""
+            SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.yahoo_code) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_sector IS NOT NULL
+            GROUP BY cbd.yahoo_sector ORDER BY n DESC
+        """)
+        stats['sectors'] = [{'sector': r[0], 'count': r[1]} for r in cur.fetchall()]
+        # Cobertura por país
+        cur.execute("""
+            SELECT cbd.yahoo_country, COUNT(DISTINCT cfh.yahoo_code) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != ''
+            GROUP BY cbd.yahoo_country ORDER BY n DESC
+        """)
+        countries_raw = cur.fetchall()
+        stats['countries'] = [{'country': r[0], 'count': r[1]} for r in countries_raw]
+        # Regiões e sub-regiões (via geographic_mappings)
+        region_counts = {}
+        subregion_counts = {}
+        for country_name, count in countries_raw:
+            geo = get_country_region(country_name)
+            region = geo['region']
+            subregion = geo['subregion']
+            region_counts[region] = region_counts.get(region, 0) + count
+            subregion_counts[subregion] = subregion_counts.get(subregion, 0) + count
+        stats['regions'] = [{'region': r, 'count': c} for r, c in sorted(region_counts.items(), key=lambda x: -x[1])]
+        stats['subregions'] = [{'subregion': r, 'count': c} for r, c in sorted(subregion_counts.items(), key=lambda x: -x[1])]
+        # Mapa país→região para o frontend
+        stats['country_region_map'] = {k: v for k, v in GEOGRAPHIC_MAPPING.items()}
+        conn.close()
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/search')
+def api_historico_search():
+    """Busca empresas com dados históricos. Params: q, sector, country, region, subregion, limit."""
+    try:
+        q = request.args.get('q', '').strip()
+        sector = request.args.get('sector', '').strip()
+        country = request.args.get('country', '').strip()
+        region = request.args.get('region', '').strip()
+        subregion = request.args.get('subregion', '').strip()
+        limit = int(request.args.get('limit', 50))
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = """
+            SELECT DISTINCT cfh.yahoo_code, cfh.company_name,
+                   cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                   cfh.original_currency,
+                   COUNT(*) AS periods,
+                   MIN(cfh.fiscal_year) AS min_year,
+                   MAX(cfh.fiscal_year) AS max_year
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cfh.period_type = 'annual'
+        """
+        params = []
+        if q:
+            query += " AND (cfh.yahoo_code LIKE ? OR cfh.company_name LIKE ?)"
+            params.extend([f'%{q}%', f'%{q}%'])
+        if sector:
+            query += " AND cbd.yahoo_sector = ?"
+            params.append(sector)
+        if country:
+            query += " AND cbd.yahoo_country = ?"
+            params.append(country)
+        if region:
+            # Filtrar por região usando geographic_mappings
+            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['region'] == region]
+            if region_countries:
+                placeholders = ','.join(['?'] * len(region_countries))
+                query += f" AND cbd.yahoo_country IN ({placeholders})"
+                params.extend(region_countries)
+        if subregion:
+            sub_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['subregion'] == subregion]
+            if sub_countries:
+                placeholders = ','.join(['?'] * len(sub_countries))
+                query += f" AND cbd.yahoo_country IN ({placeholders})"
+                params.extend(sub_countries)
+        query += " GROUP BY cfh.yahoo_code ORDER BY cfh.company_name LIMIT ?"
+        params.append(limit)
+
+        cur = conn.execute(query, params)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({'success': True, 'companies': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/company/<yahoo_code>')
+def api_historico_company(yahoo_code):
+    """Retorna todos os dados históricos de uma empresa. Params: period_type (annual/quarterly)."""
+    try:
+        period_type = request.args.get('period_type', 'annual')
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.execute("""
+            SELECT * FROM company_financials_historical
+            WHERE yahoo_code = ? AND period_type = ?
+            ORDER BY period_date DESC
+        """, [yahoo_code, period_type])
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+
+        # Info da empresa
+        info = conn.execute("""
+            SELECT cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                   cbd.yahoo_website, cbd.currency
+            FROM company_basic_data cbd
+            WHERE cbd.yahoo_code = ?
+        """, [yahoo_code]).fetchone()
+        company_info = {}
+        if info:
+            company_info = {
+                'sector': info[0], 'industry': info[1], 'country': info[2],
+                'website': info[3], 'currency': info[4]
+            }
+
+        conn.close()
+        # Limpar NaN
+        for row in rows:
+            for k, v in row.items():
+                if isinstance(v, float) and (v != v):  # NaN check
+                    row[k] = None
+        return jsonify({'success': True, 'periods': rows, 'company_info': company_info})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/sector_evolution')
+def api_historico_sector_evolution():
+    """Evolução temporal de métricas por setor. Params: metric (ebitda_margin, ev_ebitda, etc.)."""
+    try:
+        metric = request.args.get('metric', 'ebitda_margin')
+        allowed = [
+            'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            'fcf_revenue_ratio', 'fcf_ebitda_ratio', 'capex_revenue',
+            'total_revenue_usd', 'ebitda_usd', 'net_income_usd',
+            'free_cash_flow_usd', 'enterprise_value_usd'
+        ]
+        if metric not in allowed:
+            return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = f"""
+            SELECT cbd.yahoo_sector AS sector, cfh.fiscal_year,
+                   AVG(cfh.{metric}) AS avg_value,
+                   MEDIAN(cfh.{metric}) AS med_value,
+                   COUNT(*) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cfh.period_type = 'annual'
+              AND cbd.yahoo_sector IS NOT NULL
+              AND cfh.{metric} IS NOT NULL
+            GROUP BY cbd.yahoo_sector, cfh.fiscal_year
+            ORDER BY cbd.yahoo_sector, cfh.fiscal_year
+        """
+        try:
+            cur = conn.execute(query)
+        except Exception:
+            # SQLite doesn't have MEDIAN, use AVG only
+            query = query.replace(f'MEDIAN(cfh.{metric}) AS med_value,', '')
+            cur = conn.execute(query)
+
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        # Agrupar por setor
+        sectors = {}
+        for r in rows:
+            s = r['sector']
+            if s not in sectors:
+                sectors[s] = []
+            sectors[s].append(r)
+
+        return jsonify({'success': True, 'sectors': sectors})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/compare')
+def api_historico_compare():
+    """Compara múltiplas empresas. Params: codes (comma-separated), metric, period_type."""
+    try:
+        codes_str = request.args.get('codes', '')
+        metric = request.args.get('metric', 'ebitda_margin')
+        period_type = request.args.get('period_type', 'annual')
+
+        if not codes_str:
+            return jsonify({'success': False, 'error': 'Parâmetro codes obrigatório'}), 400
+
+        codes = [c.strip() for c in codes_str.split(',') if c.strip()][:10]
+
+        allowed = [
+            'total_revenue', 'ebit', 'ebitda', 'net_income', 'free_cash_flow',
+            'total_revenue_usd', 'ebitda_usd', 'net_income_usd', 'free_cash_flow_usd',
+            'enterprise_value_estimated', 'enterprise_value_usd', 'market_cap_estimated',
+            'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            'fcf_revenue_ratio', 'fcf_ebitda_ratio', 'capex_revenue'
+        ]
+        if metric not in allowed:
+            return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
+
+        placeholders = ','.join(['?'] * len(codes))
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = f"""
+            SELECT yahoo_code, company_name, fiscal_year, period_date, {metric}
+            FROM company_financials_historical
+            WHERE yahoo_code IN ({placeholders}) AND period_type = ?
+              AND {metric} IS NOT NULL
+            ORDER BY yahoo_code, fiscal_year
+        """
+        cur = conn.execute(query, codes + [period_type])
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        # Agrupar por empresa
+        companies = {}
+        for r in rows:
+            c = r['yahoo_code']
+            if c not in companies:
+                companies[c] = {'name': r['company_name'], 'data': []}
+            companies[c]['data'].append(r)
+
+        return jsonify({'success': True, 'companies': companies})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/sectors_list')
+def api_historico_sectors_list():
+    """Lista setores com dados históricos disponíveis."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.execute("""
+            SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.yahoo_code) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_sector IS NOT NULL AND cfh.period_type = 'annual'
+            GROUP BY cbd.yahoo_sector ORDER BY n DESC
+        """)
+        rows = [{'sector': r[0], 'count': r[1]} for r in cur.fetchall()]
+        conn.close()
+        return jsonify({'success': True, 'sectors': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ===== DRILL-DOWN HISTÓRICO =====
+
+@app.route('/api/historico_drill/companies')
+def api_historico_drill_companies():
+    """Lista paginada de empresas com dados históricos, com filtros."""
+    try:
+        sector = request.args.get('sector', '')
+        country = request.args.get('country', '')
+        region = request.args.get('region', '')
+        subregion = request.args.get('subregion', '')
+        search = request.args.get('search', '')
+        has_ev = request.args.get('has_ev', '')
+        currency = request.args.get('currency', '')
+        sort = request.args.get('sort', 'company_name')
+        order = request.args.get('order', 'asc')
+        page = max(1, int(request.args.get('page', 1)))
+        per_page = min(100, max(10, int(request.args.get('per_page', 50))))
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        conditions = ["cfh.period_type = 'annual'"]
+
+        if sector:
+            conditions.append("cbd.yahoo_sector = ?")
+            params.append(sector)
+        if country:
+            conditions.append("cbd.yahoo_country = ?")
+            params.append(country)
+        if region:
+            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['region'] == region]
+            if region_countries:
+                placeholders = ','.join(['?'] * len(region_countries))
+                conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+                params.extend(region_countries)
+        if subregion:
+            sub_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['subregion'] == subregion]
+            if sub_countries:
+                placeholders = ','.join(['?'] * len(sub_countries))
+                conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+                params.extend(sub_countries)
+        if search:
+            conditions.append("(cfh.yahoo_code LIKE ? OR cfh.company_name LIKE ?)")
+            s = f"%{search}%"
+            params.extend([s, s])
+        if has_ev == '1':
+            conditions.append("cfh.enterprise_value_estimated IS NOT NULL")
+        elif has_ev == '0':
+            conditions.append("cfh.enterprise_value_estimated IS NULL")
+        if currency:
+            conditions.append("cfh.original_currency = ?")
+            params.append(currency)
+
+        where = "WHERE " + " AND ".join(conditions)
+
+        valid_sorts = {
+            'company_name': 'cfh.company_name',
+            'yahoo_code': 'cfh.yahoo_code',
+            'sector': 'cbd.yahoo_sector',
+            'country': 'cbd.yahoo_country',
+            'periods': 'periods',
+            'max_year': 'max_year',
+        }
+        sort_col = valid_sorts.get(sort, 'cfh.company_name')
+        sort_dir = 'DESC' if order.lower() == 'desc' else 'ASC'
+
+        count_query = f"""
+            SELECT COUNT(DISTINCT cfh.yahoo_code)
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            {where}
+        """
+        cur = conn.execute(count_query, params)
+        total = cur.fetchone()[0]
+
+        offset = (page - 1) * per_page
+        query = f"""
+            SELECT cfh.yahoo_code, cfh.company_name,
+                   cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                   cfh.original_currency,
+                   COUNT(*) AS periods,
+                   MIN(cfh.fiscal_year) AS min_year,
+                   MAX(cfh.fiscal_year) AS max_year
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            {where}
+            GROUP BY cfh.yahoo_code
+            ORDER BY {sort_col} {sort_dir}
+            LIMIT ? OFFSET ?
+        """
+        params.extend([per_page, offset])
+        cur = conn.execute(query, params)
+        cols = [d[0] for d in cur.description]
+        companies = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'companies': companies,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico_drill/year_detail')
+def api_historico_drill_year_detail():
+    """Detalhe individual por empresa para um ano/métrica específico (do consolidado).
+    Params: codes (comma-separated), year, metric
+    """
+    try:
+        codes_str = request.args.get('codes', '')
+        year = request.args.get('year', '')
+        metric = request.args.get('metric', 'ebitda_margin')
+
+        if not codes_str or not year:
+            return jsonify({'success': False, 'error': 'Parâmetros obrigatórios: codes, year'}), 400
+
+        codes = [c.strip() for c in codes_str.split(',') if c.strip()]
+        year = int(year)
+
+        valid_metrics = [
+            'total_revenue_usd', 'ebitda_usd', 'net_income_usd', 'free_cash_flow_usd',
+            'enterprise_value_usd', 'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            'fcf_revenue_ratio', 'capex_revenue',
+            'total_revenue', 'ebitda', 'net_income', 'free_cash_flow',
+            'market_cap_estimated', 'enterprise_value_estimated',
+            'total_debt', 'cash_and_equivalents', 'stockholders_equity'
+        ]
+        if metric not in valid_metrics:
+            return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
+
+        placeholders = ','.join(['?'] * len(codes))
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        query = f"""
+            SELECT cfh.yahoo_code, cfh.company_name, cfh.{metric} AS value,
+                   cbd.yahoo_sector, cbd.yahoo_country, cfh.original_currency
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cfh.yahoo_code IN ({placeholders})
+              AND cfh.fiscal_year = ?
+              AND cfh.period_type = 'annual'
+              AND cfh.{metric} IS NOT NULL
+            ORDER BY cfh.{metric} DESC
+        """
+        cur = conn.execute(query, codes + [year])
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        # Calcular stats
+        values = [r['value'] for r in rows if r['value'] is not None]
+        stats = None
+        if values:
+            arr = np.array(values, dtype=float)
+            stats = {
+                'count': len(arr),
+                'mean': float(np.mean(arr)),
+                'median': float(np.median(arr)),
+                'min': float(np.min(arr)),
+                'max': float(np.max(arr)),
+                'p25': float(np.percentile(arr, 25)),
+                'p75': float(np.percentile(arr, 75)),
+            }
+
+        # Labels for metrics
+        metric_labels = {
+            'ebitda_margin': 'Margem EBITDA', 'ebit_margin': 'Margem EBIT',
+            'gross_margin': 'Margem Bruta', 'net_margin': 'Margem Líquida',
+            'ev_ebitda': 'EV/EBITDA', 'ev_ebit': 'EV/EBIT', 'ev_revenue': 'EV/Receita',
+            'debt_equity': 'Dívida/PL', 'debt_ebitda': 'Dívida/EBITDA',
+            'fcf_revenue_ratio': 'FCF/Receita', 'capex_revenue': 'Capex/Receita',
+            'total_revenue_usd': 'Receita USD', 'ebitda_usd': 'EBITDA USD',
+            'net_income_usd': 'Lucro Líq. USD', 'free_cash_flow_usd': 'FCF USD',
+            'enterprise_value_usd': 'EV USD', 'total_revenue': 'Receita',
+            'ebitda': 'EBITDA', 'net_income': 'Lucro Líquido',
+            'free_cash_flow': 'FCF', 'market_cap_estimated': 'Market Cap',
+            'enterprise_value_estimated': 'EV', 'total_debt': 'Dívida Total',
+            'cash_and_equivalents': 'Caixa', 'stockholders_equity': 'PL',
+        }
+
+        return jsonify({
+            'success': True,
+            'year': year,
+            'metric': metric,
+            'label': metric_labels.get(metric, metric),
+            'companies': rows,
+            'stats': stats,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/historico/consolidated', methods=['POST'])
+def api_historico_consolidated():
+    """Retorna dados consolidados (avg, median, min, max, p25, p75) para um conjunto de empresas.
+    Body JSON: { codes: [...], period_type: 'annual' }
+    """
+    try:
+        data = request.get_json()
+        codes = data.get('codes', [])
+        period_type = data.get('period_type', 'annual')
+        include_detail = data.get('include_detail', False)
+        if not codes:
+            return jsonify({'success': False, 'error': 'Nenhuma empresa selecionada'}), 400
+
+        placeholders = ','.join(['?'] * len(codes))
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+
+        # Buscar todos os registros das empresas
+        query = f"""
+            SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cfh.yahoo_code IN ({placeholders}) AND cfh.period_type = ?
+            ORDER BY cfh.fiscal_year, cfh.yahoo_code
+        """
+        df = pd.read_sql_query(query, conn, params=codes + [period_type])
+        conn.close()
+
+        if df.empty:
+            return jsonify({'success': True, 'years': [], 'companies': [], 'aggregated': {}, 'ranking': []})
+
+        df = df.replace({np.nan: None})
+
+        # Métricas para agregar
+        metrics = [
+            'total_revenue_usd', 'ebitda_usd', 'net_income_usd', 'free_cash_flow_usd',
+            'enterprise_value_usd', 'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            'fcf_revenue_ratio', 'fcf_ebitda_ratio', 'capex_revenue',
+            'total_revenue', 'ebitda', 'net_income', 'free_cash_flow',
+            'market_cap_estimated', 'enterprise_value_estimated',
+            'total_debt', 'cash_and_equivalents', 'stockholders_equity'
+        ]
+
+        # Agregar por ano
+        years = sorted(df['fiscal_year'].dropna().unique().tolist())
+        aggregated = {}
+        for metric in metrics:
+            if metric not in df.columns:
+                continue
+            agg = {}
+            for year in years:
+                year_data = df[df['fiscal_year'] == year][metric].dropna()
+                if len(year_data) == 0:
+                    continue
+                arr = year_data.values.astype(float)
+                agg[int(year)] = {
+                    'avg': float(np.mean(arr)),
+                    'median': float(np.median(arr)),
+                    'min': float(np.min(arr)),
+                    'max': float(np.max(arr)),
+                    'p25': float(np.percentile(arr, 25)),
+                    'p75': float(np.percentile(arr, 75)),
+                    'count': int(len(arr)),
+                    'sum': float(np.sum(arr)),
+                }
+            if agg:
+                aggregated[metric] = agg
+
+        # Lista de empresas com info
+        companies_info = []
+        for code in df['yahoo_code'].unique():
+            cdf = df[df['yahoo_code'] == code]
+            latest = cdf.sort_values('fiscal_year', ascending=False).iloc[0]
+            companies_info.append({
+                'yahoo_code': code,
+                'company_name': latest.get('company_name'),
+                'sector': latest.get('yahoo_sector'),
+                'industry': latest.get('yahoo_industry'),
+                'country': latest.get('yahoo_country'),
+                'currency': latest.get('original_currency'),
+                'periods': int(len(cdf)),
+            })
+
+        # Ranking: última período por empresa com métricas chave
+        latest_year = max(years)
+        latest_df = df[df['fiscal_year'] == latest_year].copy()
+        ranking = []
+        for _, row in latest_df.iterrows():
+            ranking.append({
+                'yahoo_code': row.get('yahoo_code'),
+                'company_name': row.get('company_name'),
+                'sector': row.get('yahoo_sector'),
+                'total_revenue_usd': row.get('total_revenue_usd'),
+                'ebitda_usd': row.get('ebitda_usd'),
+                'net_income_usd': row.get('net_income_usd'),
+                'free_cash_flow_usd': row.get('free_cash_flow_usd'),
+                'enterprise_value_usd': row.get('enterprise_value_usd'),
+                'ebitda_margin': row.get('ebitda_margin'),
+                'net_margin': row.get('net_margin'),
+                'ev_ebitda': row.get('ev_ebitda'),
+                'ev_ebit': row.get('ev_ebit'),
+                'ev_revenue': row.get('ev_revenue'),
+                'debt_equity': row.get('debt_equity'),
+                'fcf_revenue_ratio': row.get('fcf_revenue_ratio'),
+            })
+
+        # Limpar NaN dos rankings
+        for item in ranking:
+            for k, v in item.items():
+                if isinstance(v, float) and (v != v):
+                    item[k] = None
+
+        # Dados detalhados por empresa (opcional)
+        detail_records = []
+        if include_detail:
+            detail_cols = ['yahoo_code', 'company_name', 'fiscal_year', 'original_currency',
+                           'yahoo_sector', 'yahoo_industry', 'yahoo_country'] + metrics
+            available_cols = [c for c in detail_cols if c in df.columns]
+            detail_df = df[available_cols].copy()
+            for col in detail_df.columns:
+                if detail_df[col].dtype in ['float64', 'float32']:
+                    detail_df[col] = detail_df[col].where(detail_df[col].notna(), None)
+                    # Replace inf/-inf
+                    detail_df[col] = detail_df[col].replace([np.inf, -np.inf], None)
+            detail_records = detail_df.to_dict('records')
+            # Clean NaN
+            for rec in detail_records:
+                for k, v in rec.items():
+                    if isinstance(v, float) and (v != v):
+                        rec[k] = None
+
+        return jsonify({
+            'success': True,
+            'years': [int(y) for y in years],
+            'companies': companies_info,
+            'aggregated': aggregated,
+            'ranking': ranking,
+            'detail': detail_records,
+            'total_selected': len(codes),
+            'total_with_data': len(companies_info),
+            'latest_year': int(latest_year),
+        })
+    except Exception as e:
+        logger.error(f"Erro na consolidação: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ===== ANÁLISE POR SETOR =====
+
+@app.route('/analise-setor')
+def analise_setor_page():
+    """Página de análise comparativa por setor e localidade."""
+    return render_template('analise_setor.html')
+
+
+@app.route('/api/analise_setor/filters')
+def api_analise_setor_filters():
+    """Retorna opções de filtro: setores, regiões, países e anos disponíveis."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.cursor()
+
+        # Setores
+        cur.execute("""
+            SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.company_basic_data_id) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_sector IS NOT NULL AND cfh.period_type = 'annual'
+            GROUP BY cbd.yahoo_sector ORDER BY n DESC
+        """)
+        sectors = [{'name': r[0], 'count': r[1]} for r in cur.fetchall()]
+
+        # Países com contagem
+        cur.execute("""
+            SELECT cbd.yahoo_country, COUNT(DISTINCT cfh.company_basic_data_id) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != '' AND cfh.period_type = 'annual'
+            GROUP BY cbd.yahoo_country ORDER BY n DESC
+        """)
+        countries_raw = cur.fetchall()
+        countries = [{'name': r[0], 'count': r[1]} for r in countries_raw]
+
+        # Regiões e sub-regiões via geographic_mappings
+        region_counts = {}
+        subregion_counts = {}
+        country_to_region = {}
+        for country_name, count in countries_raw:
+            geo = get_country_region(country_name)
+            region = geo['region']
+            subregion = geo['subregion']
+            region_counts[region] = region_counts.get(region, 0) + count
+            subregion_counts[subregion] = subregion_counts.get(subregion, 0) + count
+            country_to_region[country_name] = {'region': region, 'subregion': subregion}
+
+        regions = [{'name': r, 'count': c} for r, c in sorted(region_counts.items(), key=lambda x: -x[1])]
+        subregions = [{'name': r, 'count': c} for r, c in sorted(subregion_counts.items(), key=lambda x: -x[1])]
+
+        # Anos disponíveis
+        cur.execute("SELECT DISTINCT fiscal_year FROM company_financials_historical WHERE period_type='annual' AND fiscal_year IS NOT NULL ORDER BY fiscal_year")
+        years = [r[0] for r in cur.fetchall()]
+
+        conn.close()
+        return jsonify({
+            'success': True,
+            'sectors': sectors,
+            'regions': regions,
+            'subregions': subregions,
+            'countries': countries,
+            'country_to_region': country_to_region,
+            'years': years
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analise_setor/data')
+def api_analise_setor_data():
+    """Retorna dados agregados por setor/localidade para os períodos selecionados.
+    Params: sectors, countries, regions, years, metrics, group_by (sector|country|region)
+    """
+    try:
+        # Parse params
+        sectors = [s.strip() for s in request.args.get('sectors', '').split(',') if s.strip()]
+        countries = [s.strip() for s in request.args.get('countries', '').split(',') if s.strip()]
+        regions = [s.strip() for s in request.args.get('regions', '').split(',') if s.strip()]
+        years = [int(y) for y in request.args.get('years', '').split(',') if y.strip()]
+        group_by = request.args.get('group_by', 'sector')
+
+        allowed_metrics = [
+            'total_revenue_usd', 'ebit_usd', 'ebitda_usd', 'net_income_usd',
+            'free_cash_flow_usd', 'enterprise_value_usd',
+            'ebit_margin', 'ebitda_margin', 'gross_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            'fcf_revenue_ratio', 'fcf_ebitda_ratio', 'capex_revenue',
+            'total_revenue', 'ebit', 'ebitda', 'net_income', 'free_cash_flow',
+            'market_cap_estimated', 'enterprise_value_estimated',
+            'total_assets', 'total_debt', 'stockholders_equity',
+            'interest_expense', 'tax_provision', 'research_and_development',
+        ]
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        conditions = ["cfh.period_type = 'annual'"]
+
+        if sectors:
+            placeholders = ','.join(['?'] * len(sectors))
+            conditions.append(f"cbd.yahoo_sector IN ({placeholders})")
+            params.extend(sectors)
+
+        if countries:
+            placeholders = ','.join(['?'] * len(countries))
+            conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+            params.extend(countries)
+        elif regions:
+            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items()
+                                if info['region'] in regions]
+            if region_countries:
+                placeholders = ','.join(['?'] * len(region_countries))
+                conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+                params.extend(region_countries)
+
+        if years:
+            placeholders = ','.join(['?'] * len(years))
+            conditions.append(f"cfh.fiscal_year IN ({placeholders})")
+            params.extend(years)
+
+        where = ' AND '.join(conditions)
+
+        # Determine grouping column
+        if group_by == 'country':
+            group_col = 'cbd.yahoo_country'
+            group_alias = 'group_name'
+        elif group_by == 'region':
+            group_col = 'cbd.yahoo_country'
+            group_alias = 'country'
+        else:
+            group_col = 'cbd.yahoo_sector'
+            group_alias = 'group_name'
+
+        # Build metric aggregations
+        metric_aggs = []
+        for m in allowed_metrics:
+            metric_aggs.append(f"AVG(cfh.{m}) AS avg_{m}")
+            metric_aggs.append(f"MIN(cfh.{m}) AS min_{m}")
+            metric_aggs.append(f"MAX(cfh.{m}) AS max_{m}")
+            metric_aggs.append(f"SUM(CASE WHEN cfh.{m} IS NOT NULL THEN 1 ELSE 0 END) AS n_{m}")
+        metric_sql = ', '.join(metric_aggs)
+
+        query = f"""
+            SELECT {group_col} AS {group_alias},
+                   cfh.fiscal_year,
+                   COUNT(DISTINCT cfh.company_basic_data_id) AS num_companies,
+                   COUNT(*) AS num_records,
+                   {metric_sql}
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE {where}
+            GROUP BY {group_col}, cfh.fiscal_year
+            ORDER BY {group_col}, cfh.fiscal_year
+        """
+
+        cur = conn.execute(query, params)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        # Se group_by == 'region', agregar countries em regions
+        if group_by == 'region':
+            region_data = {}
+            for r in rows:
+                geo = get_country_region(r.get('country', '') or '')
+                region_name = geo['region']
+                year = r['fiscal_year']
+                key = (region_name, year)
+                if key not in region_data:
+                    region_data[key] = {'group_name': region_name, 'fiscal_year': year,
+                                        'num_companies': 0, 'num_records': 0}
+                    for m in allowed_metrics:
+                        region_data[key][f'_sum_{m}'] = 0.0
+                        region_data[key][f'_n_{m}'] = 0
+                        region_data[key][f'min_{m}'] = None
+                        region_data[key][f'max_{m}'] = None
+                region_data[key]['num_companies'] += r['num_companies']
+                region_data[key]['num_records'] += r['num_records']
+                for m in allowed_metrics:
+                    avg_v = r.get(f'avg_{m}')
+                    n_v = r.get(f'n_{m}', 0) or 0
+                    mn = r.get(f'min_{m}')
+                    mx = r.get(f'max_{m}')
+                    if avg_v is not None and n_v > 0:
+                        region_data[key][f'_sum_{m}'] += avg_v * n_v
+                        region_data[key][f'_n_{m}'] += n_v
+                    if mn is not None:
+                        cur_min = region_data[key][f'min_{m}']
+                        region_data[key][f'min_{m}'] = mn if cur_min is None else min(cur_min, mn)
+                    if mx is not None:
+                        cur_max = region_data[key][f'max_{m}']
+                        region_data[key][f'max_{m}'] = mx if cur_max is None else max(cur_max, mx)
+            rows = []
+            for key, data in region_data.items():
+                row = {'group_name': data['group_name'], 'fiscal_year': data['fiscal_year'],
+                       'num_companies': data['num_companies'], 'num_records': data['num_records']}
+                for m in allowed_metrics:
+                    total_n = data[f'_n_{m}']
+                    row[f'avg_{m}'] = data[f'_sum_{m}'] / total_n if total_n > 0 else None
+                    row[f'n_{m}'] = total_n
+                    row[f'min_{m}'] = data[f'min_{m}']
+                    row[f'max_{m}'] = data[f'max_{m}']
+                rows.append(row)
+            rows.sort(key=lambda x: (x['group_name'], x['fiscal_year']))
+
+        # Clean NaN/Inf
+        for r in rows:
+            for k, v in r.items():
+                if isinstance(v, float) and (v != v or v == float('inf') or v == float('-inf')):
+                    r[k] = None
+
+        return jsonify({'success': True, 'data': rows, 'group_by': group_by})
+    except Exception as e:
+        logger.error(f"Erro analise_setor/data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analise_setor/detail')
+def api_analise_setor_detail():
+    """Retorna dados individuais das empresas para exportação/tabela detalhada.
+    Params: sectors, countries, regions, years, page, per_page, sort, order
+    """
+    try:
+        sectors = [s.strip() for s in request.args.get('sectors', '').split(',') if s.strip()]
+        countries = [s.strip() for s in request.args.get('countries', '').split(',') if s.strip()]
+        regions = [s.strip() for s in request.args.get('regions', '').split(',') if s.strip()]
+        years = [int(y) for y in request.args.get('years', '').split(',') if y.strip()]
+        sort = request.args.get('sort', 'company_name')
+        order = request.args.get('order', 'asc').lower()
+        page = max(1, int(request.args.get('page', 1)))
+        per_page = min(500, max(10, int(request.args.get('per_page', 50))))
+
+        allowed_sort = [
+            'company_name', 'yahoo_code', 'yahoo_sector', 'yahoo_country',
+            'fiscal_year', 'total_revenue_usd', 'ebitda_usd', 'ebit_usd',
+            'net_income_usd', 'ebitda_margin', 'ebit_margin', 'net_margin',
+            'ev_ebitda', 'ev_ebit', 'debt_equity', 'enterprise_value_usd',
+            'market_cap_estimated', 'free_cash_flow_usd'
+        ]
+        if sort not in allowed_sort:
+            sort = 'company_name'
+        order_dir = 'DESC' if order == 'desc' else 'ASC'
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        params = []
+        conditions = ["cfh.period_type = 'annual'"]
+
+        if sectors:
+            placeholders = ','.join(['?'] * len(sectors))
+            conditions.append(f"cbd.yahoo_sector IN ({placeholders})")
+            params.extend(sectors)
+        if countries:
+            placeholders = ','.join(['?'] * len(countries))
+            conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+            params.extend(countries)
+        elif regions:
+            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items()
+                                if info['region'] in regions]
+            if region_countries:
+                placeholders = ','.join(['?'] * len(region_countries))
+                conditions.append(f"cbd.yahoo_country IN ({placeholders})")
+                params.extend(region_countries)
+        if years:
+            placeholders = ','.join(['?'] * len(years))
+            conditions.append(f"cfh.fiscal_year IN ({placeholders})")
+            params.extend(years)
+
+        where = ' AND '.join(conditions)
+
+        # Total count
+        count_q = f"""SELECT COUNT(*) FROM company_financials_historical cfh
+                      JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                      WHERE {where}"""
+        total = conn.execute(count_q, params).fetchone()[0]
+
+        # Sort column mapping
+        sort_col = f'cfh.{sort}' if sort not in ('company_name', 'yahoo_code', 'yahoo_sector', 'yahoo_country') else f'cbd.{sort}' if sort in ('yahoo_sector', 'yahoo_country') else f'cfh.{sort}'
+
+        query = f"""
+            SELECT cfh.yahoo_code, cfh.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
+                   cbd.yahoo_country, cfh.fiscal_year, cfh.original_currency,
+                   cfh.total_revenue, cfh.ebit, cfh.ebitda, cfh.net_income,
+                   cfh.free_cash_flow, cfh.total_debt, cfh.stockholders_equity,
+                   cfh.enterprise_value_estimated, cfh.market_cap_estimated,
+                   cfh.total_revenue_usd, cfh.ebit_usd, cfh.ebitda_usd,
+                   cfh.net_income_usd, cfh.free_cash_flow_usd, cfh.enterprise_value_usd,
+                   cfh.ebit_margin, cfh.ebitda_margin, cfh.gross_margin, cfh.net_margin,
+                   cfh.ev_ebitda, cfh.ev_ebit, cfh.ev_revenue,
+                   cfh.debt_equity, cfh.debt_ebitda, cfh.capex_revenue,
+                   cfh.fcf_revenue_ratio, cfh.interest_expense, cfh.tax_provision
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            WHERE {where}
+            ORDER BY {sort_col} {order_dir} NULLS LAST
+            LIMIT ? OFFSET ?
+        """
+        params.extend([per_page, (page - 1) * per_page])
+        cur = conn.execute(query, params)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+
+        # Clean NaN
+        for r in rows:
+            for k, v in r.items():
+                if isinstance(v, float) and (v != v or v == float('inf') or v == float('-inf')):
+                    r[k] = None
+
+        return jsonify({
+            'success': True,
+            'data': rows,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        logger.error(f"Erro analise_setor/detail: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

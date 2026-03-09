@@ -1,169 +1,125 @@
-# 🏢 Anloc - Aplicação de Análise de Empresas
+# Anloc — Aplicação de Análise de Empresas
+
+> Última atualização: Março/2026
 
 ## Visão Geral
 
-Esta aplicação web foi desenvolvida para análise e benchmarking de empresas utilizando a base de dados do Damodaran com aproximadamente 47 mil empresas globais. A plataforma permite análises comparativas por país, região e setor, fornecendo insights valiosos para decisões de investimento e valuation.
+Aplicação web para análise e benchmarking de empresas utilizando a base de dados Damodaran com ~47 mil empresas globais. A plataforma permite análises comparativas por país, região, setor e indústria, com dados históricos de 2021 a 2026.
 
-## Funcionalidades Principais
+O app principal (`app.py`, porta 5000) inclui todas as funcionalidades. O `company_analysis_app.py` (porta 5001) é uma versão enxuta focada apenas em análise/benchmarking.
 
-### 📊 KPIs e Métricas Implementadas
+---
 
-**Métricas Financeiras Fundamentais:**
-- Market Cap (Valor de Mercado)
-- Enterprise Value (Valor da Empresa)
-- Revenue (Receita)
-- Net Income (Lucro Líquido)
-- EBITDA
+## Funcionalidades
 
-**Indicadores de Rentabilidade:**
-- ROE (Return on Equity)
-- ROA (Return on Assets)
-- Operating Margin (Margem Operacional)
-- Dividend Yield
+### Métricas Disponíveis
 
-**Métricas de Valuation:**
-- P/E Ratio (Preço/Lucro)
-- Debt/Equity (Dívida/Patrimônio)
-- Beta (Risco Sistemático)
+**Margens e Rentabilidade:**
+- EBITDA Margin, EBIT Margin, Gross Margin, Net Margin
+- ROE, ROA, Operating Margin
 
-**Indicadores de Crescimento:**
-- Revenue Growth (Crescimento da Receita)
+**Múltiplos de Valuation:**
+- EV/EBITDA, EV/EBIT, EV/Revenue
+- P/E Ratio, Dividend Yield
 
-### 🔍 Funcionalidades de Análise
+**Alavancagem:**
+- Debt/Equity, Debt/EBITDA
 
-1. **Filtros Avançados:**
-   - Por país (todos os países disponíveis na base)
-   - Por setor/indústria
-   - Por faixa de Market Cap (mínimo e máximo)
+**Eficiência:**
+- FCF/Revenue, Capex/Revenue, FCF/EBITDA
 
-2. **Visualização de Empresas:**
-   - Lista paginada com principais métricas
-   - Ordenação por Market Cap
-   - Limite de 1000 empresas por consulta para performance
+**Valores Absolutos (USD):**
+- Revenue, EBITDA, Net Income, Enterprise Value, Free Cash Flow, Market Cap
 
-3. **Benchmarking:**
-   - Estatísticas por setor ou país
-   - Métricas: média, mediana, quartis, mín/máx
-   - Comparação com pares do mesmo segmento
+---
 
-4. **Análise Detalhada:**
-   - Análise individual de empresas
-   - Rankings setoriais, nacionais e globais
-   - Comparação com benchmarks do setor
-   - Percentis de performance
+### Páginas e Funcionalidades
 
-## Estrutura Técnica
+#### `/data-yahoo` — Dashboard Yahoo Finance
+- KPIs globais (total empresas, cobertura, médias)
+- Agregações por setor, indústria, país, atividade Anloc
+- Análise cruzada setor × país
+- Drill-down paginado com exportação CSV
 
-### Arquivos Principais
+#### `/data-yahoo-historico` — Dados Históricos
+- **Aba Empresa**: busca por ticker, gráficos de evolução individual
+- **Aba Consolidado**: selecionar múltiplas empresas e analisar
+  - KPIs agregados, 6 gráficos (margens, múltiplos, receita, alavancagem, dispersão)
+  - Tabela estatística (N, Média, Mediana, P25, P75, Min, Max)
+  - Toggle **Consolidado/Detalhado** com dados por empresa
+  - Multi-select de métricas (14 opções)
+  - Ranking das empresas no último período
+  - Exportação CSV (formato pt-BR: `;` delimitador, `,` decimal)
+- **Aba Comparar**: comparação direta entre tickers
+- **Aba Setores**: evolução temporal por setor
 
-- `company_analysis_app.py` - Aplicação Flask principal
-- `templates/company_analysis.html` - Interface web
-- `data/damodaran_data_new.db` - Base de dados SQLite
+#### `/analise-setor` — Análise por Setor
+- Filtros multi-select: setores, regiões, países, anos
+- 3 abas: Agregado, Evolução, Detalhes
+- Exportação CSV
 
-### Rotas da API
+#### `/company-analysis` — Análise Individual
+- Filtros por país, setor, faixa de market cap
+- Lista paginada com métricas principais
+- Benchmarking por grupo (setor/país)
+- Análise detalhada: rankings setoriais, nacionais e globais
 
-- `GET /` - Página principal
-- `GET /api/filters` - Opções de filtros (países e setores)
-- `GET /api/companies` - Lista de empresas com filtros
-- `GET /api/benchmarks` - Benchmarks por grupo
-- `GET /api/company/<nome>/analysis` - Análise detalhada
+#### `/exporta-data` — Exportação de Dados
+- Exportação Excel (.xlsx) com filtros e preview
+- Seleção de campos, formatos e agrupamentos
 
-### Classe CompanyAnalyzer
+---
 
-**Métodos Principais:**
-- `get_companies_data()` - Extrai dados com filtros
-- `calculate_benchmarks()` - Calcula estatísticas por grupo
-- `get_company_ranking()` - Determina posição em rankings
+### APIs de Análise
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /api/companies` | Lista empresas com filtros hierárquicos (geo + setor + market cap) |
+| `GET /api/benchmarks` | Benchmarks estatísticos por grupo |
+| `GET /api/company/<name>/analysis` | Análise detalhada + posição em rankings |
+| `GET /api/yahoo_dashboard_summary` | KPIs globais |
+| `GET /api/yahoo_dashboard_sectors` | Métricas por setor Yahoo |
+| `GET /api/yahoo_dashboard_countries` | Métricas por país |
+| `GET /api/yahoo_drill/companies` | Drill-down paginado |
+| `GET /api/historico/search` | Busca empresas com históricos |
+| `GET /api/historico/company/<code>` | Dados históricos de uma empresa |
+| `POST /api/historico/consolidated` | Consolidado + detalhado por empresa |
+| `GET /api/analise_setor/data` | Análise agregada por setor |
+| `POST /api/export_excel` | Exportar para Excel |
+
+---
+
+## Base de Dados
+
+SQLite (`data/damodaran_data_new.db`):
+
+| Tabela | Registros | Descrição |
+|--------|-----------|-----------|
+| `company_basic_data` | ~42.878 | Dados atuais das empresas (Yahoo Finance) |
+| `company_financials_historical` | ~156.585 | Séries históricas 2021-2026, 26 métricas, 37k+ empresas |
+| `damodaran_global` | ~47.000 | Dados originais Damodaran (Excel anual) |
+| `country_risk` | ~200 | Prêmios de risco por país |
+| `size_premium` | 13 | Decis de size premium (Ibbotson) |
+
+---
 
 ## Como Usar
 
-### 1. Iniciar a Aplicação
 ```bash
+# App principal
+python app.py
+# Abrir http://localhost:5000
+
+# App de análise (alternativo)
 python company_analysis_app.py
+# Abrir http://localhost:5001
 ```
 
-### 2. Acessar a Interface
-- URL: http://localhost:5001
-- A aplicação roda na porta 5001 para evitar conflitos
+### Fluxo Típico
 
-### 3. Funcionalidades Disponíveis
-
-**Aba Empresas:**
-- Aplicar filtros desejados
-- Clicar em "Buscar Empresas"
-- Visualizar resultados em tabela
-- Clicar em "Analisar" para análise detalhada
-
-**Aba Benchmarks:**
-- Escolher agrupamento (setor ou país)
-- Aplicar filtros opcionais
-- Clicar em "Ver Benchmarks"
-- Visualizar estatísticas comparativas
-
-**Aba Análise Detalhada:**
-- Digitar nome da empresa
-- Clicar em "Analisar"
-- Visualizar métricas, rankings e comparações
-
-## Casos de Uso para Valuation
-
-### 1. Análise de Múltiplos
-- Comparar P/E ratios por setor
-- Identificar empresas sub/sobrevalorizadas
-- Benchmarking de múltiplos de receita
-
-### 2. Análise de Rentabilidade
-- Comparar ROE e ROA setoriais
-- Identificar líderes em eficiência
-- Análise de margens operacionais
-
-### 3. Análise de Risco
-- Comparar betas por setor
-- Análise de alavancagem (D/E)
-- Identificação de perfis de risco
-
-### 4. Análise Regional
-- Comparar métricas por país
-- Identificar oportunidades geográficas
-- Análise de mercados emergentes vs desenvolvidos
-
-## Melhorias Futuras Sugeridas
-
-1. **Visualizações Gráficas:**
-   - Gráficos de dispersão para correlações
-   - Histogramas de distribuição de métricas
-   - Gráficos de barras para comparações
-
-2. **Análises Avançadas:**
-   - Análise de regressão para múltiplos
-   - Correlações entre métricas
-   - Análise de tendências temporais
-
-3. **Exportação de Dados:**
-   - Export para Excel/CSV
-   - Relatórios em PDF
-   - APIs para integração
-
-4. **Filtros Adicionais:**
-   - Por faixa de receita
-   - Por faixa de funcionários
-   - Por idade da empresa
-
-## Dependências
-
-```python
-flask
-pandas
-numpy
-sqlite3 (built-in)
-```
-
-## Notas Técnicas
-
-- Base de dados: SQLite com ~47k empresas
-- Performance otimizada com limites de consulta
-- Interface responsiva básica
-- Tratamento de valores nulos e infinitos
-- Formatação automática de números (K, M, B)
-
-Esta aplicação fornece uma base sólida para análises de benchmarking empresarial, sendo facilmente extensível para funcionalidades mais avançadas conforme necessário.
+1. Acessar `/data-yahoo-historico`
+2. Buscar empresas por setor/país/ticker
+3. Selecionar empresas na tabela (checkbox)
+4. Clicar "Consolidado" ou "Detalhado"
+5. Alternar métricas no multi-select
+6. Exportar CSV quando necessário
