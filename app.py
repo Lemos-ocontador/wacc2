@@ -14,6 +14,7 @@ Data: 2025-09-24
 """
 
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, Response, stream_with_context
+import os
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -32,7 +33,7 @@ from geographic_mappings import GEOGRAPHIC_MAPPING, get_country_region
 
 # Configurar aplicação Flask
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'wacc-calculator-2025'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 app.config['JSON_AS_ASCII'] = False
 
 # Configurar logging
@@ -1836,6 +1837,94 @@ def get_company_analysis(company_name):
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/company_profile')
+def api_company_profile():
+    """API unificada: retorna TODOS os dados de uma empresa (basic, damodaran, histórico)."""
+    try:
+        code = request.args.get('code', '').strip()
+        if not code:
+            return jsonify({'success': False, 'error': 'Parâmetro code obrigatório'}), 400
+
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+
+        # 1) company_basic_data — tenta yahoo_code, google_finance_code, ou company_name contendo o code
+        row = None
+        cols = None
+        for sql in [
+            "SELECT * FROM company_basic_data WHERE yahoo_code = ?",
+            "SELECT * FROM company_basic_data WHERE google_finance_code = ?",
+            "SELECT * FROM company_basic_data WHERE company_name LIKE ?",
+        ]:
+            param = code if 'LIKE' not in sql else f'%{code}%'
+            cur = conn.execute(sql, [param])
+            cols = [d[0] for d in cur.description]
+            row = cur.fetchone()
+            if row:
+                break
+        basic = dict(zip(cols, row)) if row else {}
+        # Resolve yahoo_code for historical queries
+        yahoo_code = basic.get('yahoo_code', code)
+
+        # 2) damodaran_global (pode ter por company_name ou ticker)
+        dam = {}
+        if basic:
+            cur2 = conn.execute(
+                "SELECT * FROM damodaran_global WHERE company_name = ? ORDER BY year DESC LIMIT 1",
+                [basic.get('company_name', '')])
+            cols2 = [d[0] for d in cur2.description]
+            row2 = cur2.fetchone()
+            if row2:
+                dam = dict(zip(cols2, row2))
+        if not dam:
+            # Fallback: buscar pelo code no company_name do damodaran
+            cur2b = conn.execute(
+                "SELECT * FROM damodaran_global WHERE company_name LIKE ? ORDER BY year DESC LIMIT 1",
+                [f'%{code}%'])
+            cols2b = [d[0] for d in cur2b.description]
+            row2b = cur2b.fetchone()
+            if row2b:
+                dam = dict(zip(cols2b, row2b))
+
+        # 3) company_financials_historical (annual)
+        cur3 = conn.execute(
+            "SELECT * FROM company_financials_historical WHERE yahoo_code = ? AND period_type = 'annual' ORDER BY period_date DESC",
+            [yahoo_code])
+        cols3 = [d[0] for d in cur3.description]
+        hist_annual = [dict(zip(cols3, r)) for r in cur3.fetchall()]
+
+        # 4) company_financials_historical (quarterly)
+        cur4 = conn.execute(
+            "SELECT * FROM company_financials_historical WHERE yahoo_code = ? AND period_type = 'quarterly' ORDER BY period_date DESC",
+            [yahoo_code])
+        cols4 = [d[0] for d in cur4.description]
+        hist_quarterly = [dict(zip(cols4, r)) for r in cur4.fetchall()]
+
+        conn.close()
+
+        # Limpar NaN
+        def clean(d):
+            for k, v in d.items():
+                if isinstance(v, float) and (v != v):
+                    d[k] = None
+            return d
+
+        basic = clean(basic)
+        dam = clean(dam)
+        hist_annual = [clean(r) for r in hist_annual]
+        hist_quarterly = [clean(r) for r in hist_quarterly]
+
+        return jsonify({
+            'success': True,
+            'basic': basic,
+            'damodaran': dam,
+            'historical_annual': hist_annual,
+            'historical_quarterly': hist_quarterly
+        })
+    except Exception as e:
+        logger.error(f"Erro em company_profile: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.errorhandler(404)
 def not_found(error):
     """Handler para páginas não encontradas."""
@@ -1936,10 +2025,99 @@ def api_get_field_info(field_name):
 
 # ===== DASHBOARD DADOS YAHOO ===== 
 
+def _build_joined_filters(args):
+    """Build WHERE conditions for joined dg/cbd dashboard queries.
+    Returns (conditions_list, params_list)."""
+    conditions = []
+    params = []
+    for arg_name, col_expr in [
+        ('sectors', 'cbd.yahoo_sector'),
+        ('industries', 'cbd.yahoo_industry'),
+        ('countries', 'cbd.yahoo_country'),
+        ('atividades', 'dg.atividade_anloc'),
+    ]:
+        val = args.get(arg_name, '').strip()
+        if val:
+            items = [v.strip() for v in val.split(',') if v.strip()]
+            if items:
+                placeholders = ','.join('?' * len(items))
+                conditions.append(f"{col_expr} IN ({placeholders})")
+                params.extend(items)
+    return conditions, params
+
+
 @app.route('/data-yahoo')
 def data_yahoo_page():
     """Dashboard analítico dos dados obtidos do Yahoo Finance."""
     return render_template('data_yahoo.html')
+
+
+@app.route('/api/yahoo_filter_options')
+def api_yahoo_filter_options():
+    """Returns distinct values for each filter dimension with counts.
+    Supports cross-filtering: when filters are active, other dimensions
+    show only values available within those filters."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        cur = conn.cursor()
+
+        # Build cross-filter conditions per dimension
+        # For each dimension, apply filters from ALL OTHER dimensions
+        dim_config = [
+            ('sectors', 'cbd.yahoo_sector', 'cbd.yahoo_sector'),
+            ('industries', 'cbd.yahoo_industry', 'cbd.yahoo_industry'),
+            ('countries', 'cbd.yahoo_country', 'cbd.yahoo_country'),
+            ('atividades', 'dg.atividade_anloc', 'dg.atividade_anloc'),
+        ]
+        filter_map = {
+            'sectors': ('cbd.yahoo_sector', request.args.get('sectors', '').strip()),
+            'industries': ('cbd.yahoo_industry', request.args.get('industries', '').strip()),
+            'countries': ('cbd.yahoo_country', request.args.get('countries', '').strip()),
+            'atividades': ('dg.atividade_anloc', request.args.get('atividades', '').strip()),
+        }
+        has_any_filter = any(v for _, v in filter_map.values())
+
+        results = {}
+        for dim_name, col_expr, _ in dim_config:
+            conds = [f"{col_expr} IS NOT NULL"]
+            if dim_name == 'atividades':
+                conds.append(f"{col_expr} != ''")
+            params = []
+            # Apply filters from OTHER dimensions only
+            if has_any_filter:
+                for other_dim, (other_col, other_val) in filter_map.items():
+                    if other_dim == dim_name:
+                        continue  # skip own dimension
+                    if other_val:
+                        items = [v.strip() for v in other_val.split(',') if v.strip()]
+                        if items:
+                            placeholders = ','.join('?' * len(items))
+                            conds.append(f"{other_col} IN ({placeholders})")
+                            params.extend(items)
+
+            where = " AND ".join(conds)
+            if dim_name == 'atividades':
+                query = f"""SELECT {col_expr}, COUNT(*) as cnt
+                           FROM damodaran_global dg
+                           LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+                           WHERE {where}
+                           GROUP BY {col_expr} ORDER BY {col_expr}"""
+            else:
+                query = f"""SELECT {col_expr}, COUNT(*) as cnt
+                           FROM company_basic_data cbd
+                           LEFT JOIN damodaran_global dg ON dg.ticker = cbd.ticker
+                           WHERE {where}
+                           GROUP BY {col_expr} ORDER BY {col_expr}"""
+            cur.execute(query, params)
+            results[dim_name] = [{'name': r[0], 'count': r[1]} for r in cur.fetchall()]
+
+        conn.close()
+        return jsonify({'success': True, 'sectors': results['sectors'],
+                        'industries': results['industries'],
+                        'countries': results['countries'],
+                        'atividades': results['atividades']})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/yahoo_dashboard_summary')
@@ -1948,30 +2126,61 @@ def api_yahoo_dashboard_summary():
     try:
         conn = sqlite3.connect('data/damodaran_data_new.db')
         cur = conn.cursor()
+        filter_conds, filter_params = _build_joined_filters(request.args)
 
-        stats = {}
-        cur.execute("SELECT COUNT(*) FROM company_basic_data")
-        stats['total_companies'] = cur.fetchone()[0]
+        if filter_conds:
+            where_clause = " AND ".join(filter_conds)
+            query = f"""
+                SELECT
+                    COUNT(DISTINCT dg.ticker) as total_companies,
+                    COUNT(DISTINCT CASE WHEN cbd.about IS NOT NULL AND cbd.about != '' THEN dg.ticker END) as with_about,
+                    COUNT(DISTINCT CASE WHEN cbd.yahoo_sector IS NOT NULL THEN dg.ticker END) as with_sector,
+                    COUNT(DISTINCT CASE WHEN cbd.yahoo_industry IS NOT NULL THEN dg.ticker END) as with_industry,
+                    COUNT(DISTINCT CASE WHEN cbd.yahoo_country IS NOT NULL THEN dg.ticker END) as with_country,
+                    COUNT(DISTINCT CASE WHEN cbd.enterprise_value IS NOT NULL AND CAST(cbd.enterprise_value AS TEXT) != '' THEN dg.ticker END) as with_ev,
+                    COUNT(DISTINCT CASE WHEN cbd.market_cap IS NOT NULL AND CAST(cbd.market_cap AS TEXT) != '' THEN dg.ticker END) as with_mcap,
+                    COUNT(DISTINCT CASE WHEN cbd.currency IS NOT NULL THEN dg.ticker END) as with_currency,
+                    COUNT(DISTINCT CASE WHEN cbd.yahoo_website IS NOT NULL AND cbd.yahoo_website != '' THEN dg.ticker END) as with_website,
+                    COUNT(DISTINCT cbd.yahoo_sector) as distinct_sectors,
+                    COUNT(DISTINCT cbd.yahoo_industry) as distinct_industries,
+                    COUNT(DISTINCT cbd.yahoo_country) as distinct_countries,
+                    COUNT(DISTINCT cbd.currency) as distinct_currencies,
+                    COUNT(DISTINCT dg.atividade_anloc) as distinct_atividades
+                FROM damodaran_global dg
+                LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+                WHERE {where_clause}
+            """
+            cur.execute(query, filter_params)
+            row = cur.fetchone()
+            cols = ['total_companies', 'with_about', 'with_sector', 'with_industry',
+                    'with_country', 'with_ev', 'with_mcap', 'with_currency', 'with_website',
+                    'distinct_sectors', 'distinct_industries', 'distinct_countries',
+                    'distinct_currencies', 'distinct_atividades']
+            stats = dict(zip(cols, row))
+        else:
+            stats = {}
+            cur.execute("SELECT COUNT(*) FROM company_basic_data")
+            stats['total_companies'] = cur.fetchone()[0]
 
-        for col, key in [
-            ('about', 'with_about'), ('yahoo_sector', 'with_sector'),
-            ('yahoo_industry', 'with_industry'), ('yahoo_country', 'with_country'),
-            ('enterprise_value', 'with_ev'), ('market_cap', 'with_mcap'),
-            ('currency', 'with_currency'), ('yahoo_website', 'with_website'),
-        ]:
-            cur.execute(f"SELECT COUNT(*) FROM company_basic_data WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS TEXT)) != ''")
-            stats[key] = cur.fetchone()[0]
+            for col, key in [
+                ('about', 'with_about'), ('yahoo_sector', 'with_sector'),
+                ('yahoo_industry', 'with_industry'), ('yahoo_country', 'with_country'),
+                ('enterprise_value', 'with_ev'), ('market_cap', 'with_mcap'),
+                ('currency', 'with_currency'), ('yahoo_website', 'with_website'),
+            ]:
+                cur.execute(f"SELECT COUNT(*) FROM company_basic_data WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS TEXT)) != ''")
+                stats[key] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT yahoo_sector) FROM company_basic_data WHERE yahoo_sector IS NOT NULL")
-        stats['distinct_sectors'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT yahoo_industry) FROM company_basic_data WHERE yahoo_industry IS NOT NULL")
-        stats['distinct_industries'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT yahoo_country) FROM company_basic_data WHERE yahoo_country IS NOT NULL")
-        stats['distinct_countries'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT currency) FROM company_basic_data WHERE currency IS NOT NULL")
-        stats['distinct_currencies'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT atividade_anloc) FROM damodaran_global WHERE atividade_anloc IS NOT NULL")
-        stats['distinct_atividades'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT yahoo_sector) FROM company_basic_data WHERE yahoo_sector IS NOT NULL")
+            stats['distinct_sectors'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT yahoo_industry) FROM company_basic_data WHERE yahoo_industry IS NOT NULL")
+            stats['distinct_industries'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT yahoo_country) FROM company_basic_data WHERE yahoo_country IS NOT NULL")
+            stats['distinct_countries'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT currency) FROM company_basic_data WHERE currency IS NOT NULL")
+            stats['distinct_currencies'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT atividade_anloc) FROM damodaran_global WHERE atividade_anloc IS NOT NULL")
+            stats['distinct_atividades'] = cur.fetchone()[0]
 
         conn.close()
         return jsonify({'success': True, 'stats': stats})
@@ -1984,7 +2193,11 @@ def api_yahoo_dashboard_sectors():
     """Métricas agregadas por setor Yahoo."""
     try:
         conn = sqlite3.connect('data/damodaran_data_new.db')
-        query = """
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        where = "WHERE cbd.yahoo_sector IS NOT NULL"
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+        query = f"""
             SELECT 
                 cbd.yahoo_sector AS sector,
                 COUNT(*) AS count,
@@ -2000,16 +2213,14 @@ def api_yahoo_dashboard_sectors():
                 AVG(CAST(dg.beta AS REAL)) AS avg_beta,
                 AVG(CAST(dg.dividend_yield AS REAL)) AS avg_div_yield,
                 AVG(CAST(dg.debt_equity AS REAL)) AS avg_debt_equity,
-                MEDIAN(CAST(dg.pe_ratio AS REAL)) AS med_pe
+                0 AS med_pe
             FROM damodaran_global dg
             LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
-            WHERE cbd.yahoo_sector IS NOT NULL
+            {where}
             GROUP BY cbd.yahoo_sector
             ORDER BY COUNT(*) DESC
         """
-        # SQLite doesn't have MEDIAN, use a simpler approach
-        query = query.replace("MEDIAN(CAST(dg.pe_ratio AS REAL)) AS med_pe", "0 AS med_pe")
-        df = pd.read_sql_query(query, conn)
+        df = pd.read_sql_query(query, conn, params=filter_params)
         conn.close()
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return jsonify({'success': True, 'sectors': df.to_dict('records')})
@@ -2028,6 +2239,11 @@ def api_yahoo_dashboard_industries():
         if sector:
             where += " AND cbd.yahoo_sector = ?"
             params.append(sector)
+
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+            params.extend(filter_params)
 
         query = f"""
             SELECT 
@@ -2066,7 +2282,11 @@ def api_yahoo_dashboard_countries():
     """Métricas agregadas por país Yahoo."""
     try:
         conn = sqlite3.connect('data/damodaran_data_new.db')
-        query = """
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        where = "WHERE cbd.yahoo_country IS NOT NULL"
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+        query = f"""
             SELECT 
                 cbd.yahoo_country AS country,
                 COUNT(*) AS count,
@@ -2080,12 +2300,12 @@ def api_yahoo_dashboard_countries():
                 COUNT(DISTINCT cbd.yahoo_industry) AS industries_count
             FROM damodaran_global dg
             LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
-            WHERE cbd.yahoo_country IS NOT NULL
+            {where}
             GROUP BY cbd.yahoo_country
             HAVING COUNT(*) >= 3
             ORDER BY COUNT(*) DESC
         """
-        df = pd.read_sql_query(query, conn)
+        df = pd.read_sql_query(query, conn, params=filter_params)
         conn.close()
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return jsonify({'success': True, 'countries': df.to_dict('records')})
@@ -2098,7 +2318,13 @@ def api_yahoo_dashboard_atividades():
     """Métricas agregadas por atividade Anloc."""
     try:
         conn = sqlite3.connect('data/damodaran_data_new.db')
-        query = """
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        has_cbd_filter = any(c.startswith('cbd.') for c in filter_conds) if filter_conds else False
+        join_clause = "LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker" if has_cbd_filter else ""
+        where = "WHERE dg.atividade_anloc IS NOT NULL AND dg.atividade_anloc != ''"
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+        query = f"""
             SELECT 
                 dg.atividade_anloc AS atividade,
                 COUNT(*) AS count,
@@ -2114,12 +2340,13 @@ def api_yahoo_dashboard_atividades():
                 AVG(CAST(dg.beta AS REAL)) AS avg_beta,
                 AVG(CAST(dg.debt_equity AS REAL)) AS avg_debt_equity
             FROM damodaran_global dg
-            WHERE dg.atividade_anloc IS NOT NULL AND dg.atividade_anloc != ''
+            {join_clause}
+            {where}
             GROUP BY dg.atividade_anloc
             HAVING COUNT(*) >= 3
             ORDER BY COUNT(*) DESC
         """
-        df = pd.read_sql_query(query, conn)
+        df = pd.read_sql_query(query, conn, params=filter_params)
         conn.close()
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return jsonify({'success': True, 'atividades': df.to_dict('records')})
@@ -2143,6 +2370,11 @@ def api_yahoo_dashboard_cross():
             where += " AND cbd.yahoo_country = ?"
             params.append(country)
 
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+            params.extend(filter_params)
+
         query = f"""
             SELECT 
                 cbd.yahoo_sector AS sector,
@@ -2164,6 +2396,44 @@ def api_yahoo_dashboard_cross():
         conn.close()
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return jsonify({'success': True, 'cross': df.to_dict('records')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/yahoo_dashboard_treemap')
+def api_yahoo_dashboard_treemap():
+    """Dados para treemap: indústrias agrupadas por setor com métricas."""
+    try:
+        conn = sqlite3.connect('data/damodaran_data_new.db')
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        where = "WHERE cbd.yahoo_sector IS NOT NULL AND cbd.yahoo_industry IS NOT NULL"
+        if filter_conds:
+            where += " AND " + " AND ".join(filter_conds)
+
+        query = f"""
+            SELECT
+                cbd.yahoo_sector AS sector,
+                cbd.yahoo_industry AS industry,
+                COUNT(*) AS count,
+                COALESCE(SUM(CAST(cbd.market_cap AS REAL)), 0) AS total_market_cap,
+                COALESCE(SUM(CAST(cbd.enterprise_value AS REAL)), 0) AS total_ev,
+                AVG(CAST(dg.pe_ratio AS REAL)) AS avg_pe,
+                AVG(CAST(dg.ev_ebitda AS REAL)) AS avg_ev_ebitda,
+                AVG(CAST(dg.operating_margin AS REAL)) AS avg_op_margin,
+                AVG(CAST(dg.roe AS REAL)) AS avg_roe,
+                AVG(CAST(dg.revenue_growth AS REAL)) AS avg_rev_growth,
+                AVG(CAST(dg.beta AS REAL)) AS avg_beta
+            FROM damodaran_global dg
+            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
+            {where}
+            GROUP BY cbd.yahoo_sector, cbd.yahoo_industry
+            HAVING COUNT(*) >= 1
+            ORDER BY cbd.yahoo_sector, COUNT(*) DESC
+        """
+        df = pd.read_sql_query(query, conn, params=filter_params)
+        conn.close()
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return jsonify({'success': True, 'items': df.to_dict('records')})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -2203,6 +2473,12 @@ def api_yahoo_drill_companies():
         if atividade:
             conditions.append("dg.atividade_anloc = ?")
             params.append(atividade)
+
+        # Multi-value global filters
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        conditions.extend(filter_conds)
+        params.extend(filter_params)
+
         if search:
             conditions.append("(dg.company_name LIKE ? OR dg.ticker LIKE ? OR cbd.yahoo_code LIKE ?)")
             s = f"%{search}%"
@@ -2332,6 +2608,11 @@ def api_yahoo_drill_distribution():
         if atividade:
             conditions.append("dg.atividade_anloc = ?")
             params.append(atividade)
+
+        # Multi-value global filters
+        filter_conds, filter_params = _build_joined_filters(request.args)
+        conditions.extend(filter_conds)
+        params.extend(filter_params)
 
         where = "WHERE " + " AND ".join(conditions)
 
@@ -2769,6 +3050,12 @@ def api_export_preview():
 # ==========================================================================
 # DADOS FINANCEIROS HISTÓRICOS
 # ==========================================================================
+
+@app.route('/metodologias')
+def metodologias_page():
+    """Página de metodologias de cálculo."""
+    return render_template('metodologias.html')
+
 
 @app.route('/data-yahoo-historico')
 def data_yahoo_historico_page():
@@ -3361,6 +3648,9 @@ def api_historico_consolidated():
                 'ev_revenue': row.get('ev_revenue'),
                 'debt_equity': row.get('debt_equity'),
                 'fcf_revenue_ratio': row.get('fcf_revenue_ratio'),
+                'short_term_debt': row.get('short_term_debt'),
+                'long_term_debt': row.get('long_term_debt'),
+                'diluted_average_shares': row.get('diluted_average_shares'),
             })
 
         # Limpar NaN dos rankings
@@ -3736,8 +4026,8 @@ if __name__ == '__main__':
     
     # Executar aplicação
     app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True,
+        host=os.environ.get('FLASK_HOST', '127.0.0.1'),
+        port=int(os.environ.get('FLASK_PORT', 5000)),
+        debug=os.environ.get('FLASK_DEBUG', '0') == '1',
         threaded=True
     )

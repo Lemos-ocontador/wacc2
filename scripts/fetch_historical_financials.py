@@ -28,6 +28,7 @@ import random
 import sqlite3
 import threading
 import logging
+import warnings
 from datetime import datetime, date
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -40,6 +41,10 @@ from yfinance.exceptions import YFRateLimitError
 from yfinance.data import YfData
 import numpy as np
 import pandas as pd
+
+# Silenciar warnings de depreciação do Pandas (Timestamp.utcnow) no yfinance
+warnings.filterwarnings("ignore", category=FutureWarning, module="yfinance")
+warnings.filterwarnings("ignore", message=".*Timestamp.utcnow.*")
 
 # --------------------------------------------------------------------------
 # Logging
@@ -87,16 +92,16 @@ def _reset_yf_session():
 
 
 # --------------------------------------------------------------------------
-# Conversão de moeda (cache simples)
+# Conversão de moeda (cache com série histórica)
 # --------------------------------------------------------------------------
-_fx_cache: dict[str, float] = {"USD": 1.0}
+_fx_cache: dict[str, pd.DataFrame] = {}
 _fx_lock = threading.Lock()
 
 
-def _get_fx_rate(currency: str) -> float:
-    """Retorna taxa de conversão para USD. Usa cache thread-safe."""
+def _get_fx_series(currency: str) -> pd.DataFrame:
+    """Retorna série histórica FX para USD. Usa cache thread-safe."""
     if not currency or currency == "USD":
-        return 1.0
+        return pd.DataFrame()
     with _fx_lock:
         if currency in _fx_cache:
             return _fx_cache[currency]
@@ -104,18 +109,37 @@ def _get_fx_rate(currency: str) -> float:
     try:
         pair = f"{currency}USD=X"
         ticker = yf.Ticker(pair)
-        hist = ticker.history(period="5d")
-        if not hist.empty:
-            rate = float(hist["Close"].iloc[-1])
-        else:
-            rate = 1.0
-            log.warning(f"Sem cotação para {pair}, usando 1.0")
+        hist = ticker.history(period="10y", interval="1d")
+        if hist.empty:
+            log.warning(f"Sem cotação histórica para {pair}")
+            hist = pd.DataFrame()
     except Exception as e:
         log.warning(f"Erro buscando FX {currency}: {e}")
-        rate = 1.0
+        hist = pd.DataFrame()
     with _fx_lock:
-        _fx_cache[currency] = rate
-    return rate
+        _fx_cache[currency] = hist
+    return hist
+
+
+def _get_historical_fx_rates(currency: str, period_dates: list[str]) -> dict[str, float]:
+    """Retorna taxa FX para USD mais próxima de cada data de período."""
+    if not currency or currency == "USD":
+        return {d: 1.0 for d in period_dates}
+    fx_hist = _get_fx_series(currency)
+    if fx_hist.empty:
+        return {d: 1.0 for d in period_dates}
+    tz = fx_hist.index.tz
+    result = {}
+    for date_str in period_dates:
+        pd_date = pd.Timestamp(date_str)
+        if tz is not None:
+            pd_date = pd_date.tz_localize(tz)
+        closest_idx = fx_hist.index.get_indexer([pd_date], method="nearest")[0]
+        if 0 <= closest_idx < len(fx_hist):
+            result[date_str] = float(fx_hist.iloc[closest_idx]["Close"])
+        else:
+            result[date_str] = 1.0
+    return result
 
 
 # --------------------------------------------------------------------------
@@ -153,6 +177,7 @@ def ensure_table(db_path: Path):
         tax_provision REAL,
         research_and_development REAL,
         sga REAL,
+        diluted_average_shares REAL,
 
         -- Cash Flow
         free_cash_flow REAL,
@@ -165,9 +190,14 @@ def ensure_table(db_path: Path):
         stockholders_equity REAL,
         total_liabilities REAL,
         cash_and_equivalents REAL,
+        short_term_debt REAL,
+        long_term_debt REAL,
         short_term_investments REAL,
         current_assets REAL,
         current_liabilities REAL,
+        ordinary_shares_number REAL,
+        preferred_stock REAL,
+        minority_interest REAL,
 
         -- Market / EV
         market_cap_estimated REAL,
@@ -209,6 +239,14 @@ def ensure_table(db_path: Path):
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cfh_yahoo ON company_financials_historical(yahoo_code)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cfh_period ON company_financials_historical(period_type, fiscal_year)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cfh_company ON company_financials_historical(company_basic_data_id)")
+    # Migration: adicionar colunas novas se tabela já existia
+    for col_name in ('ordinary_shares_number', 'preferred_stock', 'minority_interest',
+                      'diluted_average_shares', 'short_term_debt', 'long_term_debt'):
+        try:
+            conn.execute(f"ALTER TABLE company_financials_historical ADD COLUMN {col_name} REAL")
+            log.info(f"Coluna '{col_name}' adicionada.")
+        except sqlite3.OperationalError:
+            pass  # coluna já existe
     conn.commit()
     conn.close()
     log.info("Tabela company_financials_historical verificada/criada.")
@@ -283,7 +321,7 @@ def _get_historical_prices(ticker_obj, periods: list[str]) -> dict[str, float | 
     """Busca preço de fechamento nas datas dos períodos para calcular market cap."""
     result = {}
     try:
-        hist = ticker_obj.history(period="10y", interval="1mo")
+        hist = ticker_obj.history(period="10y", interval="1d")
         if hist.empty:
             return result
         # Resolver timezone: hist.index é tz-aware, periods são naive
@@ -335,11 +373,8 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
     if qt in ("NONE", ""):
         return None
 
-    shares_outstanding = info.get("sharesOutstanding")
+    shares_outstanding_current = info.get("sharesOutstanding")  # fallback se balance_sheet não tiver
     financial_currency = info.get("financialCurrency") or info.get("currency")
-    current_ev = info.get("enterpriseValue")
-    current_ev_revenue = info.get("enterpriseToRevenue")
-    current_ev_ebitda = info.get("enterpriseToEbitda")
 
     # Buscar financial statements
     try:
@@ -360,12 +395,12 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
     if income_df is None or income_df.empty:
         return None
 
-    # Taxa de câmbio
-    fx_rate = _get_fx_rate(financial_currency) if financial_currency else 1.0
-
-    # Preços históricos para market cap
+    # Preços históricos para market cap (diário para precisão)
     period_dates = [str(c.date()) for c in income_df.columns]
-    hist_prices = _get_historical_prices(ticker, period_dates) if shares_outstanding else {}
+    hist_prices = _get_historical_prices(ticker, period_dates)
+
+    # Taxas de câmbio históricas por período
+    fx_rates = _get_historical_fx_rates(financial_currency, period_dates) if financial_currency else {d: 1.0 for d in period_dates}
 
     periods = []
     for col in income_df.columns:
@@ -373,6 +408,7 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
         fiscal_year = col.year
         fiscal_quarter = (col.month - 1) // 3 + 1 if quarterly else None
 
+        fx_rate = fx_rates.get(period_date, 1.0)
         rec = {
             "period_date": period_date,
             "fiscal_year": fiscal_year,
@@ -396,6 +432,7 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
         rec["tax_provision"] = _safe_value(income_col, "Tax Provision")
         rec["research_and_development"] = _safe_value(income_col, "Research And Development")
         rec["sga"] = _safe_value(income_col, "Selling General And Administration")
+        rec["diluted_average_shares"] = _safe_value(income_col, "Diluted Average Shares")
 
         # Cash Flow
         if cashflow_df is not None and not cashflow_df.empty and col in cashflow_df.columns:
@@ -412,25 +449,31 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
             rec["stockholders_equity"] = _safe_value(bs_col, "Stockholders Equity")
             rec["total_liabilities"] = _safe_value(bs_col, "Total Liabilities Net Minority Interest")
             rec["cash_and_equivalents"] = _safe_value(bs_col, "Cash And Cash Equivalents")
+            rec["short_term_debt"] = _safe_value(bs_col, "Current Debt")
+            rec["long_term_debt"] = _safe_value(bs_col, "Long Term Debt")
             rec["short_term_investments"] = _safe_value(bs_col, "Other Short Term Investments")
             rec["current_assets"] = _safe_value(bs_col, "Current Assets")
             rec["current_liabilities"] = _safe_value(bs_col, "Current Liabilities")
+            rec["ordinary_shares_number"] = _safe_value(bs_col, "Ordinary Shares Number")
+            rec["preferred_stock"] = _safe_value(bs_col, "Preferred Stock")
+            rec["minority_interest"] = _safe_value(bs_col, "Minority Interest")
 
-        # Market Cap estimado
+        # Market Cap: usar shares histórico do balance_sheet, fallback para atual
         price = hist_prices.get(period_date)
-        if price and shares_outstanding:
-            rec["market_cap_estimated"] = price * shares_outstanding
+        shares = rec.get("ordinary_shares_number") or shares_outstanding_current
+        if price and shares:
+            rec["market_cap_estimated"] = price * shares
         else:
             rec["market_cap_estimated"] = None
 
-        # EV estimado = Market Cap + Total Debt - Cash
+        # EV = Market Cap + Total Debt + Preferred Stock + Minority Interest - Cash
         mcap = rec.get("market_cap_estimated")
-        debt = rec.get("total_debt")
-        cash = rec.get("cash_and_equivalents")
-        if mcap and debt is not None and cash is not None:
-            rec["enterprise_value_estimated"] = mcap + debt - cash
-        elif mcap and debt is not None:
-            rec["enterprise_value_estimated"] = mcap + debt
+        debt = rec.get("total_debt") or 0
+        pref = rec.get("preferred_stock") or 0
+        mi = rec.get("minority_interest") or 0
+        cash = rec.get("cash_and_equivalents") or 0
+        if mcap:
+            rec["enterprise_value_estimated"] = mcap + debt + pref + mi - cash
         else:
             rec["enterprise_value_estimated"] = None
 
@@ -499,9 +542,12 @@ FIELDS = [
     "total_revenue", "cost_of_revenue", "gross_profit", "operating_income",
     "operating_expense", "ebit", "ebitda", "normalized_ebitda", "net_income",
     "interest_expense", "tax_provision", "research_and_development", "sga",
+    "diluted_average_shares",
     "free_cash_flow", "operating_cash_flow", "capital_expenditure",
     "total_assets", "total_debt", "stockholders_equity", "total_liabilities",
-    "cash_and_equivalents", "short_term_investments", "current_assets", "current_liabilities",
+    "cash_and_equivalents", "short_term_debt", "long_term_debt",
+    "short_term_investments", "current_assets", "current_liabilities",
+    "ordinary_shares_number", "preferred_stock", "minority_interest",
     "market_cap_estimated", "enterprise_value_estimated",
     "original_currency", "fx_rate_to_usd",
     "total_revenue_usd", "ebit_usd", "ebitda_usd", "net_income_usd",

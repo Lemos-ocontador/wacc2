@@ -13,8 +13,8 @@
 | **Yahoo Finance (yfinance)** — `ticker.cash_flow` | Fluxo de Caixa: FCF, Operacional, Capex | Anual: até 5 períodos |
 | **Yahoo Finance (yfinance)** — `ticker.balance_sheet` | Balanço: Dívida Total, Patrimônio, Ativos, Caixa | Anual: até 5 períodos |
 | **Yahoo Finance (yfinance)** — `ticker.get_info()` | Shares Outstanding, moeda financeira, EV atual | Valor corrente |
-| **Yahoo Finance (yfinance)** — `ticker.history()` | Preços históricos de fechamento (mensal, 10 anos) | Série temporal |
-| **Yahoo Finance (yfinance)** — `{MOEDA}USD=X` | Taxa de câmbio para USD | Último disponível |
+| **Yahoo Finance (yfinance)** — `ticker.history()` | Preços históricos de fechamento (diário, 10 anos) | Série temporal |
+| **Yahoo Finance (yfinance)** — `{MOEDA}USD=X` | Taxa de câmbio histórica para USD (diário, 10 anos) | Série temporal |
 | **Damodaran** — tabela `damodaran_global` | Market Cap histórico (dez/2014—2023), EV, múltiplos | Cross-validation |
 
 ---
@@ -23,23 +23,23 @@
 
 ### 2.1 Fórmula
 
-$$EV = \text{Market Cap Estimado} + \text{Dívida Total} - \text{Caixa e Equivalentes}$$
+$$EV = \text{Market Cap Estimado} + \text{Dívida Total} + \text{Preferred Stock} + \text{Minority Interest} - \text{Caixa e Equivalentes}$$
 
-Quando o campo `cash_and_equivalents` não está disponível:
+Quando componentes opcionais não estão disponíveis, são tratados como zero:
 
-$$EV = \text{Market Cap Estimado} + \text{Dívida Total}$$
+$$EV = \text{MCap} + \text{Dívida Total} + \text{Preferred}_{(se\ disponível)} + \text{Minority}_{(se\ disponível)} - \text{Caixa}_{(se\ disponível)}$$
 
 ### 2.2 Market Cap Estimado
 
-$$\text{Market Cap} = P_{\text{close}}(t) \times \text{Shares Outstanding}$$
+$$\text{Market Cap} = P_{\text{close}}(t) \times \text{Ordinary Shares Number}(t)$$
 
 Onde:
 - $P_{\text{close}}(t)$ = preço de fechamento **mais próximo** da data do período fiscal $t$
-- **Shares Outstanding** = número atual de ações em circulação (obtido via `ticker.get_info()`)
+- **Ordinary Shares Number(t)** = número de ações ordinárias em circulação no período $t$, extraído do Balance Sheet (`Ordinary Shares Number`). Se não disponível, utiliza `sharesOutstanding` corrente via `ticker.get_info()`
 
 #### Obtenção do Preço Histórico
 
-1. Busca-se a série de preços mensais dos últimos 10 anos: `ticker.history(period="10y", interval="1mo")`
+1. Busca-se a série de preços diários dos últimos 10 anos: `ticker.history(period="10y", interval="1d")`
 2. Para cada data de período fiscal (ex: `2024-09-30`), localiza-se o preço mais próximo usando `pd.Index.get_indexer(method="nearest")`
 3. **Tratamento de timezone**: o índice retornado pelo yfinance é timezone-aware (ex: `America/New_York`). A data do período é localizada para o mesmo timezone antes da comparação
 
@@ -47,17 +47,21 @@ Onde:
 
 | Limitação | Impacto | Mitigação |
 |-----------|---------|-----------|
-| Shares Outstanding é o valor **atual**, não histórico | Market Cap de períodos anteriores pode estar inflado/deflado se houve emissão, recompra ou split | Para empresas com base acionária estável, o impacto é mínimo. Splits são ajustados automaticamente pelo yfinance nos preços históricos |
+| Shares Outstanding histórico pode não estar disponível em alguns balanços | Nesses casos, usa-se o `sharesOutstanding` corrente via `get_info()` | Para empresas com base acionária estável, o impacto é mínimo. Splits são ajustados automaticamente pelo yfinance nos preços históricos |
 | yfinance retorna até 5 períodos anuais, mas o 5° pode ter dados incompletos | FY mais antigo pode ter todas as métricas como N/A | O campo `data_quality` pode ser usado para filtrar |
-| Preços mensais (não diários) | Diferença de poucos dias na data exata do balanço | O `get_indexer(method="nearest")` minimiza a diferença |
 
 ### 2.3 Componentes do Balanço
 
 | Campo | Origem yfinance | Campo no BD |
 |-------|----------------|-------------|
 | Dívida Total | `balance_sheet["Total Debt"]` | `total_debt` |
+| Dívida Curto Prazo | `balance_sheet["Current Debt"]` | `short_term_debt` |
+| Dívida Longo Prazo | `balance_sheet["Long Term Debt"]` | `long_term_debt` |
 | Caixa e Equivalentes | `balance_sheet["Cash And Cash Equivalents"]` | `cash_and_equivalents` |
 | Patrimônio Líquido | `balance_sheet["Stockholders Equity"]` | `stockholders_equity` |
+| Ações Ordinárias | `balance_sheet["Ordinary Shares Number"]` | `ordinary_shares_number` |
+| Preferred Stock | `balance_sheet["Preferred Stock"]` | `preferred_stock` |
+| Minority Interest | `balance_sheet["Minority Interest"]` | `minority_interest` |
 | Ativos Totais | `balance_sheet["Total Assets"]` | `total_assets` |
 | Passivos Totais | `balance_sheet["Total Liabilities Net Minority Interest"]` | `total_liabilities` |
 | Investimentos CP | `balance_sheet["Other Short Term Investments"]` | `short_term_investments` |
@@ -93,6 +97,7 @@ Para Apple Inc (AAPL), FY2025:
 | Provisão p/ IR | `Tax Provision` | `tax_provision` | Imposto de renda provisionado |
 | P&D | `Research And Development` | `research_and_development` | Gastos com pesquisa e desenvolvimento |
 | SG&A | `Selling General And Administration` | `sga` | Despesas com vendas, gerais e administrativas |
+| Média Diluída Ações | `Diluted Average Shares` | `diluted_average_shares` | Média ponderada de ações diluídas no período |
 
 ---
 
@@ -150,9 +155,9 @@ Para Apple Inc (AAPL), FY2025:
 ### 6.1 Metodologia
 
 1. A moeda original dos demonstrativos financeiros é obtida via `ticker.get_info()["financialCurrency"]`
-2. A taxa de câmbio é buscada via ticker auxiliar `{MOEDA}USD=X` (ex: `BRLUSD=X`) usando `ticker.history(period="5d")`
-3. O último preço de fechamento disponível é usado como taxa de conversão
-4. A taxa é **cacheada** por moeda (thread-safe) durante a execução
+2. A série histórica de câmbio é buscada via ticker auxiliar `{MOEDA}USD=X` (ex: `BRLUSD=X`) usando `ticker.history(period="10y", interval="1d")`
+3. Para cada período fiscal, a taxa mais próxima da data do balanço é utilizada (método `nearest`)
+4. A série FX é **cacheada** por moeda (thread-safe) durante a execução
 
 ### 6.2 Campos Convertidos
 
@@ -169,7 +174,7 @@ Para Apple Inc (AAPL), FY2025:
 
 | Limitação | Impacto |
 |-----------|---------|
-| Taxa de câmbio é a **corrente** (últimos 5 dias), não a histórica do período | Valores USD de períodos antigos refletem a taxa atual, não a que vigorava na data do balanço |
+| Série FX limitada a ~10 anos; períodos anteriores usam a taxa mais antiga disponível | Para empresas com histórico >10 anos, períodos muito antigos podem usar taxa de ~10 anos atrás |
 | Para moedas sem cotação no Yahoo Finance, assume-se taxa = 1.0 | Algumas moedas exóticas podem não converter corretamente |
 | `market_cap_estimated` é em moeda local (mesma do preço da ação) | Para ações em BRL, `market_cap_estimated` estará em BRL; use `enterprise_value_usd` para comparações cross-country |
 
@@ -271,8 +276,8 @@ O pequeno desvio no EV se deve a:
 
 | Métrica | Fórmula |
 |---------|---------|
-| **Market Cap (est.)** | $P_{\text{close}} \times \text{SharesOut}$ |
-| **Enterprise Value** | $\text{MCap} + \text{Dívida Total} - \text{Caixa}$ |
+| **Market Cap (est.)** | $P_{\text{close}} \times \text{OrdinarySharesNumber}$ |
+| **Enterprise Value** | $\text{MCap} + \text{Dívida Total} + \text{Preferred Stock} + \text{Minority Interest} - \text{Caixa}$ |
 | **Margem EBIT** | $\frac{\text{EBIT}}{\text{Receita}}$ |
 | **Margem EBITDA** | $\frac{\text{EBITDA}}{\text{Receita}}$ |
 | **Margem Bruta** | $\frac{\text{Lucro Bruto}}{\text{Receita}}$ |
@@ -284,7 +289,7 @@ O pequeno desvio no EV se deve a:
 | **Dívida/EBITDA** | $\frac{\text{Dívida Total}}{\text{EBITDA}}$ |
 | **EV/Receita** | $\frac{\text{EV}}{\text{Receita}}$ |
 | **EV/EBITDA** | $\frac{\text{EV}}{\text{EBITDA}}$ |
-| **Valor USD** | $\text{Valor Local} \times \text{FX Rate}$ |
+| **Valor USD** | $\text{Valor Local} \times \text{FX Rate}(t)$ |
 
 ---
 

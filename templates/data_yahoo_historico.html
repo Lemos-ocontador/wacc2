@@ -305,6 +305,19 @@
             .grid-2, .grid-3 { grid-template-columns: 1fr; }
             .kpi-row { grid-template-columns: repeat(3, 1fr); }
         }
+        /* Source legend badges */
+        .src-badge {
+            display: inline-block; padding: 1px 5px; border-radius: 3px;
+            font-size: 10px; font-weight: 700; vertical-align: middle; margin-right: 3px;
+        }
+        .src-y { background: rgba(108,52,235,0.2); color: #a78bfa; }
+        .src-d { background: rgba(46,204,113,0.2); color: #2ecc71; }
+        .src-c { background: rgba(243,156,18,0.2); color: #f39c12; }
+        .legend-bar {
+            display: flex; gap: 16px; align-items: center;
+            font-size: 11px; color: var(--text2); margin-bottom: 12px;
+        }
+        .legend-bar .legend-item { display: flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
@@ -316,6 +329,7 @@
             <div class="subtitle">Evolução temporal de demonstrativos financeiros • Yahoo Finance</div>
         </div>
         <div class="header-actions">
+            <a href="/metodologias" class="btn-nav" style="opacity:0.7;font-size:11px" title="Metodologias de cálculo">📖</a>
             <a href="/analise-setor" class="btn-nav">📊 Análise Setor</a>
             <a href="/data-yahoo" class="btn-nav">← Yahoo Dashboard</a>
             <a href="/" class="btn-nav">🏠 Home</a>
@@ -448,6 +462,12 @@
             <div class="card">
                 <div class="card-header"><h3>Dados Completos</h3></div>
                 <div class="card-body">
+                    <div class="legend-bar">
+                        <strong>Fonte:</strong>
+                        <div class="legend-item"><span class="src-badge src-y">Y</span> Yahoo Finance</div>
+                        <div class="legend-item"><span class="src-badge src-c">C</span> Calculado</div>
+                        <a href="/metodologias" target="_blank" style="margin-left:auto;color:var(--text2);font-size:11px;text-decoration:none;opacity:0.7" title="Ver metodologias de cálculo">📖 Metodologias</a>
+                    </div>
                     <div class="table-scroll"><table class="data-table" id="detail-table"></table></div>
                 </div>
             </div>
@@ -543,6 +563,10 @@
                                 <label><input type="checkbox" value="total_revenue_usd" onchange="onMetricChange()"> Receita USD</label>
                                 <label><input type="checkbox" value="ebitda_usd" onchange="onMetricChange()"> EBITDA USD</label>
                                 <label><input type="checkbox" value="enterprise_value_usd" onchange="onMetricChange()"> EV USD</label>
+                                <div class="metric-ms-sep"></div>
+                                <label><input type="checkbox" value="short_term_debt" onchange="onMetricChange()"> Dívida CP</label>
+                                <label><input type="checkbox" value="long_term_debt" onchange="onMetricChange()"> Dívida LP</label>
+                                <label><input type="checkbox" value="diluted_average_shares" onchange="onMetricChange()"> Ações Diluídas (méd)</label>
                             </div>
                         </div>
                         <button class="btn-export" onclick="exportConsolCSV()">📥 Exportar CSV</button>
@@ -590,6 +614,9 @@
                         <option value="net_income_usd">Lucro Liq. (USD)</option>
                         <option value="free_cash_flow_usd">FCF (USD)</option>
                         <option value="enterprise_value_usd">EV (USD)</option>
+                        <option value="short_term_debt">Dívida CP</option>
+                        <option value="long_term_debt">Dívida LP</option>
+                        <option value="diluted_average_shares">Ações Diluídas (méd)</option>
                     </select>
                 </div>
                 <div id="compare-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:15px;"></div>
@@ -1142,35 +1169,42 @@ function renderDetailTable(periods) {
     const table = document.getElementById('detail-table');
     const fields = [
         { key: 'fiscal_year', label: 'Ano', fmt: v => v },
-        { key: 'total_revenue', label: 'Receita', fmt: v => fmt(v) },
-        { key: 'gross_profit', label: 'Lucro Bruto', fmt: v => fmt(v) },
-        { key: 'ebitda', label: 'EBITDA', fmt: v => fmt(v) },
-        { key: 'ebit', label: 'EBIT', fmt: v => fmt(v) },
-        { key: 'net_income', label: 'Lucro Líquido', fmt: v => fmt(v) },
-        { key: 'free_cash_flow', label: 'FCF', fmt: v => fmt(v) },
-        { key: 'operating_cash_flow', label: 'Cx. Operacional', fmt: v => fmt(v) },
-        { key: 'capital_expenditure', label: 'Capex', fmt: v => fmt(v) },
-        { key: 'total_debt', label: 'Dívida Total', fmt: v => fmt(v) },
-        { key: 'cash_and_equivalents', label: 'Caixa', fmt: v => fmt(v) },
-        { key: 'stockholders_equity', label: 'PL', fmt: v => fmt(v) },
-        { key: 'market_cap_estimated', label: 'Market Cap', fmt: v => fmt(v) },
-        { key: 'enterprise_value_estimated', label: 'EV', fmt: v => fmt(v) },
-        { key: 'gross_margin', label: 'Margem Bruta', fmt: pct },
-        { key: 'ebitda_margin', label: 'Margem EBITDA', fmt: pct },
-        { key: 'ebit_margin', label: 'Margem EBIT', fmt: pct },
-        { key: 'net_margin', label: 'Margem Líquida', fmt: pct },
-        { key: 'fcf_revenue_ratio', label: 'FCF/Receita', fmt: pct },
-        { key: 'debt_equity', label: 'Dívida/PL', fmt: ratio },
-        { key: 'debt_ebitda', label: 'Dívida/EBITDA', fmt: ratio },
-        { key: 'ev_ebitda', label: 'EV/EBITDA', fmt: ratio },
-        { key: 'ev_ebit', label: 'EV/EBIT', fmt: ratio },
-        { key: 'ev_revenue', label: 'EV/Receita', fmt: ratio },
+        { key: 'total_revenue', label: 'Receita', fmt: v => fmt(v), src: 'Y' },
+        { key: 'gross_profit', label: 'Lucro Bruto', fmt: v => fmt(v), src: 'Y' },
+        { key: 'ebitda', label: 'EBITDA', fmt: v => fmt(v), src: 'Y' },
+        { key: 'ebit', label: 'EBIT', fmt: v => fmt(v), src: 'Y' },
+        { key: 'net_income', label: 'Lucro Líquido', fmt: v => fmt(v), src: 'Y' },
+        { key: 'diluted_average_shares', label: 'Ações Diluídas (méd)', fmt: v => fmt(v), src: 'Y' },
+        { key: 'free_cash_flow', label: 'FCF', fmt: v => fmt(v), src: 'Y' },
+        { key: 'operating_cash_flow', label: 'Cx. Operacional', fmt: v => fmt(v), src: 'Y' },
+        { key: 'capital_expenditure', label: 'Capex', fmt: v => fmt(v), src: 'Y' },
+        { key: 'total_debt', label: 'Dívida Total', fmt: v => fmt(v), src: 'Y' },
+        { key: 'short_term_debt', label: 'Dívida CP', fmt: v => fmt(v), src: 'Y' },
+        { key: 'long_term_debt', label: 'Dívida LP', fmt: v => fmt(v), src: 'Y' },
+        { key: 'cash_and_equivalents', label: 'Caixa', fmt: v => fmt(v), src: 'Y' },
+        { key: 'stockholders_equity', label: 'PL', fmt: v => fmt(v), src: 'Y' },
+        { key: 'ordinary_shares_number', label: 'Ações Ordinárias', fmt: v => fmt(v), src: 'Y' },
+        { key: 'preferred_stock', label: 'Preferred Stock', fmt: v => fmt(v), src: 'Y' },
+        { key: 'minority_interest', label: 'Minority Interest', fmt: v => fmt(v), src: 'Y' },
+        { key: 'market_cap_estimated', label: 'Market Cap', fmt: v => fmt(v), src: 'C' },
+        { key: 'enterprise_value_estimated', label: 'EV', fmt: v => fmt(v), src: 'C' },
+        { key: 'gross_margin', label: 'Margem Bruta', fmt: pct, src: 'C' },
+        { key: 'ebitda_margin', label: 'Margem EBITDA', fmt: pct, src: 'C' },
+        { key: 'ebit_margin', label: 'Margem EBIT', fmt: pct, src: 'C' },
+        { key: 'net_margin', label: 'Margem Líquida', fmt: pct, src: 'C' },
+        { key: 'fcf_revenue_ratio', label: 'FCF/Receita', fmt: pct, src: 'C' },
+        { key: 'debt_equity', label: 'Dívida/PL', fmt: ratio, src: 'C' },
+        { key: 'debt_ebitda', label: 'Dívida/EBITDA', fmt: ratio, src: 'C' },
+        { key: 'ev_ebitda', label: 'EV/EBITDA', fmt: ratio, src: 'C' },
+        { key: 'ev_ebit', label: 'EV/EBIT', fmt: ratio, src: 'C' },
+        { key: 'ev_revenue', label: 'EV/Receita', fmt: ratio, src: 'C' },
     ];
     let html = '<thead><tr><th>Métrica</th>';
     periods.forEach(p => html += '<th class="num">' + p.fiscal_year + '</th>');
     html += '</tr></thead><tbody>';
+    const srcBadge = s => s === 'Y' ? '<span class="src-badge src-y" title="Yahoo Finance">Y</span>' : s === 'C' ? '<span class="src-badge src-c" title="Calculado">C</span>' : '';
     fields.forEach(f => {
-        html += '<tr><td><strong>' + f.label + '</strong></td>';
+        html += '<tr><td>' + srcBadge(f.src) + ' <strong>' + f.label + '</strong></td>';
         periods.forEach(p => {
             const v = p[f.key];
             html += '<td class="num ' + colorVal(v) + '">' + f.fmt(v) + '</td>';
@@ -1664,7 +1698,12 @@ const METRIC_LABELS = {
     ev_ebitda:'EV/EBITDA', ev_ebit:'EV/EBIT', ev_revenue:'EV/Receita',
     debt_equity:'Dív/PL', debt_ebitda:'Dív/EBITDA',
     fcf_revenue_ratio:'FCF/Rec', capex_revenue:'Capex/Rec',
-    total_revenue_usd:'Receita USD', ebitda_usd:'EBITDA USD', enterprise_value_usd:'EV USD'
+    total_revenue_usd:'Receita USD', ebitda_usd:'EBITDA USD', enterprise_value_usd:'EV USD',
+    short_term_debt:'Dívida CP', long_term_debt:'Dívida LP',
+    diluted_average_shares:'Ações Diluídas (méd)',
+    ordinary_shares_number:'Ações Ordinárias', preferred_stock:'Preferred Stock',
+    minority_interest:'Minority Interest', net_income_usd:'Lucro Líq USD',
+    free_cash_flow_usd:'FCF USD'
 };
 
 function getSelectedMetrics() {
@@ -1893,10 +1932,10 @@ function exportDetailCSV() {
 function exportRankingCSV() {
     if (!_consolData || !_consolData.ranking) return;
     const fmtN = v => v == null ? '' : String(v).replace('.', ',');
-    let csv = 'Código;Empresa;Setor;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida\n';
+    let csv = 'Código;Empresa;Setor;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida;Dívida_CP;Dívida_LP\n';
     _consolData.ranking.forEach(r => {
         csv += ['"'+(r.yahoo_code||'')+'"', '"'+(r.company_name||'').replace(/"/g,"'")+'"', '"'+(r.sector||'')+'"',
-            fmtN(r.total_revenue_usd), fmtN(r.ebitda_usd), fmtN(r.ebitda_margin), fmtN(r.ev_ebitda), fmtN(r.ev_ebit), fmtN(r.ev_revenue), fmtN(r.debt_equity), fmtN(r.net_margin)].join(';') + '\n';
+            fmtN(r.total_revenue_usd), fmtN(r.ebitda_usd), fmtN(r.ebitda_margin), fmtN(r.ev_ebitda), fmtN(r.ev_ebit), fmtN(r.ev_revenue), fmtN(r.debt_equity), fmtN(r.net_margin), fmtN(r.short_term_debt), fmtN(r.long_term_debt)].join(';') + '\n';
     });
     downloadCSV(csv, 'ranking_empresas.csv');
 }

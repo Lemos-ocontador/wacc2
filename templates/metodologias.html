@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anloc - Metodologias de Cálculo</title>
+    <style>
+        :root {
+            --bg: #0f1923; --bg2: #1a2733; --bg3: #243447;
+            --accent: #3498db; --accent2: #2ecc71; --accent3: #e74c3c;
+            --accent4: #f39c12; --accent5: #9b59b6;
+            --text: #ecf0f1; --text2: #95a5a6; --border: #2c3e50;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: linear-gradient(135deg, #1a5276, #2980b9, #1a8a6e);
+            padding: 18px 25px; border-radius: 12px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+        .btn-nav {
+            padding: 8px 16px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            background: rgba(255,255,255,0.15); color: white;
+            text-decoration: none; transition: background 0.2s;
+        }
+        .btn-nav:hover { background: rgba(255,255,255,0.25); }
+        .header-actions { display: flex; gap: 8px; }
+
+        /* TOC */
+        .toc {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 20px 25px; margin-bottom: 25px;
+        }
+        .toc h3 { color: var(--accent); margin-bottom: 10px; font-size: 15px; }
+        .toc ul { list-style: none; columns: 2; column-gap: 30px; }
+        .toc li { margin-bottom: 5px; }
+        .toc a { color: var(--text2); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .toc a:hover { color: var(--accent); }
+
+        /* Sections */
+        .section {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 25px 30px; margin-bottom: 20px;
+        }
+        .section h2 {
+            color: var(--accent); font-size: 18px; margin-bottom: 15px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+        .section h3 { color: var(--accent4); font-size: 15px; margin: 18px 0 10px; }
+        .section p { font-size: 14px; margin-bottom: 10px; color: var(--text); }
+        .section ul, .section ol { margin-left: 20px; margin-bottom: 12px; }
+        .section li { font-size: 13px; margin-bottom: 4px; }
+
+        /* Tables */
+        table {
+            width: 100%; border-collapse: collapse; margin: 12px 0 18px;
+            font-size: 13px;
+        }
+        th {
+            background: var(--bg3); color: var(--accent); text-align: left;
+            padding: 8px 12px; font-weight: 600; border: 1px solid var(--border);
+        }
+        td {
+            padding: 6px 12px; border: 1px solid var(--border);
+            vertical-align: top;
+        }
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        code {
+            background: var(--bg3); padding: 2px 6px; border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace; font-size: 12px;
+            color: var(--accent2);
+        }
+        .formula {
+            background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+            padding: 15px 20px; margin: 12px 0; font-size: 15px;
+            text-align: center; color: var(--accent4); font-weight: 600;
+        }
+        .note {
+            background: rgba(52, 152, 219, 0.1); border-left: 3px solid var(--accent);
+            padding: 10px 15px; margin: 12px 0; border-radius: 0 6px 6px 0;
+            font-size: 13px;
+        }
+
+        /* Legend badges */
+        .source-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 600; margin-right: 4px; vertical-align: middle;
+        }
+        .source-yahoo { background: rgba(108, 52, 235, 0.2); color: #a78bfa; }
+        .source-damodaran { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .source-calculado { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
+
+        .legend-box {
+            display: flex; gap: 20px; align-items: center;
+            background: var(--bg3); border-radius: 8px; padding: 10px 16px;
+            margin-bottom: 18px; font-size: 13px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+
+        @media (max-width: 768px) {
+            .toc ul { columns: 1; }
+            .container { padding: 10px; }
+            .section { padding: 15px; }
+            .header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>📖 Metodologias de Cálculo</h1>
+            <div class="subtitle">Referência técnica dos cálculos e fontes de dados • Dados Financeiros Históricos</div>
+        </div>
+        <div class="header-actions">
+            <a href="/data-yahoo-historico" class="btn-nav">📊 Históricos</a>
+            <a href="/data-yahoo" class="btn-nav">📈 Yahoo Dashboard</a>
+            <a href="/" class="btn-nav">🏠 Home</a>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-box">
+        <strong>Legenda de Fontes:</strong>
+        <div class="legend-item"><span class="source-badge source-yahoo">Y</span> Yahoo Finance (yfinance)</div>
+        <div class="legend-item"><span class="source-badge source-damodaran">D</span> Damodaran</div>
+        <div class="legend-item"><span class="source-badge source-calculado">C</span> Calculado</div>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+        <h3>Índice</h3>
+        <ul>
+            <li><a href="#fontes">1. Fontes de Dados</a></li>
+            <li><a href="#ev">2. Enterprise Value (EV)</a></li>
+            <li><a href="#dre">3. Demonstrações Financeiras (DRE)</a></li>
+            <li><a href="#fluxo">4. Fluxo de Caixa</a></li>
+            <li><a href="#balanco">5. Balanço Patrimonial</a></li>
+            <li><a href="#margens">6. Margens e Rentabilidade</a></li>
+            <li><a href="#alavancagem">7. Alavancagem e Múltiplos</a></li>
+            <li><a href="#fx">8. Conversão Cambial (FX)</a></li>
+            <li><a href="#qualidade">9. Qualidade dos Dados</a></li>
+        </ul>
+    </div>
+
+    <!-- 1. Fontes de Dados -->
+    <div class="section" id="fontes">
+        <h2>1. Fontes de Dados</h2>
+        <table>
+            <thead>
+                <tr><th>Fonte</th><th>Dados Obtidos</th><th>API/Método</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.income_stmt</code></td><td>DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc.</td><td>Anual: até 5 períodos</td></tr>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.cash_flow</code></td><td>Fluxo de Caixa: FCF, Operacional, Capex</td><td>Anual: até 5 períodos</td></tr>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.balance_sheet</code></td><td>Balanço: Dívida, PL, Ações, Ativos, Caixa</td><td>Anual: até 5 períodos</td></tr>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.get_info()</code></td><td>Shares Outstanding (fallback), moeda financeira</td><td>Valor corrente</td></tr>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.history()</code></td><td>Preços históricos de fechamento (diário, 10 anos)</td><td>Série temporal</td></tr>
+                <tr><td><span class="source-badge source-yahoo">Y</span> <code>{MOEDA}USD=X</code></td><td>Taxa de câmbio histórica para USD (diário, 10 anos)</td><td>Série temporal</td></tr>
+                <tr><td><span class="source-badge source-damodaran">D</span> <code>damodaran_global</code></td><td>Market Cap histórico, EV, múltiplos (cross-validation)</td><td>dez/2014–2023</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 2. Enterprise Value -->
+    <div class="section" id="ev">
+        <h2>2. Enterprise Value (EV) — Estimativa Histórica</h2>
+
+        <h3>2.1 Fórmula do EV</h3>
+        <div class="formula">
+            EV = Market Cap + Dívida Total + Preferred Stock + Minority Interest − Caixa e Equivalentes
+        </div>
+        <div class="note">
+            Quando Preferred Stock, Minority Interest ou Caixa não estão disponíveis, são tratados como zero. Isso aproxima a fórmula do cálculo utilizado pelo Damodaran e pelo Yahoo Finance.
+        </div>
+
+        <h3>2.2 Market Cap Estimado</h3>
+        <div class="formula">
+            Market Cap = P<sub>close</sub>(t) × Ordinary Shares Number(t)
+        </div>
+        <table>
+            <thead><tr><th>Componente</th><th>Descrição</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>P<sub>close</sub>(t)</strong></td>
+                    <td>Preço de fechamento <strong>diário</strong> mais próximo da data do período fiscal</td>
+                    <td><span class="source-badge source-yahoo">Y</span> <code>ticker.history(period="10y", interval="1d")</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Ordinary Shares Number(t)</strong></td>
+                    <td>Número de ações ordinárias no período <em>t</em> (extraído do Balance Sheet). Se não disponível, usa <code>sharesOutstanding</code> corrente via <code>get_info()</code></td>
+                    <td><span class="source-badge source-yahoo">Y</span> <code>balance_sheet["Ordinary Shares Number"]</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.3 Componentes do EV</h3>
+        <table>
+            <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Dívida Total</td><td><code>Total Debt</code></td><td><code>total_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Dívida Curto Prazo</td><td><code>Current Debt</code></td><td><code>short_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Dívida Longo Prazo</td><td><code>Long Term Debt</code></td><td><code>long_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Caixa e Equivalentes</td><td><code>Cash And Cash Equivalents</code></td><td><code>cash_and_equivalents</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Preferred Stock</td><td><code>Preferred Stock</code></td><td><code>preferred_stock</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Minority Interest</td><td><code>Minority Interest</code></td><td><code>minority_interest</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Ações Ordinárias</td><td><code>Ordinary Shares Number</code></td><td><code>ordinary_shares_number</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Market Cap Estimado</td><td>—</td><td><code>market_cap_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Enterprise Value Estimado</td><td>—</td><td><code>enterprise_value_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DRE -->
+    <div class="section" id="dre">
+        <h2>3. Demonstrações Financeiras — Income Statement</h2>
+        <table>
+            <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Receita Total</td><td><code>Total Revenue</code></td><td><code>total_revenue</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Custo da Receita</td><td><code>Cost Of Revenue</code></td><td><code>cost_of_revenue</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Lucro Bruto</td><td><code>Gross Profit</code></td><td><code>gross_profit</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Receita Operacional</td><td><code>Operating Income</code></td><td><code>operating_income</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Despesas Operacionais</td><td><code>Operating Expense</code></td><td><code>operating_expense</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>EBIT</td><td><code>EBIT</code></td><td><code>ebit</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>EBITDA</td><td><code>EBITDA</code></td><td><code>ebitda</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>EBITDA Normalizado</td><td><code>Normalized EBITDA</code></td><td><code>normalized_ebitda</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Lucro Líquido</td><td><code>Net Income</code></td><td><code>net_income</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Despesas de Juros</td><td><code>Interest Expense</code></td><td><code>interest_expense</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Provisão p/ IR</td><td><code>Tax Provision</code></td><td><code>tax_provision</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>P&amp;D</td><td><code>Research And Development</code></td><td><code>research_and_development</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>SG&amp;A</td><td><code>Selling General And Administration</code></td><td><code>sga</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Média Diluída Ações</td><td><code>Diluted Average Shares</code></td><td><code>diluted_average_shares</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 4. Fluxo de Caixa -->
+    <div class="section" id="fluxo">
+        <h2>4. Fluxo de Caixa</h2>
+        <table>
+            <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Free Cash Flow</td><td><code>Free Cash Flow</code></td><td><code>free_cash_flow</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Caixa Operacional</td><td><code>Operating Cash Flow</code></td><td><code>operating_cash_flow</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Capex</td><td><code>Capital Expenditure</code></td><td><code>capital_expenditure</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+            </tbody>
+        </table>
+        <div class="note">
+            O Free Cash Flow reportado pelo Yahoo Finance é: <strong>FCF = Operating Cash Flow + Capital Expenditure</strong> (Capex é negativo).
+        </div>
+    </div>
+
+    <!-- 5. Balanço -->
+    <div class="section" id="balanco">
+        <h2>5. Balanço Patrimonial</h2>
+        <table>
+            <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Dívida Total</td><td><code>Total Debt</code></td><td><code>total_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Dívida Curto Prazo</td><td><code>Current Debt</code></td><td><code>short_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Dívida Longo Prazo</td><td><code>Long Term Debt</code></td><td><code>long_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Caixa e Equivalentes</td><td><code>Cash And Cash Equivalents</code></td><td><code>cash_and_equivalents</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Patrimônio Líquido</td><td><code>Stockholders Equity</code></td><td><code>stockholders_equity</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Ações Ordinárias</td><td><code>Ordinary Shares Number</code></td><td><code>ordinary_shares_number</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Preferred Stock</td><td><code>Preferred Stock</code></td><td><code>preferred_stock</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Minority Interest</td><td><code>Minority Interest</code></td><td><code>minority_interest</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Ativos Totais</td><td><code>Total Assets</code></td><td><code>total_assets</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Passivos Totais</td><td><code>Total Liabilities Net Minority Interest</code></td><td><code>total_liabilities</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Investimentos CP</td><td><code>Other Short Term Investments</code></td><td><code>short_term_investments</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Ativo Circulante</td><td><code>Current Assets</code></td><td><code>current_assets</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Passivo Circulante</td><td><code>Current Liabilities</code></td><td><code>current_liabilities</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 6. Margens -->
+    <div class="section" id="margens">
+        <h2>6. Margens e Indicadores de Rentabilidade</h2>
+
+        <h3>6.1 Margens sobre Receita</h3>
+        <table>
+            <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Margem EBIT</td><td>EBIT / Receita Total</td><td><code>ebit_margin</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Margem EBITDA</td><td>EBITDA / Receita Total</td><td><code>ebitda_margin</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Margem Bruta</td><td>Lucro Bruto / Receita Total</td><td><code>gross_margin</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Margem Líquida</td><td>Lucro Líquido / Receita Total</td><td><code>net_margin</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>6.2 Indicadores de Conversão de Caixa</h3>
+        <table>
+            <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>FCF/Receita</td><td>FCF / Receita Total</td><td><code>fcf_revenue_ratio</code></td><td>Quanto da receita vira caixa livre</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>FCF/EBITDA</td><td>FCF / EBITDA</td><td><code>fcf_ebitda_ratio</code></td><td>Eficiência de conversão do EBITDA em caixa</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Capex/Receita</td><td>|Capex| / Receita Total</td><td><code>capex_revenue</code></td><td>Intensidade de capital</td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 7. Alavancagem e Múltiplos -->
+    <div class="section" id="alavancagem">
+        <h2>7. Alavancagem e Múltiplos de Avaliação</h2>
+
+        <h3>7.1 Indicadores de Alavancagem</h3>
+        <table>
+            <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>Dívida/PL</td><td>Dívida Total / Patrimônio Líquido</td><td><code>debt_equity</code></td><td>Alavancagem financeira</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>Dívida/EBITDA</td><td>Dívida Total / EBITDA</td><td><code>debt_ebitda</code></td><td>Capacidade de pagamento (em anos de EBITDA)</td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>7.2 Múltiplos de Avaliação</h3>
+        <table>
+            <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td>EV/Receita</td><td>EV Estimado / Receita Total</td><td><code>ev_revenue</code></td><td>Múltiplo de receita</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>EV/EBITDA</td><td>EV Estimado / EBITDA</td><td><code>ev_ebitda</code></td><td>Múltiplo de EBITDA (principal para valuation)</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>EV/EBIT</td><td>EV Estimado / EBIT</td><td><code>ev_ebit</code></td><td>Múltiplo de EBIT</td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+        <div class="note">
+            Os múltiplos usam o Enterprise Value <strong>estimado</strong> do período (não o corrente), permitindo análise temporal de valuation.
+        </div>
+    </div>
+
+    <!-- 8. FX -->
+    <div class="section" id="fx">
+        <h2>8. Conversão Cambial (FX)</h2>
+
+        <h3>8.1 Metodologia</h3>
+        <ol>
+            <li>A moeda original dos demonstrativos é obtida via <code>ticker.get_info()["financialCurrency"]</code></li>
+            <li>A série histórica de câmbio é buscada via ticker auxiliar <code>{MOEDA}USD=X</code> com <code>period="10y"</code></li>
+            <li>Para cada período fiscal, a taxa mais próxima da data do balanço é utilizada (método <code>nearest</code>)</li>
+            <li>A série FX é <strong>cacheada</strong> por moeda (thread-safe) durante a execução</li>
+        </ol>
+
+        <h3>8.2 Campos Convertidos</h3>
+        <table>
+            <thead><tr><th>Campo Original (moeda local)</th><th>Campo USD</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td><code>total_revenue</code></td><td><code>total_revenue_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>ebit</code></td><td><code>ebit_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>ebitda</code></td><td><code>ebitda_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>net_income</code></td><td><code>net_income_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>free_cash_flow</code></td><td><code>free_cash_flow_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>enterprise_value_estimated</code></td><td><code>enterprise_value_usd</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>8.3 Limitações</h3>
+        <table>
+            <thead><tr><th>Limitação</th><th>Impacto</th></tr></thead>
+            <tbody>
+                <tr><td>Série FX limitada a ~10 anos; períodos anteriores usam a taxa mais antiga disponível</td><td>Períodos muito antigos podem usar taxa de ~10 anos atrás</td></tr>
+                <tr><td>Moedas sem cotação no Yahoo Finance assumem taxa = 1.0</td><td>Moedas exóticas podem não converter corretamente</td></tr>
+                <tr><td><code>market_cap_estimated</code> é em moeda local</td><td>Use <code>enterprise_value_usd</code> para comparações cross-country</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 9. Qualidade -->
+    <div class="section" id="qualidade">
+        <h2>9. Qualidade dos Dados</h2>
+
+        <h3>9.1 Cobertura Temporal</h3>
+        <p>O yfinance retorna tipicamente:</p>
+        <ul>
+            <li><strong>4-5 períodos anuais</strong> (últimos ~5 anos fiscais)</li>
+            <li><strong>4-5 períodos trimestrais</strong> (últimos ~16 meses)</li>
+        </ul>
+        <p>O período mais antigo pode ter dados incompletos, especialmente para empresas menores.</p>
+
+        <h3>9.2 Limitações Conhecidas</h3>
+        <table>
+            <thead><tr><th>Limitação</th><th>Mitigação</th></tr></thead>
+            <tbody>
+                <tr><td>Shares Outstanding histórico pode não estar disponível em alguns balanços</td><td>Usa <code>sharesOutstanding</code> corrente como fallback</td></tr>
+                <tr><td>yfinance retorna até 5 períodos anuais; o 5° pode ter dados incompletos</td><td>Campo <code>data_quality</code> para filtrar</td></tr>
+                <tr><td>Série FX limitada a ~10 anos (yfinance)</td><td>Valores em moeda local disponíveis para análises precisas; a maioria dos períodos usa taxa histórica real</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="text-align:center; padding: 20px 0; color: var(--text2); font-size: 12px;">
+        Documento atualizado em julho/2025 • Script: <code>scripts/fetch_historical_financials.py</code>
+    </div>
+</div>
+</body>
+</html>

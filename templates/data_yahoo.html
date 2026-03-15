@@ -277,6 +277,13 @@
         .drill-pagination button:hover { border-color: var(--accent); }
         .drill-pagination button:disabled { opacity: 0.4; cursor: default; }
         .drill-pagination .page-info { font-size: 12px; color: var(--text2); }
+        .page-btn { background:var(--bg3);border:1px solid var(--border);color:var(--text);
+            padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;min-width:32px; }
+        .page-btn:hover { border-color:var(--accent);color:var(--accent); }
+        .page-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+        .page-btn:disabled { opacity:0.35;cursor:default; }
+        .sortable { cursor:pointer;user-select:none; }
+        .sortable:hover { color:var(--accent); }
 
         /* Drill-Down Stats row */
         .drill-stats {
@@ -295,8 +302,71 @@
         /* KPI / Coverage clickable */
         .kpi-card.clickable { cursor: pointer; transition: all 0.2s; }
         .kpi-card.clickable:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(52,152,219,0.2); }
+        .kpi-card.filter-active { border-color: var(--accent); box-shadow: 0 0 8px rgba(52,152,219,0.3); }
+        .kpi-card .filter-indicator { font-size: 10px; color: var(--accent); margin-top: 2px; }
         .coverage-item.clickable { cursor: pointer; }
         .coverage-item.clickable:hover .cov-label { color: var(--accent); }
+
+        /* Filter Panels */
+        .filter-panels { margin-bottom: 10px; }
+        .filter-panel {
+            background: var(--bg2); border: 1px solid var(--accent); border-radius: 10px;
+            padding: 12px 16px; margin-bottom: 10px; display: none;
+            animation: filterSlideDown 0.2s ease;
+        }
+        @keyframes filterSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-panel.open { display: block; }
+        .filter-panel-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;
+        }
+        .filter-panel-header input {
+            flex: 1; max-width: 300px; background: var(--bg3); border: 1px solid var(--border);
+            color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12px;
+        }
+        .filter-panel-header input:focus { outline: none; border-color: var(--accent); }
+        .filter-panel-header input::placeholder { color: #555; }
+        .filter-panel-actions { display: flex; gap: 6px; }
+        .filter-panel-actions button {
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+            padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+        }
+        .filter-panel-actions button:hover { border-color: var(--accent); color: var(--accent); }
+        .filter-panel-items {
+            display: flex; flex-wrap: wrap; gap: 5px;
+            max-height: 220px; overflow-y: auto; padding: 2px 0;
+        }
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 14px; font-size: 11px;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+        }
+        .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+        .filter-chip.selected {
+            background: rgba(52,152,219,0.2); border-color: var(--accent); color: var(--accent); font-weight: 600;
+        }
+        .filter-chip .chip-count { opacity: 0.6; font-size: 10px; }
+
+        /* Active Filters Bar */
+        .active-filters-bar {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 14px; margin-bottom: 10px;
+            display: none; flex-wrap: wrap; gap: 6px; align-items: center;
+        }
+        .active-filters-bar.visible { display: flex; }
+        .active-filters-bar .af-label { font-size: 11px; color: var(--text2); margin-right: 4px; }
+        .active-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px 3px 10px; border-radius: 12px; font-size: 11px;
+            background: rgba(52,152,219,0.15); color: var(--accent); cursor: pointer; transition: all 0.15s;
+        }
+        .active-tag:hover { background: rgba(231,76,60,0.15); color: var(--accent3); }
+        .active-tag .at-x { font-weight: bold; font-size: 13px; line-height: 1; }
+        .btn-clear-filters {
+            background: none; border: 1px solid var(--border); color: var(--text2);
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; margin-left: auto;
+        }
+        .btn-clear-filters:hover { border-color: var(--accent3); color: var(--accent3); }
     </style>
 </head>
 <body>
@@ -308,6 +378,7 @@
             <div class="subtitle">Análise agregada por Setor, Indústria, Atividade Anloc e Localização | ~43.000 empresas globais</div>
         </div>
         <div class="header-actions">
+            <a href="/metodologias" class="btn-nav" style="opacity:0.7;font-size:11px" title="Metodologias de cálculo">📖</a>
             <a href="/data-yahoo-historico" class="btn-nav">📊 Históricos</a>
             <a href="/" class="btn-nav">Início</a>
             <a href="/company-analysis" class="btn-nav">Empresas</a>
@@ -317,12 +388,64 @@
 
     <!-- KPI Cards -->
     <div class="kpi-row" id="kpi-row">
-        <div class="kpi-card clickable" onclick="drillCompanies({})"><div class="value" id="kpi-total">—</div><div class="label">Empresas</div></div>
-        <div class="kpi-card green clickable" onclick="drillSectorsList()"><div class="value" id="kpi-sectors">—</div><div class="label">Setores Yahoo</div></div>
-        <div class="kpi-card orange clickable" onclick="drillIndustriesList()"><div class="value" id="kpi-industries">—</div><div class="label">Indústrias</div></div>
-        <div class="kpi-card purple clickable" onclick="drillCountriesList()"><div class="value" id="kpi-countries">—</div><div class="label">Países</div></div>
-        <div class="kpi-card clickable" onclick="drillCurrencies()"><div class="value" id="kpi-currencies">—</div><div class="label">Moedas</div></div>
-        <div class="kpi-card green clickable" onclick="drillAtividadesList()"><div class="value" id="kpi-atividades">—</div><div class="label">Atividades Anloc</div></div>
+        <div class="kpi-card clickable" onclick="drillCompanies(buildDrillParams())"><div class="value" id="kpi-total">—</div><div class="label">Empresas</div><div class="filter-indicator" id="kpi-total-indicator"></div></div>
+        <div class="kpi-card green clickable" id="kpi-card-sectors" onclick="toggleFilterPanel('sectors')"><div class="value" id="kpi-sectors">—</div><div class="label">Setores Yahoo</div><div class="filter-indicator" id="kpi-sectors-indicator"></div></div>
+        <div class="kpi-card orange clickable" id="kpi-card-industries" onclick="toggleFilterPanel('industries')"><div class="value" id="kpi-industries">—</div><div class="label">Indústrias</div><div class="filter-indicator" id="kpi-industries-indicator"></div></div>
+        <div class="kpi-card purple clickable" id="kpi-card-countries" onclick="toggleFilterPanel('countries')"><div class="value" id="kpi-countries">—</div><div class="label">Países</div><div class="filter-indicator" id="kpi-countries-indicator"></div></div>
+        <div class="kpi-card green clickable" id="kpi-card-atividades" onclick="toggleFilterPanel('atividades')"><div class="value" id="kpi-atividades">—</div><div class="label">Atividades Anloc</div><div class="filter-indicator" id="kpi-atividades-indicator"></div></div>
+    </div>
+
+    <!-- Active Filters Bar -->
+    <div class="active-filters-bar" id="active-filters-bar">
+        <span class="af-label">Filtros:</span>
+    </div>
+
+    <!-- Filter Panels -->
+    <div class="filter-panels" id="filter-panels">
+        <div class="filter-panel" id="filter-panel-sectors">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar setor..." oninput="filterPanelSearch('sectors', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('sectors')">Todos</button>
+                    <button onclick="clearFilter('sectors')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-sectors"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-industries">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar indústria..." oninput="filterPanelSearch('industries', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('industries')">Todos</button>
+                    <button onclick="clearFilter('industries')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-industries"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-countries">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar país..." oninput="filterPanelSearch('countries', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('countries')">Todos</button>
+                    <button onclick="clearFilter('countries')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-countries"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-atividades">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar atividade..." oninput="filterPanelSearch('atividades', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('atividades')">Todos</button>
+                    <button onclick="clearFilter('atividades')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-atividades"></div>
+        </div>
     </div>
 
     <!-- Coverage Bars -->
@@ -336,8 +459,10 @@
         <button class="tab-btn" onclick="switchTab('industries')">Indústrias</button>
         <button class="tab-btn" onclick="switchTab('countries')">Países</button>
         <button class="tab-btn" onclick="switchTab('atividades')">Atividades Anloc</button>
+        <button class="tab-btn" onclick="switchTab('treemap')">Treemap</button>
         <button class="tab-btn" onclick="switchTab('cross')">Análise Cruzada</button>
         <button class="tab-btn" onclick="switchTab('multiples')">Múltiplos</button>
+        <button class="tab-btn" onclick="switchTab('companies')">📋 Empresas</button>
     </div>
 
     <!-- ============ TAB: SETORES ============ -->
@@ -456,6 +581,46 @@
         </div>
     </div>
 
+    <!-- ============ TAB: TREEMAP ============ -->
+    <div class="tab-content" id="tab-treemap">
+        <div class="card">
+            <div class="card-header">
+                <h3>Treemap: Setores e Indústrias</h3>
+                <div class="filter-bar">
+                    <label>Dimensionar por:</label>
+                    <select id="treemap-size" onchange="renderTreemap()">
+                        <option value="count">Quantidade de Empresas</option>
+                        <option value="market_cap">Market Cap Agregado</option>
+                        <option value="enterprise_value">Enterprise Value Agregado</option>
+                    </select>
+                    <label>Colorir por:</label>
+                    <select id="treemap-color" onchange="renderTreemap()">
+                        <option value="avg_ev_ebitda">EV/EBITDA Médio</option>
+                        <option value="avg_pe">P/E Médio</option>
+                        <option value="avg_op_margin">Margem Operacional</option>
+                        <option value="avg_roe">ROE</option>
+                        <option value="avg_rev_growth">Crescimento Receita</option>
+                        <option value="avg_beta">Beta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="treemap-container" style="width:100%;height:600px;position:relative;">
+                    <div class="loading-spinner"><div class="spinner"></div>Carregando...</div>
+                </div>
+                <div id="treemap-legend" style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px 12px;background:var(--bg3);border-radius:8px;">
+                    <span style="font-size:11px;color:var(--text2)">Tamanho = <span id="treemap-size-label">Qtd Empresas</span></span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:11px;color:var(--text2)" id="treemap-color-min"></span>
+                        <div style="width:180px;height:12px;border-radius:6px;background:linear-gradient(to right,#e74c3c,#f39c12,#2ecc71);"></div>
+                        <span style="font-size:11px;color:var(--text2)" id="treemap-color-max"></span>
+                    </div>
+                    <span style="font-size:11px;color:var(--text2)">Cor = <span id="treemap-color-label">EV/EBITDA</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ TAB: ANÁLISE CRUZADA ============ -->
     <div class="tab-content" id="tab-cross">
         <div class="card">
@@ -527,6 +692,52 @@
     </div>
 </div>
 
+<!-- ============ TAB: EMPRESAS ============ -->
+<div class="tab-content" id="tab-companies">
+    <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <h3>Tabela de Empresas</h3>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <input type="text" id="companies-search" placeholder="Buscar empresa ou ticker..."
+                    style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:13px;width:220px;"
+                    oninput="companiesSearchDebounced()">
+                <select id="companies-per-page" onchange="loadCompaniesTab(1)"
+                    style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px;">
+                    <option value="25">25 /pág</option>
+                    <option value="50" selected>50 /pág</option>
+                    <option value="100">100 /pág</option>
+                </select>
+                <button onclick="exportCompaniesCSV()" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--accent2);cursor:pointer;font-size:12px;">📥 CSV</button>
+            </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div id="companies-stats" style="padding:8px 16px;display:flex;gap:15px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);"></div>
+            <div style="overflow-x:auto;">
+                <table class="drill-table" id="companies-table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="sortCompanies('company_name')">Empresa <span id="sort-icon-company_name"></span></th>
+                            <th class="sortable" onclick="sortCompanies('ticker')">Ticker <span id="sort-icon-ticker"></span></th>
+                            <th class="sortable" onclick="sortCompanies('yahoo_sector')">Setor <span id="sort-icon-yahoo_sector"></span></th>
+                            <th class="sortable" onclick="sortCompanies('yahoo_industry')">Indústria <span id="sort-icon-yahoo_industry"></span></th>
+                            <th class="sortable" onclick="sortCompanies('yahoo_country')">País <span id="sort-icon-yahoo_country"></span></th>
+                            <th class="sortable num" onclick="sortCompanies('market_cap')">Market Cap <span id="sort-icon-market_cap"></span></th>
+                            <th class="sortable num" onclick="sortCompanies('enterprise_value')">EV <span id="sort-icon-enterprise_value"></span></th>
+                            <th class="sortable num" onclick="sortCompanies('pe_ratio')">P/E <span id="sort-icon-pe_ratio"></span></th>
+                            <th class="sortable num" onclick="sortCompanies('ev_ebitda')">EV/EBITDA <span id="sort-icon-ev_ebitda"></span></th>
+                            <th class="sortable num" onclick="sortCompanies('operating_margin')">Marg.Op. <span id="sort-icon-operating_margin"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="companies-tbody">
+                        <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text2);">Clique na aba para carregar</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="companies-pagination" style="display:flex;justify-content:center;align-items:center;gap:12px;padding:12px;border-top:1px solid var(--border);"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Drill-Down Modal -->
 <div class="drill-overlay" id="drill-overlay" onclick="if(event.target===this)closeDrillDown()">
     <div class="drill-modal">
@@ -563,6 +774,228 @@ const COLORS = [
     '#4caf50','#2196f3','#ff4081','#7c4dff','#00e676'
 ];
 const ALPHA_COLORS = COLORS.map(c => c + '99');
+
+// ===== FILTER STATE =====
+let activeFilters = { sectors: [], industries: [], countries: [], atividades: [] };
+let filterOptions = { sectors: [], industries: [], countries: [], atividades: [] };
+let filterOptionsTotals = { sectors: 0, industries: 0, countries: 0, atividades: 0 };
+let currentFilterPanel = null;
+
+async function loadFilterOptions(crossFilter = false) {
+    try {
+        let url = '/api/yahoo_filter_options';
+        if (crossFilter) url = appendFilterParams(url);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success) return;
+        filterOptions = {
+            sectors: data.sectors,
+            industries: data.industries,
+            countries: data.countries,
+            atividades: data.atividades
+        };
+        if (!crossFilter) {
+            filterOptionsTotals = {
+                sectors: data.sectors.length,
+                industries: data.industries.length,
+                countries: data.countries.length,
+                atividades: data.atividades.length
+            };
+        }
+        // Re-populate open panel if any
+        if (currentFilterPanel) populateFilterPanel(currentFilterPanel);
+    } catch (e) { console.error('Filter options error:', e); }
+}
+
+function toggleFilterPanel(dimension) {
+    const panel = document.getElementById('filter-panel-' + dimension);
+    if (currentFilterPanel === dimension) {
+        panel.classList.remove('open');
+        currentFilterPanel = null;
+        return;
+    }
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    populateFilterPanel(dimension);
+    panel.classList.add('open');
+    currentFilterPanel = dimension;
+    const searchInput = panel.querySelector('input[type="text"]');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+}
+
+function closeFilterPanel() {
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    currentFilterPanel = null;
+}
+
+function populateFilterPanel(dimension) {
+    const container = document.getElementById('filter-items-' + dimension);
+    const items = filterOptions[dimension] || [];
+    const selected = activeFilters[dimension] || [];
+    container.innerHTML = items.map(item => {
+        const name = item.name || item;
+        const count = item.count || '';
+        const isSelected = selected.includes(name);
+        const escapedName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return `<div class="filter-chip ${isSelected ? 'selected' : ''}" 
+                     onclick="toggleFilterItem('${dimension}', this, '${escapedName}')"
+                     data-value="${escapedName}" data-name="${escapedName}">
+            <span>${name}</span>
+            ${count ? `<span class="chip-count">(${count})</span>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function toggleFilterItem(dimension, el, value) {
+    const idx = activeFilters[dimension].indexOf(value);
+    if (idx >= 0) {
+        activeFilters[dimension].splice(idx, 1);
+        el.classList.remove('selected');
+    } else {
+        activeFilters[dimension].push(value);
+        el.classList.add('selected');
+    }
+    applyFiltersDebounced();
+}
+
+function selectAllFilter(dimension) {
+    const items = filterOptions[dimension] || [];
+    activeFilters[dimension] = items.map(i => i.name || i);
+    populateFilterPanel(dimension);
+    applyFiltersDebounced();
+}
+
+function clearFilter(dimension) {
+    activeFilters[dimension] = [];
+    populateFilterPanel(dimension);
+    applyFiltersDebounced();
+}
+
+function clearAllFilters() {
+    activeFilters = { sectors: [], industries: [], countries: [], atividades: [] };
+    document.querySelectorAll('.kpi-card.filter-active').forEach(c => c.classList.remove('filter-active'));
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    currentFilterPanel = null;
+    loadFilterOptions(false);  // Reset to full options
+    applyFilters();
+}
+
+function removeFilterItem(dimension, value) {
+    const idx = activeFilters[dimension].indexOf(value);
+    if (idx >= 0) {
+        activeFilters[dimension].splice(idx, 1);
+        applyFilters();
+    }
+}
+
+function filterPanelSearch(dimension, term) {
+    const container = document.getElementById('filter-items-' + dimension);
+    const chips = container.querySelectorAll('.filter-chip');
+    const t = term.toLowerCase();
+    chips.forEach(chip => {
+        const name = chip.getAttribute('data-name') || '';
+        chip.style.display = (!t || name.toLowerCase().includes(t)) ? '' : 'none';
+    });
+}
+
+let _applyTimer = null;
+function applyFiltersDebounced() {
+    clearTimeout(_applyTimer);
+    _applyTimer = setTimeout(applyFilters, 300);
+}
+
+function applyFilters() {
+    updateActiveFilterTags();
+    updateKPIHighlights();
+    loadFilterOptions(true);  // Cross-filter: update other dimensions
+    loadSummary();
+    loadSectors();
+    // Reload tabs that have data
+    industryData = []; countryData = []; atividadeData = [];
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        if (activeTab.id === 'tab-industries') loadIndustries();
+        else if (activeTab.id === 'tab-countries') loadCountries();
+        else if (activeTab.id === 'tab-atividades') loadAtividades();
+        else if (activeTab.id === 'tab-treemap') loadTreemapData();
+        else if (activeTab.id === 'tab-cross') loadCross();
+        else if (activeTab.id === 'tab-multiples') renderMultiplesTab();
+        else if (activeTab.id === 'tab-companies') loadCompaniesTab();
+    }
+}
+
+function buildFilterQueryString() {
+    const parts = [];
+    for (const [dim, items] of Object.entries(activeFilters)) {
+        if (items.length > 0 && items.length < filterOptionsTotals[dim]) {
+            parts.push(dim + '=' + encodeURIComponent(items.join(',')));
+        }
+    }
+    return parts.join('&');
+}
+
+function appendFilterParams(url) {
+    const fq = buildFilterQueryString();
+    if (!fq) return url;
+    return url + (url.includes('?') ? '&' : '?') + fq;
+}
+
+function buildDrillParams() {
+    const params = {};
+    if (activeFilters.sectors.length > 0 && activeFilters.sectors.length === 1)
+        params.sector = activeFilters.sectors[0];
+    if (activeFilters.industries.length > 0 && activeFilters.industries.length === 1)
+        params.industry = activeFilters.industries[0];
+    if (activeFilters.countries.length > 0 && activeFilters.countries.length === 1)
+        params.country = activeFilters.countries[0];
+    if (activeFilters.atividades.length > 0 && activeFilters.atividades.length === 1)
+        params.atividade = activeFilters.atividades[0];
+    return params;
+}
+
+function updateActiveFilterTags() {
+    const bar = document.getElementById('active-filters-bar');
+    const allTags = [];
+    const dimLabels = { sectors: 'Setor', industries: 'Indústria', countries: 'País', atividades: 'Atividade' };
+    for (const [dim, items] of Object.entries(activeFilters)) {
+        if (items.length > 0 && items.length < filterOptionsTotals[dim]) {
+            items.forEach(item => {
+                allTags.push({ dim, item, label: dimLabels[dim] });
+            });
+        }
+    }
+    if (allTags.length === 0) {
+        bar.classList.remove('visible');
+        return;
+    }
+    bar.classList.add('visible');
+    let html = '<span class="af-label">Filtros:</span>';
+    html += allTags.map(t => {
+        const escapedItem = t.item.replace(/'/g, "\\'");
+        return `<span class="active-tag" onclick="removeFilterItem('${t.dim}','${escapedItem}')" title="${t.label}">
+            ${truncate(t.item, 30)} <span class="at-x">×</span>
+        </span>`;
+    }).join('');
+    html += '<button class="btn-clear-filters" onclick="clearAllFilters()">Limpar filtros</button>';
+    bar.innerHTML = html;
+}
+
+function updateKPIHighlights() {
+    const dims = ['sectors', 'industries', 'countries', 'atividades'];
+    dims.forEach(dim => {
+        const card = document.getElementById('kpi-card-' + dim);
+        const indicator = document.getElementById('kpi-' + dim + '-indicator');
+        if (!card) return;
+        const sel = activeFilters[dim].length;
+        const total = filterOptionsTotals[dim];
+        if (sel > 0 && sel < total) {
+            card.classList.add('filter-active');
+            if (indicator) indicator.textContent = sel + ' selecionado' + (sel > 1 ? 's' : '');
+        } else {
+            card.classList.remove('filter-active');
+            if (indicator) indicator.textContent = '';
+        }
+    });
+}
 
 // ===== UTILITIES =====
 function fmt(v, dec=1) {
@@ -622,14 +1055,16 @@ function switchTab(tabName) {
     if (tabName === 'industries' && industryData.length === 0) loadIndustries();
     if (tabName === 'countries' && countryData.length === 0) loadCountries();
     if (tabName === 'atividades' && atividadeData.length === 0) loadAtividades();
+    if (tabName === 'treemap') loadTreemapData();
     if (tabName === 'cross') loadCross();
     if (tabName === 'multiples') renderMultiplesTab();
+    if (tabName === 'companies') loadCompaniesTab();
 }
 
 // ===== LOAD SUMMARY =====
 async function loadSummary() {
     try {
-        const res = await fetch('/api/yahoo_dashboard_summary');
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_summary'));
         const data = await res.json();
         if (!data.success) return;
         const s = data.stats;
@@ -637,7 +1072,6 @@ async function loadSummary() {
         document.getElementById('kpi-sectors').textContent = s.distinct_sectors;
         document.getElementById('kpi-industries').textContent = s.distinct_industries;
         document.getElementById('kpi-countries').textContent = s.distinct_countries;
-        document.getElementById('kpi-currencies').textContent = s.distinct_currencies;
         document.getElementById('kpi-atividades').textContent = s.distinct_atividades;
 
         // Coverage bars
@@ -665,7 +1099,7 @@ async function loadSummary() {
 // ===== LOAD SECTORS =====
 async function loadSectors() {
     try {
-        const res = await fetch('/api/yahoo_dashboard_sectors');
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_sectors'));
         const data = await res.json();
         if (!data.success) return;
         sectorData = data.sectors;
@@ -846,7 +1280,7 @@ async function loadIndustries() {
 
     try {
         const params = sector ? `?sector=${encodeURIComponent(sector)}` : '';
-        const res = await fetch('/api/yahoo_dashboard_industries' + params);
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_industries' + params));
         const data = await res.json();
         if (!data.success) return;
         industryData = data.industries;
@@ -954,7 +1388,7 @@ function filterIndustryTable() {
 // ===== LOAD COUNTRIES =====
 async function loadCountries() {
     try {
-        const res = await fetch('/api/yahoo_dashboard_countries');
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_countries'));
         const data = await res.json();
         if (!data.success) return;
         countryData = data.countries;
@@ -1065,7 +1499,7 @@ function populateCountryFilter() {
 // ===== LOAD ATIVIDADES =====
 async function loadAtividades() {
     try {
-        const res = await fetch('/api/yahoo_dashboard_atividades');
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_atividades'));
         const data = await res.json();
         if (!data.success) return;
         atividadeData = data.atividades;
@@ -1181,7 +1615,7 @@ async function loadCross() {
         const params = new URLSearchParams();
         if (sector) params.append('sector', sector);
         if (country) params.append('country', country);
-        const res = await fetch('/api/yahoo_dashboard_cross?' + params);
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_cross?' + params));
         const data = await res.json();
         if (!data.success) return;
 
@@ -1319,6 +1753,342 @@ function renderMultiplesTab() {
         return { type: 'distribution', metric: metrics[dsIdx], params: { sector: sectorData[idx]?.sector },
             label: `${labels[dsIdx]} — ${sectorData[idx]?.sector}` };
     });
+}
+
+// ===== COMPANIES TAB =====
+let companiesSort = 'company_name';
+let companiesOrder = 'asc';
+let companiesPage = 1;
+let _compSearchTimer = null;
+
+function companiesSearchDebounced() {
+    clearTimeout(_compSearchTimer);
+    _compSearchTimer = setTimeout(() => loadCompaniesTab(1), 400);
+}
+
+function sortCompanies(col) {
+    if (companiesSort === col) {
+        companiesOrder = companiesOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        companiesSort = col;
+        companiesOrder = col === 'company_name' || col === 'ticker' ? 'asc' : 'desc';
+    }
+    loadCompaniesTab(companiesPage);
+}
+
+async function loadCompaniesTab(page = 1) {
+    companiesPage = page;
+    const search = (document.getElementById('companies-search')?.value || '').trim();
+    const perPage = parseInt(document.getElementById('companies-per-page')?.value || '50');
+    const params = new URLSearchParams({ sort: companiesSort, order: companiesOrder, page, per_page: perPage });
+    if (search) params.set('search', search);
+
+    try {
+        const res = await fetch(appendFilterParams('/api/yahoo_drill/companies?' + params));
+        const data = await res.json();
+        if (!data.success) return;
+
+        // Stats
+        const statsEl = document.getElementById('companies-stats');
+        statsEl.innerHTML = `<span>Total: <strong>${fmtInt(data.total)}</strong></span>
+            <span>Página ${data.page} de ${data.pages}</span>`;
+
+        // Sort icons
+        document.querySelectorAll('[id^="sort-icon-"]').forEach(el => el.textContent = '');
+        const iconEl = document.getElementById('sort-icon-' + companiesSort);
+        if (iconEl) iconEl.textContent = companiesOrder === 'asc' ? ' ▲' : ' ▼';
+
+        // Table body
+        const tbody = document.getElementById('companies-tbody');
+        if (!data.companies.length) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text2);">Nenhuma empresa encontrada</td></tr>';
+        } else {
+            tbody.innerHTML = data.companies.map(c => `<tr class="clickable-row" onclick="window.open('/company-analysis?company=${encodeURIComponent(c.ticker||'')}','_blank')">
+                <td title="${c.company_name||''}">${truncate(c.company_name, 35)}</td>
+                <td><strong>${c.ticker||'—'}</strong></td>
+                <td><span class="badge badge-blue">${truncate(c.yahoo_sector, 20)||'—'}</span></td>
+                <td title="${c.yahoo_industry||''}">${truncate(c.yahoo_industry, 22)||'—'}</td>
+                <td>${c.yahoo_country||'—'}</td>
+                <td class="num">${fmtBigNum(c.market_cap)}</td>
+                <td class="num">${fmtBigNum(c.enterprise_value)}</td>
+                <td class="num">${fmt(c.pe_ratio)}</td>
+                <td class="num">${fmt(c.ev_ebitda)}</td>
+                <td class="num ${colorClass(c.operating_margin)}">${fmtPct(c.operating_margin)}</td>
+            </tr>`).join('');
+        }
+
+        // Pagination
+        const pagEl = document.getElementById('companies-pagination');
+        if (data.pages > 1) {
+            let html = '';
+            html += `<button class="page-btn" ${data.page<=1?'disabled':''} onclick="loadCompaniesTab(1)">«</button>`;
+            html += `<button class="page-btn" ${data.page<=1?'disabled':''} onclick="loadCompaniesTab(${data.page-1})">‹</button>`;
+            // Page numbers
+            let start = Math.max(1, data.page - 3), end = Math.min(data.pages, data.page + 3);
+            for (let i = start; i <= end; i++) {
+                html += `<button class="page-btn ${i===data.page?'active':''}" onclick="loadCompaniesTab(${i})">${i}</button>`;
+            }
+            html += `<button class="page-btn" ${data.page>=data.pages?'disabled':''} onclick="loadCompaniesTab(${data.page+1})">›</button>`;
+            html += `<button class="page-btn" ${data.page>=data.pages?'disabled':''} onclick="loadCompaniesTab(${data.pages})">»</button>`;
+            pagEl.innerHTML = html;
+        } else {
+            pagEl.innerHTML = '';
+        }
+    } catch (e) { console.error('Companies tab error:', e); }
+}
+
+function fmtBigNum(v) {
+    if (v == null || v === '') return '—';
+    const n = parseFloat(v);
+    if (isNaN(n)) return '—';
+    if (Math.abs(n) >= 1e12) return (n/1e12).toFixed(1) + 'T';
+    if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(1) + 'B';
+    if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(0) + 'K';
+    return n.toFixed(0);
+}
+
+function exportCompaniesCSV() {
+    const params = new URLSearchParams({ sort: companiesSort, order: companiesOrder, page: 1, per_page: 10000 });
+    const search = (document.getElementById('companies-search')?.value || '').trim();
+    if (search) params.set('search', search);
+    const url = appendFilterParams('/api/yahoo_drill/companies?' + params);
+    fetch(url).then(r => r.json()).then(data => {
+        if (!data.success || !data.companies.length) return;
+        const cols = ['company_name','ticker','yahoo_sector','yahoo_industry','yahoo_country','market_cap','enterprise_value','pe_ratio','ev_ebitda','operating_margin'];
+        const headers = ['Empresa','Ticker','Setor','Indústria','País','Market Cap','Enterprise Value','P/E','EV/EBITDA','Marg.Operacional'];
+        let csv = headers.join(';') + '\n';
+        data.companies.forEach(c => {
+            csv += cols.map(col => {
+                let v = c[col]; if (v == null) return ''; return String(v).replace(/;/g, ',');
+            }).join(';') + '\n';
+        });
+        downloadCSV(csv, 'empresas_yahoo.csv');
+    });
+}
+
+// ===== TREEMAP =====
+let treemapData = [];
+let treemapRendered = false;
+
+async function loadTreemapData() {
+    try {
+        const res = await fetch(appendFilterParams('/api/yahoo_dashboard_treemap'));
+        const data = await res.json();
+        if (!data.success) return;
+        treemapData = data.items;
+        renderTreemap();
+    } catch (e) { console.error('Treemap error:', e); }
+}
+
+function renderTreemap() {
+    const container = document.getElementById('treemap-container');
+    if (!treemapData.length) {
+        container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px;">Sem dados disponíveis</p>';
+        return;
+    }
+
+    const sizeKey = document.getElementById('treemap-size').value;
+    const colorKey = document.getElementById('treemap-color').value;
+
+    const sizeLabels = { count: 'Qtd Empresas', market_cap: 'Market Cap', enterprise_value: 'Enterprise Value' };
+    const colorLabels = { avg_ev_ebitda: 'EV/EBITDA', avg_pe: 'P/E', avg_op_margin: 'Marg.Oper.', avg_roe: 'ROE', avg_rev_growth: 'Cresc.Rec.', avg_beta: 'Beta' };
+    document.getElementById('treemap-size-label').textContent = sizeLabels[sizeKey] || sizeKey;
+    document.getElementById('treemap-color-label').textContent = colorLabels[colorKey] || colorKey;
+
+    // Map size values
+    const sizeMap = { count: 'count', market_cap: 'total_market_cap', enterprise_value: 'total_ev' };
+    const sizeField = sizeMap[sizeKey] || 'count';
+
+    // Group by sector
+    const sectorMap = {};
+    treemapData.forEach(item => {
+        const sec = item.sector || 'Outros';
+        if (!sectorMap[sec]) sectorMap[sec] = [];
+        const sizeVal = Math.max(item[sizeField] || 0, 0);
+        if (sizeVal > 0) sectorMap[sec].push({ ...item, _size: sizeVal });
+    });
+
+    // Get color range
+    const colorValues = treemapData.map(d => d[colorKey]).filter(v => v != null && isFinite(v));
+    let colorMin = Math.min(...colorValues), colorMax = Math.max(...colorValues);
+    if (colorMin === colorMax) { colorMin -= 1; colorMax += 1; }
+    document.getElementById('treemap-color-min').textContent = fmt(colorMin, 1);
+    document.getElementById('treemap-color-max').textContent = fmt(colorMax, 1);
+
+    // Squarify treemap layout
+    const W = container.clientWidth || 1100;
+    const H = 600;
+
+    // Level 1: sectors
+    const sectorEntries = Object.entries(sectorMap)
+        .map(([sec, items]) => ({ sector: sec, items, total: items.reduce((s, i) => s + i._size, 0) }))
+        .filter(s => s.total > 0)
+        .sort((a, b) => b.total - a.total);
+
+    const grandTotal = sectorEntries.reduce((s, e) => s + e.total, 0);
+    if (grandTotal <= 0) {
+        container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px;">Sem dados suficientes para treemap</p>';
+        return;
+    }
+
+    // Squarify algorithm
+    function squarify(items, x, y, w, h) {
+        if (items.length === 0 || w <= 0 || h <= 0) return [];
+        const rects = [];
+        const total = items.reduce((s, i) => s + i.value, 0);
+        if (total <= 0) return [];
+
+        let remaining = [...items];
+        let cx = x, cy = y, cw = w, ch = h;
+
+        while (remaining.length > 0) {
+            const isWide = cw >= ch;
+            const side = isWide ? ch : cw;
+            const totalRemaining = remaining.reduce((s, i) => s + i.value, 0);
+
+            // Find best row
+            let row = [remaining[0]];
+            let rowSum = remaining[0].value;
+            let bestWorst = Infinity;
+
+            for (let i = 1; i < remaining.length; i++) {
+                const testRow = [...row, remaining[i]];
+                const testSum = rowSum + remaining[i].value;
+                const rowArea = (testSum / totalRemaining) * cw * ch;
+                const rowSide = rowArea / side;
+
+                let worst = 0;
+                testRow.forEach(r => {
+                    const rSize = (r.value / testSum) * side;
+                    const aspect = Math.max(rowSide / rSize, rSize / rowSide);
+                    worst = Math.max(worst, aspect);
+                });
+
+                if (worst <= bestWorst || row.length === 0) {
+                    bestWorst = worst;
+                    row = testRow;
+                    rowSum = testSum;
+                } else {
+                    break;
+                }
+            }
+
+            // Layout row
+            const rowFrac = rowSum / totalRemaining;
+            const rowThickness = isWide ? cw * rowFrac : ch * rowFrac;
+            let pos = isWide ? cy : cx;
+
+            row.forEach(r => {
+                const rFrac = r.value / rowSum;
+                const rLength = side * rFrac;
+
+                if (isWide) {
+                    rects.push({ ...r, x: cx, y: pos, w: rowThickness, h: rLength });
+                    pos += rLength;
+                } else {
+                    rects.push({ ...r, x: pos, y: cy, w: rLength, h: rowThickness });
+                    pos += rLength;
+                }
+            });
+
+            if (isWide) cx += rowThickness, cw -= rowThickness;
+            else cy += rowThickness, ch -= rowThickness;
+            remaining = remaining.slice(row.length);
+        }
+        return rects;
+    }
+
+    // Layout sectors
+    const sectorItems = sectorEntries.map(s => ({ ...s, value: s.total }));
+    const sectorRects = squarify(sectorItems, 0, 0, W, H);
+
+    // Layout industries within sectors
+    const allRects = [];
+    const PAD = 2;
+    sectorRects.forEach(sr => {
+        const headerH = 20;
+        const innerX = sr.x + PAD, innerY = sr.y + headerH + PAD;
+        const innerW = sr.w - PAD * 2, innerH = sr.h - headerH - PAD * 2;
+
+        allRects.push({ type: 'sector', sector: sr.sector, x: sr.x, y: sr.y, w: sr.w, h: sr.h, total: sr.total });
+
+        if (innerW > 5 && innerH > 5) {
+            const indItems = sr.items.map(i => ({ ...i, value: i._size })).sort((a, b) => b.value - a.value);
+            const indRects = squarify(indItems, innerX, innerY, innerW, innerH);
+            indRects.forEach(ir => {
+                allRects.push({
+                    type: 'industry', sector: sr.sector, industry: ir.industry,
+                    x: ir.x, y: ir.y, w: ir.w, h: ir.h,
+                    count: ir.count, colorVal: ir[colorKey],
+                    avg_pe: ir.avg_pe, avg_ev_ebitda: ir.avg_ev_ebitda,
+                    avg_op_margin: ir.avg_op_margin
+                });
+            });
+        }
+    });
+
+    // Color interpolation
+    function getColor(val) {
+        if (val == null || !isFinite(val)) return '#555';
+        const t = Math.max(0, Math.min(1, (val - colorMin) / (colorMax - colorMin)));
+        // Red -> Yellow -> Green
+        if (t < 0.5) {
+            const lt = t * 2;
+            const r = 231, g = Math.round(76 + (156 - 76) * lt), b = Math.round(60 + (18 - 60) * lt);
+            return `rgb(${r},${g},${b})`;
+        } else {
+            const lt = (t - 0.5) * 2;
+            const r = Math.round(243 - (243 - 46) * lt), g = Math.round(156 + (204 - 156) * lt), b = Math.round(18 + (113 - 18) * lt);
+            return `rgb(${r},${g},${b})`;
+        }
+    }
+
+    // Contrasting text color
+    function textColor(bgColor) {
+        const m = bgColor.match(/\d+/g);
+        if (!m) return '#fff';
+        const lum = (parseInt(m[0]) * 299 + parseInt(m[1]) * 587 + parseInt(m[2]) * 114) / 1000;
+        return lum > 140 ? '#111' : '#fff';
+    }
+
+    // Render HTML
+    let html = '';
+    const sectorColors = {};
+    COLORS.forEach((c, i) => { if (sectorEntries[i]) sectorColors[sectorEntries[i].sector] = c; });
+
+    allRects.forEach(r => {
+        if (r.type === 'sector') {
+            const sc = sectorColors[r.sector] || '#555';
+            html += `<div style="position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;
+                border:2px solid ${sc};border-radius:4px;overflow:hidden;pointer-events:none;z-index:1;">
+                <div style="background:${sc}22;padding:1px 6px;font-size:11px;font-weight:700;color:${sc};
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;">
+                    ${r.w > 80 ? r.sector : ''}
+                </div>
+            </div>`;
+        } else {
+            const bg = getColor(r.colorVal);
+            const tc = textColor(bg);
+            const showLabel = r.w > 50 && r.h > 30;
+            const showCount = r.w > 70 && r.h > 45;
+            const title = `${r.industry}\n${r.sector}\nEmpresas: ${r.count}\nEV/EBITDA: ${fmt(r.avg_ev_ebitda)}\nP/E: ${fmt(r.avg_pe)}\nMarg.Op.: ${fmtPct(r.avg_op_margin)}`;
+            html += `<div style="position:absolute;left:${r.x + 1}px;top:${r.y + 1}px;
+                width:${r.w - 2}px;height:${r.h - 2}px;background:${bg};border-radius:2px;
+                cursor:pointer;overflow:hidden;padding:3px 5px;z-index:2;transition:opacity 0.15s;"
+                title="${title.replace(/"/g, '&quot;')}"
+                onclick="drillCompanies({industry:'${(r.industry||'').replace(/'/g, "\\'")}'});"
+                onmouseenter="this.style.opacity='0.7'" onmouseleave="this.style.opacity='1'">
+                ${showLabel ? `<div style="font-size:${r.w > 120 ? 11 : 9}px;font-weight:600;color:${tc};
+                    line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    ${truncate(r.industry, r.w > 150 ? 35 : 18)}</div>` : ''}
+                ${showCount ? `<div style="font-size:9px;color:${tc};opacity:0.8;margin-top:1px;">${r.count}</div>` : ''}
+            </div>`;
+        }
+    });
+
+    container.innerHTML = html;
+    treemapRendered = true;
 }
 
 // ===== CSV HELPER =====
@@ -1490,7 +2260,7 @@ async function drillCompanies(params, page = 1) {
         const qs = new URLSearchParams();
         Object.entries(p).forEach(([k, v]) => { if (v != null && v !== '') qs.append(k, v); });
         _drillExportEndpoint = '/api/yahoo_drill/companies';
-        const res = await fetch('/api/yahoo_drill/companies?' + qs);
+        const res = await fetch(appendFilterParams('/api/yahoo_drill/companies?' + qs));
         const data = await res.json();
         if (!data.success) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro: ' + (data.error||'') + '</p>'; return; }
 
@@ -1562,7 +2332,7 @@ async function drillDistribution(metric, filterParams, filterLabel) {
     try {
         const qs = new URLSearchParams({ metric });
         if (filterParams) Object.entries(filterParams).forEach(([k, v]) => { if (v) qs.append(k, v); });
-        const res = await fetch('/api/yahoo_drill/distribution?' + qs);
+        const res = await fetch(appendFilterParams('/api/yahoo_drill/distribution?' + qs));
         const data = await res.json();
         if (!data.success || !data.stats) { document.getElementById('drill-body').innerHTML = '<p style="color:var(--text2)">Sem dados suficientes</p>'; return; }
 
@@ -1896,6 +2666,7 @@ function addBarClickHandler(chartId, getFilterFn) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+    loadFilterOptions();
     loadSummary();
     loadSectors();
 });
