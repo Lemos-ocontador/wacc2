@@ -1,0 +1,217 @@
+{
+  "iShares Micro-Cap ETF": {
+    "series_id": "S000004439",
+    "accession": "0002071691-26-004264",
+    "date": "2026-02-25"
+  },
+  "iShares Top 20 U.S. Stocks ETF": {
+    "series_id": "S000088434",
+    "accession": "0002071691-26-004257",
+    "date": "2026-02-25"
+  },
+  "iShares Semiconductor ETF": {
+    "series_id": "S000004354",
+    "accession": "0002071691-26-004253",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P Total U.S. Stock Market ETF": {
+    "series_id": "S000004317",
+    "accession": "0002071691-26-004244",
+    "date": "2026-02-25"
+  },
+  "iShares Biotechnology ETF": {
+    "series_id": "S000004350",
+    "accession": "0002071691-26-004248",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P Mid-Cap 400 Growth ETF": {
+    "series_id": "S000004308",
+    "accession": "0002071691-26-004246",
+    "date": "2026-02-25"
+  },
+  "iShares Russell 2500 ETF": {
+    "series_id": "S000057567",
+    "accession": "0002071691-26-004245",
+    "date": "2026-02-25"
+  },
+  "iShares Russell 2000 Growth ETF": {
+    "series_id": "S000004343",
+    "accession": "0002071691-26-004243",
+    "date": "2026-02-25"
+  },
+  "iShares North American Natural Resources ETF": {
+    "series_id": "S000004356",
+    "accession": "0002071691-26-004241",
+    "date": "2026-02-25"
+  },
+  "iShares Nasdaq Top 30 Stocks ETF": {
+    "series_id": "S000088433",
+    "accession": "0002071691-26-004240",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P 500 ETF": {
+    "series_id": "S000004310",
+    "accession": "0002071691-26-004238",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P 500 ex S&amp;P 100 ETF": {
+    "series_id": "S000093347",
+    "accession": "0002071691-26-004233",
+    "date": "2026-02-25"
+  },
+  "iShares Expanded Tech Sector ETF": {
+    "series_id": "S000004352",
+    "accession": "0002071691-26-004232",
+    "date": "2026-02-25"
+  },
+  "iShares Russell 2000 ETF": {
+    "series_id": "S000004344",
+    "accession": "0002071691-26-004226",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P Mid-Cap 400 Value ETF": {
+    "series_id": "S000004309",
+    "accession": "0002071691-26-004229",
+    "date": "2026-02-25"
+  },
+  "iShares U.S. Digital Infrastructure and Real Estate ETF": {
+    "series_id": "S000004353",
+    "accession": "0002071691-26-004228",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P Small-Cap 600 Growth ETF": {
+    "series_id": "S000004314",
+    "accession": "0002071691-26-004227",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P 500 3% Capped ETF": {
+    "series_id": "S000091281",
+    "accession": "0002071691-26-004225",
+    "date": "2026-02-25"
+  },
+  "iShares Nasdaq-100 ex Top 30 ETF": {
+    "series_id": "S000088432",
+    "accession": "0002071691-26-004223",
+    "date": "2026-02-25"
+  },
+  "iShares Expanded Tech-Software Sector ETF": {
+    "series_id": "S000004355",
+    "accession": "0002071691-26-004222",
+    "date": "2026-02-25"
+  },
+  "iShares Russell 2000 Value ETF": {
+    "series_id": "S000004342",
+    "accession": "0002071691-26-004220",
+    "date": "2026-02-25"
+  },
+  "iShares Russell 3000 ETF": {
+    "series_id": "S000004341",
+    "accession": "0000940400-26-007533",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Mid-Cap Growth ETF": {
+    "series_id": "S000004336",
+    "accession": "0002071691-26-004215",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Mid-Cap ETF": {
+    "series_id": "S000004338",
+    "accession": "0002071691-26-004214",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Top 200 ETF": {
+    "series_id": "S000026553",
+    "accession": "0000940400-26-007531",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P Small-Cap ETF": {
+    "series_id": "S000004313",
+    "accession": "0000940400-26-007526",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P 500 Growth ETF": {
+    "series_id": "S000004311",
+    "accession": "0000940400-26-007528",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P 500 Value ETF": {
+    "series_id": "S000004312",
+    "accession": "0000940400-26-007527",
+    "date": "2026-02-25"
+  },
+  "iShares MSCI USA Quality GARP ETF": {
+    "series_id": "S000066849",
+    "accession": "0000940400-26-007530",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Top 200 Value ETF": {
+    "series_id": "S000026554",
+    "accession": "0000940400-26-007524",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Mid-Cap Value ETF": {
+    "series_id": "S000004335",
+    "accession": "0000940400-26-007525",
+    "date": "2026-02-25"
+  },
+  "iShares Mortgage Real Estate ETF": {
+    "series_id": "S000015626",
+    "accession": "0000940400-26-007519",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P Mid-Cap ETF": {
+    "series_id": "S000004307",
+    "accession": "0000940400-26-007518",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P 100 ETF": {
+    "series_id": "S000004306",
+    "accession": "0000940400-26-007517",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P U.S. Growth ETF": {
+    "series_id": "S000004340",
+    "accession": "0000940400-26-007516",
+    "date": "2026-02-25"
+  },
+  "iShares Preferred and Income Securities ETF": {
+    "series_id": "S000013499",
+    "accession": "0000940400-26-007511",
+    "date": "2026-02-25"
+  },
+  "iShares Core S&amp;P U.S. Value ETF": {
+    "series_id": "S000004339",
+    "accession": "0000940400-26-007510",
+    "date": "2026-02-25"
+  },
+  "iShares S&amp;P Small-Cap 600 Value ETF": {
+    "series_id": "S000004316",
+    "accession": "0000940400-26-007509",
+    "date": "2026-02-25"
+  },
+  "iShares Russell Top 200 Growth ETF": {
+    "series_id": "S000026552",
+    "accession": "0000940400-26-007507",
+    "date": "2026-02-25"
+  },
+  "iShares ESG Select Screened S&amp;P Mid-Cap ETF": {
+    "series_id": "S000069533",
+    "accession": "0000940400-26-007506",
+    "date": "2026-02-25"
+  },
+  "iShares ESG Select Screened S&amp;P Small-Cap ETF": {
+    "series_id": "S000069536",
+    "accession": "0000940400-26-007505",
+    "date": "2026-02-25"
+  },
+  "iShares ESG Select Screened S&amp;P 500 ETF": {
+    "series_id": "S000069532",
+    "accession": "0000940400-26-007503",
+    "date": "2026-02-25"
+  },
+  "iShares Residential and Multisector Real Estate ETF": {
+    "series_id": "S000015623",
+    "accession": "0000940400-26-007502",
+    "date": "2026-02-25"
+  }
+}

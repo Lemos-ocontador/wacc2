@@ -36,6 +36,28 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 app.config['JSON_AS_ASCII'] = False
 
+# Detectar ambiente: Google App Engine vs Local
+IS_GAE = os.environ.get('GAE_ENV', '').startswith('standard')
+
+# Path centralizado do banco de dados
+DB_PATH = os.environ.get('DB_PATH', 'data/damodaran_data_new.db')
+
+def get_db(db_path=None):
+    """Abre conexão SQLite. No GAE usa modo immutable para evitar journal no filesystem read-only."""
+    path = db_path or DB_PATH
+    if IS_GAE:
+        abs_path = os.path.abspath(path)
+        uri = 'file:' + abs_path + '?immutable=1'
+        return sqlite3.connect(uri, uri=True)
+    return sqlite3.connect(path)
+
+# No GAE, cache vai para /tmp (filesystem efêmero mas gravável)
+if IS_GAE:
+    CACHE_DIR = Path("/tmp/cache")
+else:
+    CACHE_DIR = Path("cache")
+CACHE_DIR.mkdir(exist_ok=True)
+
 # Configurar logging
 import logging
 logging.basicConfig(
@@ -44,25 +66,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+if IS_GAE:
+    logger.info("Rodando no Google App Engine")
+else:
+    logger.info("Rodando em ambiente local")
+
 # Inicializar calculadora WACC
-calculator = WACCCalculator()
-data_manager = WACCDataManager()
+calculator = WACCCalculator(cache_dir=str(CACHE_DIR))
+data_manager = WACCDataManager(cache_dir=str(CACHE_DIR))
 wacc_connector = WACCDataConnector()
 field_manager = FieldCategoriesManager()
 data_source_mgr = DataSourceManager()
 
-# Configurações globais
-CACHE_DIR = Path("cache")
-CACHE_DIR.mkdir(exist_ok=True)
-
 # Classe para análise de empresas
 class CompanyAnalyzer:
-    def __init__(self, db_path='data/damodaran_data_new.db'):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        self.db_path = db_path or DB_PATH
     
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
-    
+        return get_db(self.db_path)
     def get_companies_data(self, filters=None):
         """Obtém dados das empresas com filtros aplicados"""
         conn = self.get_connection()
@@ -709,7 +731,7 @@ def get_benchmark_companies():
         max_mc = request.args.get('max_market_cap', type=float)
         search = request.args.get('search', '').strip()
         
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         
         query = """
         SELECT dg.company_name, dg.ticker, dg.exchange, dg.country, dg.broad_group,
@@ -813,7 +835,7 @@ def calculate_benchmark():
         if len(tickers) < 1:
             return jsonify({'success': False, 'error': 'Selecione pelo menos 1 empresa'}), 400
         
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         placeholders = ','.join(['?' for _ in tickers])
         query = f"""
         SELECT dg.company_name, dg.ticker, dg.exchange, dg.country,
@@ -1300,7 +1322,7 @@ def get_broad_groups():
     """Obter grupos geográficos amplos (Broad Groups) disponíveis."""
     try:
         import sqlite3
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -1341,7 +1363,7 @@ def get_industry_groups():
     """Obter grupos de indústria disponíveis."""
     try:
         import sqlite3
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -1387,7 +1409,7 @@ def get_sub_groups():
         import sqlite3
         broad_group = request.args.get('broad_group')
         
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         if broad_group:
@@ -1451,7 +1473,7 @@ def get_primary_sectors():
     """Obter setores primários disponíveis."""
     try:
         import sqlite3
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -1495,7 +1517,7 @@ def get_subdivision_hierarchy():
     """Obter hierarquia completa de subdivisões."""
     try:
         import sqlite3
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         # Hierarquia geográfica
@@ -1575,7 +1597,7 @@ def get_subdivision_hierarchy():
 def get_hierarchy():
     """API para obter hierarquia de filtros para o frontend"""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         # Hierarquia geográfica
@@ -1647,7 +1669,7 @@ def get_hierarchy():
 def get_filters():
     """API para obter opções de filtros"""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         
         # Obter países únicos
@@ -1837,6 +1859,41 @@ def get_company_analysis(company_name):
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/company_search')
+def api_company_search():
+    """Busca empresas por ticker ou nome (autocomplete)."""
+    try:
+        q = request.args.get('q', '').strip()
+        if len(q) < 2:
+            return jsonify({'success': True, 'results': []})
+
+        conn = get_db()
+        rows = conn.execute("""
+            SELECT yahoo_code, company_name, yahoo_sector, yahoo_industry, yahoo_country,
+                   market_cap, currency
+            FROM company_basic_data
+            WHERE yahoo_code LIKE ? OR company_name LIKE ?
+            ORDER BY
+                CASE WHEN yahoo_code LIKE ? THEN 0 ELSE 1 END,
+                market_cap DESC NULLS LAST
+            LIMIT 15
+        """, (f'{q}%', f'%{q}%', f'{q}%')).fetchall()
+        conn.close()
+
+        results = []
+        for r in rows:
+            results.append({
+                'code': r[0], 'name': r[1], 'sector': r[2],
+                'industry': r[3], 'country': r[4],
+                'market_cap': r[5], 'currency': r[6],
+            })
+
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        logger.error(f"Erro na busca de empresas: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/company_profile')
 def api_company_profile():
     """API unificada: retorna TODOS os dados de uma empresa (basic, damodaran, histórico)."""
@@ -1845,7 +1902,7 @@ def api_company_profile():
         if not code:
             return jsonify({'success': False, 'error': 'Parâmetro code obrigatório'}), 400
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
 
         # 1) company_basic_data — tenta yahoo_code, google_finance_code, ou company_name contendo o code
         row = None
@@ -1899,6 +1956,32 @@ def api_company_profile():
         cols4 = [d[0] for d in cur4.description]
         hist_quarterly = [dict(zip(cols4, r)) for r in cur4.fetchall()]
 
+        # 5) ETFs que contêm este ticker (busca em etf_holdings)
+        etf_memberships = []
+        try:
+            ticker_base = yahoo_code.replace('.SA', '')  # VALE3.SA → VALE3
+            etf_rows = conn.execute("""
+                SELECT h.etf_ticker, e.name, h.weight, e.total_holdings,
+                       e.aum, e.data_source, e.category
+                FROM etf_holdings h
+                JOIN etfs e ON e.ticker = h.etf_ticker
+                WHERE h.holding_ticker = ? OR h.holding_ticker = ?
+                   OR h.holding_ticker = ? OR h.holding_name LIKE ?
+                ORDER BY h.weight DESC
+            """, (yahoo_code, ticker_base, code, f'%{ticker_base}%')).fetchall()
+            seen = set()
+            for r in etf_rows:
+                if r[0] not in seen:
+                    seen.add(r[0])
+                    etf_memberships.append({
+                        'etf_ticker': r[0], 'etf_name': r[1],
+                        'weight': round(r[2], 4) if r[2] else None,
+                        'total_holdings': r[3], 'aum': r[4],
+                        'data_source': r[5], 'category': r[6],
+                    })
+        except Exception:
+            pass  # tabela etf_holdings pode não existir
+
         conn.close()
 
         # Limpar NaN
@@ -1918,7 +2001,8 @@ def api_company_profile():
             'basic': basic,
             'damodaran': dam,
             'historical_annual': hist_annual,
-            'historical_quarterly': hist_quarterly
+            'historical_quarterly': hist_quarterly,
+            'etf_memberships': etf_memberships,
         })
     except Exception as e:
         logger.error(f"Erro em company_profile: {e}")
@@ -2035,6 +2119,7 @@ def _build_joined_filters(args):
         ('industries', 'cbd.yahoo_industry'),
         ('countries', 'cbd.yahoo_country'),
         ('atividades', 'dg.atividade_anloc'),
+        ('sic_descs', 'dg.sic_desc'),
     ]:
         val = args.get(arg_name, '').strip()
         if val:
@@ -2058,7 +2143,7 @@ def api_yahoo_filter_options():
     Supports cross-filtering: when filters are active, other dimensions
     show only values available within those filters."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.cursor()
 
         # Build cross-filter conditions per dimension
@@ -2068,19 +2153,21 @@ def api_yahoo_filter_options():
             ('industries', 'cbd.yahoo_industry', 'cbd.yahoo_industry'),
             ('countries', 'cbd.yahoo_country', 'cbd.yahoo_country'),
             ('atividades', 'dg.atividade_anloc', 'dg.atividade_anloc'),
+            ('sic_descs', 'dg.sic_desc', 'dg.sic_desc'),
         ]
         filter_map = {
             'sectors': ('cbd.yahoo_sector', request.args.get('sectors', '').strip()),
             'industries': ('cbd.yahoo_industry', request.args.get('industries', '').strip()),
             'countries': ('cbd.yahoo_country', request.args.get('countries', '').strip()),
             'atividades': ('dg.atividade_anloc', request.args.get('atividades', '').strip()),
+            'sic_descs': ('dg.sic_desc', request.args.get('sic_descs', '').strip()),
         }
         has_any_filter = any(v for _, v in filter_map.values())
 
         results = {}
         for dim_name, col_expr, _ in dim_config:
             conds = [f"{col_expr} IS NOT NULL"]
-            if dim_name == 'atividades':
+            if dim_name in ('atividades', 'sic_descs'):
                 conds.append(f"{col_expr} != ''")
             params = []
             # Apply filters from OTHER dimensions only
@@ -2096,7 +2183,7 @@ def api_yahoo_filter_options():
                             params.extend(items)
 
             where = " AND ".join(conds)
-            if dim_name == 'atividades':
+            if dim_name in ('atividades', 'sic_descs'):
                 query = f"""SELECT {col_expr}, COUNT(*) as cnt
                            FROM damodaran_global dg
                            LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
@@ -2115,7 +2202,8 @@ def api_yahoo_filter_options():
         return jsonify({'success': True, 'sectors': results['sectors'],
                         'industries': results['industries'],
                         'countries': results['countries'],
-                        'atividades': results['atividades']})
+                        'atividades': results['atividades'],
+                        'sic_descs': results['sic_descs']})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -2124,7 +2212,7 @@ def api_yahoo_filter_options():
 def api_yahoo_dashboard_summary():
     """Retorna resumo geral dos dados Yahoo para os KPI cards."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.cursor()
         filter_conds, filter_params = _build_joined_filters(request.args)
 
@@ -2145,7 +2233,9 @@ def api_yahoo_dashboard_summary():
                     COUNT(DISTINCT cbd.yahoo_industry) as distinct_industries,
                     COUNT(DISTINCT cbd.yahoo_country) as distinct_countries,
                     COUNT(DISTINCT cbd.currency) as distinct_currencies,
-                    COUNT(DISTINCT dg.atividade_anloc) as distinct_atividades
+                    COUNT(DISTINCT dg.atividade_anloc) as distinct_atividades,
+                    COUNT(DISTINCT dg.sic_desc) as distinct_sic_descs,
+                    MAX(cbd.updated_at) as last_updated
                 FROM damodaran_global dg
                 LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker
                 WHERE {where_clause}
@@ -2155,7 +2245,8 @@ def api_yahoo_dashboard_summary():
             cols = ['total_companies', 'with_about', 'with_sector', 'with_industry',
                     'with_country', 'with_ev', 'with_mcap', 'with_currency', 'with_website',
                     'distinct_sectors', 'distinct_industries', 'distinct_countries',
-                    'distinct_currencies', 'distinct_atividades']
+                    'distinct_currencies', 'distinct_atividades', 'distinct_sic_descs',
+                    'last_updated']
             stats = dict(zip(cols, row))
         else:
             stats = {}
@@ -2181,6 +2272,11 @@ def api_yahoo_dashboard_summary():
             stats['distinct_currencies'] = cur.fetchone()[0]
             cur.execute("SELECT COUNT(DISTINCT atividade_anloc) FROM damodaran_global WHERE atividade_anloc IS NOT NULL")
             stats['distinct_atividades'] = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT sic_desc) FROM damodaran_global WHERE sic_desc IS NOT NULL AND sic_desc != ''")
+            stats['distinct_sic_descs'] = cur.fetchone()[0]
+
+            cur.execute("SELECT MAX(updated_at) FROM company_basic_data")
+            stats['last_updated'] = cur.fetchone()[0]
 
         conn.close()
         return jsonify({'success': True, 'stats': stats})
@@ -2192,7 +2288,7 @@ def api_yahoo_dashboard_summary():
 def api_yahoo_dashboard_sectors():
     """Métricas agregadas por setor Yahoo."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         filter_conds, filter_params = _build_joined_filters(request.args)
         where = "WHERE cbd.yahoo_sector IS NOT NULL"
         if filter_conds:
@@ -2233,7 +2329,7 @@ def api_yahoo_dashboard_industries():
     """Métricas agregadas por indústria Yahoo, filtrável por setor."""
     try:
         sector = request.args.get('sector', '')
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         where = "WHERE cbd.yahoo_industry IS NOT NULL"
         if sector:
@@ -2281,7 +2377,7 @@ def api_yahoo_dashboard_industries():
 def api_yahoo_dashboard_countries():
     """Métricas agregadas por país Yahoo."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         filter_conds, filter_params = _build_joined_filters(request.args)
         where = "WHERE cbd.yahoo_country IS NOT NULL"
         if filter_conds:
@@ -2317,7 +2413,7 @@ def api_yahoo_dashboard_countries():
 def api_yahoo_dashboard_atividades():
     """Métricas agregadas por atividade Anloc."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         filter_conds, filter_params = _build_joined_filters(request.args)
         has_cbd_filter = any(c.startswith('cbd.') for c in filter_conds) if filter_conds else False
         join_clause = "LEFT JOIN company_basic_data cbd ON cbd.ticker = dg.ticker" if has_cbd_filter else ""
@@ -2360,7 +2456,7 @@ def api_yahoo_dashboard_cross():
     try:
         sector = request.args.get('sector', '')
         country = request.args.get('country', '')
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         where = "WHERE cbd.yahoo_sector IS NOT NULL AND cbd.yahoo_country IS NOT NULL"
         if sector:
@@ -2404,7 +2500,7 @@ def api_yahoo_dashboard_cross():
 def api_yahoo_dashboard_treemap():
     """Dados para treemap: indústrias agrupadas por setor com métricas."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         filter_conds, filter_params = _build_joined_filters(request.args)
         where = "WHERE cbd.yahoo_sector IS NOT NULL AND cbd.yahoo_industry IS NOT NULL"
         if filter_conds:
@@ -2457,7 +2553,7 @@ def api_yahoo_drill_companies():
         has_field = request.args.get('has_field', '')  # ex: 'about', 'yahoo_sector'
         has_value = request.args.get('has_value', '')   # '1' = com dados, '0' = sem dados
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         conditions = []
 
@@ -2592,7 +2688,7 @@ def api_yahoo_drill_distribution():
             return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
 
         col_expr, label = valid_metrics[metric]
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         conditions = [f"CAST({col_expr} AS REAL) IS NOT NULL"]
 
@@ -2697,7 +2793,7 @@ def api_yahoo_drill_coverage():
             return jsonify({'success': False, 'error': f'Campo inválido: {field}'}), 400
 
         col, label = field_map[field]
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
 
         # Total
         total_df = pd.read_sql_query("""
@@ -2746,7 +2842,7 @@ def api_yahoo_drill_coverage():
 def api_yahoo_drill_currencies():
     """Lista de moedas com contagem de empresas e países."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         query = """
             SELECT 
                 cbd.currency,
@@ -2800,7 +2896,7 @@ def api_export_excel():
             return jsonify({'success': False, 'error': 'Nenhum campo selecionado'}), 400
 
         # Sanitizar nomes de colunas (prevenir SQL injection)
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(damodaran_global)")
         valid_columns = {row[1] for row in cursor.fetchall()}
@@ -2944,7 +3040,7 @@ def api_export_preview():
             return jsonify({'success': False, 'error': 'Nenhum campo selecionado'}), 400
 
         # Sanitizar nomes de colunas
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(damodaran_global)")
         valid_columns = {row[1] for row in cursor.fetchall()}
@@ -3065,50 +3161,142 @@ def data_yahoo_historico_page():
 
 @app.route('/api/historico/summary')
 def api_historico_summary():
-    """Resumo geral dos dados históricos para KPI cards."""
+    """Resumo geral dos dados históricos para KPI cards. Aceita filtros cross-filter."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.cursor()
         stats = {}
-        cur.execute("SELECT COUNT(*) FROM company_financials_historical")
+
+        # Parse cross-filter params
+        f_sectors = request.args.get('sectors', '').strip()
+        f_industries = request.args.get('industries', '').strip()
+        f_countries = request.args.get('countries', '').strip()
+
+        # Build filter conditions
+        base_conds = []
+        base_params = []
+        if f_sectors:
+            items = [v.strip() for v in f_sectors.split(',') if v.strip()]
+            base_conds.append(f"cbd.yahoo_sector IN ({','.join('?' * len(items))})")
+            base_params.extend(items)
+        if f_industries:
+            items = [v.strip() for v in f_industries.split(',') if v.strip()]
+            base_conds.append(f"cbd.yahoo_industry IN ({','.join('?' * len(items))})")
+            base_params.extend(items)
+        if f_countries:
+            items = [v.strip() for v in f_countries.split(',') if v.strip()]
+            base_conds.append(f"cbd.yahoo_country IN ({','.join('?' * len(items))})")
+            base_params.extend(items)
+
+        has_filter = len(base_conds) > 0
+        join_cbd = "JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id"
+
+        if has_filter:
+            where_base = " AND " + " AND ".join(base_conds)
+        else:
+            where_base = ""
+
+        # Basic counts
+        if has_filter:
+            cur.execute(f"SELECT COUNT(*) FROM company_financials_historical cfh {join_cbd} WHERE 1=1 {where_base}", base_params)
+        else:
+            cur.execute("SELECT COUNT(*) FROM company_financials_historical")
         stats['total_records'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical")
+
+        if has_filter:
+            cur.execute(f"SELECT COUNT(DISTINCT cfh.yahoo_code) FROM company_financials_historical cfh {join_cbd} WHERE 1=1 {where_base}", base_params)
+        else:
+            cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical")
         stats['total_companies'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='annual'")
+
+        if has_filter:
+            cur.execute(f"SELECT COUNT(DISTINCT cfh.yahoo_code) FROM company_financials_historical cfh {join_cbd} WHERE cfh.period_type='annual' {where_base}", base_params)
+        else:
+            cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='annual'")
         stats['annual_companies'] = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='quarterly'")
+
+        if has_filter:
+            cur.execute(f"SELECT COUNT(DISTINCT cfh.yahoo_code) FROM company_financials_historical cfh {join_cbd} WHERE cfh.period_type='quarterly' {where_base}", base_params)
+        else:
+            cur.execute("SELECT COUNT(DISTINCT yahoo_code) FROM company_financials_historical WHERE period_type='quarterly'")
         stats['quarterly_companies'] = cur.fetchone()[0]
-        cur.execute("SELECT MIN(fiscal_year), MAX(fiscal_year) FROM company_financials_historical WHERE period_type='annual'")
+
+        if has_filter:
+            cur.execute(f"SELECT MIN(cfh.fiscal_year), MAX(cfh.fiscal_year) FROM company_financials_historical cfh {join_cbd} WHERE cfh.period_type='annual' {where_base}", base_params)
+        else:
+            cur.execute("SELECT MIN(fiscal_year), MAX(fiscal_year) FROM company_financials_historical WHERE period_type='annual'")
         r = cur.fetchone()
         stats['min_year'] = r[0]
         stats['max_year'] = r[1]
-        cur.execute("SELECT COUNT(DISTINCT original_currency) FROM company_financials_historical WHERE original_currency IS NOT NULL")
+
+        if has_filter:
+            cur.execute(f"SELECT COUNT(DISTINCT cfh.original_currency) FROM company_financials_historical cfh {join_cbd} WHERE cfh.original_currency IS NOT NULL {where_base}", base_params)
+        else:
+            cur.execute("SELECT COUNT(DISTINCT original_currency) FROM company_financials_historical WHERE original_currency IS NOT NULL")
         stats['distinct_currencies'] = cur.fetchone()[0]
-        cur.execute("""
-            SELECT COUNT(DISTINCT cfh.yahoo_code) 
-            FROM company_financials_historical cfh
-            WHERE cfh.enterprise_value_estimated IS NOT NULL
-        """)
+
+        # Distinct sectors, industries, countries
+        cur.execute(f"""
+            SELECT COUNT(DISTINCT cbd.yahoo_sector)
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_sector IS NOT NULL {where_base}
+        """, base_params)
+        stats['distinct_sectors'] = cur.fetchone()[0]
+        cur.execute(f"""
+            SELECT COUNT(DISTINCT cbd.yahoo_industry)
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_industry IS NOT NULL {where_base}
+        """, base_params)
+        stats['distinct_industries'] = cur.fetchone()[0]
+        cur.execute(f"""
+            SELECT COUNT(DISTINCT cbd.yahoo_country)
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != '' {where_base}
+        """, base_params)
+        stats['distinct_countries'] = cur.fetchone()[0]
+
+        # Industries list
+        cur.execute(f"""
+            SELECT cbd.yahoo_industry, COUNT(DISTINCT cfh.yahoo_code) AS n
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_industry IS NOT NULL {where_base}
+            GROUP BY cbd.yahoo_industry ORDER BY n DESC
+        """, base_params)
+        stats['industries'] = [{'industry': r[0], 'count': r[1]} for r in cur.fetchall()]
+
+        if has_filter:
+            cur.execute(f"""
+                SELECT COUNT(DISTINCT cfh.yahoo_code) 
+                FROM company_financials_historical cfh {join_cbd}
+                WHERE cfh.enterprise_value_estimated IS NOT NULL {where_base}
+            """, base_params)
+        else:
+            cur.execute("""
+                SELECT COUNT(DISTINCT cfh.yahoo_code) 
+                FROM company_financials_historical cfh
+                WHERE cfh.enterprise_value_estimated IS NOT NULL
+            """)
         stats['with_ev'] = cur.fetchone()[0]
+
         # Cobertura por setor
-        cur.execute("""
+        cur.execute(f"""
             SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.yahoo_code) AS n
-            FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
-            WHERE cbd.yahoo_sector IS NOT NULL
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_sector IS NOT NULL {where_base}
             GROUP BY cbd.yahoo_sector ORDER BY n DESC
-        """)
+        """, base_params)
         stats['sectors'] = [{'sector': r[0], 'count': r[1]} for r in cur.fetchall()]
+
         # Cobertura por país
-        cur.execute("""
+        cur.execute(f"""
             SELECT cbd.yahoo_country, COUNT(DISTINCT cfh.yahoo_code) AS n
-            FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
-            WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != ''
+            FROM company_financials_historical cfh {join_cbd}
+            WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != '' {where_base}
             GROUP BY cbd.yahoo_country ORDER BY n DESC
-        """)
+        """, base_params)
         countries_raw = cur.fetchall()
         stats['countries'] = [{'country': r[0], 'count': r[1]} for r in countries_raw]
+
         # Regiões e sub-regiões (via geographic_mappings)
         region_counts = {}
         subregion_counts = {}
@@ -3128,60 +3316,139 @@ def api_historico_summary():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/historico_filter_options')
+def api_historico_filter_options():
+    """Opções de filtro para cross-filter na página de dados históricos."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        filter_map = {
+            'sectors': ('cbd.yahoo_sector', request.args.get('sectors', '').strip()),
+            'industries': ('cbd.yahoo_industry', request.args.get('industries', '').strip()),
+            'countries': ('cbd.yahoo_country', request.args.get('countries', '').strip()),
+        }
+
+        dim_config = [
+            ('sectors', 'cbd.yahoo_sector'),
+            ('industries', 'cbd.yahoo_industry'),
+            ('countries', 'cbd.yahoo_country'),
+        ]
+
+        results = {}
+        for dim_name, col_expr in dim_config:
+            conds = [f"{col_expr} IS NOT NULL"]
+            if dim_name == 'countries':
+                conds.append(f"{col_expr} != ''")
+            params = []
+            # Apply filters from OTHER dimensions only (cross-filter)
+            for other_dim, (other_col, other_val) in filter_map.items():
+                if other_dim == dim_name:
+                    continue
+                if other_val:
+                    items = [v.strip() for v in other_val.split(',') if v.strip()]
+                    if items:
+                        conds.append(f"{other_col} IN ({','.join('?' * len(items))})")
+                        params.extend(items)
+
+            where = " AND ".join(conds)
+            query = f"""SELECT {col_expr}, COUNT(DISTINCT cfh.yahoo_code) as cnt
+                       FROM company_financials_historical cfh
+                       JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                       WHERE {where}
+                       GROUP BY {col_expr} ORDER BY {col_expr}"""
+            cur.execute(query, params)
+            results[dim_name] = [{'name': r[0], 'count': r[1]} for r in cur.fetchall()]
+
+        conn.close()
+        return jsonify({'success': True, **results})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/historico/search')
 def api_historico_search():
-    """Busca empresas com dados históricos. Params: q, sector, country, region, subregion, limit."""
+    """Busca empresas com dados históricos. Params: q, sector, country, region, subregion, sectors, industries, countries, limit."""
     try:
         q = request.args.get('q', '').strip()
         sector = request.args.get('sector', '').strip()
         country = request.args.get('country', '').strip()
         region = request.args.get('region', '').strip()
         subregion = request.args.get('subregion', '').strip()
+        # Cross-filter params (comma-separated)
+        sectors_csv = request.args.get('sectors', '').strip()
+        industries_csv = request.args.get('industries', '').strip()
+        countries_csv = request.args.get('countries', '').strip()
         limit = int(request.args.get('limit', 50))
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
-        query = """
+        conn = get_db()
+
+        # Build filter conditions once
+        filter_conds = ["cfh.period_type = 'annual'"]
+        filter_params = []
+        if q:
+            filter_conds.append("(cfh.yahoo_code LIKE ? OR cfh.company_name LIKE ?)")
+            filter_params.extend([f'%{q}%', f'%{q}%'])
+        if sector:
+            filter_conds.append("cbd.yahoo_sector = ?")
+            filter_params.append(sector)
+        if country:
+            filter_conds.append("cbd.yahoo_country = ?")
+            filter_params.append(country)
+        if region:
+            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['region'] == region]
+            if region_countries:
+                filter_conds.append(f"cbd.yahoo_country IN ({','.join('?' * len(region_countries))})")
+                filter_params.extend(region_countries)
+        if subregion:
+            sub_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['subregion'] == subregion]
+            if sub_countries:
+                filter_conds.append(f"cbd.yahoo_country IN ({','.join('?' * len(sub_countries))})")
+                filter_params.extend(sub_countries)
+        if sectors_csv:
+            items = [v.strip() for v in sectors_csv.split(',') if v.strip()]
+            if items:
+                filter_conds.append(f"cbd.yahoo_sector IN ({','.join('?' * len(items))})")
+                filter_params.extend(items)
+        if industries_csv:
+            items = [v.strip() for v in industries_csv.split(',') if v.strip()]
+            if items:
+                filter_conds.append(f"cbd.yahoo_industry IN ({','.join('?' * len(items))})")
+                filter_params.extend(items)
+        if countries_csv:
+            items = [v.strip() for v in countries_csv.split(',') if v.strip()]
+            if items:
+                filter_conds.append(f"cbd.yahoo_country IN ({','.join('?' * len(items))})")
+                filter_params.extend(items)
+
+        where_clause = " AND ".join(filter_conds)
+        base_from = """FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id"""
+
+        # Total count
+        total_count = conn.execute(
+            f"SELECT COUNT(DISTINCT cfh.yahoo_code) {base_from} WHERE {where_clause}",
+            filter_params
+        ).fetchone()[0]
+
+        # Main query with limit
+        query = f"""
             SELECT DISTINCT cfh.yahoo_code, cfh.company_name,
                    cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
                    cfh.original_currency,
                    COUNT(*) AS periods,
                    MIN(cfh.fiscal_year) AS min_year,
                    MAX(cfh.fiscal_year) AS max_year
-            FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
-            WHERE cfh.period_type = 'annual'
+            {base_from}
+            WHERE {where_clause}
+            GROUP BY cfh.yahoo_code ORDER BY cfh.company_name LIMIT ?
         """
-        params = []
-        if q:
-            query += " AND (cfh.yahoo_code LIKE ? OR cfh.company_name LIKE ?)"
-            params.extend([f'%{q}%', f'%{q}%'])
-        if sector:
-            query += " AND cbd.yahoo_sector = ?"
-            params.append(sector)
-        if country:
-            query += " AND cbd.yahoo_country = ?"
-            params.append(country)
-        if region:
-            # Filtrar por região usando geographic_mappings
-            region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['region'] == region]
-            if region_countries:
-                placeholders = ','.join(['?'] * len(region_countries))
-                query += f" AND cbd.yahoo_country IN ({placeholders})"
-                params.extend(region_countries)
-        if subregion:
-            sub_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['subregion'] == subregion]
-            if sub_countries:
-                placeholders = ','.join(['?'] * len(sub_countries))
-                query += f" AND cbd.yahoo_country IN ({placeholders})"
-                params.extend(sub_countries)
-        query += " GROUP BY cfh.yahoo_code ORDER BY cfh.company_name LIMIT ?"
-        params.append(limit)
 
-        cur = conn.execute(query, params)
+        cur = conn.execute(query, filter_params + [limit])
         cols = [d[0] for d in cur.description]
         rows = [dict(zip(cols, r)) for r in cur.fetchall()]
         conn.close()
-        return jsonify({'success': True, 'companies': rows})
+        return jsonify({'success': True, 'companies': rows, 'total_count': total_count})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -3191,7 +3458,7 @@ def api_historico_company(yahoo_code):
     """Retorna todos os dados históricos de uma empresa. Params: period_type (annual/quarterly)."""
     try:
         period_type = request.args.get('period_type', 'annual')
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.execute("""
             SELECT * FROM company_financials_historical
             WHERE yahoo_code = ? AND period_type = ?
@@ -3240,7 +3507,7 @@ def api_historico_sector_evolution():
         if metric not in allowed:
             return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         query = f"""
             SELECT cbd.yahoo_sector AS sector, cfh.fiscal_year,
                    AVG(cfh.{metric}) AS avg_value,
@@ -3303,7 +3570,7 @@ def api_historico_compare():
             return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
 
         placeholders = ','.join(['?'] * len(codes))
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         query = f"""
             SELECT yahoo_code, company_name, fiscal_year, period_date, {metric}
             FROM company_financials_historical
@@ -3333,7 +3600,7 @@ def api_historico_compare():
 def api_historico_sectors_list():
     """Lista setores com dados históricos disponíveis."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.execute("""
             SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.yahoo_code) AS n
             FROM company_financials_historical cfh
@@ -3356,6 +3623,7 @@ def api_historico_drill_companies():
     try:
         sector = request.args.get('sector', '')
         country = request.args.get('country', '')
+        industry = request.args.get('industry', '')
         region = request.args.get('region', '')
         subregion = request.args.get('subregion', '')
         search = request.args.get('search', '')
@@ -3366,7 +3634,7 @@ def api_historico_drill_companies():
         page = max(1, int(request.args.get('page', 1)))
         per_page = min(100, max(10, int(request.args.get('per_page', 50))))
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         conditions = ["cfh.period_type = 'annual'"]
 
@@ -3376,6 +3644,9 @@ def api_historico_drill_companies():
         if country:
             conditions.append("cbd.yahoo_country = ?")
             params.append(country)
+        if industry:
+            conditions.append("cbd.yahoo_industry = ?")
+            params.append(industry)
         if region:
             region_countries = [c for c, info in GEOGRAPHIC_MAPPING.items() if info['region'] == region]
             if region_countries:
@@ -3484,7 +3755,7 @@ def api_historico_drill_year_detail():
             return jsonify({'success': False, 'error': f'Métrica inválida: {metric}'}), 400
 
         placeholders = ','.join(['?'] * len(codes))
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         query = f"""
             SELECT cfh.yahoo_code, cfh.company_name, cfh.{metric} AS value,
                    cbd.yahoo_sector, cbd.yahoo_country, cfh.original_currency
@@ -3554,21 +3825,32 @@ def api_historico_consolidated():
         codes = data.get('codes', [])
         period_type = data.get('period_type', 'annual')
         include_detail = data.get('include_detail', False)
+        exclude_critical = data.get('exclude_critical', False)
         if not codes:
             return jsonify({'success': False, 'error': 'Nenhuma empresa selecionada'}), 400
 
         placeholders = ','.join(['?'] * len(codes))
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
 
         # Buscar todos os registros das empresas
-        query = f"""
-            SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
-            FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
-            WHERE cfh.yahoo_code IN ({placeholders}) AND cfh.period_type = ?
-            ORDER BY cfh.fiscal_year, cfh.yahoo_code
-        """
-        df = pd.read_sql_query(query, conn, params=codes + [period_type])
+        if period_type == 'all':
+            query = f"""
+                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
+                FROM company_financials_historical cfh
+                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                WHERE cfh.yahoo_code IN ({placeholders})
+                ORDER BY cfh.fiscal_year, cfh.yahoo_code
+            """
+            df = pd.read_sql_query(query, conn, params=codes)
+        else:
+            query = f"""
+                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
+                FROM company_financials_historical cfh
+                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                WHERE cfh.yahoo_code IN ({placeholders}) AND cfh.period_type = ?
+                ORDER BY cfh.fiscal_year, cfh.yahoo_code
+            """
+            df = pd.read_sql_query(query, conn, params=codes + [period_type])
         conn.close()
 
         if df.empty:
@@ -3576,26 +3858,57 @@ def api_historico_consolidated():
 
         df = df.replace({np.nan: None})
 
-        # Métricas para agregar
+        # Filtrar registros com problemas críticos de qualidade se solicitado
+        df_agg = df.copy()
+        excluded_count = 0
+        if exclude_critical and 'data_quality' in df_agg.columns:
+            mask = df_agg['data_quality'].fillna('').str.contains('critical', case=False)
+            excluded_count = int(mask.sum())
+            df_agg = df_agg[~mask]
+
+        # Métricas para agregar (todos os campos numéricos da base)
         metrics = [
-            'total_revenue_usd', 'ebitda_usd', 'net_income_usd', 'free_cash_flow_usd',
-            'enterprise_value_usd', 'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            # DRE (P&L)
+            'total_revenue', 'cost_of_revenue', 'gross_profit',
+            'operating_income', 'operating_expense',
+            'ebit', 'ebitda', 'normalized_ebitda', 'net_income',
+            'interest_expense', 'tax_provision',
+            'research_and_development', 'sga', 'diluted_average_shares',
+            # Fluxo de Caixa
+            'free_cash_flow', 'operating_cash_flow', 'capital_expenditure',
+            # Balanço
+            'total_assets', 'current_assets',
+            'total_liabilities', 'current_liabilities',
+            'total_debt', 'short_term_debt', 'long_term_debt',
+            'stockholders_equity', 'cash_and_equivalents', 'short_term_investments',
+            'ordinary_shares_number', 'preferred_stock', 'minority_interest',
+            # Mercado / EV
+            'close_price', 'market_cap_estimated', 'enterprise_value_estimated',
+            # Margens
+            'ebitda_margin', 'ebit_margin', 'gross_margin', 'net_margin',
+            # Múltiplos
             'ev_ebitda', 'ev_ebit', 'ev_revenue', 'debt_equity', 'debt_ebitda',
+            # Indicadores
             'fcf_revenue_ratio', 'fcf_ebitda_ratio', 'capex_revenue',
-            'total_revenue', 'ebitda', 'net_income', 'free_cash_flow',
-            'market_cap_estimated', 'enterprise_value_estimated',
-            'total_debt', 'cash_and_equivalents', 'stockholders_equity'
+            # Valores em USD
+            'total_revenue_usd', 'ebit_usd', 'ebitda_usd',
+            'net_income_usd', 'free_cash_flow_usd', 'enterprise_value_usd',
+            # Câmbio
+            'fx_rate_to_usd',
+            # TTM
+            'total_revenue_ttm', 'ebitda_ttm', 'ebit_ttm',
+            'free_cash_flow_ttm', 'net_income_ttm', 'ttm_quarters_count',
         ]
 
         # Agregar por ano
-        years = sorted(df['fiscal_year'].dropna().unique().tolist())
+        years = sorted(df_agg['fiscal_year'].dropna().unique().tolist())
         aggregated = {}
         for metric in metrics:
-            if metric not in df.columns:
+            if metric not in df_agg.columns:
                 continue
             agg = {}
             for year in years:
-                year_data = df[df['fiscal_year'] == year][metric].dropna()
+                year_data = df_agg[df_agg['fiscal_year'] == year][metric].dropna()
                 if len(year_data) == 0:
                     continue
                 arr = year_data.values.astype(float)
@@ -3614,8 +3927,8 @@ def api_historico_consolidated():
 
         # Lista de empresas com info
         companies_info = []
-        for code in df['yahoo_code'].unique():
-            cdf = df[df['yahoo_code'] == code]
+        for code in df_agg['yahoo_code'].unique():
+            cdf = df_agg[df_agg['yahoo_code'] == code]
             latest = cdf.sort_values('fiscal_year', ascending=False).iloc[0]
             companies_info.append({
                 'yahoo_code': code,
@@ -3629,7 +3942,7 @@ def api_historico_consolidated():
 
         # Ranking: última período por empresa com métricas chave
         latest_year = max(years)
-        latest_df = df[df['fiscal_year'] == latest_year].copy()
+        latest_df = df_agg[df_agg['fiscal_year'] == latest_year].copy()
         ranking = []
         for _, row in latest_df.iterrows():
             ranking.append({
@@ -3651,6 +3964,7 @@ def api_historico_consolidated():
                 'short_term_debt': row.get('short_term_debt'),
                 'long_term_debt': row.get('long_term_debt'),
                 'diluted_average_shares': row.get('diluted_average_shares'),
+                'data_quality': row.get('data_quality'),
             })
 
         # Limpar NaN dos rankings
@@ -3662,7 +3976,8 @@ def api_historico_consolidated():
         # Dados detalhados por empresa (opcional)
         detail_records = []
         if include_detail:
-            detail_cols = ['yahoo_code', 'company_name', 'fiscal_year', 'original_currency',
+            detail_cols = ['yahoo_code', 'company_name', 'fiscal_year', 'fiscal_quarter',
+                           'period_type', 'original_currency',
                            'yahoo_sector', 'yahoo_industry', 'yahoo_country'] + metrics
             available_cols = [c for c in detail_cols if c in df.columns]
             detail_df = df[available_cols].copy()
@@ -3688,6 +4003,7 @@ def api_historico_consolidated():
             'total_selected': len(codes),
             'total_with_data': len(companies_info),
             'latest_year': int(latest_year),
+            'excluded_critical': excluded_count,
         })
     except Exception as e:
         logger.error(f"Erro na consolidação: {e}")
@@ -3706,7 +4022,7 @@ def analise_setor_page():
 def api_analise_setor_filters():
     """Retorna opções de filtro: setores, regiões, países e anos disponíveis."""
     try:
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         cur = conn.cursor()
 
         # Setores
@@ -3749,6 +4065,17 @@ def api_analise_setor_filters():
         cur.execute("SELECT DISTINCT fiscal_year FROM company_financials_historical WHERE period_type='annual' AND fiscal_year IS NOT NULL ORDER BY fiscal_year")
         years = [r[0] for r in cur.fetchall()]
 
+        # SIC Desc
+        cur.execute("""
+            SELECT dg.sic_desc, COUNT(DISTINCT cfh.company_basic_data_id) AS n
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN damodaran_global dg ON dg.ticker = cbd.ticker
+            WHERE dg.sic_desc IS NOT NULL AND dg.sic_desc != '' AND cfh.period_type = 'annual'
+            GROUP BY dg.sic_desc ORDER BY n DESC
+        """)
+        sic_descs = [{'name': r[0], 'count': r[1]} for r in cur.fetchall()]
+
         conn.close()
         return jsonify({
             'success': True,
@@ -3757,7 +4084,8 @@ def api_analise_setor_filters():
             'subregions': subregions,
             'countries': countries,
             'country_to_region': country_to_region,
-            'years': years
+            'years': years,
+            'sic_descs': sic_descs
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -3774,6 +4102,7 @@ def api_analise_setor_data():
         countries = [s.strip() for s in request.args.get('countries', '').split(',') if s.strip()]
         regions = [s.strip() for s in request.args.get('regions', '').split(',') if s.strip()]
         years = [int(y) for y in request.args.get('years', '').split(',') if y.strip()]
+        sic_descs = [s.strip() for s in request.args.get('sic_descs', '').split(',') if s.strip()]
         group_by = request.args.get('group_by', 'sector')
 
         allowed_metrics = [
@@ -3788,7 +4117,7 @@ def api_analise_setor_data():
             'interest_expense', 'tax_provision', 'research_and_development',
         ]
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         conditions = ["cfh.period_type = 'annual'"]
 
@@ -3814,6 +4143,11 @@ def api_analise_setor_data():
             conditions.append(f"cfh.fiscal_year IN ({placeholders})")
             params.extend(years)
 
+        if sic_descs:
+            placeholders = ','.join(['?'] * len(sic_descs))
+            conditions.append(f"dg.sic_desc IN ({placeholders})")
+            params.extend(sic_descs)
+
         where = ' AND '.join(conditions)
 
         # Determine grouping column
@@ -3836,6 +4170,8 @@ def api_analise_setor_data():
             metric_aggs.append(f"SUM(CASE WHEN cfh.{m} IS NOT NULL THEN 1 ELSE 0 END) AS n_{m}")
         metric_sql = ', '.join(metric_aggs)
 
+        sic_join = "LEFT JOIN damodaran_global dg ON dg.ticker = cbd.ticker" if sic_descs else ""
+
         query = f"""
             SELECT {group_col} AS {group_alias},
                    cfh.fiscal_year,
@@ -3844,6 +4180,7 @@ def api_analise_setor_data():
                    {metric_sql}
             FROM company_financials_historical cfh
             JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            {sic_join}
             WHERE {where}
             GROUP BY {group_col}, cfh.fiscal_year
             ORDER BY {group_col}, cfh.fiscal_year
@@ -3921,6 +4258,7 @@ def api_analise_setor_detail():
         countries = [s.strip() for s in request.args.get('countries', '').split(',') if s.strip()]
         regions = [s.strip() for s in request.args.get('regions', '').split(',') if s.strip()]
         years = [int(y) for y in request.args.get('years', '').split(',') if y.strip()]
+        sic_descs_detail = [s.strip() for s in request.args.get('sic_descs', '').split(',') if s.strip()]
         sort = request.args.get('sort', 'company_name')
         order = request.args.get('order', 'asc').lower()
         page = max(1, int(request.args.get('page', 1)))
@@ -3937,7 +4275,7 @@ def api_analise_setor_detail():
             sort = 'company_name'
         order_dir = 'DESC' if order == 'desc' else 'ASC'
 
-        conn = sqlite3.connect('data/damodaran_data_new.db')
+        conn = get_db()
         params = []
         conditions = ["cfh.period_type = 'annual'"]
 
@@ -3961,11 +4299,18 @@ def api_analise_setor_detail():
             conditions.append(f"cfh.fiscal_year IN ({placeholders})")
             params.extend(years)
 
+        if sic_descs_detail:
+            placeholders = ','.join(['?'] * len(sic_descs_detail))
+            conditions.append(f"dg.sic_desc IN ({placeholders})")
+            params.extend(sic_descs_detail)
+
         where = ' AND '.join(conditions)
+        sic_join_detail = "LEFT JOIN damodaran_global dg ON dg.ticker = cbd.ticker" if sic_descs_detail else ""
 
         # Total count
         count_q = f"""SELECT COUNT(*) FROM company_financials_historical cfh
                       JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                      {sic_join_detail}
                       WHERE {where}"""
         total = conn.execute(count_q, params).fetchone()[0]
 
@@ -3986,6 +4331,7 @@ def api_analise_setor_detail():
                    cfh.fcf_revenue_ratio, cfh.interest_expense, cfh.tax_provision
             FROM company_financials_historical cfh
             JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            {sic_join_detail}
             WHERE {where}
             ORDER BY {sort_col} {order_dir} NULLS LAST
             LIMIT ? OFFSET ?
@@ -4012,6 +4358,787 @@ def api_analise_setor_detail():
         })
     except Exception as e:
         logger.error(f"Erro analise_setor/detail: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ANÁLISE DE CONSISTÊNCIA DOS DADOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.route('/data-consistency')
+def data_consistency_page():
+    """Página de análise de consistência dos dados financeiros históricos."""
+    return render_template('data_consistency.html')
+
+
+@app.route('/api/data_consistency/validate')
+def api_data_consistency_validate():
+    """Executa validação de consistência e retorna resultados."""
+    try:
+        from scripts.validate_data_consistency import get_validation_results_for_api
+        conn = get_db()
+        results = get_validation_results_for_api(conn)
+        conn.close()
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        logger.error(f"Erro na validação de consistência: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/data_consistency/update_quality', methods=['POST'])
+def api_data_consistency_update():
+    """Atualiza o campo data_quality no banco com base nos problemas encontrados."""
+    try:
+        from scripts.validate_data_consistency import run_validation, update_data_quality
+        conn = get_db()
+        results = run_validation(conn)
+        updated = update_data_quality(conn, results)
+        conn.close()
+        return jsonify({'success': True, 'updated': updated})
+    except Exception as e:
+        logger.error(f"Erro ao atualizar data_quality: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ════════════════════════════════════════════════════════════════════
+# ETF Explorer – Rotas (Fase 3)
+# ════════════════════════════════════════════════════════════════════
+
+# Tag types disponíveis para cross-filter
+_TAG_FILTER_TYPES = ['asset_class', 'geography', 'strategy', 'style', 'sector', 'cap_size', 'index']
+
+
+def _etf_cross_filter_where(args, table_alias='e'):
+    """Monta cláusulas WHERE para cross-filtering de ETFs (inclui tags)."""
+    conds, params = [], []
+    f_sources = args.get('sources', '').strip()
+    f_categories = args.get('categories', '').strip()
+    f_issuers = args.get('issuers', '').strip()
+    f_regions = args.get('regions', '').strip()
+
+    if f_sources:
+        items = [v.strip() for v in f_sources.split(',') if v.strip()]
+        conds.append(f"{table_alias}.data_source IN ({','.join('?' * len(items))})")
+        params.extend(items)
+    if f_categories:
+        items = [v.strip() for v in f_categories.split(',') if v.strip()]
+        conds.append(f"{table_alias}.category IN ({','.join('?' * len(items))})")
+        params.extend(items)
+    if f_issuers:
+        items = [v.strip() for v in f_issuers.split(',') if v.strip()]
+        conds.append(f"{table_alias}.issuer IN ({','.join('?' * len(items))})")
+        params.extend(items)
+    if f_regions:
+        region_conds = []
+        for reg in [v.strip() for v in f_regions.split(',') if v.strip()]:
+            if reg == 'Brasil':
+                region_conds.append(f"{table_alias}.ticker LIKE '%.SA'")
+            elif reg == 'EUA':
+                region_conds.append(f"({table_alias}.ticker NOT LIKE '%.SA' AND {table_alias}.ticker NOT LIKE '%.L' AND {table_alias}.ticker NOT LIKE '%.TO' AND {table_alias}.ticker NOT LIKE '%.AX' AND {table_alias}.ticker NOT LIKE '%.HK')")
+            else:
+                ext = {'UK': '.L', 'Canadá': '.TO', 'Austrália': '.AX', 'Hong Kong': '.HK'}.get(reg)
+                if ext:
+                    region_conds.append(f"{table_alias}.ticker LIKE '%{ext}'")
+        if region_conds:
+            conds.append(f"({' OR '.join(region_conds)})")
+
+    # Tag filters: tag_asset_class=Equity,Crypto → ticker IN (SELECT ...)
+    for tt in _TAG_FILTER_TYPES:
+        raw = args.get(f'tag_{tt}', '').strip()
+        if raw:
+            items = [v.strip() for v in raw.split(',') if v.strip()]
+            placeholders = ','.join('?' * len(items))
+            conds.append(
+                f"{table_alias}.ticker IN ("
+                f"SELECT etf_ticker FROM etf_tags "
+                f"WHERE tag_type = ? AND tag_value IN ({placeholders}))"
+            )
+            params.append(tt)
+            params.extend(items)
+
+    return conds, params
+
+
+_ETF_REGION_CASE = """
+    CASE
+        WHEN {t}.ticker LIKE '%.SA' THEN 'Brasil'
+        WHEN {t}.ticker LIKE '%.L'  THEN 'UK'
+        WHEN {t}.ticker LIKE '%.TO' THEN 'Canadá'
+        WHEN {t}.ticker LIKE '%.AX' THEN 'Austrália'
+        WHEN {t}.ticker LIKE '%.HK' THEN 'Hong Kong'
+        ELSE 'EUA'
+    END"""
+
+
+@app.route('/etfs')
+def etfs_page():
+    """Página do ETF Explorer."""
+    return render_template('etf_explorer.html')
+
+
+@app.route('/api/etfs', methods=['GET'])
+def api_etfs_list():
+    """Lista ETFs com filtros opcionais + cross-filter."""
+    try:
+        search = request.args.get('search', '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        per_page = min(per_page, 500)
+
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+
+        conds, params = _etf_cross_filter_where(request.args)
+
+        if search:
+            conds.append("(e.ticker LIKE ? OR e.name LIKE ?)")
+            params.extend([f'%{search}%', f'%{search}%'])
+
+        where = (" AND " + " AND ".join(conds)) if conds else ""
+
+        total = conn.execute(f"SELECT COUNT(*) FROM etfs e WHERE 1=1{where}", params).fetchone()[0]
+
+        rows = conn.execute(
+            f"SELECT e.*, {_ETF_REGION_CASE.format(t='e')} as computed_region FROM etfs e WHERE 1=1{where} ORDER BY e.ticker LIMIT ? OFFSET ?",
+            params + [per_page, (page - 1) * per_page],
+        ).fetchall()
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'etfs': [dict(r) for r in rows],
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': max(1, (total + per_page - 1) // per_page),
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF list: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/stats', methods=['GET'])
+def api_etfs_stats():
+    """Estatísticas da base de ETFs (com cross-filter)."""
+    try:
+        conn = get_db()
+        conds, params = _etf_cross_filter_where(request.args)
+        where = (" AND " + " AND ".join(conds)) if conds else ""
+
+        etf_count = conn.execute(f"SELECT COUNT(*) FROM etfs e WHERE 1=1{where}", params).fetchone()[0]
+
+        # Holdings via join
+        h_where = where.replace('e.', 'e2.') if where else ""
+        holding_count = conn.execute(
+            f"SELECT COUNT(*) FROM etf_holdings h JOIN etfs e2 ON e2.ticker=h.etf_ticker WHERE 1=1{h_where}", params
+        ).fetchone()[0]
+        unique_holdings = conn.execute(
+            f"SELECT COUNT(DISTINCT h.holding_ticker) FROM etf_holdings h JOIN etfs e2 ON e2.ticker=h.etf_ticker WHERE h.holding_ticker IS NOT NULL{h_where}", params
+        ).fetchone()[0]
+
+        last_update = conn.execute(f"SELECT MAX(e.last_updated) FROM etfs e WHERE 1=1{where}", params).fetchone()[0]
+
+        # By source
+        by_source = []
+        for r in conn.execute(f"SELECT e.data_source, COUNT(*) FROM etfs e WHERE e.data_source IS NOT NULL{where} GROUP BY e.data_source ORDER BY 2 DESC", params).fetchall():
+            by_source.append({'name': r[0], 'count': r[1]})
+
+        # By region
+        by_region = []
+        for r in conn.execute(
+            f"SELECT {_ETF_REGION_CASE.format(t='e')} as reg, COUNT(*) FROM etfs e WHERE 1=1{where} GROUP BY 1 ORDER BY 2 DESC", params
+        ).fetchall():
+            by_region.append({'name': r[0], 'count': r[1]})
+
+        # By category
+        by_category = []
+        for r in conn.execute(f"SELECT e.category, COUNT(*) FROM etfs e WHERE e.category IS NOT NULL{where} GROUP BY e.category ORDER BY 2 DESC", params).fetchall():
+            by_category.append({'name': r[0], 'count': r[1]})
+
+        # By issuer
+        by_issuer = []
+        for r in conn.execute(f"SELECT e.issuer, COUNT(*) FROM etfs e WHERE e.issuer IS NOT NULL{where} GROUP BY e.issuer ORDER BY 2 DESC", params).fetchall():
+            by_issuer.append({'name': r[0], 'count': r[1]})
+
+        # Distinct counts
+        distinct_sources = len(by_source)
+        distinct_categories = len(by_category)
+        distinct_issuers = len(by_issuer)
+        distinct_regions = len(by_region)
+
+        # AUM total
+        aum_total = conn.execute(f"SELECT COALESCE(SUM(e.aum),0) FROM etfs e WHERE e.aum IS NOT NULL{where}", params).fetchone()[0]
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'etfs': etf_count,
+            'holdings_total': holding_count,
+            'unique_holdings': unique_holdings,
+            'last_update': last_update,
+            'aum_total': aum_total,
+            'distinct_sources': distinct_sources,
+            'distinct_categories': distinct_categories,
+            'distinct_issuers': distinct_issuers,
+            'distinct_regions': distinct_regions,
+            'by_source': by_source,
+            'by_region': by_region,
+            'by_category': by_category,
+            'by_issuer': by_issuer,
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/filter_options', methods=['GET'])
+def api_etfs_filter_options():
+    """Opções de filtro cross-filter: cada dimensão filtrada pelas OUTRAS."""
+    try:
+        conn = get_db()
+        f_sources = request.args.get('sources', '').strip()
+        f_categories = request.args.get('categories', '').strip()
+        f_issuers = request.args.get('issuers', '').strip()
+        f_regions = request.args.get('regions', '').strip()
+
+        filter_map = {
+            'sources': f_sources,
+            'categories': f_categories,
+            'issuers': f_issuers,
+            'regions': f_regions,
+        }
+
+        def build_other_conds(skip_dim):
+            c, p = [], []
+            for dim, val in filter_map.items():
+                if dim == skip_dim or not val:
+                    continue
+                items = [v.strip() for v in val.split(',') if v.strip()]
+                if not items:
+                    continue
+                if dim == 'sources':
+                    c.append(f"e.data_source IN ({','.join('?' * len(items))})")
+                    p.extend(items)
+                elif dim == 'categories':
+                    c.append(f"e.category IN ({','.join('?' * len(items))})")
+                    p.extend(items)
+                elif dim == 'issuers':
+                    c.append(f"e.issuer IN ({','.join('?' * len(items))})")
+                    p.extend(items)
+                elif dim == 'regions':
+                    rc = []
+                    for reg in items:
+                        if reg == 'Brasil':
+                            rc.append("e.ticker LIKE '%.SA'")
+                        elif reg == 'EUA':
+                            rc.append("(e.ticker NOT LIKE '%.SA' AND e.ticker NOT LIKE '%.L' AND e.ticker NOT LIKE '%.TO' AND e.ticker NOT LIKE '%.AX' AND e.ticker NOT LIKE '%.HK')")
+                        else:
+                            ext = {'UK': '.L', 'Canadá': '.TO', 'Austrália': '.AX', 'Hong Kong': '.HK'}.get(reg)
+                            if ext:
+                                rc.append(f"e.ticker LIKE '%{ext}'")
+                    if rc:
+                        c.append(f"({' OR '.join(rc)})")
+            return c, p
+
+        results = {}
+
+        # Sources
+        c, p = build_other_conds('sources')
+        w = (" AND " + " AND ".join(c)) if c else ""
+        results['sources'] = [{'name': r[0], 'count': r[1]} for r in
+            conn.execute(f"SELECT e.data_source, COUNT(*) FROM etfs e WHERE e.data_source IS NOT NULL{w} GROUP BY e.data_source ORDER BY e.data_source", p).fetchall()]
+
+        # Categories
+        c, p = build_other_conds('categories')
+        w = (" AND " + " AND ".join(c)) if c else ""
+        results['categories'] = [{'name': r[0], 'count': r[1]} for r in
+            conn.execute(f"SELECT e.category, COUNT(*) FROM etfs e WHERE e.category IS NOT NULL{w} GROUP BY e.category ORDER BY e.category", p).fetchall()]
+
+        # Issuers
+        c, p = build_other_conds('issuers')
+        w = (" AND " + " AND ".join(c)) if c else ""
+        results['issuers'] = [{'name': r[0], 'count': r[1]} for r in
+            conn.execute(f"SELECT e.issuer, COUNT(*) FROM etfs e WHERE e.issuer IS NOT NULL{w} GROUP BY e.issuer ORDER BY e.issuer", p).fetchall()]
+
+        # Regions
+        c, p = build_other_conds('regions')
+        w = (" AND " + " AND ".join(c)) if c else ""
+        results['regions'] = [{'name': r[0], 'count': r[1]} for r in
+            conn.execute(f"SELECT {_ETF_REGION_CASE.format(t='e')} as reg, COUNT(*) FROM etfs e WHERE 1=1{w} GROUP BY 1 ORDER BY 1", p).fetchall()]
+
+        # Tag filters cross-filter options
+        tag_results = {}
+        for tt in _TAG_FILTER_TYPES:
+            # Build conditions excluding this tag type
+            tag_conds, tag_params = [], []
+            # Apply non-tag filters
+            for dim, val in filter_map.items():
+                if not val:
+                    continue
+                items = [v.strip() for v in val.split(',') if v.strip()]
+                if not items:
+                    continue
+                if dim == 'sources':
+                    tag_conds.append(f"e.data_source IN ({','.join('?' * len(items))})")
+                    tag_params.extend(items)
+                elif dim == 'categories':
+                    tag_conds.append(f"e.category IN ({','.join('?' * len(items))})")
+                    tag_params.extend(items)
+                elif dim == 'issuers':
+                    tag_conds.append(f"e.issuer IN ({','.join('?' * len(items))})")
+                    tag_params.extend(items)
+                elif dim == 'regions':
+                    rc = []
+                    for reg in items:
+                        if reg == 'Brasil':
+                            rc.append("e.ticker LIKE '%.SA'")
+                        elif reg == 'EUA':
+                            rc.append("(e.ticker NOT LIKE '%.SA' AND e.ticker NOT LIKE '%.L' AND e.ticker NOT LIKE '%.TO' AND e.ticker NOT LIKE '%.AX' AND e.ticker NOT LIKE '%.HK')")
+                        else:
+                            ext = {'UK': '.L', 'Canadá': '.TO', 'Austrália': '.AX', 'Hong Kong': '.HK'}.get(reg)
+                            if ext:
+                                rc.append(f"e.ticker LIKE '%{ext}'")
+                    if rc:
+                        tag_conds.append(f"({' OR '.join(rc)})")
+            # Apply OTHER tag filters (cross-filter)
+            for tt2 in _TAG_FILTER_TYPES:
+                if tt2 == tt:
+                    continue
+                raw = request.args.get(f'tag_{tt2}', '').strip()
+                if raw:
+                    items = [v.strip() for v in raw.split(',') if v.strip()]
+                    placeholders = ','.join('?' * len(items))
+                    tag_conds.append(
+                        f"e.ticker IN (SELECT etf_ticker FROM etf_tags WHERE tag_type = ? AND tag_value IN ({placeholders}))"
+                    )
+                    tag_params.append(tt2)
+                    tag_params.extend(items)
+
+            tw = (" AND " + " AND ".join(tag_conds)) if tag_conds else ""
+            tag_results[tt] = [{'name': r[0], 'count': r[1]} for r in
+                conn.execute(
+                    f"SELECT t.tag_value, COUNT(DISTINCT t.etf_ticker) "
+                    f"FROM etf_tags t JOIN etfs e ON e.ticker = t.etf_ticker "
+                    f"WHERE t.tag_type = ?{tw} "
+                    f"GROUP BY t.tag_value ORDER BY COUNT(DISTINCT t.etf_ticker) DESC",
+                    [tt] + tag_params
+                ).fetchall()]
+
+        results['tags'] = tag_results
+
+        conn.close()
+        return jsonify({'success': True, **results})
+    except Exception as e:
+        logger.error(f"Erro na API ETF filter_options: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/drill/top_holdings', methods=['GET'])
+def api_etfs_drill_top_holdings():
+    """Top holdings agregados de todos ETFs (com cross-filter)."""
+    try:
+        conn = get_db()
+        conds, params = _etf_cross_filter_where(request.args, 'e2')
+        where = (" AND " + " AND ".join(conds)) if conds else ""
+        limit = request.args.get('limit', 50, type=int)
+
+        rows = conn.execute(f"""
+            SELECT h.holding_ticker, h.holding_name,
+                   COUNT(DISTINCT h.etf_ticker) as in_etfs,
+                   AVG(h.weight) as avg_weight,
+                   SUM(h.market_value) as total_value
+            FROM etf_holdings h
+            JOIN etfs e2 ON e2.ticker = h.etf_ticker
+            WHERE h.holding_ticker IS NOT NULL AND h.holding_ticker != ''{where}
+            GROUP BY h.holding_ticker
+            ORDER BY in_etfs DESC, avg_weight DESC
+            LIMIT ?
+        """, params + [limit]).fetchall()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'holdings': [{'ticker': r[0], 'name': r[1], 'in_etfs': r[2],
+                          'avg_weight': round(r[3], 2) if r[3] else None,
+                          'total_value': r[4]} for r in rows],
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF drill holdings: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ══════════════════════════════════════════════════════════════
+#  ETF Tags API  (antes de <ticker> para evitar conflito de rota)
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/etfs/tags/stats', methods=['GET'])
+def api_etfs_tags_stats():
+    """Estatísticas das tags de ETFs."""
+    try:
+        from data_extractors.etf_extractor import ETFExtractor
+        ext = ETFExtractor()
+        stats = ext.get_tag_stats()
+        return jsonify({'success': True, **stats})
+    except Exception as e:
+        logger.error(f"Erro tags stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/tags/search', methods=['GET'])
+def api_etfs_tags_search():
+    """Busca ETFs por tag (type + value)."""
+    try:
+        tag_type = request.args.get('type', '').strip()
+        tag_value = request.args.get('value', '').strip()
+        if not tag_type:
+            return jsonify({'success': False, 'error': 'Parâmetro type é obrigatório'}), 400
+
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+        if tag_value:
+            rows = conn.execute("""
+                SELECT t.etf_ticker, t.tag_type, t.tag_value, t.confidence, t.source,
+                       e.name, e.category, e.issuer
+                FROM etf_tags t JOIN etfs e ON t.etf_ticker = e.ticker
+                WHERE t.tag_type = ? AND t.tag_value = ?
+                ORDER BY t.confidence DESC, e.name
+            """, (tag_type, tag_value)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT t.etf_ticker, t.tag_type, t.tag_value, t.confidence, t.source,
+                       e.name, e.category, e.issuer
+                FROM etf_tags t JOIN etfs e ON t.etf_ticker = e.ticker
+                WHERE t.tag_type = ?
+                ORDER BY t.tag_value, t.confidence DESC, e.name
+            """, (tag_type,)).fetchall()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'count': len(rows),
+            'results': [dict(r) for r in rows],
+        })
+    except Exception as e:
+        logger.error(f"Erro tags search: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/tags/values', methods=['GET'])
+def api_etfs_tags_values():
+    """Lista valores únicos de um tag_type (para filtros)."""
+    try:
+        tag_type = request.args.get('type', '').strip()
+        conn = get_db()
+        if tag_type:
+            rows = conn.execute("""
+                SELECT tag_value, COUNT(*) as cnt FROM etf_tags
+                WHERE tag_type = ? GROUP BY tag_value ORDER BY cnt DESC
+            """, (tag_type,)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT tag_type, tag_value, COUNT(*) as cnt FROM etf_tags
+                GROUP BY tag_type, tag_value ORDER BY tag_type, cnt DESC
+            """).fetchall()
+        conn.close()
+
+        if tag_type:
+            return jsonify({'success': True, 'type': tag_type,
+                            'values': [{'value': v, 'count': c} for v, c in rows]})
+        else:
+            return jsonify({'success': True,
+                            'values': [{'type': t, 'value': v, 'count': c} for t, v, c in rows]})
+    except Exception as e:
+        logger.error(f"Erro tags values: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/tags/auto-tag', methods=['POST'])
+def api_etfs_auto_tag():
+    """Executa auto-tagging (all ou ticker específico)."""
+    try:
+        from data_extractors.etf_extractor import ETFExtractor
+        ext = ETFExtractor()
+        ticker = request.json.get('ticker') if request.is_json else None
+        if ticker:
+            tags = ext.auto_tag_etf(ticker.upper())
+            count = ext.save_tags(ticker.upper(), tags)
+            return jsonify({'success': True, 'ticker': ticker.upper(), 'tags_saved': count})
+        else:
+            result = ext.auto_tag_all()
+            return jsonify({'success': True, **result})
+    except Exception as e:
+        logger.error(f"Erro auto-tag: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/<ticker>', methods=['GET'])
+def api_etf_detail(ticker):
+    """Detalhes de um ETF + seus holdings + breakdowns."""
+    try:
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+
+        etf = conn.execute("SELECT * FROM etfs WHERE ticker = ?", (ticker.upper(),)).fetchone()
+        if not etf:
+            conn.close()
+            return jsonify({'success': False, 'error': 'ETF não encontrado'}), 404
+
+        holdings = conn.execute(
+            "SELECT * FROM etf_holdings WHERE etf_ticker = ? ORDER BY weight DESC",
+            (ticker.upper(),),
+        ).fetchall()
+
+        tags = conn.execute(
+            "SELECT tag_type, tag_value, confidence, source FROM etf_tags WHERE etf_ticker = ? ORDER BY tag_type",
+            (ticker.upper(),),
+        ).fetchall()
+
+        conn.close()
+
+        holdings_list = [dict(h) for h in holdings]
+
+        # Build breakdowns
+        sector_map, asset_map, country_map = {}, {}, {}
+        for h in holdings_list:
+            w = h.get('weight') or 0
+            s = h.get('sector') or 'N/A'
+            a = h.get('asset_class') or 'N/A'
+            c = h.get('country') or 'N/A'
+            sector_map[s] = sector_map.get(s, 0) + w
+            asset_map[a] = asset_map.get(a, 0) + w
+            country_map[c] = country_map.get(c, 0) + w
+
+        def _sorted_breakdown(m):
+            return sorted([{'name': k, 'weight': round(v, 2)} for k, v in m.items()], key=lambda x: x['weight'], reverse=True)
+
+        return jsonify({
+            'success': True,
+            'etf': dict(etf),
+            'holdings': holdings_list,
+            'tags': [dict(t) for t in tags],
+            'breakdowns': {
+                'sector': _sorted_breakdown(sector_map),
+                'asset_class': _sorted_breakdown(asset_map),
+                'country': _sorted_breakdown(country_map)[:30],
+            },
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF detail: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/search', methods=['GET'])
+def api_etfs_reverse_search():
+    """Busca reversa: em quais ETFs um ticker aparece?"""
+    try:
+        q = request.args.get('q', '').strip().upper()
+        if not q:
+            return jsonify({'success': False, 'error': 'Parâmetro q é obrigatório'}), 400
+
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+
+        rows = conn.execute("""
+            SELECT h.etf_ticker, e.name as etf_name, e.category, e.aum,
+                   h.weight, h.holding_name, h.holding_ticker,
+                   e.data_source, e.total_holdings
+            FROM etf_holdings h
+            JOIN etfs e ON e.ticker = h.etf_ticker
+            WHERE h.holding_ticker LIKE ?
+               OR h.holding_name LIKE ?
+            ORDER BY h.weight DESC
+        """, (f'%{q}%', f'%{q}%')).fetchall()
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'query': q,
+            'results': [dict(r) for r in rows],
+            'total': len(rows),
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF search: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/overlap', methods=['GET'])
+def api_etfs_overlap():
+    """Calcula sobreposição entre dois ETFs."""
+    try:
+        etf1 = request.args.get('etf1', '').strip().upper()
+        etf2 = request.args.get('etf2', '').strip().upper()
+        if not etf1 or not etf2:
+            return jsonify({'success': False, 'error': 'Parâmetros etf1 e etf2 são obrigatórios'}), 400
+
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+
+        h1 = conn.execute(
+            "SELECT holding_ticker, holding_name, weight FROM etf_holdings WHERE etf_ticker = ?", (etf1,)
+        ).fetchall()
+        h2 = conn.execute(
+            "SELECT holding_ticker, holding_name, weight FROM etf_holdings WHERE etf_ticker = ?", (etf2,)
+        ).fetchall()
+
+        n1 = conn.execute("SELECT name FROM etfs WHERE ticker = ?", (etf1,)).fetchone()
+        n2 = conn.execute("SELECT name FROM etfs WHERE ticker = ?", (etf2,)).fetchone()
+        conn.close()
+
+        t1 = {r['holding_ticker'] for r in h1 if r['holding_ticker']}
+        t2 = {r['holding_ticker'] for r in h2 if r['holding_ticker']}
+        common = t1 & t2
+        union = t1 | t2
+        pct = round(len(common) / len(union) * 100, 2) if union else 0
+
+        w1 = {r['holding_ticker']: dict(r) for r in h1 if r['holding_ticker']}
+        w2 = {r['holding_ticker']: dict(r) for r in h2 if r['holding_ticker']}
+        common_detail = []
+        for tk in sorted(common):
+            common_detail.append({
+                'ticker': tk,
+                'name': (w1.get(tk) or w2.get(tk, {})).get('holding_name', ''),
+                'weight_etf1': w1.get(tk, {}).get('weight'),
+                'weight_etf2': w2.get(tk, {}).get('weight'),
+            })
+        common_detail.sort(key=lambda x: (x.get('weight_etf1') or 0), reverse=True)
+
+        return jsonify({
+            'success': True,
+            'etf1': etf1, 'etf1_name': n1['name'] if n1 else etf1,
+            'etf2': etf2, 'etf2_name': n2['name'] if n2 else etf2,
+            'holdings_etf1': len(t1),
+            'holdings_etf2': len(t2),
+            'common': len(common),
+            'overlap_pct': pct,
+            'common_holdings': common_detail[:100],
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF overlap: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/compare', methods=['GET'])
+def api_etfs_compare():
+    """Compara N ETFs side-by-side (overlap + pesos)."""
+    try:
+        raw = request.args.get('tickers', '').strip().upper()
+        if not raw:
+            return jsonify({'success': False, 'error': 'Parâmetro tickers é obrigatório'}), 400
+        tickers = [t.strip() for t in raw.split(',') if t.strip()][:10]
+        if len(tickers) < 2:
+            return jsonify({'success': False, 'error': 'Pelo menos 2 ETFs necessários'}), 400
+
+        conn = get_db()
+        conn.row_factory = sqlite3.Row
+
+        etf_meta = {}
+        etf_holdings = {}
+        for tk in tickers:
+            etf = conn.execute("SELECT ticker, name, category, aum, total_holdings, data_source FROM etfs WHERE ticker = ?", (tk,)).fetchone()
+            if etf:
+                etf_meta[tk] = dict(etf)
+            rows = conn.execute(
+                "SELECT holding_ticker, holding_name, weight, sector, asset_class, country FROM etf_holdings WHERE etf_ticker = ? ORDER BY weight DESC",
+                (tk,),
+            ).fetchall()
+            etf_holdings[tk] = {r['holding_ticker']: dict(r) for r in rows if r['holding_ticker']}
+        conn.close()
+
+        # Encontrar tickers válidos
+        valid = [t for t in tickers if t in etf_meta]
+        if len(valid) < 2:
+            return jsonify({'success': False, 'error': 'ETFs não encontrados'}), 404
+
+        # Overlap matrix
+        overlap_matrix = {}
+        for i, t1 in enumerate(valid):
+            s1 = set(etf_holdings.get(t1, {}).keys())
+            for t2 in valid[i+1:]:
+                s2 = set(etf_holdings.get(t2, {}).keys())
+                common = s1 & s2
+                union = s1 | s2
+                pct = round(len(common) / len(union) * 100, 2) if union else 0
+                overlap_matrix[f"{t1}|{t2}"] = {'common': len(common), 'pct': pct}
+
+        # Holdings presentes em todos os ETFs
+        all_sets = [set(etf_holdings.get(t, {}).keys()) for t in valid]
+        common_all = set.intersection(*all_sets) if all_sets else set()
+
+        # Top common holdings com pesos por ETF
+        common_detail = []
+        for tk in common_all:
+            row = {'ticker': tk, 'name': ''}
+            for etf_tk in valid:
+                h = etf_holdings.get(etf_tk, {}).get(tk, {})
+                if not row['name']:
+                    row['name'] = h.get('holding_name', '')
+                row[f'weight_{etf_tk}'] = h.get('weight')
+            common_detail.append(row)
+        common_detail.sort(key=lambda x: max((x.get(f'weight_{t}') or 0) for t in valid), reverse=True)
+
+        # Sector breakdown por ETF
+        sector_breakdown = {}
+        for tk in valid:
+            sectors = {}
+            for h in etf_holdings.get(tk, {}).values():
+                s = h.get('sector') or 'N/A'
+                sectors[s] = sectors.get(s, 0) + (h.get('weight') or 0)
+            sector_breakdown[tk] = sorted(sectors.items(), key=lambda x: x[1], reverse=True)
+
+        return jsonify({
+            'success': True,
+            'etfs': [etf_meta[t] for t in valid],
+            'tickers': valid,
+            'overlap_matrix': overlap_matrix,
+            'common_all': len(common_all),
+            'common_holdings': common_detail[:100],
+            'sector_breakdown': sector_breakdown,
+        })
+    except Exception as e:
+        logger.error(f"Erro na API ETF compare: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/etfs/export', methods=['GET'])
+def api_etfs_export():
+    """Exporta holdings de um ou mais ETFs como CSV."""
+    try:
+        raw = request.args.get('tickers', '').strip().upper()
+        if not raw:
+            return jsonify({'success': False, 'error': 'Parâmetro tickers é obrigatório'}), 400
+        tickers = [t.strip() for t in raw.split(',') if t.strip()][:20]
+
+        conn = get_db()
+        placeholders = ','.join('?' * len(tickers))
+        rows = conn.execute(f"""
+            SELECT h.etf_ticker, h.holding_ticker, h.holding_name, h.weight,
+                   h.shares, h.market_value, h.sector, h.asset_class,
+                   h.country, h.cusip, h.isin, h.report_date
+            FROM etf_holdings h
+            WHERE h.etf_ticker IN ({placeholders})
+            ORDER BY h.etf_ticker, h.weight DESC
+        """, tickers).fetchall()
+        conn.close()
+
+        import io as _io
+        import csv as _csv
+        output = _io.StringIO()
+        writer = _csv.writer(output)
+        writer.writerow(['ETF', 'Ticker', 'Nome', 'Peso (%)', 'Shares', 'Market Value',
+                        'Setor', 'Asset Class', 'País', 'CUSIP', 'ISIN', 'Data'])
+        for r in rows:
+            writer.writerow(list(r))
+
+        from flask import Response
+        resp = Response(output.getvalue(), mimetype='text/csv')
+        fname = tickers[0] if len(tickers) == 1 else 'etfs_export'
+        resp.headers['Content-Disposition'] = f'attachment; filename={fname}_holdings.csv'
+        return resp
+    except Exception as e:
+        logger.error(f"Erro na API ETF export: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

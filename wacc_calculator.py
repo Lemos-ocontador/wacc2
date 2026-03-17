@@ -62,7 +62,11 @@ class WACCCalculator:
             cache_dir: Diretório para cache de dados
         """
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
+        try:
+            self.cache_dir.mkdir(exist_ok=True)
+        except OSError:
+            self.cache_dir = Path('/tmp/cache')
+            self.cache_dir.mkdir(exist_ok=True)
         
         # Configurar logging
         self.logger = logging.getLogger(__name__)

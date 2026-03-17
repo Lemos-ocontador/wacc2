@@ -1,0 +1,34 @@
+runtime: python312
+instance_class: F4_1G
+
+# Entrypoint: gunicorn servindo a app Flask
+entrypoint: gunicorn -b :$PORT -w 2 --threads 4 --timeout 120 --preload app:app
+
+# Scaling otimizado para custo baixo
+automatic_scaling:
+  min_instances: 0
+  max_instances: 3
+  min_idle_instances: 0
+  max_idle_instances: 1
+  target_cpu_utilization: 0.65
+
+# Recursos
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+env_variables:
+  GAE_ENV: "standard"
+  FLASK_HOST: "0.0.0.0"
+  FLASK_PORT: "8080"
+  FLASK_DEBUG: "0"
+
+# Handlers para arquivos estáticos (servidos diretamente pelo GAE)
+handlers:
+  - url: /static
+    static_dir: static
+    expiration: "1d"
+
+  - url: /.*
+    script: auto

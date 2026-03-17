@@ -1,0 +1,5384 @@
+{
+  "OEF": {
+    "series_name": "iShares S&amp;P 100 ETF",
+    "series_id": "S000004306",
+    "class_id": "C000012036",
+    "accession": "0000940400-26-007517",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJH": {
+    "series_name": "iShares Core S&amp;P Mid-Cap ETF",
+    "series_id": "S000004307",
+    "class_id": "C000012037",
+    "accession": "0000940400-26-007518",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJK": {
+    "series_name": "iShares S&amp;P Mid-Cap 400 Growth ETF",
+    "series_id": "S000004308",
+    "class_id": "C000012038",
+    "accession": "0002071691-26-004246",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJJ": {
+    "series_name": "iShares S&amp;P Mid-Cap 400 Value ETF",
+    "series_id": "S000004309",
+    "class_id": "C000012039",
+    "accession": "0002071691-26-004229",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IVV": {
+    "series_name": "iShares Core S&amp;P 500 ETF",
+    "series_id": "S000004310",
+    "class_id": "C000012040",
+    "accession": "0002071691-26-004238",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IVW": {
+    "series_name": "iShares S&amp;P 500 Growth ETF",
+    "series_id": "S000004311",
+    "class_id": "C000012041",
+    "accession": "0000940400-26-007528",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IVE": {
+    "series_name": "iShares S&amp;P 500 Value ETF",
+    "series_id": "S000004312",
+    "class_id": "C000012042",
+    "accession": "0000940400-26-007527",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJR": {
+    "series_name": "iShares Core S&amp;P Small-Cap ETF",
+    "series_id": "S000004313",
+    "class_id": "C000012043",
+    "accession": "0000940400-26-007526",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJT": {
+    "series_name": "iShares S&amp;P Small-Cap 600 Growth ETF",
+    "series_id": "S000004314",
+    "class_id": "C000012044",
+    "accession": "0002071691-26-004227",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IJS": {
+    "series_name": "iShares S&amp;P Small-Cap 600 Value ETF",
+    "series_id": "S000004316",
+    "class_id": "C000012046",
+    "accession": "0000940400-26-007509",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "ITOT": {
+    "series_name": "iShares Core S&amp;P Total U.S. Stock Market ETF",
+    "series_id": "S000004317",
+    "class_id": "C000012047",
+    "accession": "0002071691-26-004244",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWS": {
+    "series_name": "iShares Russell Mid-Cap Value ETF",
+    "series_id": "S000004335",
+    "class_id": "C000012065",
+    "accession": "0000940400-26-007525",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWP": {
+    "series_name": "iShares Russell Mid-Cap Growth ETF",
+    "series_id": "S000004336",
+    "class_id": "C000012066",
+    "accession": "0002071691-26-004215",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWR": {
+    "series_name": "iShares Russell Mid-Cap ETF",
+    "series_id": "S000004338",
+    "class_id": "C000012068",
+    "accession": "0002071691-26-004214",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IUSV": {
+    "series_name": "iShares Core S&amp;P U.S. Value ETF",
+    "series_id": "S000004339",
+    "class_id": "C000012069",
+    "accession": "0000940400-26-007510",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IUSG": {
+    "series_name": "iShares Core S&amp;P U.S. Growth ETF",
+    "series_id": "S000004340",
+    "class_id": "C000012070",
+    "accession": "0000940400-26-007516",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWV": {
+    "series_name": "iShares Russell 3000 ETF",
+    "series_id": "S000004341",
+    "class_id": "C000012071",
+    "accession": "0000940400-26-007533",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWN": {
+    "series_name": "iShares Russell 2000 Value ETF",
+    "series_id": "S000004342",
+    "class_id": "C000012072",
+    "accession": "0002071691-26-004220",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWO": {
+    "series_name": "iShares Russell 2000 Growth ETF",
+    "series_id": "S000004343",
+    "class_id": "C000012073",
+    "accession": "0002071691-26-004243",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWM": {
+    "series_name": "iShares Russell 2000 ETF",
+    "series_id": "S000004344",
+    "class_id": "C000012074",
+    "accession": "0002071691-26-004226",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IBB": {
+    "series_name": "iShares Biotechnology ETF",
+    "series_id": "S000004350",
+    "class_id": "C000012080",
+    "accession": "0002071691-26-004248",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IGM": {
+    "series_name": "iShares Expanded Tech Sector ETF",
+    "series_id": "S000004352",
+    "class_id": "C000012082",
+    "accession": "0002071691-26-004232",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IDGT": {
+    "series_name": "iShares U.S. Digital Infrastructure and Real Estate ETF",
+    "series_id": "S000004353",
+    "class_id": "C000012083",
+    "accession": "0002071691-26-004228",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "SOXX": {
+    "series_name": "iShares Semiconductor ETF",
+    "series_id": "S000004354",
+    "class_id": "C000012084",
+    "accession": "0002071691-26-004253",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IGV": {
+    "series_name": "iShares Expanded Tech-Software Sector ETF",
+    "series_id": "S000004355",
+    "class_id": "C000012085",
+    "accession": "0002071691-26-004222",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IGE": {
+    "series_name": "iShares North American Natural Resources ETF",
+    "series_id": "S000004356",
+    "class_id": "C000012086",
+    "accession": "0002071691-26-004241",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWC": {
+    "series_name": "iShares Micro-Cap ETF",
+    "series_id": "S000004439",
+    "class_id": "C000012202",
+    "accession": "0002071691-26-004264",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "PFF": {
+    "series_name": "iShares Preferred and Income Securities ETF",
+    "series_id": "S000013499",
+    "class_id": "C000036528",
+    "accession": "0000940400-26-007511",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "REZ": {
+    "series_name": "iShares Residential and Multisector Real Estate ETF",
+    "series_id": "S000015623",
+    "class_id": "C000042584",
+    "accession": "0000940400-26-007502",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "REM": {
+    "series_name": "iShares Mortgage Real Estate ETF",
+    "series_id": "S000015626",
+    "class_id": "C000042587",
+    "accession": "0000940400-26-007519",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWY": {
+    "series_name": "iShares Russell Top 200 Growth ETF",
+    "series_id": "S000026552",
+    "class_id": "C000079751",
+    "accession": "0000940400-26-007507",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWL": {
+    "series_name": "iShares Russell Top 200 ETF",
+    "series_id": "S000026553",
+    "class_id": "C000079752",
+    "accession": "0000940400-26-007531",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "IWX": {
+    "series_name": "iShares Russell Top 200 Value ETF",
+    "series_id": "S000026554",
+    "class_id": "C000079753",
+    "accession": "0000940400-26-007524",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "SMMD": {
+    "series_name": "iShares Russell 2500 ETF",
+    "series_id": "S000057567",
+    "class_id": "C000183467",
+    "accession": "0002071691-26-004245",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "GARP": {
+    "series_name": "iShares MSCI USA Quality GARP ETF",
+    "series_id": "S000066849",
+    "class_id": "C000215209",
+    "accession": "0000940400-26-007530",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "XVV": {
+    "series_name": "iShares ESG Select Screened S&amp;P 500 ETF",
+    "series_id": "S000069532",
+    "class_id": "C000221870",
+    "accession": "0000940400-26-007503",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "XJH": {
+    "series_name": "iShares ESG Select Screened S&amp;P Mid-Cap ETF",
+    "series_id": "S000069533",
+    "class_id": "C000221871",
+    "accession": "0000940400-26-007506",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "XJR": {
+    "series_name": "iShares ESG Select Screened S&amp;P Small-Cap ETF",
+    "series_id": "S000069536",
+    "class_id": "C000221874",
+    "accession": "0000940400-26-007505",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "QNXT": {
+    "series_name": "iShares Nasdaq-100 ex Top 30 ETF",
+    "series_id": "S000088432",
+    "class_id": "C000254699",
+    "accession": "0002071691-26-004223",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "QTOP": {
+    "series_name": "iShares Nasdaq Top 30 Stocks ETF",
+    "series_id": "S000088433",
+    "class_id": "C000254700",
+    "accession": "0002071691-26-004240",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "TOPT": {
+    "series_name": "iShares Top 20 U.S. Stocks ETF",
+    "series_id": "S000088434",
+    "class_id": "C000254701",
+    "accession": "0002071691-26-004257",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "TOPC": {
+    "series_name": "iShares S&amp;P 500 3% Capped ETF",
+    "series_id": "S000091281",
+    "class_id": "C000258810",
+    "accession": "0002071691-26-004225",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "XOEF": {
+    "series_name": "iShares S&amp;P 500 ex S&amp;P 100 ETF",
+    "series_id": "S000093347",
+    "class_id": "C000261561",
+    "accession": "0002071691-26-004233",
+    "date": "2026-02-25",
+    "trust_cik": "0001100663",
+    "trust_name": "iShares Trust"
+  },
+  "VFINX": {
+    "series_name": "VANGUARD 500 INDEX FUND",
+    "series_id": "S000002839",
+    "class_id": "C000007773",
+    "accession": "0000036405-26-000063",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VFIAX": {
+    "series_name": "VANGUARD 500 INDEX FUND",
+    "series_id": "S000002839",
+    "class_id": "C000007774",
+    "accession": "0000036405-26-000063",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIFSX": {
+    "series_name": "VANGUARD 500 INDEX FUND",
+    "series_id": "S000002839",
+    "class_id": "C000035202",
+    "accession": "0000036405-26-000063",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VOO": {
+    "series_name": "VANGUARD 500 INDEX FUND",
+    "series_id": "S000002839",
+    "class_id": "C000092055",
+    "accession": "0000036405-26-000063",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VFFSX": {
+    "series_name": "VANGUARD 500 INDEX FUND",
+    "series_id": "S000002839",
+    "class_id": "C000170274",
+    "accession": "0000036405-26-000063",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIVAX": {
+    "series_name": "VANGUARD VALUE INDEX FUND",
+    "series_id": "S000002840",
+    "class_id": "C000007775",
+    "accession": "0000036405-26-000074",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VVIAX": {
+    "series_name": "VANGUARD VALUE INDEX FUND",
+    "series_id": "S000002840",
+    "class_id": "C000007776",
+    "accession": "0000036405-26-000074",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIVIX": {
+    "series_name": "VANGUARD VALUE INDEX FUND",
+    "series_id": "S000002840",
+    "class_id": "C000007777",
+    "accession": "0000036405-26-000074",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VTV": {
+    "series_name": "VANGUARD VALUE INDEX FUND",
+    "series_id": "S000002840",
+    "class_id": "C000007778",
+    "accession": "0000036405-26-000074",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VVISX": {
+    "series_name": "VANGUARD VALUE INDEX FUND",
+    "series_id": "S000002840",
+    "class_id": "C000035203",
+    "accession": "0000036405-26-000074",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VEXMX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000007779",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VEXAX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000007780",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIEIX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000007781",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VXF": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000007782",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VEMSX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000035204",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VEMPX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000096110",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSEMX": {
+    "series_name": "VANGUARD EXTENDED MARKET INDEX FUND",
+    "series_id": "S000002841",
+    "class_id": "C000170275",
+    "accession": "0000036405-26-000069",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIGRX": {
+    "series_name": "VANGUARD GROWTH INDEX FUND",
+    "series_id": "S000002842",
+    "class_id": "C000007783",
+    "accession": "0000036405-26-000067",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIGAX": {
+    "series_name": "VANGUARD GROWTH INDEX FUND",
+    "series_id": "S000002842",
+    "class_id": "C000007784",
+    "accession": "0000036405-26-000067",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIGIX": {
+    "series_name": "VANGUARD GROWTH INDEX FUND",
+    "series_id": "S000002842",
+    "class_id": "C000007785",
+    "accession": "0000036405-26-000067",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VUG": {
+    "series_name": "VANGUARD GROWTH INDEX FUND",
+    "series_id": "S000002842",
+    "class_id": "C000007786",
+    "accession": "0000036405-26-000067",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIGSX": {
+    "series_name": "VANGUARD GROWTH INDEX FUND",
+    "series_id": "S000002842",
+    "class_id": "C000035205",
+    "accession": "0000036405-26-000067",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VLACX": {
+    "series_name": "VANGUARD LARGE-CAP INDEX FUND",
+    "series_id": "S000002843",
+    "class_id": "C000007787",
+    "accession": "0000036405-26-000068",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VLCAX": {
+    "series_name": "VANGUARD LARGE-CAP INDEX FUND",
+    "series_id": "S000002843",
+    "class_id": "C000007788",
+    "accession": "0000036405-26-000068",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VLISX": {
+    "series_name": "VANGUARD LARGE-CAP INDEX FUND",
+    "series_id": "S000002843",
+    "class_id": "C000007789",
+    "accession": "0000036405-26-000068",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VV": {
+    "series_name": "VANGUARD LARGE-CAP INDEX FUND",
+    "series_id": "S000002843",
+    "class_id": "C000007790",
+    "accession": "0000036405-26-000068",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VLCSX": {
+    "series_name": "VANGUARD LARGE-CAP INDEX FUND",
+    "series_id": "S000002843",
+    "class_id": "C000035206",
+    "accession": "0000036405-26-000068",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIMSX": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000007791",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VIMAX": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000007792",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMCIX": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000007793",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VO": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000007794",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMISX": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000035207",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMCPX": {
+    "series_name": "VANGUARD MID-CAP INDEX FUND",
+    "series_id": "S000002844",
+    "class_id": "C000096111",
+    "accession": "0000036405-26-000071",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "NAESX": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000007795",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSMAX": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000007796",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSCIX": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000007797",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VB": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000007798",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSISX": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000035208",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSCPX": {
+    "series_name": "VANGUARD SMALL-CAP INDEX FUND",
+    "series_id": "S000002845",
+    "class_id": "C000096112",
+    "accession": "0000036405-26-000066",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VISGX": {
+    "series_name": "VANGUARD SMALL-CAP GROWTH INDEX FUND",
+    "series_id": "S000002846",
+    "class_id": "C000007799",
+    "accession": "0000036405-26-000065",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSGIX": {
+    "series_name": "VANGUARD SMALL-CAP GROWTH INDEX FUND",
+    "series_id": "S000002846",
+    "class_id": "C000007800",
+    "accession": "0000036405-26-000065",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VBK": {
+    "series_name": "VANGUARD SMALL-CAP GROWTH INDEX FUND",
+    "series_id": "S000002846",
+    "class_id": "C000007801",
+    "accession": "0000036405-26-000065",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSGAX": {
+    "series_name": "VANGUARD SMALL-CAP GROWTH INDEX FUND",
+    "series_id": "S000002846",
+    "class_id": "C000105304",
+    "accession": "0000036405-26-000065",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VISVX": {
+    "series_name": "VANGUARD SMALL-CAP VALUE INDEX FUND",
+    "series_id": "S000002847",
+    "class_id": "C000007802",
+    "accession": "0000036405-26-000072",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSIIX": {
+    "series_name": "VANGUARD SMALL-CAP VALUE INDEX FUND",
+    "series_id": "S000002847",
+    "class_id": "C000007803",
+    "accession": "0000036405-26-000072",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VBR": {
+    "series_name": "VANGUARD SMALL-CAP VALUE INDEX FUND",
+    "series_id": "S000002847",
+    "class_id": "C000007804",
+    "accession": "0000036405-26-000072",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSIAX": {
+    "series_name": "VANGUARD SMALL-CAP VALUE INDEX FUND",
+    "series_id": "S000002847",
+    "class_id": "C000105305",
+    "accession": "0000036405-26-000072",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VTSMX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000007805",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VTSAX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000007806",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VITSX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000007807",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VTI": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000007808",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VTSSX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000035211",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSMPX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000155407",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VSTSX": {
+    "series_name": "VANGUARD TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002848",
+    "class_id": "C000170276",
+    "accession": "0000036405-26-000070",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMGIX": {
+    "series_name": "VANGUARD MID-CAP GROWTH INDEX FUND",
+    "series_id": "S000012756",
+    "class_id": "C000034427",
+    "accession": "0000036405-26-000064",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VOT": {
+    "series_name": "VANGUARD MID-CAP GROWTH INDEX FUND",
+    "series_id": "S000012756",
+    "class_id": "C000034428",
+    "accession": "0000036405-26-000064",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMGMX": {
+    "series_name": "VANGUARD MID-CAP GROWTH INDEX FUND",
+    "series_id": "S000012756",
+    "class_id": "C000105306",
+    "accession": "0000036405-26-000064",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMVIX": {
+    "series_name": "VANGUARD MID-CAP VALUE INDEX FUND",
+    "series_id": "S000012757",
+    "class_id": "C000034429",
+    "accession": "0000036405-26-000073",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VOE": {
+    "series_name": "VANGUARD MID-CAP VALUE INDEX FUND",
+    "series_id": "S000012757",
+    "class_id": "C000034430",
+    "accession": "0000036405-26-000073",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VMVAX": {
+    "series_name": "VANGUARD MID-CAP VALUE INDEX FUND",
+    "series_id": "S000012757",
+    "class_id": "C000105307",
+    "accession": "0000036405-26-000073",
+    "date": "2026-02-26",
+    "trust_cik": "0000036405",
+    "trust_name": "Vanguard Index Funds"
+  },
+  "VINIX": {
+    "series_name": "VANGUARD INSTITUTIONAL INDEX FUND",
+    "series_id": "S000002853",
+    "class_id": "C000007825",
+    "accession": "0000862084-26-000024",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VIIIX": {
+    "series_name": "VANGUARD INSTITUTIONAL INDEX FUND",
+    "series_id": "S000002853",
+    "class_id": "C000007826",
+    "accession": "0000862084-26-000024",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VITNX": {
+    "series_name": "VANGUARD INSTITUTIONAL TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002855",
+    "class_id": "C000007828",
+    "accession": "0000862084-26-000025",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VITPX": {
+    "series_name": "VANGUARD INSTITUTIONAL TOTAL STOCK MARKET INDEX FUND",
+    "series_id": "S000002855",
+    "class_id": "C000007829",
+    "accession": "0000862084-26-000025",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VBIL": {
+    "series_name": "VANGUARD 0-3 MONTH TREASURY BILL ETF",
+    "series_id": "S000090172",
+    "class_id": "C000257083",
+    "accession": "0000862084-26-000023",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VGUS": {
+    "series_name": "VANGUARD ULTRA-SHORT TREASURY ETF",
+    "series_id": "S000090173",
+    "class_id": "C000257084",
+    "accession": "0000862084-26-000026",
+    "date": "2026-02-26",
+    "trust_cik": "0000862084",
+    "trust_name": "Vanguard Whitehall Funds"
+  },
+  "VMGAX": {
+    "series_name": "VANGUARD MEGA CAP GROWTH INDEX FUND",
+    "series_id": "S000019700",
+    "class_id": "C000055215",
+    "accession": "0000052848-26-000203",
+    "date": "2026-02-26",
+    "trust_cik": "0000052848",
+    "trust_name": "Vanguard World Fund"
+  },
+  "MGK": {
+    "series_name": "VANGUARD MEGA CAP GROWTH INDEX FUND",
+    "series_id": "S000019700",
+    "class_id": "C000055216",
+    "accession": "0000052848-26-000203",
+    "date": "2026-02-26",
+    "trust_cik": "0000052848",
+    "trust_name": "Vanguard World Fund"
+  },
+  "VEIEX": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000015900",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEMIX": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000015901",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VWO": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000015902",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEMAX": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000035633",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VERSX": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000038994",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEMRX": {
+    "series_name": "VANGUARD EMERGING MARKETS STOCK INDEX FUND",
+    "series_id": "S000005786",
+    "class_id": "C000096106",
+    "accession": "0000857489-25-000149",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEURX": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000015903",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEUSX": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000015904",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VESIX": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000015905",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VGK": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000015906",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VESSX": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000038995",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEUPX": {
+    "series_name": "VANGUARD EUROPEAN STOCK INDEX FUND",
+    "series_id": "S000005787",
+    "class_id": "C000096107",
+    "accession": "0000857489-25-000152",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPACX": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000015907",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPADX": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000015908",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPKIX": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000015909",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPL": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000015910",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPASX": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000038996",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VPAPX": {
+    "series_name": "VANGUARD PACIFIC STOCK INDEX FUND",
+    "series_id": "S000005788",
+    "class_id": "C000096108",
+    "accession": "0000857489-25-000153",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFWIX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US INDEX FUND",
+    "series_id": "S000015871",
+    "class_id": "C000043571",
+    "accession": "0000857489-25-000151",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VEU": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US INDEX FUND",
+    "series_id": "S000015871",
+    "class_id": "C000043572",
+    "accession": "0000857489-25-000151",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFWSX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US INDEX FUND",
+    "series_id": "S000015871",
+    "class_id": "C000043573",
+    "accession": "0000857489-25-000151",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFWPX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US INDEX FUND",
+    "series_id": "S000015871",
+    "class_id": "C000096109",
+    "accession": "0000857489-25-000151",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFWAX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US INDEX FUND",
+    "series_id": "S000015871",
+    "class_id": "C000105302",
+    "accession": "0000857489-25-000151",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VTWSX": {
+    "series_name": "VANGUARD TOTAL WORLD STOCK INDEX FUND",
+    "series_id": "S000022482",
+    "class_id": "C000065037",
+    "accession": "0000857489-25-000147",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VT": {
+    "series_name": "VANGUARD TOTAL WORLD STOCK INDEX FUND",
+    "series_id": "S000022482",
+    "class_id": "C000065038",
+    "accession": "0000857489-25-000147",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VTWIX": {
+    "series_name": "VANGUARD TOTAL WORLD STOCK INDEX FUND",
+    "series_id": "S000022482",
+    "class_id": "C000065039",
+    "accession": "0000857489-25-000147",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VTWAX": {
+    "series_name": "VANGUARD TOTAL WORLD STOCK INDEX FUND",
+    "series_id": "S000022482",
+    "class_id": "C000209799",
+    "accession": "0000857489-25-000147",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFSVX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US SMALL-CAP INDEX FUND",
+    "series_id": "S000025074",
+    "class_id": "C000074579",
+    "accession": "0000857489-25-000148",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFSNX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US SMALL-CAP INDEX FUND",
+    "series_id": "S000025074",
+    "class_id": "C000074580",
+    "accession": "0000857489-25-000148",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VSS": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US SMALL-CAP INDEX FUND",
+    "series_id": "S000025074",
+    "class_id": "C000074581",
+    "accession": "0000857489-25-000148",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VFSAX": {
+    "series_name": "VANGUARD FTSE ALL-WORLD EX-US SMALL-CAP INDEX FUND",
+    "series_id": "S000025074",
+    "class_id": "C000209801",
+    "accession": "0000857489-25-000148",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VGXRX": {
+    "series_name": "VANGUARD GLOBAL EX-U.S. REAL ESTATE INDEX FUND",
+    "series_id": "S000030007",
+    "class_id": "C000092023",
+    "accession": "0000857489-25-000150",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VGRLX": {
+    "series_name": "VANGUARD GLOBAL EX-U.S. REAL ESTATE INDEX FUND",
+    "series_id": "S000030007",
+    "class_id": "C000092024",
+    "accession": "0000857489-25-000150",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VNQI": {
+    "series_name": "VANGUARD GLOBAL EX-U.S. REAL ESTATE INDEX FUND",
+    "series_id": "S000030007",
+    "class_id": "C000092025",
+    "accession": "0000857489-25-000150",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "VGRNX": {
+    "series_name": "VANGUARD GLOBAL EX-U.S. REAL ESTATE INDEX FUND",
+    "series_id": "S000030007",
+    "class_id": "C000092026",
+    "accession": "0000857489-25-000150",
+    "date": "2025-12-23",
+    "trust_cik": "0000857489",
+    "trust_name": "Vanguard Chester Funds"
+  },
+  "XLY": {
+    "series_name": "State Street(R) Consumer Discretionary Select Sector SPDR(R) ETF",
+    "series_id": "S000006408",
+    "class_id": "C000017594",
+    "accession": "0001410368-26-020042",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLP": {
+    "series_name": "State Street(R) Consumer Staples Select Sector SPDR(R) ETF",
+    "series_id": "S000006409",
+    "class_id": "C000017595",
+    "accession": "0001410368-26-020132",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLE": {
+    "series_name": "State Street(R) Energy Select Sector SPDR(R) ETF",
+    "series_id": "S000006410",
+    "class_id": "C000017596",
+    "accession": "0001410368-26-019987",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLF": {
+    "series_name": "State Street(R) Financial Select Sector SPDR(R) ETF",
+    "series_id": "S000006411",
+    "class_id": "C000017597",
+    "accession": "0001410368-26-020016",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLV": {
+    "series_name": "State Street(R) Health Care Select Sector SPDR(R) ETF",
+    "series_id": "S000006412",
+    "class_id": "C000017598",
+    "accession": "0001410368-26-019995",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLI": {
+    "series_name": "State Street(R) Industrial Select Sector SPDR(R) ETF",
+    "series_id": "S000006413",
+    "class_id": "C000017599",
+    "accession": "0001410368-26-020174",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLB": {
+    "series_name": "State Street(R) Materials Select Sector SPDR(R) ETF",
+    "series_id": "S000006414",
+    "class_id": "C000017600",
+    "accession": "0001410368-26-020021",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLK": {
+    "series_name": "State Street(R) Technology Select Sector SPDR(R) ETF",
+    "series_id": "S000006415",
+    "class_id": "C000017601",
+    "accession": "0001410368-26-020063",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLU": {
+    "series_name": "State Street(R) Utilities Select Sector SPDR(R) ETF",
+    "series_id": "S000006416",
+    "class_id": "C000017602",
+    "accession": "0001410368-26-020130",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLRE": {
+    "series_name": "State Street(R) Real Estate Select Sector SPDR(R) ETF",
+    "series_id": "S000051152",
+    "class_id": "C000161049",
+    "accession": "0001410368-26-020128",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLC": {
+    "series_name": "State Street(R) Communication Services Select Sector SPDR(R) ETF",
+    "series_id": "S000062095",
+    "class_id": "C000201048",
+    "accession": "0001410368-26-020123",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLCI": {
+    "series_name": "State Street(R) Communication Services Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093831",
+    "class_id": "C000262279",
+    "accession": "0001410368-26-020035",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLKI": {
+    "series_name": "State Street(R) Technology Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093832",
+    "class_id": "C000262280",
+    "accession": "0001410368-26-020044",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLUI": {
+    "series_name": "State Street(R) Utilities Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093833",
+    "class_id": "C000262281",
+    "accession": "0001410368-26-020155",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLYI": {
+    "series_name": "State Street(R) Consumer Discretionary Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093834",
+    "class_id": "C000262282",
+    "accession": "0001410368-26-020109",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLSI": {
+    "series_name": "State Street(R) Consumer Staples Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093835",
+    "class_id": "C000262283",
+    "accession": "0001410368-26-019993",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLEI": {
+    "series_name": "State Street(R) Energy Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093836",
+    "class_id": "C000262284",
+    "accession": "0001410368-26-020008",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLFI": {
+    "series_name": "State Street(R) Financial Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093837",
+    "class_id": "C000262285",
+    "accession": "0001410368-26-020161",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLVI": {
+    "series_name": "State Street(R) Health Care Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093838",
+    "class_id": "C000262286",
+    "accession": "0001410368-26-020017",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLII": {
+    "series_name": "State Street(R) Industrial Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093839",
+    "class_id": "C000262287",
+    "accession": "0001410368-26-020163",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLBI": {
+    "series_name": "State Street(R) Materials Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093840",
+    "class_id": "C000262288",
+    "accession": "0001410368-26-020147",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "XLRI": {
+    "series_name": "State Street(R) Real Estate Select Sector SPDR(R) Premium Income ETF",
+    "series_id": "S000093841",
+    "class_id": "C000262289",
+    "accession": "0001410368-26-020004",
+    "date": "2026-02-26",
+    "trust_cik": "0001064641",
+    "trust_name": "Select Sector SPDR Fund"
+  },
+  "ARKG": {
+    "series_name": "ARK Genomic Revolution ETF",
+    "series_id": "S000042975",
+    "class_id": "C000133119",
+    "accession": "0000940400-25-014991",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKQ": {
+    "series_name": "ARK Autonomous Technology &amp; Robotics ETF",
+    "series_id": "S000042976",
+    "class_id": "C000133120",
+    "accession": "0000940400-25-014990",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKK": {
+    "series_name": "ARK Innovation ETF",
+    "series_id": "S000042977",
+    "class_id": "C000133121",
+    "accession": "0000940400-25-014992",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKW": {
+    "series_name": "ARK Next Generation Internet ETF",
+    "series_id": "S000042978",
+    "class_id": "C000133122",
+    "accession": "0000940400-25-014994",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "PRNT": {
+    "series_name": "The 3D Printing ETF",
+    "series_id": "S000052298",
+    "class_id": "C000164426",
+    "accession": "0000940400-25-014995",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "IZRL": {
+    "series_name": "ARK Israel Innovative Technology ETF",
+    "series_id": "S000052299",
+    "class_id": "C000164427",
+    "accession": "0000940400-25-014988",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKF": {
+    "series_name": "ARK Fintech Innovation ETF",
+    "series_id": "S000064752",
+    "class_id": "C000209702",
+    "accession": "0000940400-25-014989",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKX": {
+    "series_name": "ARK Space Exploration &amp; Innovation ETF",
+    "series_id": "S000071318",
+    "class_id": "C000226276",
+    "accession": "0000940400-25-014987",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "ARKT": {
+    "series_name": "ARK DIET Q4 Buffer ETF",
+    "series_id": "S000095346",
+    "class_id": "C000264065",
+    "accession": "0000940400-25-014986",
+    "date": "2025-12-29",
+    "trust_cik": "0001579982",
+    "trust_name": "ARK ETF Trust"
+  },
+  "GOVI": {
+    "series_name": "Invesco Equal Weight 0-30 Year Treasury ETF",
+    "series_id": "S000019225",
+    "class_id": "C000053046",
+    "accession": "0001378872-26-000332",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PGX": {
+    "series_name": "Invesco Preferred ETF",
+    "series_id": "S000019228",
+    "class_id": "C000053049",
+    "accession": "0001378872-26-000335",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "IFLN": {
+    "series_name": "Invesco Fundamental High Yield Corporate Bond ETF",
+    "series_id": "S000019230",
+    "class_id": "C000053051",
+    "accession": "0001378872-26-000331",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PZA": {
+    "series_name": "Invesco National AMT-Free Municipal Bond ETF",
+    "series_id": "S000019245",
+    "class_id": "C000053071",
+    "accession": "0001378872-26-000364",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "BAB": {
+    "series_name": "Invesco Taxable Municipal Bond ETF",
+    "series_id": "S000019246",
+    "class_id": "C000053072",
+    "accession": "0001378872-26-000334",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PWZ": {
+    "series_name": "Invesco California AMT-Free Municipal Bond ETF",
+    "series_id": "S000019411",
+    "class_id": "C000053967",
+    "accession": "0001378872-26-000327",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PZT": {
+    "series_name": "Invesco New York AMT-Free Municipal Bond ETF",
+    "series_id": "S000019412",
+    "class_id": "C000053968",
+    "accession": "0001378872-26-000329",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PVI": {
+    "series_name": "Invesco Floating Rate Municipal Income ETF",
+    "series_id": "S000019521",
+    "class_id": "C000054223",
+    "accession": "0001378872-26-000333",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PCEF": {
+    "series_name": "Invesco CEF Income Composite ETF",
+    "series_id": "S000027370",
+    "class_id": "C000082591",
+    "accession": "0001378872-26-000326",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "BKLN": {
+    "series_name": "Invesco Senior Loan ETF",
+    "series_id": "S000031053",
+    "class_id": "C000096299",
+    "accession": "0001378872-26-000362",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "PFIG": {
+    "series_name": "Invesco Fundamental Investment Grade Corporate Bond ETF",
+    "series_id": "S000033429",
+    "class_id": "C000102793",
+    "accession": "0001378872-26-000330",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "KBWB": {
+    "series_name": "Invesco KBW Bank ETF",
+    "series_id": "S000034530",
+    "class_id": "C000106122",
+    "accession": "0001378872-26-000338",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "DWAS": {
+    "series_name": "Invesco Dorsey Wright SmallCap Momentum ETF",
+    "series_id": "S000037586",
+    "class_id": "C000116012",
+    "accession": "0001378872-26-000324",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "VRP": {
+    "series_name": "Invesco Variable Rate Preferred ETF",
+    "series_id": "S000045020",
+    "class_id": "C000139641",
+    "accession": "0001378872-26-000336",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "EQAL": {
+    "series_name": "Invesco Russell 1000 Equal Weight ETF",
+    "series_id": "S000047524",
+    "class_id": "C000149243",
+    "accession": "0001378872-26-000359",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "SPMO": {
+    "series_name": "Invesco S&amp;P 500 Momentum ETF",
+    "series_id": "S000050154",
+    "class_id": "C000158243",
+    "accession": "0001378872-26-000328",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "TBLL": {
+    "series_name": "Invesco Short Term Treasury ETF",
+    "series_id": "S000055054",
+    "class_id": "C000173134",
+    "accession": "0001378872-26-000325",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "RWK": {
+    "series_name": "Invesco S&amp;P MidCap 400 Revenue ETF",
+    "series_id": "S000064595",
+    "class_id": "C000209112",
+    "accession": "0001378872-26-000358",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "QQQM": {
+    "series_name": "Invesco NASDAQ 100 ETF",
+    "series_id": "S000069448",
+    "class_id": "C000221604",
+    "accession": "0001378872-26-000337",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "QVMM": {
+    "series_name": "Invesco S&amp;P Midcap 400 QVM Multi-Factor ETF",
+    "series_id": "S000072319",
+    "class_id": "C000228443",
+    "accession": "0001378872-26-000360",
+    "date": "2026-01-29",
+    "trust_cik": "0001378872",
+    "trust_name": "Invesco Exchanged Traded Fund Trust"
+  },
+  "SSO": {
+    "series_name": "ProShares Ultra S&amp;P500",
+    "series_id": "S000006821",
+    "class_id": "C000018459",
+    "accession": "0002071691-26-001732",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "MZZ": {
+    "series_name": "ProShares UltraShort MidCap400",
+    "series_id": "S000006822",
+    "class_id": "C000018460",
+    "accession": "0002071691-26-001763",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DXD": {
+    "series_name": "ProShares UltraShort Dow30",
+    "series_id": "S000006823",
+    "class_id": "C000018461",
+    "accession": "0002071691-26-001747",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QID": {
+    "series_name": "ProShares UltraShort QQQ",
+    "series_id": "S000006824",
+    "class_id": "C000018462",
+    "accession": "0002071691-26-001704",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "MVV": {
+    "series_name": "ProShares Ultra MidCap400",
+    "series_id": "S000006825",
+    "class_id": "C000018463",
+    "accession": "0002071691-26-001748",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DDM": {
+    "series_name": "ProShares Ultra Dow30",
+    "series_id": "S000006826",
+    "class_id": "C000018464",
+    "accession": "0002071691-26-001690",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QLD": {
+    "series_name": "ProShares Ultra QQQ",
+    "series_id": "S000006827",
+    "class_id": "C000018465",
+    "accession": "0002071691-26-001643",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SH": {
+    "series_name": "ProShares Short S&amp;P500",
+    "series_id": "S000006828",
+    "class_id": "C000018466",
+    "accession": "0002071691-26-001639",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "MYY": {
+    "series_name": "ProShares Short MidCap400",
+    "series_id": "S000006829",
+    "class_id": "C000018467",
+    "accession": "0002071691-26-001709",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DOG": {
+    "series_name": "ProShares Short Dow30",
+    "series_id": "S000006830",
+    "class_id": "C000018468",
+    "accession": "0002071691-26-001645",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "PSQ": {
+    "series_name": "ProShares Short QQQ",
+    "series_id": "S000006831",
+    "class_id": "C000018469",
+    "accession": "0002071691-26-001646",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SDS": {
+    "series_name": "ProShares UltraShort S&amp;P500",
+    "series_id": "S000006832",
+    "class_id": "C000018470",
+    "accession": "0002071691-26-001696",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UWM": {
+    "series_name": "ProShares Ultra Russell2000",
+    "series_id": "S000014248",
+    "class_id": "C000038807",
+    "accession": "0002071691-26-001667",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UGE": {
+    "series_name": "ProShares Ultra Consumer Staples",
+    "series_id": "S000014250",
+    "class_id": "C000038809",
+    "accession": "0002071691-26-001676",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UCC": {
+    "series_name": "ProShares Ultra Consumer Discretionary",
+    "series_id": "S000014251",
+    "class_id": "C000038810",
+    "accession": "0002071691-26-001726",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UYG": {
+    "series_name": "ProShares Ultra Financials",
+    "series_id": "S000014252",
+    "class_id": "C000038811",
+    "accession": "0002071691-26-001669",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "RXL": {
+    "series_name": "ProShares Ultra Health Care",
+    "series_id": "S000014253",
+    "class_id": "C000038812",
+    "accession": "0002071691-26-001686",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UXI": {
+    "series_name": "ProShares Ultra Industrials",
+    "series_id": "S000014254",
+    "class_id": "C000038813",
+    "accession": "0002071691-26-001777",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DIG": {
+    "series_name": "ProShares Ultra Energy",
+    "series_id": "S000014255",
+    "class_id": "C000038814",
+    "accession": "0002071691-26-001745",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "URE": {
+    "series_name": "ProShares Ultra Real Estate",
+    "series_id": "S000014257",
+    "class_id": "C000038816",
+    "accession": "0002071691-26-001691",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "USD": {
+    "series_name": "ProShares Ultra Semiconductors",
+    "series_id": "S000014258",
+    "class_id": "C000038817",
+    "accession": "0002071691-26-001640",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SAA": {
+    "series_name": "ProShares Ultra SmallCap600",
+    "series_id": "S000014259",
+    "class_id": "C000038818",
+    "accession": "0002071691-26-001730",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ROM": {
+    "series_name": "ProShares Ultra Technology",
+    "series_id": "S000014260",
+    "class_id": "C000038819",
+    "accession": "0002071691-26-001683",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "LTL": {
+    "series_name": "ProShares Ultra Communication Services",
+    "series_id": "S000014261",
+    "class_id": "C000038820",
+    "accession": "0002071691-26-001664",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UPW": {
+    "series_name": "ProShares Ultra Utilities",
+    "series_id": "S000014262",
+    "class_id": "C000038821",
+    "accession": "0002071691-26-001725",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "RWM": {
+    "series_name": "ProShares Short Russell2000",
+    "series_id": "S000014263",
+    "class_id": "C000038822",
+    "accession": "0002071691-26-001775",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SBB": {
+    "series_name": "ProShares Short SmallCap600",
+    "series_id": "S000014264",
+    "class_id": "C000038823",
+    "accession": "0002071691-26-001689",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SEF": {
+    "series_name": "ProShares Short Financials",
+    "series_id": "S000014276",
+    "class_id": "C000038835",
+    "accession": "0002071691-26-001716",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "REK": {
+    "series_name": "ProShares Short Real Estate",
+    "series_id": "S000014282",
+    "class_id": "C000038841",
+    "accession": "0002071691-26-001713",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TWM": {
+    "series_name": "ProShares UltraShort Russell 2000",
+    "series_id": "S000014287",
+    "class_id": "C000038846",
+    "accession": "0002071691-26-001766",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SDD": {
+    "series_name": "ProShares UltraShort SmallCap600",
+    "series_id": "S000014288",
+    "class_id": "C000038847",
+    "accession": "0002071691-26-001641",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SMN": {
+    "series_name": "ProShares UltraShort Materials",
+    "series_id": "S000014296",
+    "class_id": "C000038855",
+    "accession": "0002071691-26-001652",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SZK": {
+    "series_name": "ProShares UltraShort Consumer Staples",
+    "series_id": "S000014298",
+    "class_id": "C000038857",
+    "accession": "0002071691-26-001761",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SCC": {
+    "series_name": "ProShares UltraShort Consumer Discretionary",
+    "series_id": "S000014299",
+    "class_id": "C000038858",
+    "accession": "0002071691-26-001739",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SKF": {
+    "series_name": "ProShares UltraShort Financials",
+    "series_id": "S000014300",
+    "class_id": "C000038859",
+    "accession": "0002071691-26-001687",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "RXD": {
+    "series_name": "ProShares UltraShort Health Care",
+    "series_id": "S000014301",
+    "class_id": "C000038860",
+    "accession": "0002071691-26-001773",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SIJ": {
+    "series_name": "ProShares UltraShort Industrials",
+    "series_id": "S000014302",
+    "class_id": "C000038861",
+    "accession": "0002071691-26-001698",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DUG": {
+    "series_name": "ProShares UltraShort Energy",
+    "series_id": "S000014304",
+    "class_id": "C000038863",
+    "accession": "0002071691-26-001699",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SRS": {
+    "series_name": "ProShares UltraShort Real Estate",
+    "series_id": "S000014306",
+    "class_id": "C000038865",
+    "accession": "0002071691-26-001729",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SSG": {
+    "series_name": "ProShares UltraShort Semiconductors",
+    "series_id": "S000014307",
+    "class_id": "C000038866",
+    "accession": "0002071691-26-001765",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "REW": {
+    "series_name": "ProShares UltraShort Technology",
+    "series_id": "S000014308",
+    "class_id": "C000038867",
+    "accession": "0002071691-26-001769",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SDP": {
+    "series_name": "ProShares UltraShort Utilities",
+    "series_id": "S000014310",
+    "class_id": "C000038869",
+    "accession": "0002071691-26-001757",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UYM": {
+    "series_name": "ProShares Ultra Materials",
+    "series_id": "S000014313",
+    "class_id": "C000038872",
+    "accession": "0002071691-26-001679",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BIB": {
+    "series_name": "ProShares Ultra Nasdaq Biotechnology",
+    "series_id": "S000018718",
+    "class_id": "C000051848",
+    "accession": "0002071691-26-001772",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "YXI": {
+    "series_name": "ProShares Short FTSE China 50",
+    "series_id": "S000018719",
+    "class_id": "C000051849",
+    "accession": "0002071691-26-001684",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TBX": {
+    "series_name": "ProShares Short 7-10 Year Treasury",
+    "series_id": "S000018720",
+    "class_id": "C000051850",
+    "accession": "0002071691-26-001650",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TBF": {
+    "series_name": "ProShares Short 20+ Year Treasury",
+    "series_id": "S000018721",
+    "class_id": "C000051851",
+    "accession": "0002071691-26-001779",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SJB": {
+    "series_name": "ProShares Short High Yield",
+    "series_id": "S000018723",
+    "class_id": "C000051853",
+    "accession": "0002071691-26-001677",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BIS": {
+    "series_name": "ProShares UltraShort Nasdaq Biotechnology",
+    "series_id": "S000018724",
+    "class_id": "C000051854",
+    "accession": "0002071691-26-001642",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EEV": {
+    "series_name": "ProShares UltraShort MSCI Emerging Markets",
+    "series_id": "S000018727",
+    "class_id": "C000051857",
+    "accession": "0002071691-26-001708",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EWV": {
+    "series_name": "ProShares UltraShort MSCI Japan",
+    "series_id": "S000018728",
+    "class_id": "C000051858",
+    "accession": "0002071691-26-001656",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EFU": {
+    "series_name": "ProShares UltraShort MSCI EAFE",
+    "series_id": "S000018730",
+    "class_id": "C000051860",
+    "accession": "0002071691-26-001714",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "FXP": {
+    "series_name": "ProShares UltraShort FTSE China 50",
+    "series_id": "S000018731",
+    "class_id": "C000051861",
+    "accession": "0002071691-26-001693",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "PST": {
+    "series_name": "ProShares UltraShort 7-10 Year Treasury",
+    "series_id": "S000018732",
+    "class_id": "C000051862",
+    "accession": "0002071691-26-001735",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TBT": {
+    "series_name": "ProShares UltraShort 20+ Year Treasury",
+    "series_id": "S000018733",
+    "class_id": "C000051863",
+    "accession": "0002071691-26-001728",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EUM": {
+    "series_name": "ProShares Short MSCI Emerging Markets",
+    "series_id": "S000018740",
+    "class_id": "C000051870",
+    "accession": "0002071691-26-001695",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EFZ": {
+    "series_name": "ProShares Short MSCI EAFE",
+    "series_id": "S000018742",
+    "class_id": "C000051872",
+    "accession": "0002071691-26-001701",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "CSM": {
+    "series_name": "ProShares Large Cap Core Plus",
+    "series_id": "S000020962",
+    "class_id": "C000059344",
+    "accession": "0002071691-26-001659",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BZQ": {
+    "series_name": "ProShares UltraShort MSCI Brazil Capped",
+    "series_id": "S000022290",
+    "class_id": "C000063928",
+    "accession": "0002071691-26-001668",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EPV": {
+    "series_name": "ProShares UltraShort FTSE Europe",
+    "series_id": "S000022292",
+    "class_id": "C000063930",
+    "accession": "0002071691-26-001733",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "XPP": {
+    "series_name": "ProShares Ultra FTSE China 50",
+    "series_id": "S000022299",
+    "class_id": "C000063937",
+    "accession": "0002071691-26-001707",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EFO": {
+    "series_name": "ProShares Ultra MSCI EAFE",
+    "series_id": "S000022302",
+    "class_id": "C000063940",
+    "accession": "0002071691-26-001756",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EET": {
+    "series_name": "ProShares Ultra MSCI Emerging Markets",
+    "series_id": "S000022303",
+    "class_id": "C000063941",
+    "accession": "0002071691-26-001702",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EZJ": {
+    "series_name": "ProShares Ultra MSCI Japan",
+    "series_id": "S000022304",
+    "class_id": "C000063942",
+    "accession": "0002071691-26-001768",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TQQQ": {
+    "series_name": "ProShares UltraPro QQQ",
+    "series_id": "S000024908",
+    "class_id": "C000074098",
+    "accession": "0002071691-26-001671",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SQQQ": {
+    "series_name": "ProShares UltraPro Short QQQ",
+    "series_id": "S000024909",
+    "class_id": "C000074099",
+    "accession": "0002071691-26-001727",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SDOW": {
+    "series_name": "ProShares UltraPro Short Dow30",
+    "series_id": "S000024910",
+    "class_id": "C000074100",
+    "accession": "0002071691-26-001649",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SPXU": {
+    "series_name": "ProShares UltraPro Short S&amp;P500",
+    "series_id": "S000024911",
+    "class_id": "C000074101",
+    "accession": "0002071691-26-001660",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SMDD": {
+    "series_name": "ProShares UltraPro Short MidCap400",
+    "series_id": "S000024912",
+    "class_id": "C000074102",
+    "accession": "0002071691-26-001648",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SRTY": {
+    "series_name": "ProShares UltraPro Short Russell2000",
+    "series_id": "S000024913",
+    "class_id": "C000074103",
+    "accession": "0002071691-26-001653",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TTT": {
+    "series_name": "ProShares UltraPro Short 20+ Year Treasury",
+    "series_id": "S000024917",
+    "class_id": "C000074107",
+    "accession": "0002071691-26-001665",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UDOW": {
+    "series_name": "ProShares UltraPro Dow30",
+    "series_id": "S000024918",
+    "class_id": "C000074108",
+    "accession": "0002071691-26-001651",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UPRO": {
+    "series_name": "ProShares UltraPro S&amp;P500",
+    "series_id": "S000024919",
+    "class_id": "C000074109",
+    "accession": "0002071691-26-001753",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UMDD": {
+    "series_name": "ProShares UltraPro MidCap400",
+    "series_id": "S000024920",
+    "class_id": "C000074110",
+    "accession": "0002071691-26-001672",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "URTY": {
+    "series_name": "ProShares UltraPro Russell2000",
+    "series_id": "S000024921",
+    "class_id": "C000074111",
+    "accession": "0002071691-26-001746",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UST": {
+    "series_name": "ProShares Ultra 7-10 Year Treasury",
+    "series_id": "S000027192",
+    "class_id": "C000082080",
+    "accession": "0002071691-26-001749",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UBT": {
+    "series_name": "ProShares Ultra 20+ Year Treasury",
+    "series_id": "S000027193",
+    "class_id": "C000082081",
+    "accession": "0002071691-26-001741",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UBR": {
+    "series_name": "ProShares Ultra MSCI Brazil Capped",
+    "series_id": "S000028919",
+    "class_id": "C000088638",
+    "accession": "0002071691-26-001751",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UPV": {
+    "series_name": "ProShares Ultra FTSE Europe",
+    "series_id": "S000028921",
+    "class_id": "C000088640",
+    "accession": "0002071691-26-001736",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "HDG": {
+    "series_name": "ProShares Hedge Replication ETF",
+    "series_id": "S000031041",
+    "class_id": "C000096244",
+    "accession": "0002071691-26-001759",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UJB": {
+    "series_name": "ProShares Ultra High Yield",
+    "series_id": "S000031635",
+    "class_id": "C000098413",
+    "accession": "0002071691-26-001742",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "RINF": {
+    "series_name": "ProShares Inflation Expectations ETF",
+    "series_id": "S000035008",
+    "class_id": "C000107655",
+    "accession": "0002071691-26-001718",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "MRGR": {
+    "series_name": "ProShares Merger ETF",
+    "series_id": "S000037318",
+    "class_id": "C000115055",
+    "accession": "0002071691-26-001654",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "PEX": {
+    "series_name": "ProShares Global Listed Private Equity ETF",
+    "series_id": "S000037319",
+    "class_id": "C000115056",
+    "accession": "0002071691-26-001663",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "HYHG": {
+    "series_name": "ProShares High Yield-Interest Rate Hedged",
+    "series_id": "S000039732",
+    "class_id": "C000123089",
+    "accession": "0002071691-26-001694",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TOLZ": {
+    "series_name": "ProShares DJ Brookfield Global Infrastructure ETF",
+    "series_id": "S000040181",
+    "class_id": "C000124906",
+    "accession": "0002071691-26-001760",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "NOBL": {
+    "series_name": "ProShares S&amp;P 500 Dividend Aristocrats ETF",
+    "series_id": "S000042349",
+    "class_id": "C000131287",
+    "accession": "0002071691-26-001754",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "IGHG": {
+    "series_name": "ProShares Investment Grade-Interest Rate Hedged",
+    "series_id": "S000042798",
+    "class_id": "C000132381",
+    "accession": "0002071691-26-001723",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EFAD": {
+    "series_name": "ProShares MSCI EAFE Dividend Growers ETF",
+    "series_id": "S000046273",
+    "class_id": "C000144590",
+    "accession": "0002071691-26-001722",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EMDV": {
+    "series_name": "ProShares MSCI Emerging Markets Dividend Growers ETF",
+    "series_id": "S000046274",
+    "class_id": "C000144591",
+    "accession": "0002071691-26-001674",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EUDV": {
+    "series_name": "ProShares MSCI Europe Dividend Growers ETF",
+    "series_id": "S000046275",
+    "class_id": "C000144592",
+    "accession": "0002071691-26-001781",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "REGL": {
+    "series_name": "ProShares S&amp;P MidCap 400 Dividend Aristocrats ETF",
+    "series_id": "S000047884",
+    "class_id": "C000150377",
+    "accession": "0002071691-26-001712",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SMDV": {
+    "series_name": "ProShares Russell 2000 Dividend Growers ETF",
+    "series_id": "S000047885",
+    "class_id": "C000150378",
+    "accession": "0002071691-26-001737",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SPXE": {
+    "series_name": "ProShares S&amp;P 500 Ex-Energy ETF",
+    "series_id": "S000050775",
+    "class_id": "C000160294",
+    "accession": "0002071691-26-001685",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SPXN": {
+    "series_name": "ProShares S&amp;P 500 Ex-Financials ETF",
+    "series_id": "S000050776",
+    "class_id": "C000160295",
+    "accession": "0002071691-26-001710",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SPXV": {
+    "series_name": "ProShares S&amp;P 500 Ex-Health Care ETF",
+    "series_id": "S000050777",
+    "class_id": "C000160296",
+    "accession": "0002071691-26-001705",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SPXT": {
+    "series_name": "ProShares S&amp;P 500 Ex-Technology ETF",
+    "series_id": "S000050780",
+    "class_id": "C000160299",
+    "accession": "0002071691-26-001700",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "OILK": {
+    "series_name": "ProShares K-1 Free Crude Oil ETF",
+    "series_id": "S000054590",
+    "class_id": "C000171471",
+    "accession": "0002071691-26-001678",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EQRR": {
+    "series_name": "ProShares Equities for Rising Rates ETF",
+    "series_id": "S000057332",
+    "class_id": "C000182948",
+    "accession": "0002071691-26-001774",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EMTY": {
+    "series_name": "ProShares Decline of the Retail Store ETF",
+    "series_id": "S000059653",
+    "class_id": "C000195295",
+    "accession": "0002071691-26-001719",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "CLIX": {
+    "series_name": "ProShares Long Online/Short Stores ETF",
+    "series_id": "S000059656",
+    "class_id": "C000195298",
+    "accession": "0002071691-26-001770",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "PAWZ": {
+    "series_name": "ProShares Pet Care ETF",
+    "series_id": "S000062559",
+    "class_id": "C000202974",
+    "accession": "0002071691-26-001764",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ONLN": {
+    "series_name": "ProShares Online Retail ETF",
+    "series_id": "S000063144",
+    "class_id": "C000204726",
+    "accession": "0002071691-26-001743",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TMDV": {
+    "series_name": "ProShares Russell U.S. Dividend Growers ETF",
+    "series_id": "S000066433",
+    "class_id": "C000214312",
+    "accession": "0002071691-26-001724",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TDV": {
+    "series_name": "ProShares S&amp;P Technology Dividend Aristocrats ETF",
+    "series_id": "S000066435",
+    "class_id": "C000214314",
+    "accession": "0002071691-26-001734",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ANEW": {
+    "series_name": "ProShares MSCI Transformational Changes ETF",
+    "series_id": "S000069834",
+    "class_id": "C000222595",
+    "accession": "0002071691-26-001731",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UCYB": {
+    "series_name": "ProShares Ultra Nasdaq Cybersecurity",
+    "series_id": "S000070718",
+    "class_id": "C000224813",
+    "accession": "0002071691-26-001738",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SKYU": {
+    "series_name": "ProShares Ultra Nasdaq Cloud Computing",
+    "series_id": "S000070720",
+    "class_id": "C000224815",
+    "accession": "0002071691-26-001782",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QQQA": {
+    "series_name": "ProShares Nasdaq-100 Dorsey Wright Momentum ETF",
+    "series_id": "S000071850",
+    "class_id": "C000227376",
+    "accession": "0002071691-26-001703",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TINT": {
+    "series_name": "ProShares Smart Materials ETF",
+    "series_id": "S000073416",
+    "class_id": "C000230303",
+    "accession": "0002071691-26-001706",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "MAKX": {
+    "series_name": "ProShares S&amp;P Kensho Smart Factories ETF",
+    "series_id": "S000073417",
+    "class_id": "C000230304",
+    "accession": "0002071691-26-001721",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "CTEX": {
+    "series_name": "ProShares S&amp;P Kensho Cleantech ETF",
+    "series_id": "S000073419",
+    "class_id": "C000230306",
+    "accession": "0002071691-26-001647",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "OND": {
+    "series_name": "ProShares On Demand ETF",
+    "series_id": "S000073420",
+    "class_id": "C000230307",
+    "accession": "0002071691-26-001711",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TINY": {
+    "series_name": "ProShares Nanotechnology ETF",
+    "series_id": "S000073421",
+    "class_id": "C000230308",
+    "accession": "0002071691-26-001755",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DAT": {
+    "series_name": "ProShares Big Data Refiners ETF",
+    "series_id": "S000073423",
+    "class_id": "C000230310",
+    "accession": "0002071691-26-001778",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BITO": {
+    "series_name": "ProShares Bitcoin ETF",
+    "series_id": "S000073908",
+    "class_id": "C000231184",
+    "accession": "0002071691-26-001752",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "EETH": {
+    "series_name": "ProShares Ether ETF",
+    "series_id": "S000074165",
+    "class_id": "C000231749",
+    "accession": "0002071691-26-001692",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "VERS": {
+    "series_name": "ProShares Metaverse ETF",
+    "series_id": "S000075552",
+    "class_id": "C000234747",
+    "accession": "0002071691-26-001767",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SUPL": {
+    "series_name": "ProShares Supply Chain Logistics ETF",
+    "series_id": "S000075630",
+    "class_id": "C000234857",
+    "accession": "0002071691-26-001740",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BITI": {
+    "series_name": "ProShares Short Bitcoin ETF",
+    "series_id": "S000076601",
+    "class_id": "C000236586",
+    "accession": "0002071691-26-001680",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ION": {
+    "series_name": "ProShares S&amp;P Global Core Battery Metals ETF",
+    "series_id": "S000078011",
+    "class_id": "C000238747",
+    "accession": "0002071691-26-001661",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ISPY": {
+    "series_name": "ProShares S&amp;P 500 High Income ETF",
+    "series_id": "S000081387",
+    "class_id": "C000244194",
+    "accession": "0002071691-26-001675",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SETH": {
+    "series_name": "ProShares Short Ether ETF",
+    "series_id": "S000082336",
+    "class_id": "C000245638",
+    "accession": "0002071691-26-001670",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BETH": {
+    "series_name": "ProShares Bitcoin &amp; Ether Market Cap Weight ETF",
+    "series_id": "S000082352",
+    "class_id": "C000245659",
+    "accession": "0002071691-26-001771",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BETE": {
+    "series_name": "ProShares Bitcoin &amp; Ether Equal Weight ETF",
+    "series_id": "S000082365",
+    "class_id": "C000245674",
+    "accession": "0002071691-26-001762",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "IQQQ": {
+    "series_name": "ProShares Nasdaq-100 High Income ETF",
+    "series_id": "S000083818",
+    "class_id": "C000247835",
+    "accession": "0002071691-26-001715",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SBIT": {
+    "series_name": "ProShares UltraShort Bitcoin ETF",
+    "series_id": "S000084462",
+    "class_id": "C000248847",
+    "accession": "0002071691-26-001681",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ETHD": {
+    "series_name": "ProShares UltraShort Ether ETF",
+    "series_id": "S000084463",
+    "class_id": "C000248848",
+    "accession": "0002071691-26-001655",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ETHT": {
+    "series_name": "ProShares Ultra Ether ETF",
+    "series_id": "S000084465",
+    "class_id": "C000248850",
+    "accession": "0002071691-26-001688",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "BITU": {
+    "series_name": "ProShares Ultra Bitcoin ETF",
+    "series_id": "S000084466",
+    "class_id": "C000248851",
+    "accession": "0002071691-26-001638",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "ITWO": {
+    "series_name": "ProShares Russell 2000 High Income ETF",
+    "series_id": "S000087688",
+    "class_id": "C000253563",
+    "accession": "0002071691-26-001657",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "COIA": {
+    "series_name": "ProShares Ultra COIN",
+    "series_id": "S000087811",
+    "class_id": "C000253777",
+    "accession": "0002071691-26-001662",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QQDN": {
+    "series_name": "ProShares UltraShort QQQ Mega",
+    "series_id": "S000090186",
+    "class_id": "C000257112",
+    "accession": "0002071691-26-001750",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QQUP": {
+    "series_name": "ProShares Ultra QQQ Mega",
+    "series_id": "S000090187",
+    "class_id": "C000257113",
+    "accession": "0002071691-26-001673",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "SLON": {
+    "series_name": "ProShares Ultra Solana ETF",
+    "series_id": "S000091569",
+    "class_id": "C000259247",
+    "accession": "0002071691-26-001717",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "UXRP": {
+    "series_name": "ProShares Ultra XRP ETF",
+    "series_id": "S000091573",
+    "class_id": "C000259251",
+    "accession": "0002071691-26-001780",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "RB": {
+    "series_name": "ProShares Russell 2000 Dynamic Buffer ETF",
+    "series_id": "S000093204",
+    "class_id": "C000261358",
+    "accession": "0002071691-26-001658",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QB": {
+    "series_name": "ProShares Nasdaq-100 Dynamic Buffer ETF",
+    "series_id": "S000093205",
+    "class_id": "C000261359",
+    "accession": "0002071691-26-001697",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "FB": {
+    "series_name": "ProShares S&amp;P 500 Dynamic Buffer ETF",
+    "series_id": "S000093206",
+    "class_id": "C000261360",
+    "accession": "0002071691-26-001758",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "QQXL": {
+    "series_name": "ProShares Ultra QQQ Top 30",
+    "series_id": "S000094569",
+    "class_id": "C000263102",
+    "accession": "0002071691-26-001666",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "URSP": {
+    "series_name": "ProShares Ultra S&amp;P 500 Equal Weight",
+    "series_id": "S000094769",
+    "class_id": "C000263307",
+    "accession": "0002071691-26-001744",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "CRCA": {
+    "series_name": "ProShares Ultra CRCL",
+    "series_id": "S000094784",
+    "class_id": "C000263324",
+    "accession": "0002071691-26-001720",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "NVDB": {
+    "series_name": "ProShares Ultra NVDA",
+    "series_id": "S000094857",
+    "class_id": "C000263403",
+    "accession": "0002071691-26-001776",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "PLTA": {
+    "series_name": "ProShares Ultra PLTR",
+    "series_id": "S000094858",
+    "class_id": "C000263404",
+    "accession": "0002071691-26-001682",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "TSLI": {
+    "series_name": "ProShares Ultra TSLA",
+    "series_id": "S000094859",
+    "class_id": "C000263405",
+    "accession": "0002071691-26-001644",
+    "date": "2026-01-28",
+    "trust_cik": "0001174610",
+    "trust_name": "ProShares Trust"
+  },
+  "DTD": {
+    "series_name": "WisdomTree U.S. Total Dividend Fund",
+    "series_id": "S000012379",
+    "class_id": "C000033617",
+    "accession": "0000940400-26-008983",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DXJ": {
+    "series_name": "WisdomTree Japan Hedged Equity Fund",
+    "series_id": "S000012380",
+    "class_id": "C000033618",
+    "accession": "0000940400-26-009001",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DNL": {
+    "series_name": "WisdomTree Global ex-U.S. Quality Growth Fund",
+    "series_id": "S000012381",
+    "class_id": "C000033619",
+    "accession": "0000940400-26-008774",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DFJ": {
+    "series_name": "WisdomTree Japan SmallCap Dividend Fund",
+    "series_id": "S000012382",
+    "class_id": "C000033620",
+    "accession": "0000940400-26-008998",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DOL": {
+    "series_name": "WisdomTree True Developed International Fund",
+    "series_id": "S000012384",
+    "class_id": "C000033622",
+    "accession": "0000940400-26-008995",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DIM": {
+    "series_name": "WisdomTree International MidCap Dividend Fund",
+    "series_id": "S000012385",
+    "class_id": "C000033623",
+    "accession": "0000940400-26-008761",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DLS": {
+    "series_name": "WisdomTree International SmallCap Dividend Fund",
+    "series_id": "S000012386",
+    "class_id": "C000033624",
+    "accession": "0000940400-26-008765",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "AIVL": {
+    "series_name": "WisdomTree U.S. AI Enhanced Value Fund",
+    "series_id": "S000012387",
+    "class_id": "C000033625",
+    "accession": "0000940400-26-008982",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DWM": {
+    "series_name": "WisdomTree International Equity Fund",
+    "series_id": "S000012388",
+    "class_id": "C000033626",
+    "accession": "0000940400-26-008756",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "AIVI": {
+    "series_name": "WisdomTree International AI Enhanced Value Fund",
+    "series_id": "S000012389",
+    "class_id": "C000033627",
+    "accession": "0000940400-26-008763",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DHS": {
+    "series_name": "WisdomTree U.S. High Dividend Fund",
+    "series_id": "S000012390",
+    "class_id": "C000033628",
+    "accession": "0000940400-26-008992",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DLN": {
+    "series_name": "WisdomTree U.S. LargeCap Dividend Fund",
+    "series_id": "S000012392",
+    "class_id": "C000033630",
+    "accession": "0000940400-26-008990",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DON": {
+    "series_name": "WisdomTree U.S. Midcap Dividend Fund",
+    "series_id": "S000012393",
+    "class_id": "C000033631",
+    "accession": "0000940400-26-008989",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DES": {
+    "series_name": "WisdomTree U.S. SmallCap Dividend Fund",
+    "series_id": "S000012394",
+    "class_id": "C000033632",
+    "accession": "0000940400-26-008985",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DTH": {
+    "series_name": "WisdomTree International High Dividend Fund",
+    "series_id": "S000012395",
+    "class_id": "C000033633",
+    "accession": "0000940400-26-008757",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DEW": {
+    "series_name": "WisdomTree Global High Dividend Fund",
+    "series_id": "S000012397",
+    "class_id": "C000033635",
+    "accession": "0000940400-26-008760",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DFE": {
+    "series_name": "WisdomTree Europe SmallCap Dividend Fund",
+    "series_id": "S000012398",
+    "class_id": "C000033636",
+    "accession": "0000940400-26-008762",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WTV": {
+    "series_name": "WisdomTree U.S. Value Fund",
+    "series_id": "S000015479",
+    "class_id": "C000042125",
+    "accession": "0000940400-26-008994",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DEM": {
+    "series_name": "WisdomTree Emerging Markets High Dividend Fund",
+    "series_id": "S000015483",
+    "class_id": "C000042129",
+    "accession": "0000940400-26-009009",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WTRE": {
+    "series_name": "WisdomTree New Economy Real Estate Fund",
+    "series_id": "S000015502",
+    "class_id": "C000042148",
+    "accession": "0000940400-26-008979",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EPS": {
+    "series_name": "WisdomTree U.S. LargeCap Fund",
+    "series_id": "S000015505",
+    "class_id": "C000042151",
+    "accession": "0000940400-26-008980",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EZM": {
+    "series_name": "WisdomTree U.S. MidCap Fund",
+    "series_id": "S000015506",
+    "class_id": "C000042152",
+    "accession": "0000940400-26-008993",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EES": {
+    "series_name": "WisdomTree U.S. SmallCap Fund",
+    "series_id": "S000015507",
+    "class_id": "C000042153",
+    "accession": "0000940400-26-008991",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DGS": {
+    "series_name": "WisdomTree Emerging Markets SmallCap Dividend Fund",
+    "series_id": "S000019332",
+    "class_id": "C000053725",
+    "accession": "0000940400-26-008770",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EPI": {
+    "series_name": "WisdomTree India Earnings Fund",
+    "series_id": "S000020636",
+    "class_id": "C000057625",
+    "accession": "0000940400-26-008754",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "HEDJ": {
+    "series_name": "WisdomTree Europe Hedged Equity Fund",
+    "series_id": "S000023597",
+    "class_id": "C000069425",
+    "accession": "0000940400-26-008777",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "CXSE": {
+    "series_name": "WisdomTree China ex-State-Owned Enterprises Fund",
+    "series_id": "S000036809",
+    "class_id": "C000112567",
+    "accession": "0000940400-26-009011",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DGRW": {
+    "series_name": "WisdomTree U.S. Quality Dividend Growth Fund",
+    "series_id": "S000040816",
+    "class_id": "C000126584",
+    "accession": "0000940400-26-009000",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DGRS": {
+    "series_name": "WisdomTree U.S. SmallCap Quality Dividend Growth Fund",
+    "series_id": "S000040817",
+    "class_id": "C000126585",
+    "accession": "0000940400-26-008996",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "OPPJ": {
+    "series_name": "WisdomTree Japan Opportunities Fund",
+    "series_id": "S000041190",
+    "class_id": "C000127778",
+    "accession": "0000940400-26-008981",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DGRE": {
+    "series_name": "WisdomTree Emerging Markets Quality Dividend Growth Fund",
+    "series_id": "S000041433",
+    "class_id": "C000128625",
+    "accession": "0000940400-26-008788",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "IHDG": {
+    "series_name": "WisdomTree International Hedged Quality Dividend Growth Fund",
+    "series_id": "S000043768",
+    "class_id": "C000135785",
+    "accession": "0000940400-26-008772",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EUDG": {
+    "series_name": "WisdomTree Europe Quality Dividend Growth Fund",
+    "series_id": "S000045345",
+    "class_id": "C000141114",
+    "accession": "0000940400-26-008769",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "XSOE": {
+    "series_name": "WisdomTree Emerging Markets ex-State-Owned Enterprises Fund",
+    "series_id": "S000046464",
+    "class_id": "C000145138",
+    "accession": "0000940400-26-009017",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "OPPE": {
+    "series_name": "WisdomTree European Opportunities Fund",
+    "series_id": "S000048091",
+    "class_id": "C000151994",
+    "accession": "0000940400-26-008755",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DDLS": {
+    "series_name": "WisdomTree Dynamic International SmallCap Equity Fund",
+    "series_id": "S000052351",
+    "class_id": "C000164635",
+    "accession": "0000940400-26-009271",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DDWM": {
+    "series_name": "WisdomTree Dynamic International Equity Fund",
+    "series_id": "S000052353",
+    "class_id": "C000164637",
+    "accession": "0000940400-26-009273",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "IQDG": {
+    "series_name": "WisdomTree International Quality Dividend Growth Fund",
+    "series_id": "S000052973",
+    "class_id": "C000166521",
+    "accession": "0000940400-26-008759",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QIG": {
+    "series_name": "WisdomTree U.S. Corporate Bond Fund",
+    "series_id": "S000053481",
+    "class_id": "C000168143",
+    "accession": "0000940400-26-009272",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QSIG": {
+    "series_name": "WisdomTree U.S. Short-Term Corporate Bond Fund",
+    "series_id": "S000053482",
+    "class_id": "C000168144",
+    "accession": "0000940400-26-009280",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QHY": {
+    "series_name": "WisdomTree U.S. High Yield Corporate Bond Fund",
+    "series_id": "S000053483",
+    "class_id": "C000168145",
+    "accession": "0000940400-26-009282",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "USMF": {
+    "series_name": "WisdomTree U.S. Multifactor Fund",
+    "series_id": "S000058010",
+    "class_id": "C000189527",
+    "accession": "0000940400-26-008987",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "NTSX": {
+    "series_name": "WisdomTree U.S. Efficient Core Fund",
+    "series_id": "S000061867",
+    "class_id": "C000200315",
+    "accession": "0000940400-26-009275",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "EMMF": {
+    "series_name": "WisdomTree Emerging Markets Multifactor Fund",
+    "series_id": "S000062304",
+    "class_id": "C000202064",
+    "accession": "0000940400-26-009012",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "DWMF": {
+    "series_name": "WisdomTree International Multifactor Fund",
+    "series_id": "S000062306",
+    "class_id": "C000202067",
+    "accession": "0000940400-26-008768",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WCLD": {
+    "series_name": "WisdomTree Cloud Computing Fund",
+    "series_id": "S000066390",
+    "class_id": "C000214236",
+    "accession": "0000940400-26-009246",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WCBR": {
+    "series_name": "WisdomTree Cybersecurity Fund",
+    "series_id": "S000070495",
+    "class_id": "C000224004",
+    "accession": "0000940400-26-009262",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "NTSI": {
+    "series_name": "WisdomTree International Efficient Core Fund",
+    "series_id": "S000071808",
+    "class_id": "C000227314",
+    "accession": "0000940400-26-009277",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "NTSE": {
+    "series_name": "WisdomTree Emerging Markets Efficient Core Fund",
+    "series_id": "S000071810",
+    "class_id": "C000227316",
+    "accession": "0000940400-26-009285",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WDNA": {
+    "series_name": "WisdomTree BioRevolution Fund",
+    "series_id": "S000071961",
+    "class_id": "C000227588",
+    "accession": "0000940400-26-009276",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WTAI": {
+    "series_name": "WisdomTree Artificial Intelligence and Innovation Fund",
+    "series_id": "S000074466",
+    "class_id": "C000232397",
+    "accession": "0000940400-26-009263",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "XC": {
+    "series_name": "WisdomTree True Emerging Markets Fund",
+    "series_id": "S000075976",
+    "class_id": "C000235377",
+    "accession": "0000940400-26-009269",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QGRW": {
+    "series_name": "WisdomTree U.S. Quality Growth Fund",
+    "series_id": "S000079066",
+    "class_id": "C000239901",
+    "accession": "0000940400-26-008984",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QMID": {
+    "series_name": "WisdomTree U.S. MidCap Quality Growth Fund",
+    "series_id": "S000083849",
+    "class_id": "C000247879",
+    "accession": "0000940400-26-008978",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "QSML": {
+    "series_name": "WisdomTree U.S. SmallCap Quality Growth Fund",
+    "series_id": "S000083850",
+    "class_id": "C000247880",
+    "accession": "0000940400-26-008999",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "INDH": {
+    "series_name": "WisdomTree India Hedged Equity Fund",
+    "series_id": "S000084313",
+    "class_id": "C000248668",
+    "accession": "0000940400-26-008766",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "GEOA": {
+    "series_name": "WisdomTree GeoAlpha Opportunities Fund",
+    "series_id": "S000093178",
+    "class_id": "C000261324",
+    "accession": "0000940400-26-008767",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WDGF": {
+    "series_name": "WisdomTree Global Defense Fund",
+    "series_id": "S000093464",
+    "class_id": "C000261749",
+    "accession": "0000940400-26-008778",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WDEF": {
+    "series_name": "WisdomTree Europe Defense Fund",
+    "series_id": "S000093465",
+    "class_id": "C000261750",
+    "accession": "0000940400-26-008758",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WDAF": {
+    "series_name": "WisdomTree Asia Defense Fund",
+    "series_id": "S000093466",
+    "class_id": "C000261751",
+    "accession": "0000940400-26-009010",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "WQTM": {
+    "series_name": "WisdomTree Quantum Computing Fund",
+    "series_id": "S000095648",
+    "class_id": "C000264379",
+    "accession": "0000940400-26-009264",
+    "date": "2026-02-27",
+    "trust_cik": "0001350487",
+    "trust_name": "WisdomTree Trust"
+  },
+  "CBON": {
+    "series_name": "VanEck China Bond ETF",
+    "series_id": "S000046742",
+    "class_id": "C000146000",
+    "accession": "0001410368-26-021136",
+    "date": "2026-03-02",
+    "trust_cik": "0001137360",
+    "trust_name": "VanEck ETF Trust"
+  },
+  "MLPA": {
+    "series_name": "Global X MLP ETF",
+    "series_id": "S000033201",
+    "class_id": "C000102168",
+    "accession": "0002048251-26-000828",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "MLPX": {
+    "series_name": "Global X MLP and Energy Infrastructure ETF",
+    "series_id": "S000040076",
+    "class_id": "C000124409",
+    "accession": "0002048251-26-000855",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "ALTY": {
+    "series_name": "Global X Alternative Income ETF",
+    "series_id": "S000049563",
+    "class_id": "C000156499",
+    "accession": "0002048251-26-000814",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "AGNG": {
+    "series_name": "Global X Aging Population ETF",
+    "series_id": "S000054162",
+    "class_id": "C000170216",
+    "accession": "0002048251-26-000837",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "MILN": {
+    "series_name": "Global X Millennial Consumer ETF",
+    "series_id": "S000054163",
+    "class_id": "C000170217",
+    "accession": "0002048251-26-000808",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "KRMA": {
+    "series_name": "Global X Conscious Companies ETF",
+    "series_id": "S000054297",
+    "class_id": "C000170551",
+    "accession": "0002048251-26-000806",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "FINX": {
+    "series_name": "Global X FinTech ETF",
+    "series_id": "S000054691",
+    "class_id": "C000171851",
+    "accession": "0002048251-26-000832",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "SNSR": {
+    "series_name": "Global X Internet of Things ETF",
+    "series_id": "S000054692",
+    "class_id": "C000171852",
+    "accession": "0002048251-26-000829",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "BOTZ": {
+    "series_name": "Global X Robotics &amp; Artificial Intelligence ETF",
+    "series_id": "S000054693",
+    "class_id": "C000171853",
+    "accession": "0002048251-26-000856",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "PAVE": {
+    "series_name": "Global X U.S. Infrastructure Development ETF",
+    "series_id": "S000056509",
+    "class_id": "C000178804",
+    "accession": "0002048251-26-000833",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "PFFD": {
+    "series_name": "Global X U.S. Preferred ETF",
+    "series_id": "S000058429",
+    "class_id": "C000191734",
+    "accession": "0002048251-26-000813",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "AIQ": {
+    "series_name": "Global X Artificial Intelligence &amp; Technology ETF",
+    "series_id": "S000061326",
+    "class_id": "C000198548",
+    "accession": "0002048251-26-000812",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "DRIV": {
+    "series_name": "Global X Autonomous &amp; Electric Vehicles ETF",
+    "series_id": "S000061415",
+    "class_id": "C000198888",
+    "accession": "0002048251-26-000822",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "QDIV": {
+    "series_name": "Global X S&amp;P 500 Quality Dividend ETF",
+    "series_id": "S000062094",
+    "class_id": "C000201047",
+    "accession": "0002048251-26-000823",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "AUSF": {
+    "series_name": "Global X Adaptive U.S. Factor ETF",
+    "series_id": "S000062672",
+    "class_id": "C000203262",
+    "accession": "0002048251-26-000850",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GNOM": {
+    "series_name": "Global X Genomics &amp; Biotechnology ETF",
+    "series_id": "S000062676",
+    "class_id": "C000203266",
+    "accession": "0002048251-26-000846",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "CLOU": {
+    "series_name": "Global X Cloud Computing ETF",
+    "series_id": "S000065121",
+    "class_id": "C000210838",
+    "accession": "0002048251-26-000816",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "HERO": {
+    "series_name": "Global X Video Games &amp; Esports ETF",
+    "series_id": "S000066518",
+    "class_id": "C000214539",
+    "accession": "0002048251-26-000817",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXDW": {
+    "series_name": "Global X Dorsey Wright Thematic ETF",
+    "series_id": "S000066527",
+    "class_id": "C000214548",
+    "accession": "0002048251-26-000838",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "BUG": {
+    "series_name": "Global X Cybersecurity ETF",
+    "series_id": "S000066713",
+    "class_id": "C000214985",
+    "accession": "0002048251-26-000815",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "EMBD": {
+    "series_name": "Global X Emerging Markets Bond ETF",
+    "series_id": "S000068582",
+    "class_id": "C000219481",
+    "accession": "0002048251-26-000824",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "PFFV": {
+    "series_name": "Global X Variable Rate Preferred ETF",
+    "series_id": "S000068631",
+    "class_id": "C000219547",
+    "accession": "0002048251-26-000836",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "HEAL": {
+    "series_name": "Global X HealthTech ETF",
+    "series_id": "S000069056",
+    "class_id": "C000220776",
+    "accession": "0002048251-26-000845",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "CTEC": {
+    "series_name": "Global X CleanTech ETF",
+    "series_id": "S000069640",
+    "class_id": "C000222117",
+    "accession": "0002048251-26-000827",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "DTCR": {
+    "series_name": "Global X Data Center &amp; Digital Infrastructure ETF",
+    "series_id": "S000069709",
+    "class_id": "C000222332",
+    "accession": "0002048251-26-000819",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "ONOF": {
+    "series_name": "Global X Adaptive U.S. Risk Management ETF",
+    "series_id": "S000070582",
+    "class_id": "C000224228",
+    "accession": "0002048251-26-000842",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "AQWA": {
+    "series_name": "Global X Clean Water ETF",
+    "series_id": "S000071326",
+    "class_id": "C000226290",
+    "accession": "0002048251-26-000830",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "KROP": {
+    "series_name": "Global X AgTech &amp; Food Innovation ETF",
+    "series_id": "S000072327",
+    "class_id": "C000228454",
+    "accession": "0002048251-26-000811",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "BKCH": {
+    "series_name": "Global X Blockchain ETF",
+    "series_id": "S000072329",
+    "class_id": "C000228456",
+    "accession": "0002048251-26-000807",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "HYDR": {
+    "series_name": "Global X Hydrogen ETF",
+    "series_id": "S000072330",
+    "class_id": "C000228457",
+    "accession": "0002048251-26-000853",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "IRVH": {
+    "series_name": "Global X Interest Rate Volatility &amp; Inflation Hedge ETF",
+    "series_id": "S000076386",
+    "class_id": "C000236197",
+    "accession": "0002048251-26-000809",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "EMM": {
+    "series_name": "Global X Emerging Markets ex-China ETF",
+    "series_id": "S000079056",
+    "class_id": "C000239891",
+    "accession": "0002048251-26-000810",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "EMC": {
+    "series_name": "Global X Emerging Markets Great Consumer ETF",
+    "series_id": "S000079059",
+    "class_id": "C000239894",
+    "accession": "0002048251-26-000840",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "FLOW": {
+    "series_name": "Global X U.S. Cash Flow Kings 100 ETF",
+    "series_id": "S000080575",
+    "class_id": "C000243084",
+    "accession": "0002048251-26-000826",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "CLIP": {
+    "series_name": "Global X 1-3 Month T-Bill ETF",
+    "series_id": "S000080638",
+    "class_id": "C000243154",
+    "accession": "0002048251-26-000839",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "NDIA": {
+    "series_name": "Global X India Active ETF",
+    "series_id": "S000080659",
+    "class_id": "C000243177",
+    "accession": "0002048251-26-000825",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "BRAZ": {
+    "series_name": "Global X Brazil Active ETF",
+    "series_id": "S000080660",
+    "class_id": "C000243178",
+    "accession": "0002048251-26-000847",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "SHLD": {
+    "series_name": "Global X Defense Tech ETF",
+    "series_id": "S000081193",
+    "class_id": "C000243865",
+    "accession": "0002048251-26-000841",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "IPAV": {
+    "series_name": "Global X Infrastructure Development ex-U.S. ETF",
+    "series_id": "S000085030",
+    "class_id": "C000249893",
+    "accession": "0002048251-26-000834",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "SLDR": {
+    "series_name": "Global X Short-Term Treasury Ladder ETF",
+    "series_id": "S000086495",
+    "class_id": "C000252057",
+    "accession": "0002048251-26-000820",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "MLDR": {
+    "series_name": "Global X Intermediate-Term Treasury Ladder ETF",
+    "series_id": "S000086496",
+    "class_id": "C000252058",
+    "accession": "0002048251-26-000849",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "LLDR": {
+    "series_name": "Global X Long-Term Treasury Ladder ETF",
+    "series_id": "S000086497",
+    "class_id": "C000252059",
+    "accession": "0002048251-26-000843",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXIG": {
+    "series_name": "Global X Investment Grade Corporate Bond ETF",
+    "series_id": "S000092942",
+    "class_id": "C000260992",
+    "accession": "0002048251-26-000852",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXPD": {
+    "series_name": "Global X PureCap MSCI Consumer Discretionary ETF",
+    "series_id": "S000093597",
+    "class_id": "C000261988",
+    "accession": "0002048251-26-000854",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXPC": {
+    "series_name": "Global X PureCap MSCI Communication Services ETF",
+    "series_id": "S000093598",
+    "class_id": "C000261989",
+    "accession": "0002048251-26-000821",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXPT": {
+    "series_name": "Global X PureCap MSCI Information Technology ETF",
+    "series_id": "S000093599",
+    "class_id": "C000261990",
+    "accession": "0002048251-26-000831",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXPS": {
+    "series_name": "Global X PureCap MSCI Consumer Staples ETF",
+    "series_id": "S000093600",
+    "class_id": "C000261991",
+    "accession": "0002048251-26-000851",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXPE": {
+    "series_name": "Global X PureCap MSCI Energy ETF",
+    "series_id": "S000093601",
+    "class_id": "C000261992",
+    "accession": "0002048251-26-000818",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "GXLC": {
+    "series_name": "Global X U.S. 500 ETF",
+    "series_id": "S000094852",
+    "class_id": "C000263398",
+    "accession": "0002048251-26-000835",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "CHPX": {
+    "series_name": "Global X AI Semiconductor &amp; Quantum ETF",
+    "series_id": "S000095265",
+    "class_id": "C000263974",
+    "accession": "0002048251-26-000848",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "LNGX": {
+    "series_name": "Global X U.S. Natural Gas ETF",
+    "series_id": "S000095934",
+    "class_id": "C000264716",
+    "accession": "0002048251-26-000844",
+    "date": "2026-01-29",
+    "trust_cik": "0001432353",
+    "trust_name": "Global X Funds"
+  },
+  "INDL": {
+    "series_name": "Direxion Daily MSCI India Bull 2X Shares",
+    "series_id": "S000022757",
+    "class_id": "C000065885",
+    "accession": "0001193125-25-333725",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "ERX": {
+    "series_name": "Direxion Daily Energy Bull 2X Shares",
+    "series_id": "S000022760",
+    "class_id": "C000065888",
+    "accession": "0001193125-25-333695",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "FAS": {
+    "series_name": "Direxion Daily Financial Bull 3X Shares",
+    "series_id": "S000022761",
+    "class_id": "C000065889",
+    "accession": "0001193125-25-333773",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DRN": {
+    "series_name": "Direxion Daily Real Estate Bull 3X Shares",
+    "series_id": "S000022762",
+    "class_id": "C000065890",
+    "accession": "0001193125-25-333785",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NAIL": {
+    "series_name": "Direxion Daily Homebuilders &amp; Supplies Bull 3X Shares",
+    "series_id": "S000022763",
+    "class_id": "C000065891",
+    "accession": "0001193125-25-333775",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SPXS": {
+    "series_name": "Direxion Daily S&amp;P 500 Bear 3X Shares",
+    "series_id": "S000022765",
+    "class_id": "C000065893",
+    "accession": "0001193125-25-333744",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SPXL": {
+    "series_name": "Direxion Daily S&amp;P 500 Bull 3X Shares",
+    "series_id": "S000022767",
+    "class_id": "C000065895",
+    "accession": "0001193125-25-333746",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TZA": {
+    "series_name": "Direxion Daily Small Cap Bear 3X Shares",
+    "series_id": "S000022770",
+    "class_id": "C000065898",
+    "accession": "0001193125-25-333755",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "EDZ": {
+    "series_name": "Direxion Daily MSCI Emerging Markets Bear 3X Shares",
+    "series_id": "S000022773",
+    "class_id": "C000065901",
+    "accession": "0001193125-25-333720",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "YANG": {
+    "series_name": "Direxion Daily FTSE China Bear 3X Shares",
+    "series_id": "S000022775",
+    "class_id": "C000065903",
+    "accession": "0001193125-25-333701",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MIDU": {
+    "series_name": "Direxion Daily Mid Cap Bull 3X Shares",
+    "series_id": "S000022778",
+    "class_id": "C000065906",
+    "accession": "0001193125-25-333721",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "ERY": {
+    "series_name": "Direxion Daily Energy Bear 2X Shares",
+    "series_id": "S000022780",
+    "class_id": "C000065908",
+    "accession": "0001193125-25-333698",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "FAZ": {
+    "series_name": "Direxion Daily Financial Bear 3X Shares",
+    "series_id": "S000022781",
+    "class_id": "C000065909",
+    "accession": "0001193125-25-333700",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DRV": {
+    "series_name": "Direxion Daily Real Estate Bear 3X Shares",
+    "series_id": "S000022782",
+    "class_id": "C000065910",
+    "accession": "0001193125-25-333741",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TNA": {
+    "series_name": "Direxion Daily Small Cap Bull 3X Shares",
+    "series_id": "S000022786",
+    "class_id": "C000065914",
+    "accession": "0001193125-25-333758",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "EDC": {
+    "series_name": "Direxion Daily MSCI Emerging Markets Bull 3X Shares",
+    "series_id": "S000022789",
+    "class_id": "C000065917",
+    "accession": "0001193125-25-333722",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "YINN": {
+    "series_name": "Direxion Daily FTSE China Bull 3X Shares",
+    "series_id": "S000022791",
+    "class_id": "C000065919",
+    "accession": "0001193125-25-333703",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TECL": {
+    "series_name": "Direxion Daily Technology Bull 3X Shares",
+    "series_id": "S000023809",
+    "class_id": "C000070000",
+    "accession": "0001193125-25-333756",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TECS": {
+    "series_name": "Direxion Daily Technology Bear 3X Shares",
+    "series_id": "S000023810",
+    "class_id": "C000070001",
+    "accession": "0001193125-25-333757",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TYD": {
+    "series_name": "Direxion Daily 7-10 Year Treasury Bull 3X Shares",
+    "series_id": "S000025255",
+    "class_id": "C000075251",
+    "accession": "0001193125-25-333676",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TYO": {
+    "series_name": "Direxion Daily 7-10 Year Treasury Bear 3X Shares",
+    "series_id": "S000025256",
+    "class_id": "C000075252",
+    "accession": "0001193125-25-333675",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TMF": {
+    "series_name": "Direxion Daily 20+ Year Treasury Bull 3X Shares",
+    "series_id": "S000025257",
+    "class_id": "C000075253",
+    "accession": "0001193125-25-333672",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TMV": {
+    "series_name": "Direxion Daily 20+ Year Treasury Bear 3X Shares",
+    "series_id": "S000025258",
+    "class_id": "C000075254",
+    "accession": "0001193125-25-333671",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "UTSL": {
+    "series_name": "Direxion Daily Utilities Bull 3X Shares",
+    "series_id": "S000027476",
+    "class_id": "C000082787",
+    "accession": "0001193125-25-333789",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "WANT": {
+    "series_name": "Direxion Daily Consumer Discretionary Bull 3X Shares",
+    "series_id": "S000027484",
+    "class_id": "C000082795",
+    "accession": "0001193125-25-333780",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "CURE": {
+    "series_name": "Direxion Daily Healthcare Bull 3X Shares",
+    "series_id": "S000027486",
+    "class_id": "C000082797",
+    "accession": "0001193125-25-333705",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "RETL": {
+    "series_name": "Direxion Daily Retail Bull 3X Shares",
+    "series_id": "S000027487",
+    "class_id": "C000082798",
+    "accession": "0001193125-25-333784",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SOXL": {
+    "series_name": "Direxion Daily Semiconductor Bull 3X Shares",
+    "series_id": "S000027920",
+    "class_id": "C000084845",
+    "accession": "0001193125-25-333788",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SOXS": {
+    "series_name": "Direxion Daily Semiconductor Bear 3X Shares",
+    "series_id": "S000027921",
+    "class_id": "C000084846",
+    "accession": "0001193125-25-333750",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SPUU": {
+    "series_name": "Direxion Daily S&amp;P 500 Bull 2X Shares",
+    "series_id": "S000027922",
+    "class_id": "C000084847",
+    "accession": "0001193125-25-333747",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NUGT": {
+    "series_name": "Direxion Daily Gold Miners Index Bull 2X Shares",
+    "series_id": "S000029338",
+    "class_id": "C000090181",
+    "accession": "0001193125-25-333704",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DPST": {
+    "series_name": "Direxion Daily Regional Banks Bull 3X Shares",
+    "series_id": "S000029341",
+    "class_id": "C000090184",
+    "accession": "0001193125-25-333787",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "BRZU": {
+    "series_name": "Direxion Daily MSCI Brazil Bull 2X Shares",
+    "series_id": "S000029346",
+    "class_id": "C000090189",
+    "accession": "0001193125-25-333723",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DUST": {
+    "series_name": "Direxion Daily Gold Miners Index Bear 2X Shares",
+    "series_id": "S000029348",
+    "class_id": "C000090191",
+    "accession": "0001193125-25-333702",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "KORU": {
+    "series_name": "Direxion Daily MSCI South Korea Bull 3X Shares",
+    "series_id": "S000029358",
+    "class_id": "C000090201",
+    "accession": "0001193125-25-333727",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SPDN": {
+    "series_name": "Direxion Daily S&amp;P 500 Bear 1X Shares",
+    "series_id": "S000031292",
+    "class_id": "C000097007",
+    "accession": "0001193125-25-333743",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "QQQE": {
+    "series_name": "Direxion NASDAQ-100 Equal Weighted Index Shares",
+    "series_id": "S000033634",
+    "class_id": "C000103352",
+    "accession": "0001193125-25-333791",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "JNUG": {
+    "series_name": "Direxion Daily Junior Gold Miners Index Bull 2X Shares",
+    "series_id": "S000034516",
+    "class_id": "C000106084",
+    "accession": "0001193125-25-333711",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "JDST": {
+    "series_name": "Direxion Daily Junior Gold Miners Index Bear 2X Shares",
+    "series_id": "S000034517",
+    "class_id": "C000106085",
+    "accession": "0001193125-25-333709",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "EURL": {
+    "series_name": "Direxion Daily FTSE Europe Bull 3X Shares",
+    "series_id": "S000038649",
+    "class_id": "C000119158",
+    "accession": "0001193125-25-333707",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "CHAU": {
+    "series_name": "Direxion Daily CSI 300 China A Share Bull 2X Shares",
+    "series_id": "S000048742",
+    "class_id": "C000153531",
+    "accession": "0001193125-25-333690",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "LABU": {
+    "series_name": "Direxion Daily S&amp;P Biotech Bull 3X Shares",
+    "series_id": "S000049373",
+    "class_id": "C000156149",
+    "accession": "0001193125-25-333792",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "LABD": {
+    "series_name": "Direxion Daily S&amp;P Biotech Bear 3X Shares",
+    "series_id": "S000049374",
+    "class_id": "C000156150",
+    "accession": "0001193125-25-333748",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "GUSH": {
+    "series_name": "Direxion Daily S&amp;P Oil &amp; Gas Exp. &amp; Prod. Bull 2X Shares",
+    "series_id": "S000049375",
+    "class_id": "C000156151",
+    "accession": "0001193125-25-333776",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DRIP": {
+    "series_name": "Direxion Daily S&amp;P Oil &amp; Gas Exp. &amp; Prod. Bear 2X Shares",
+    "series_id": "S000049376",
+    "class_id": "C000156152",
+    "accession": "0001193125-25-333749",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "PILL": {
+    "series_name": "Direxion Daily Pharmaceutical &amp; Medical Bull 3X Shares",
+    "series_id": "S000050532",
+    "class_id": "C000159441",
+    "accession": "0001193125-25-333783",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "COM": {
+    "series_name": "Direxion Auspice Broad Commodity Strategy ETF",
+    "series_id": "S000054803",
+    "class_id": "C000172242",
+    "accession": "0001193125-25-333781",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "CWEB": {
+    "series_name": "Direxion Daily CSI China Internet Index Bull 2X Shares",
+    "series_id": "S000055198",
+    "class_id": "C000173593",
+    "accession": "0001193125-25-333696",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TPOR": {
+    "series_name": "Direxion Daily Transportation Bull 3X Shares",
+    "series_id": "S000057169",
+    "class_id": "C000181590",
+    "accession": "0001193125-25-333786",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MEXX": {
+    "series_name": "Direxion Daily MSCI Mexico Bull 3X Shares",
+    "series_id": "S000057175",
+    "class_id": "C000181596",
+    "accession": "0001193125-25-333724",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DFEN": {
+    "series_name": "Direxion Daily Aerospace &amp; Defense Bull 3X Shares",
+    "series_id": "S000057185",
+    "class_id": "C000181606",
+    "accession": "0001193125-25-333774",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "DUSL": {
+    "series_name": "Direxion Daily Industrials Bull 3X Shares",
+    "series_id": "S000057187",
+    "class_id": "C000181608",
+    "accession": "0001193125-25-333706",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "UBOT": {
+    "series_name": "Direxion Daily Robotics, Artificial Intelligence &amp; Automation Index Bull 2x Shares",
+    "series_id": "S000061746",
+    "class_id": "C000199973",
+    "accession": "0001193125-25-333740",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "HIBL": {
+    "series_name": "Direxion Daily S&amp;P 500 High Beta Bull 3X Shares",
+    "series_id": "S000066279",
+    "class_id": "C000214055",
+    "accession": "0001193125-25-333782",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "HIBS": {
+    "series_name": "Direxion Daily S&amp;P 500 High Beta Bear 3X Shares",
+    "series_id": "S000066280",
+    "class_id": "C000214056",
+    "accession": "0001193125-25-333745",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "WEBL": {
+    "series_name": "Direxion Daily Dow Jones Internet Bull 3X Shares",
+    "series_id": "S000066281",
+    "class_id": "C000214057",
+    "accession": "0001193125-25-333777",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "WEBS": {
+    "series_name": "Direxion Daily Dow Jones Internet Bear 3X Shares",
+    "series_id": "S000066282",
+    "class_id": "C000214058",
+    "accession": "0001193125-25-333697",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSLS": {
+    "series_name": "Direxion Daily TSLA Bear 1X Shares",
+    "series_id": "S000071019",
+    "class_id": "C000225448",
+    "accession": "0001193125-25-333761",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "FNGG": {
+    "series_name": "Direxion Daily NYSE FANG+ Bull 2X Shares",
+    "series_id": "S000071020",
+    "class_id": "C000225449",
+    "accession": "0001193125-25-333779",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSLL": {
+    "series_name": "Direxion Daily TSLA Bull 2X Shares",
+    "series_id": "S000072483",
+    "class_id": "C000228774",
+    "accession": "0001193125-25-333762",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "METD": {
+    "series_name": "Direxion Daily META Bear 1X Shares",
+    "series_id": "S000076230",
+    "class_id": "C000235740",
+    "accession": "0001193125-25-333718",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AAPU": {
+    "series_name": "Direxion Daily AAPL Bull 2X Shares",
+    "series_id": "S000076233",
+    "class_id": "C000235743",
+    "accession": "0001193125-25-333674",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MSFU": {
+    "series_name": "Direxion Daily MSFT Bull 2X Shares",
+    "series_id": "S000076235",
+    "class_id": "C000235745",
+    "accession": "0001193125-25-333728",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AMZU": {
+    "series_name": "Direxion Daily AMZN Bull 2X Shares",
+    "series_id": "S000076237",
+    "class_id": "C000235747",
+    "accession": "0001193125-25-333678",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "GGLL": {
+    "series_name": "Direxion Daily GOOGL Bull 2X Shares",
+    "series_id": "S000076239",
+    "class_id": "C000235749",
+    "accession": "0001193125-25-333708",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AAPD": {
+    "series_name": "Direxion Daily AAPL Bear 1X Shares",
+    "series_id": "S000076244",
+    "class_id": "C000235754",
+    "accession": "0001193125-25-333673",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MSFD": {
+    "series_name": "Direxion Daily MSFT Bear 1X Shares",
+    "series_id": "S000076245",
+    "class_id": "C000235755",
+    "accession": "0001193125-25-333726",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AMZD": {
+    "series_name": "Direxion Daily AMZN Bear 1X Shares",
+    "series_id": "S000076246",
+    "class_id": "C000235756",
+    "accession": "0001193125-25-333681",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "GGLS": {
+    "series_name": "Direxion Daily GOOGL Bear 1X Shares",
+    "series_id": "S000076247",
+    "class_id": "C000235757",
+    "accession": "0001193125-25-333710",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NVDD": {
+    "series_name": "Direxion Daily NVDA Bear 1X Shares",
+    "series_id": "S000076248",
+    "class_id": "C000235758",
+    "accession": "0001193125-25-333738",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "LMBO": {
+    "series_name": "Direxion Daily Crypto Industry Bull 2X Shares",
+    "series_id": "S000078170",
+    "class_id": "C000238924",
+    "accession": "0001193125-25-333778",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "REKT": {
+    "series_name": "Direxion Daily Crypto Industry Bear 1X Shares",
+    "series_id": "S000078171",
+    "class_id": "C000238925",
+    "accession": "0001193125-25-333687",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "HCMT": {
+    "series_name": "Direxion HCM Tactical Enhanced US ETF",
+    "series_id": "S000080459",
+    "class_id": "C000242864",
+    "accession": "0001193125-25-333790",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NVDU": {
+    "series_name": "Direxion Daily NVDA Bull 2X Shares",
+    "series_id": "S000081684",
+    "class_id": "C000244619",
+    "accession": "0001193125-25-333733",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AIBU": {
+    "series_name": "Direxion Daily AI and Big Data Bull 2X Shares",
+    "series_id": "S000083879",
+    "class_id": "C000247964",
+    "accession": "0001193125-25-333772",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AIBD": {
+    "series_name": "Direxion Daily AI and Big Data Bear 2X Shares",
+    "series_id": "S000083880",
+    "class_id": "C000247965",
+    "accession": "0001193125-25-333679",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "QQQD": {
+    "series_name": "Direxion Daily Magnificent 7 Bear 1X Shares",
+    "series_id": "S000084216",
+    "class_id": "C000248489",
+    "accession": "0001193125-25-333716",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "QQQU": {
+    "series_name": "Direxion Daily Magnificent 7 Bull 2X Shares",
+    "series_id": "S000084217",
+    "class_id": "C000248490",
+    "accession": "0001193125-25-333715",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "METU": {
+    "series_name": "Direxion Daily META Bull 2X Shares",
+    "series_id": "S000085276",
+    "class_id": "C000250248",
+    "accession": "0001193125-25-333719",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "URAA": {
+    "series_name": "Direxion Daily Uranium Industry Bull 2X Shares",
+    "series_id": "S000085277",
+    "class_id": "C000250249",
+    "accession": "0001193125-25-333764",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AMUU": {
+    "series_name": "Direxion Daily AMD Bull 2X Shares",
+    "series_id": "S000088048",
+    "class_id": "C000254076",
+    "accession": "0001193125-25-333680",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "ELIS": {
+    "series_name": "Direxion Daily LLY Bear 1X Shares",
+    "series_id": "S000088049",
+    "class_id": "C000254077",
+    "accession": "0001193125-25-333712",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MUU": {
+    "series_name": "Direxion Daily MU Bull 2X Shares",
+    "series_id": "S000088050",
+    "class_id": "C000254078",
+    "accession": "0001193125-25-333730",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "MUD": {
+    "series_name": "Direxion Daily MU Bear 1X Shares",
+    "series_id": "S000088051",
+    "class_id": "C000254079",
+    "accession": "0001193125-25-333729",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NFXL": {
+    "series_name": "Direxion Daily NFLX Bull 2X Shares",
+    "series_id": "S000088052",
+    "class_id": "C000254080",
+    "accession": "0001193125-25-333732",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "NFXS": {
+    "series_name": "Direxion Daily NFLX Bear 1X Shares",
+    "series_id": "S000088053",
+    "class_id": "C000254081",
+    "accession": "0001193125-25-333731",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "PLTU": {
+    "series_name": "Direxion Daily PLTR Bull 2X Shares",
+    "series_id": "S000088054",
+    "class_id": "C000254082",
+    "accession": "0001193125-25-333737",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "PLTD": {
+    "series_name": "Direxion Daily PLTR Bear 1X Shares",
+    "series_id": "S000088055",
+    "class_id": "C000254083",
+    "accession": "0001193125-25-333735",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSMX": {
+    "series_name": "Direxion Daily TSM Bull 2X Shares",
+    "series_id": "S000088056",
+    "class_id": "C000254084",
+    "accession": "0001193125-25-333766",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSMZ": {
+    "series_name": "Direxion Daily TSM Bear 1X Shares",
+    "series_id": "S000088057",
+    "class_id": "C000254085",
+    "accession": "0001193125-25-333763",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AMDD": {
+    "series_name": "Direxion Daily AMD Bear 1X Shares",
+    "series_id": "S000088058",
+    "class_id": "C000254086",
+    "accession": "0001193125-25-333677",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AVL": {
+    "series_name": "Direxion Daily AVGO Bull 2X Shares",
+    "series_id": "S000088059",
+    "class_id": "C000254087",
+    "accession": "0001193125-25-333692",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "AVS": {
+    "series_name": "Direxion Daily AVGO Bear 1X Shares",
+    "series_id": "S000088060",
+    "class_id": "C000254088",
+    "accession": "0001193125-25-333682",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "BOEU": {
+    "series_name": "Direxion Daily BA Bull 2X Shares",
+    "series_id": "S000088061",
+    "class_id": "C000254089",
+    "accession": "0001193125-25-333691",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "BOED": {
+    "series_name": "Direxion Daily BA Bear 1X Shares",
+    "series_id": "S000088062",
+    "class_id": "C000254090",
+    "accession": "0001193125-25-333683",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "BRKU": {
+    "series_name": "Direxion Daily BRKB Bull 2X Shares",
+    "series_id": "S000088063",
+    "class_id": "C000254091",
+    "accession": "0001193125-25-333685",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "BRKD": {
+    "series_name": "Direxion Daily BRKB Bear 1X Shares",
+    "series_id": "S000088064",
+    "class_id": "C000254092",
+    "accession": "0001193125-25-333684",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "ELIL": {
+    "series_name": "Direxion Daily LLY Bull 2X Shares",
+    "series_id": "S000088065",
+    "class_id": "C000254093",
+    "accession": "0001193125-25-333713",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "PALD": {
+    "series_name": "Direxion Daily PANW Bear 1X Shares",
+    "series_id": "S000090368",
+    "class_id": "C000257376",
+    "accession": "0001193125-25-333736",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "QCMU": {
+    "series_name": "Direxion Daily QCOM Bull 2X ETF",
+    "series_id": "S000090369",
+    "class_id": "C000257377",
+    "accession": "0001193125-25-333739",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "QCMD": {
+    "series_name": "Direxion Daily QCOM Bear 1X ETF",
+    "series_id": "S000090370",
+    "class_id": "C000257378",
+    "accession": "0001193125-25-333742",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "XOMX": {
+    "series_name": "Direxion Daily XOM Bull 2X Shares",
+    "series_id": "S000090373",
+    "class_id": "C000257381",
+    "accession": "0001193125-25-333767",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "XOMZ": {
+    "series_name": "Direxion Daily XOM Bear 1X Shares",
+    "series_id": "S000090374",
+    "class_id": "C000257382",
+    "accession": "0001193125-25-333765",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "CSCL": {
+    "series_name": "Direxion Daily CSCO Bull 2X ETF",
+    "series_id": "S000090378",
+    "class_id": "C000257386",
+    "accession": "0001193125-25-333686",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "CSCS": {
+    "series_name": "Direxion Daily CSCO Bear 1X ETF",
+    "series_id": "S000090379",
+    "class_id": "C000257387",
+    "accession": "0001193125-25-333689",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "LMTL": {
+    "series_name": "Direxion Daily LMT Bull 2X ETF",
+    "series_id": "S000090380",
+    "class_id": "C000257388",
+    "accession": "0001193125-25-333714",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "LMTS": {
+    "series_name": "Direxion Daily LMT Bear 1X ETF",
+    "series_id": "S000090381",
+    "class_id": "C000257389",
+    "accession": "0001193125-25-333717",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "PALU": {
+    "series_name": "Direxion Daily PANW Bull 2X Shares",
+    "series_id": "S000090382",
+    "class_id": "C000257390",
+    "accession": "0001193125-25-333734",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "FRDU": {
+    "series_name": "Direxion Daily F Bull 2X ETF",
+    "series_id": "S000092882",
+    "class_id": "C000260932",
+    "accession": "0001193125-25-333699",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "FRDD": {
+    "series_name": "Direxion Daily F Bear 1X ETF",
+    "series_id": "S000092883",
+    "class_id": "C000260933",
+    "accession": "0001193125-25-333694",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SHPU": {
+    "series_name": "Direxion Daily SHOP Bull 2X ETF",
+    "series_id": "S000092901",
+    "class_id": "C000260951",
+    "accession": "0001193125-25-333754",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SHPD": {
+    "series_name": "Direxion Daily SHOP Bear 1X ETF",
+    "series_id": "S000092902",
+    "class_id": "C000260952",
+    "accession": "0001193125-25-333753",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSXU": {
+    "series_name": "Direxion Daily Semiconductors Top 5 Bull 2X ETF",
+    "series_id": "S000092910",
+    "class_id": "C000260960",
+    "accession": "0001193125-25-333751",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TSXD": {
+    "series_name": "Direxion Daily Semiconductors Top 5 Bear 2X ETF",
+    "series_id": "S000092911",
+    "class_id": "C000260961",
+    "accession": "0001193125-25-333752",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TBXU": {
+    "series_name": "Direxion Daily Biotech Top 5 Bull 2X ETF",
+    "series_id": "S000092912",
+    "class_id": "C000260962",
+    "accession": "0001193125-25-333688",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TEXU": {
+    "series_name": "Direxion Daily Energy Top 5 Bull 2X ETF",
+    "series_id": "S000092921",
+    "class_id": "C000260971",
+    "accession": "0001193125-25-333693",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TTXU": {
+    "series_name": "Direxion Daily Technology Top 5 Bull 2X ETF",
+    "series_id": "S000092934",
+    "class_id": "C000260984",
+    "accession": "0001193125-25-333759",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "TTXD": {
+    "series_name": "Direxion Daily Technology Top 5 Bear 2X ETF",
+    "series_id": "S000092935",
+    "class_id": "C000260985",
+    "accession": "0001193125-25-333760",
+    "date": "2025-12-29",
+    "trust_cik": "0001424958",
+    "trust_name": "Direxion Shares ETF Trust"
+  },
+  "SPEU": {
+    "series_name": "SPDR(R) Portfolio Europe ETF",
+    "series_id": "S000006391",
+    "class_id": "C000017549",
+    "accession": "0001410368-26-019991",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "FEZ": {
+    "series_name": "SPDR(R) EURO STOXX 50(R) ETF",
+    "series_id": "S000006392",
+    "class_id": "C000017550",
+    "accession": "0001410368-26-020022",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "SPDW": {
+    "series_name": "SPDR Portfolio Developed World ex- US ETF",
+    "series_id": "S000014038",
+    "class_id": "C000038337",
+    "accession": "0001410368-26-020145",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "GWX": {
+    "series_name": "SPDR(R) S&amp;P(R) International Small Cap ETF",
+    "series_id": "S000014039",
+    "class_id": "C000038338",
+    "accession": "0001410368-26-020049",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "RWX": {
+    "series_name": "SPDR(R) Dow Jones International Real Estate ETF",
+    "series_id": "S000014040",
+    "class_id": "C000038339",
+    "accession": "0001410368-26-020120",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "GII": {
+    "series_name": "SPDR(R) S&amp;P GLOBAL INFRASTRUCTURE ETF",
+    "series_id": "S000014041",
+    "class_id": "C000038340",
+    "accession": "0001410368-26-019982",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "CWI": {
+    "series_name": "SPDR(R) MSCI ACWI EX-US ETF",
+    "series_id": "S000014042",
+    "class_id": "C000038341",
+    "accession": "0001410368-26-020111",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "GMF": {
+    "series_name": "SPDR(R) S&amp;P(R) EMERGING ASIA PACIFIC ETF",
+    "series_id": "S000014046",
+    "class_id": "C000038345",
+    "accession": "0001410368-26-020010",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "GXC": {
+    "series_name": "SPDR(R) S&amp;P(R) CHINA ETF",
+    "series_id": "S000014047",
+    "class_id": "C000038346",
+    "accession": "0001410368-26-020172",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "SPEM": {
+    "series_name": "SPDR Portfolio Emerging Markets ETF",
+    "series_id": "S000014048",
+    "class_id": "C000038347",
+    "accession": "0001410368-26-020003",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "DWX": {
+    "series_name": "SPDR (R) S&amp;P (R) International Dividend ETF",
+    "series_id": "S000020665",
+    "class_id": "C000057694",
+    "accession": "0001410368-26-020056",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "EWX": {
+    "series_name": "SPDR(R) S&amp;P(R) EMERGING MARKETS SMALL CAP ETF",
+    "series_id": "S000021247",
+    "class_id": "C000060582",
+    "accession": "0001410368-26-020079",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "RWO": {
+    "series_name": "SPDR(R) Dow Jones Global Real Estate ETF",
+    "series_id": "S000021764",
+    "class_id": "C000062489",
+    "accession": "0001410368-26-020019",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "GNR": {
+    "series_name": "SPDR(R) S&amp;P(R) Global Natural Resources ETF",
+    "series_id": "S000030037",
+    "class_id": "C000092104",
+    "accession": "0001410368-26-019979",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "EDIV": {
+    "series_name": "SPDR(R) S&amp;P(R) Emerging Markets Dividend ETF",
+    "series_id": "S000031174",
+    "class_id": "C000096745",
+    "accession": "0001410368-26-019997",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "SPGM": {
+    "series_name": "SPDR(R) Portfolio MSCI Global Stock Market ETF",
+    "series_id": "S000036082",
+    "class_id": "C000110424",
+    "accession": "0001410368-26-020054",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "WDIV": {
+    "series_name": "SPDR S&amp;P Global Dividend ETF",
+    "series_id": "S000040740",
+    "class_id": "C000126352",
+    "accession": "0001410368-26-019994",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "QEFA": {
+    "series_name": "SPDR MSCI EAFE StrategicFactors ETF",
+    "series_id": "S000045386",
+    "class_id": "C000141272",
+    "accession": "0001410368-26-020031",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "QEMM": {
+    "series_name": "SPDR MSCI Emerging Markets StrategicFactors ETF",
+    "series_id": "S000045387",
+    "class_id": "C000141273",
+    "accession": "0001410368-26-020102",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "QWLD": {
+    "series_name": "SPDR MSCI World StrategicFactors ETF",
+    "series_id": "S000045388",
+    "class_id": "C000141274",
+    "accession": "0001410368-26-019984",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "NZAC": {
+    "series_name": "SPDR MSCI ACWI Climate Paris Aligned ETF",
+    "series_id": "S000047509",
+    "class_id": "C000149166",
+    "accession": "0001410368-26-020026",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "NANR": {
+    "series_name": "SPDR S&amp;P North American Natural Resources ETF",
+    "series_id": "S000052050",
+    "class_id": "C000163789",
+    "accession": "0001410368-26-020113",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "EFAX": {
+    "series_name": "SPDR MSCI EAFE Fossil Fuel Reserves Free ETF",
+    "series_id": "S000053083",
+    "class_id": "C000167041",
+    "accession": "0001410368-26-019988",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "EEMX": {
+    "series_name": "SPDR MSCI Emerging Markets Fossil Fuel Reserves Free ETF",
+    "series_id": "S000053084",
+    "class_id": "C000167042",
+    "accession": "0001410368-26-020047",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  },
+  "XCNY": {
+    "series_name": "SPDR S&amp;P Emerging Markets ex-China ETF",
+    "series_id": "S000087668",
+    "class_id": "C000253543",
+    "accession": "0001410368-26-019974",
+    "date": "2026-02-26",
+    "trust_cik": "0001168164",
+    "trust_name": "SPDR Series Trust"
+  }
+}

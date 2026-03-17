@@ -81,7 +81,11 @@
             text-align: left; font-weight: 600; font-size: 11px;
             text-transform: uppercase; letter-spacing: 0.5px;
             position: sticky; top: 0; z-index: 5;
+            cursor: pointer; user-select: none;
         }
+        .data-table th:hover { color: var(--accent); }
+        .data-table th .sort-arrow { font-size: 10px; margin-left: 3px; opacity: 0.4; }
+        .data-table th .sort-arrow.active { opacity: 1; color: var(--accent); }
         .data-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
         .data-table tr:hover td { background: rgba(52,152,219,0.08); }
         .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -112,6 +116,10 @@
         .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
         .badge-blue { background: rgba(52,152,219,0.2); color: var(--accent); }
         .badge-green { background: rgba(46,204,113,0.2); color: var(--accent2); }
+        .badge-ok { background: rgba(46,204,113,0.2); color: var(--accent2); }
+        .badge-critical { background: rgba(231,76,60,0.2); color: var(--accent3); }
+        .badge-warning { background: rgba(243,156,18,0.2); color: var(--accent4); }
+        .badge-info { background: rgba(52,152,219,0.2); color: var(--accent); }
         /* Company detail panel */
         .company-panel {
             background: var(--bg2); border: 1px solid var(--accent);
@@ -196,7 +204,7 @@
         .metric-ms-dd {
             display: none; position: absolute; top: 100%; left: 0; z-index: 100;
             background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 220px; max-height: 360px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 220px; max-height: 500px;
             overflow-y: auto; padding: 4px 0; margin-top: 2px;
         }
         .metric-ms-dd.open { display: block; }
@@ -318,9 +326,111 @@
             font-size: 11px; color: var(--text2); margin-bottom: 12px;
         }
         .legend-bar .legend-item { display: flex; align-items: center; gap: 4px; }
+
+        /* Filter Panels (cross-filter) */
+        .kpi-card.filter-active { border-color: var(--accent); box-shadow: 0 0 8px rgba(52,152,219,0.3); }
+        .kpi-card .filter-indicator { font-size: 10px; color: var(--accent); margin-top: 2px; }
+        .filter-panels { margin-bottom: 10px; }
+        .filter-panel {
+            background: var(--bg2); border: 1px solid var(--accent); border-radius: 10px;
+            padding: 12px 16px; margin-bottom: 10px; display: none;
+            animation: filterSlideDown 0.2s ease;
+        }
+        @keyframes filterSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-panel.open { display: block; }
+        .filter-panel-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;
+        }
+        .filter-panel-header input {
+            flex: 1; max-width: 300px; background: var(--bg3); border: 1px solid var(--border);
+            color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12px;
+        }
+        .filter-panel-header input:focus { outline: none; border-color: var(--accent); }
+        .filter-panel-header input::placeholder { color: #555; }
+        .filter-panel-actions { display: flex; gap: 6px; }
+        .filter-panel-actions button {
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+            padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+        }
+        .filter-panel-actions button:hover { border-color: var(--accent); color: var(--accent); }
+        .filter-panel-items {
+            display: flex; flex-wrap: wrap; gap: 5px;
+            max-height: 220px; overflow-y: auto; padding: 2px 0;
+        }
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 14px; font-size: 11px;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+            background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+        }
+        .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+        .filter-chip.selected {
+            background: rgba(52,152,219,0.2); border-color: var(--accent); color: var(--accent); font-weight: 600;
+        }
+        .filter-chip .chip-count { opacity: 0.6; font-size: 10px; }
+        .active-filters-bar {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 14px; margin-bottom: 10px;
+            display: none; flex-wrap: wrap; gap: 6px; align-items: center;
+        }
+        .active-filters-bar.visible { display: flex; }
+        .active-filters-bar .af-label { font-size: 11px; color: var(--text2); margin-right: 4px; }
+        .active-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px 3px 10px; border-radius: 12px; font-size: 11px;
+            background: rgba(52,152,219,0.15); color: var(--accent); cursor: pointer; transition: all 0.15s;
+        }
+        .active-tag:hover { background: rgba(231,76,60,0.15); color: var(--accent3); }
+        .active-tag .at-x { font-weight: bold; font-size: 13px; line-height: 1; }
+        .btn-clear-filters {
+            background: none; border: 1px solid var(--border); color: var(--text2);
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; margin-left: auto;
+        }
+        .btn-clear-filters:hover { border-color: var(--accent3); color: var(--accent3); }
+
+        /* Loading overlay & shimmer */
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(15,25,35,0.85);
+            z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            transition: opacity 0.4s; opacity: 1;
+        }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loading-spinner {
+            width: 48px; height: 48px; border: 4px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 16px; color: var(--text2); font-size: 14px; }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .kpi-card .value.loading {
+            background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            color: transparent; border-radius: 4px;
+            min-width: 50px; display: inline-block;
+        }
+        .table-loading {
+            text-align: center; padding: 40px; color: var(--text2);
+        }
+        .table-loading .mini-spinner {
+            display: inline-block; width: 24px; height: 24px;
+            border: 3px solid var(--border); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            vertical-align: middle; margin-right: 10px;
+        }
     </style>
 </head>
 <body>
+<div class="loading-overlay" id="page-loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Carregando dados financeiros...</div>
+</div>
 <div class="container">
     <!-- Header -->
     <div class="header">
@@ -330,6 +440,7 @@
         </div>
         <div class="header-actions">
             <a href="/metodologias" class="btn-nav" style="opacity:0.7;font-size:11px" title="Metodologias de cálculo">📖</a>
+            <a href="/data-consistency" class="btn-nav">🔍 Consistência</a>
             <a href="/analise-setor" class="btn-nav">📊 Análise Setor</a>
             <a href="/data-yahoo" class="btn-nav">← Yahoo Dashboard</a>
             <a href="/" class="btn-nav">🏠 Home</a>
@@ -338,11 +449,56 @@
 
     <!-- KPIs -->
     <div class="kpi-row" id="kpi-row">
-        <div class="kpi-card clickable" onclick="drillHistCompanies({})"><div class="value" id="kpi-records">—</div><div class="label">Registros</div></div>
-        <div class="kpi-card green clickable" onclick="drillHistCompanies({})"><div class="value" id="kpi-companies">—</div><div class="label">Empresas</div></div>
-        <div class="kpi-card orange clickable" onclick="drillHistYears()"><div class="value" id="kpi-years">—</div><div class="label">Período</div></div>
-        <div class="kpi-card purple clickable" onclick="drillHistCurrencies()"><div class="value" id="kpi-currencies">—</div><div class="label">Moedas</div></div>
-        <div class="kpi-card clickable" onclick="drillHistCompanies({has_ev:'1'})"><div class="value" id="kpi-ev">—</div><div class="label">Com EV</div></div>
+        <div class="kpi-card clickable" onclick="drillHistCompanies(buildHistDrillParams())"><div class="value" id="kpi-records">—</div><div class="label">Registros</div></div>
+        <div class="kpi-card green clickable" onclick="drillHistCompanies(buildHistDrillParams())"><div class="value" id="kpi-companies">—</div><div class="label">Empresas</div></div>
+        <div class="kpi-card clickable" id="kpi-card-sectors" onclick="toggleHistFilterPanel('sectors')"><div class="value" id="kpi-sectors">—</div><div class="label">Setores</div><div class="filter-indicator" id="kpi-sectors-indicator"></div></div>
+        <div class="kpi-card orange clickable" id="kpi-card-industries" onclick="toggleHistFilterPanel('industries')"><div class="value" id="kpi-industries">—</div><div class="label">Indústrias</div><div class="filter-indicator" id="kpi-industries-indicator"></div></div>
+        <div class="kpi-card purple clickable" id="kpi-card-countries" onclick="toggleHistFilterPanel('countries')"><div class="value" id="kpi-countries">—</div><div class="label">Países</div><div class="filter-indicator" id="kpi-countries-indicator"></div></div>
+        <div class="kpi-card clickable" onclick="drillHistYears()"><div class="value" id="kpi-years">—</div><div class="label">Período</div></div>
+        <div class="kpi-card clickable" onclick="drillHistCurrencies()"><div class="value" id="kpi-currencies">—</div><div class="label">Moedas</div></div>
+        <div class="kpi-card clickable" onclick="drillHistCompanies({...buildHistDrillParams(), has_ev:'1'})"><div class="value" id="kpi-ev">—</div><div class="label">Com EV</div></div>
+    </div>
+
+    <!-- Active Filters Bar -->
+    <div class="active-filters-bar" id="hist-active-filters-bar">
+        <span class="af-label">Filtros:</span>
+    </div>
+
+    <!-- Filter Panels -->
+    <div class="filter-panels">
+        <div class="filter-panel" id="hist-filter-panel-sectors">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar setor..." oninput="histFilterPanelSearch('sectors', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="histSelectAllFilter('sectors')">Todos</button>
+                    <button onclick="histClearFilter('sectors')">Nenhum</button>
+                    <button onclick="closeHistFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="hist-filter-items-sectors"></div>
+        </div>
+        <div class="filter-panel" id="hist-filter-panel-industries">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar indústria..." oninput="histFilterPanelSearch('industries', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="histSelectAllFilter('industries')">Todos</button>
+                    <button onclick="histClearFilter('industries')">Nenhum</button>
+                    <button onclick="closeHistFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="hist-filter-items-industries"></div>
+        </div>
+        <div class="filter-panel" id="hist-filter-panel-countries">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar país..." oninput="histFilterPanelSearch('countries', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="histSelectAllFilter('countries')">Todos</button>
+                    <button onclick="histClearFilter('countries')">Nenhum</button>
+                    <button onclick="closeHistFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="hist-filter-items-countries"></div>
+        </div>
     </div>
 
     <!-- Tabs -->
@@ -481,6 +637,19 @@
             <p style="font-size:13px">Use os checkboxes ou o botão "Selecionar Todas" e clique em "📊 Analisar Consolidado"</p>
         </div>
         <div id="consol-content" style="display:none">
+            <!-- Filtros: qualidade + tipo período -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--text2)">
+                    <input type="checkbox" id="chk-exclude-critical" onchange="reloadConsolidated()" style="cursor:pointer">
+                    Excluir registros com problemas críticos de qualidade
+                </label>
+                <span id="excluded-count-badge" style="display:none;font-size:11px;background:#e74c3c22;color:#e74c3c;padding:2px 8px;border-radius:10px;"></span>
+                <div style="margin-left:auto;display:flex;gap:2px;background:var(--bg3);border-radius:6px;padding:2px;">
+                    <button id="btn-period-all" onclick="setConsolPeriodType('all')" style="padding:5px 10px;border:none;border-radius:4px;cursor:pointer;font-size:11px;background:var(--accent);color:#fff;">📋 Todos</button>
+                    <button id="btn-period-annual" onclick="setConsolPeriodType('annual')" style="padding:5px 10px;border:none;border-radius:4px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2);">📅 Anual</button>
+                    <button id="btn-period-quarterly" onclick="setConsolPeriodType('quarterly')" style="padding:5px 10px;border:none;border-radius:4px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2);">📊 Trimestral</button>
+                </div>
+            </div>
             <!-- KPI summary -->
             <div class="kpi-row" id="consol-kpis"></div>
 
@@ -545,28 +714,82 @@
                             <button type="button" class="metric-ms-btn" onclick="toggleMetricDD()"><span id="metric-ms-label">Margem EBITDA</span></button>
                             <div class="metric-ms-dd" id="metric-ms-dd">
                                 <div class="metric-ms-actions"><a onclick="metricCheckAll()">Todas</a><a onclick="metricClearAll()">Limpar</a></div>
+                                <!-- DRE (P&L) -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">DRE (P&L)</div>
+                                <label><input type="checkbox" value="total_revenue" onchange="onMetricChange()"> Total Revenue</label>
+                                <label><input type="checkbox" value="cost_of_revenue" onchange="onMetricChange()"> Custo da Receita</label>
+                                <label><input type="checkbox" value="gross_profit" onchange="onMetricChange()"> Lucro Bruto</label>
+                                <label><input type="checkbox" value="operating_income" onchange="onMetricChange()"> Receita Operacional</label>
+                                <label><input type="checkbox" value="operating_expense" onchange="onMetricChange()"> Despesa Operacional</label>
+                                <label><input type="checkbox" value="ebit" onchange="onMetricChange()"> EBIT</label>
+                                <label><input type="checkbox" value="ebitda" onchange="onMetricChange()"> EBITDA</label>
+                                <label><input type="checkbox" value="normalized_ebitda" onchange="onMetricChange()"> Normalized EBITDA</label>
+                                <label><input type="checkbox" value="net_income" onchange="onMetricChange()"> Lucro Líquido</label>
+                                <label><input type="checkbox" value="interest_expense" onchange="onMetricChange()"> Despesa de Juros</label>
+                                <label><input type="checkbox" value="tax_provision" onchange="onMetricChange()"> Provisão p/ Impostos</label>
+                                <label><input type="checkbox" value="research_and_development" onchange="onMetricChange()"> P&D</label>
+                                <label><input type="checkbox" value="sga" onchange="onMetricChange()"> SG&A</label>
+                                <label><input type="checkbox" value="diluted_average_shares" onchange="onMetricChange()"> Ações Diluídas (méd)</label>
+                                <!-- Fluxo de Caixa -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Fluxo de Caixa</div>
+                                <label><input type="checkbox" value="free_cash_flow" onchange="onMetricChange()"> Free Cash Flow (FCF)</label>
+                                <label><input type="checkbox" value="operating_cash_flow" onchange="onMetricChange()"> Fluxo Cx Operacional</label>
+                                <label><input type="checkbox" value="capital_expenditure" onchange="onMetricChange()"> Capex</label>
+                                <!-- Balanço -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Balanço Patrimonial</div>
+                                <label><input type="checkbox" value="total_assets" onchange="onMetricChange()"> Ativo Total</label>
+                                <label><input type="checkbox" value="current_assets" onchange="onMetricChange()"> Ativo Circulante</label>
+                                <label><input type="checkbox" value="total_liabilities" onchange="onMetricChange()"> Passivo Total</label>
+                                <label><input type="checkbox" value="current_liabilities" onchange="onMetricChange()"> Passivo Circulante</label>
+                                <label><input type="checkbox" value="total_debt" onchange="onMetricChange()"> Dívida Total</label>
+                                <label><input type="checkbox" value="short_term_debt" onchange="onMetricChange()"> Dívida CP</label>
+                                <label><input type="checkbox" value="long_term_debt" onchange="onMetricChange()"> Dívida LP</label>
+                                <label><input type="checkbox" value="stockholders_equity" onchange="onMetricChange()"> Patrimônio Líquido</label>
+                                <label><input type="checkbox" value="cash_and_equivalents" onchange="onMetricChange()"> Caixa e Equivalentes</label>
+                                <label><input type="checkbox" value="short_term_investments" onchange="onMetricChange()"> Investimentos CP</label>
+                                <label><input type="checkbox" value="ordinary_shares_number" onchange="onMetricChange()"> Ações Ordinárias</label>
+                                <label><input type="checkbox" value="preferred_stock" onchange="onMetricChange()"> Ações Preferenciais</label>
+                                <label><input type="checkbox" value="minority_interest" onchange="onMetricChange()"> Participação Minoritária</label>
+                                <!-- Mercado / EV -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Mercado / EV</div>
+                                <label><input type="checkbox" value="close_price" onchange="onMetricChange()"> Preço Fechamento</label>
+                                <label><input type="checkbox" value="market_cap_estimated" onchange="onMetricChange()"> Market Cap (est.)</label>
+                                <label><input type="checkbox" value="enterprise_value_estimated" onchange="onMetricChange()"> Enterprise Value (est.)</label>
+                                <label><input type="checkbox" value="fx_rate_to_usd" onchange="onMetricChange()"> Taxa Câmbio (USD)</label>
+                                <!-- Margens -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Margens</div>
                                 <label><input type="checkbox" value="ebitda_margin" checked onchange="onMetricChange()"> Margem EBITDA</label>
                                 <label><input type="checkbox" value="ebit_margin" onchange="onMetricChange()"> Margem EBIT</label>
                                 <label><input type="checkbox" value="gross_margin" onchange="onMetricChange()"> Margem Bruta</label>
                                 <label><input type="checkbox" value="net_margin" onchange="onMetricChange()"> Margem Líquida</label>
-                                <div class="metric-ms-sep"></div>
+                                <!-- Múltiplos -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Múltiplos</div>
                                 <label><input type="checkbox" value="ev_ebitda" onchange="onMetricChange()"> EV/EBITDA</label>
                                 <label><input type="checkbox" value="ev_ebit" onchange="onMetricChange()"> EV/EBIT</label>
                                 <label><input type="checkbox" value="ev_revenue" onchange="onMetricChange()"> EV/Receita</label>
-                                <div class="metric-ms-sep"></div>
                                 <label><input type="checkbox" value="debt_equity" onchange="onMetricChange()"> Dívida/PL</label>
                                 <label><input type="checkbox" value="debt_ebitda" onchange="onMetricChange()"> Dívida/EBITDA</label>
-                                <div class="metric-ms-sep"></div>
+                                <!-- Indicadores -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Indicadores</div>
                                 <label><input type="checkbox" value="fcf_revenue_ratio" onchange="onMetricChange()"> FCF/Receita</label>
+                                <label><input type="checkbox" value="fcf_ebitda_ratio" onchange="onMetricChange()"> FCF/EBITDA</label>
                                 <label><input type="checkbox" value="capex_revenue" onchange="onMetricChange()"> Capex/Receita</label>
-                                <div class="metric-ms-sep"></div>
+                                <!-- Valores em USD -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">Valores em USD</div>
                                 <label><input type="checkbox" value="total_revenue_usd" onchange="onMetricChange()"> Receita USD</label>
+                                <label><input type="checkbox" value="ebit_usd" onchange="onMetricChange()"> EBIT USD</label>
                                 <label><input type="checkbox" value="ebitda_usd" onchange="onMetricChange()"> EBITDA USD</label>
+                                <label><input type="checkbox" value="net_income_usd" onchange="onMetricChange()"> Lucro Líq USD</label>
+                                <label><input type="checkbox" value="free_cash_flow_usd" onchange="onMetricChange()"> FCF USD</label>
                                 <label><input type="checkbox" value="enterprise_value_usd" onchange="onMetricChange()"> EV USD</label>
-                                <div class="metric-ms-sep"></div>
-                                <label><input type="checkbox" value="short_term_debt" onchange="onMetricChange()"> Dívida CP</label>
-                                <label><input type="checkbox" value="long_term_debt" onchange="onMetricChange()"> Dívida LP</label>
-                                <label><input type="checkbox" value="diluted_average_shares" onchange="onMetricChange()"> Ações Diluídas (méd)</label>
+                                <!-- TTM (Trailing Twelve Months) -->
+                                <div class="metric-ms-sep" style="font-weight:600;font-size:10px;color:var(--text2);padding:4px 8px;">TTM (Últimos 12 Meses)</div>
+                                <label><input type="checkbox" value="total_revenue_ttm" onchange="onMetricChange()"> Receita TTM</label>
+                                <label><input type="checkbox" value="ebitda_ttm" onchange="onMetricChange()"> EBITDA TTM</label>
+                                <label><input type="checkbox" value="ebit_ttm" onchange="onMetricChange()"> EBIT TTM</label>
+                                <label><input type="checkbox" value="free_cash_flow_ttm" onchange="onMetricChange()"> FCF TTM</label>
+                                <label><input type="checkbox" value="net_income_ttm" onchange="onMetricChange()"> Lucro Líq TTM</label>
+                                <label><input type="checkbox" value="ttm_quarters_count" onchange="onMetricChange()"> Qtd Trimestres TTM</label>
                             </div>
                         </div>
                         <button class="btn-export" onclick="exportConsolCSV()">📥 Exportar CSV</button>
@@ -685,6 +908,91 @@
 
 <script>
 // =====================================================================
+// Generic Table Sort (DOM-based, works on any table)
+// =====================================================================
+const _tableSortState = {}; // { tableId: { col: idx, dir: 'asc'|'desc' } }
+
+function sortTableDOM(tableId, colIdx) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length === 0) return;
+
+    const state = _tableSortState[tableId] || {};
+    let dir = 'asc';
+    if (state.col === colIdx && state.dir === 'asc') dir = 'desc';
+    _tableSortState[tableId] = { col: colIdx, dir };
+
+    // Detect type from first non-empty cell
+    const parseVal = (row) => {
+        const cell = row.cells[colIdx];
+        if (!cell) return null;
+        let txt = cell.textContent.trim().replace(/[%x,]/g, '').replace(/\s/g, '');
+        if (txt === '—' || txt === '' || txt === 'N/A') return null;
+        // Try parse as number (handle pt-BR: 1.234,56)
+        let num = parseFloat(txt.replace(/\./g, '').replace(',', '.'));
+        if (!isNaN(num)) return num;
+        return cell.textContent.trim().toLowerCase();
+    };
+
+    rows.sort((a, b) => {
+        let va = parseVal(a), vb = parseVal(b);
+        // Nulls always last
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        let cmp = 0;
+        if (typeof va === 'number' && typeof vb === 'number') {
+            cmp = va - vb;
+        } else {
+            va = String(va); vb = String(vb);
+            cmp = va.localeCompare(vb, 'pt-BR');
+        }
+        return dir === 'asc' ? cmp : -cmp;
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+
+    // Update sort arrows
+    table.querySelectorAll('th .sort-arrow').forEach(el => {
+        el.classList.remove('active');
+        el.textContent = '⇅';
+    });
+    const th = table.querySelectorAll('thead th')[colIdx];
+    if (th) {
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) {
+            arrow.classList.add('active');
+            arrow.textContent = dir === 'asc' ? '▲' : '▼';
+        }
+    }
+}
+
+// Auto-attach sort to all th in a table after render
+function enableTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const ths = table.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+        // Skip checkbox columns
+        if (th.querySelector('input[type="checkbox"]')) return;
+        if (th.textContent.trim() === '') return;
+        // Add sort arrow if not present
+        if (!th.querySelector('.sort-arrow')) {
+            th.insertAdjacentHTML('beforeend', ' <span class="sort-arrow">⇅</span>');
+        }
+        // Remove old listener, add new
+        th.style.cursor = 'pointer';
+        th.onclick = (e) => {
+            e.stopPropagation();
+            sortTableDOM(tableId, idx);
+        };
+    });
+}
+
+// =====================================================================
 // State & Utils
 // =====================================================================
 let _searchTimer = null;
@@ -692,6 +1000,7 @@ const _charts = {};
 const _compareCodes = [];
 const _selectedCodes = new Set();
 let _consolData = null;
+let _consolPeriodType = 'all';
 let _countryRegionMap = {};
 let _allCountries = [];
 let _allSubregions = [];
@@ -705,6 +1014,205 @@ let _drillSearchTimer = null;
 let _drillBreadcrumbs = []; // stack for breadcrumb nav
 let _summaryStats = null; // saved summary for drill-down
 let _drillExportEndpoint = null;
+
+// ===== CROSS-FILTER STATE =====
+let histActiveFilters = { sectors: [], industries: [], countries: [] };
+let histFilterOptions = { sectors: [], industries: [], countries: [] };
+let histFilterOptionsTotals = { sectors: 0, industries: 0, countries: 0 };
+let histCurrentFilterPanel = null;
+
+async function loadHistFilterOptions(crossFilter = false) {
+    try {
+        let url = '/api/historico_filter_options';
+        if (crossFilter) url = appendHistFilterParams(url);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success) return;
+        histFilterOptions = { sectors: data.sectors, industries: data.industries, countries: data.countries };
+        if (!crossFilter) {
+            histFilterOptionsTotals = {
+                sectors: data.sectors.length, industries: data.industries.length, countries: data.countries.length
+            };
+        }
+        if (histCurrentFilterPanel) populateHistFilterPanel(histCurrentFilterPanel);
+    } catch (e) { console.error('Filter options error:', e); }
+}
+
+function toggleHistFilterPanel(dimension) {
+    const panel = document.getElementById('hist-filter-panel-' + dimension);
+    if (histCurrentFilterPanel === dimension) {
+        panel.classList.remove('open');
+        histCurrentFilterPanel = null;
+        return;
+    }
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    populateHistFilterPanel(dimension);
+    panel.classList.add('open');
+    histCurrentFilterPanel = dimension;
+    const searchInput = panel.querySelector('input[type="text"]');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+}
+
+function closeHistFilterPanel() {
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    histCurrentFilterPanel = null;
+}
+
+function populateHistFilterPanel(dimension) {
+    const container = document.getElementById('hist-filter-items-' + dimension);
+    const items = histFilterOptions[dimension] || [];
+    const selected = histActiveFilters[dimension] || [];
+    container.innerHTML = items.map(item => {
+        const name = item.name || item;
+        const count = item.count || '';
+        const isSelected = selected.includes(name);
+        const escapedName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return `<div class="filter-chip ${isSelected ? 'selected' : ''}" 
+                     onclick="toggleHistFilterItem('${dimension}', this, '${escapedName}')"
+                     data-value="${escapedName}" data-name="${escapedName}">
+            <span>${name}</span>
+            ${count ? `<span class="chip-count">(${count})</span>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function toggleHistFilterItem(dimension, el, value) {
+    const idx = histActiveFilters[dimension].indexOf(value);
+    if (idx >= 0) {
+        histActiveFilters[dimension].splice(idx, 1);
+        el.classList.remove('selected');
+    } else {
+        histActiveFilters[dimension].push(value);
+        el.classList.add('selected');
+    }
+    applyHistFiltersDebounced();
+}
+
+function histSelectAllFilter(dimension) {
+    const items = histFilterOptions[dimension] || [];
+    histActiveFilters[dimension] = items.map(i => i.name || i);
+    populateHistFilterPanel(dimension);
+    applyHistFiltersDebounced();
+}
+
+function histClearFilter(dimension) {
+    histActiveFilters[dimension] = [];
+    populateHistFilterPanel(dimension);
+    applyHistFiltersDebounced();
+}
+
+function clearAllHistFilters() {
+    histActiveFilters = { sectors: [], industries: [], countries: [] };
+    document.querySelectorAll('.kpi-card.filter-active').forEach(c => c.classList.remove('filter-active'));
+    document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+    histCurrentFilterPanel = null;
+    loadHistFilterOptions(false);
+    applyHistFilters();
+}
+
+function removeHistFilterItem(dimension, value) {
+    const idx = histActiveFilters[dimension].indexOf(value);
+    if (idx >= 0) {
+        histActiveFilters[dimension].splice(idx, 1);
+        applyHistFilters();
+    }
+}
+
+function histFilterPanelSearch(dimension, term) {
+    const container = document.getElementById('hist-filter-items-' + dimension);
+    const chips = container.querySelectorAll('.filter-chip');
+    const t = term.toLowerCase();
+    chips.forEach(chip => {
+        const name = chip.getAttribute('data-name') || '';
+        chip.style.display = (!t || name.toLowerCase().includes(t)) ? '' : 'none';
+    });
+}
+
+let _histApplyTimer = null;
+function applyHistFiltersDebounced() {
+    clearTimeout(_histApplyTimer);
+    _histApplyTimer = setTimeout(applyHistFilters, 300);
+}
+
+function applyHistFilters() {
+    updateHistActiveFilterTags();
+    updateHistKPIHighlights();
+    loadHistFilterOptions(true);
+    loadSummary();
+    searchCompanies();
+}
+
+function buildHistFilterQueryString() {
+    const parts = [];
+    for (const [dim, items] of Object.entries(histActiveFilters)) {
+        if (items.length > 0 && items.length < histFilterOptionsTotals[dim]) {
+            parts.push(dim + '=' + encodeURIComponent(items.join(',')));
+        }
+    }
+    return parts.join('&');
+}
+
+function appendHistFilterParams(url) {
+    const fq = buildHistFilterQueryString();
+    if (!fq) return url;
+    return url + (url.includes('?') ? '&' : '?') + fq;
+}
+
+function buildHistDrillParams() {
+    const params = {};
+    if (histActiveFilters.sectors.length > 0 && histActiveFilters.sectors.length === 1)
+        params.sector = histActiveFilters.sectors[0];
+    if (histActiveFilters.industries.length > 0 && histActiveFilters.industries.length === 1)
+        params.industry = histActiveFilters.industries[0];
+    if (histActiveFilters.countries.length > 0 && histActiveFilters.countries.length === 1)
+        params.country = histActiveFilters.countries[0];
+    return params;
+}
+
+function updateHistActiveFilterTags() {
+    const bar = document.getElementById('hist-active-filters-bar');
+    const allTags = [];
+    const dimLabels = { sectors: 'Setor', industries: 'Indústria', countries: 'País' };
+    for (const [dim, items] of Object.entries(histActiveFilters)) {
+        if (items.length > 0 && items.length < histFilterOptionsTotals[dim]) {
+            items.forEach(item => {
+                allTags.push({ dim, item, label: dimLabels[dim] });
+            });
+        }
+    }
+    if (allTags.length === 0) {
+        bar.classList.remove('visible');
+        return;
+    }
+    bar.classList.add('visible');
+    let html = '<span class="af-label">Filtros:</span>';
+    html += allTags.map(t => {
+        const escapedItem = t.item.replace(/'/g, "\\'");
+        return `<span class="active-tag" onclick="removeHistFilterItem('${t.dim}','${escapedItem}')" title="${t.label}">
+            ${t.item.length > 30 ? t.item.substring(0, 30) + '…' : t.item} <span class="at-x">×</span>
+        </span>`;
+    }).join('');
+    html += '<button class="btn-clear-filters" onclick="clearAllHistFilters()">Limpar filtros</button>';
+    bar.innerHTML = html;
+}
+
+function updateHistKPIHighlights() {
+    const dims = ['sectors', 'industries', 'countries'];
+    dims.forEach(dim => {
+        const card = document.getElementById('kpi-card-' + dim);
+        const indicator = document.getElementById('kpi-' + dim + '-indicator');
+        if (!card) return;
+        const sel = histActiveFilters[dim].length;
+        const total = histFilterOptionsTotals[dim];
+        if (sel > 0 && sel < total) {
+            card.classList.add('filter-active');
+            if (indicator) indicator.textContent = sel + ' selecionado' + (sel > 1 ? 's' : '');
+        } else {
+            card.classList.remove('filter-active');
+            if (indicator) indicator.textContent = '';
+        }
+    });
+}
 
 function exportDrillCSV() {
     if (_drillExportEndpoint && _drillCurrentParams) {
@@ -820,24 +1328,33 @@ function switchTab(name) {
 // KPIs & Init
 // =====================================================================
 async function loadSummary() {
+    // Shimmer nos KPIs
+    document.querySelectorAll('#kpi-row .kpi-card .value').forEach(el => el.classList.add('loading'));
     try {
-        const r = await fetch('/api/historico/summary');
+        const r = await fetch(appendHistFilterParams('/api/historico/summary'));
         const d = await r.json();
+        // Remover shimmer
+        document.querySelectorAll('#kpi-row .kpi-card .value').forEach(el => el.classList.remove('loading'));
         if (!d.success) return;
         const s = d.stats;
         _summaryStats = s;
         document.getElementById('kpi-records').textContent = s.total_records.toLocaleString();
         document.getElementById('kpi-companies').textContent = s.total_companies;
+        document.getElementById('kpi-sectors').textContent = s.distinct_sectors || (s.sectors||[]).length;
+        document.getElementById('kpi-industries').textContent = s.distinct_industries || '—';
+        document.getElementById('kpi-countries').textContent = s.distinct_countries || (s.countries||[]).length;
         document.getElementById('kpi-years').textContent = s.min_year && s.max_year ? s.min_year + '–' + s.max_year : '—';
         document.getElementById('kpi-currencies').textContent = s.distinct_currencies;
         document.getElementById('kpi-ev').textContent = s.with_ev;
-        // Populate sector filter
+        // Populate sector filter dropdown (only on initial load)
         const sel = document.getElementById('filter-sector');
-        (s.sectors || []).forEach(x => {
-            const o = document.createElement('option');
-            o.value = x.sector; o.textContent = x.sector + ' (' + x.count + ')';
-            sel.appendChild(o);
-        });
+        if (sel.options.length <= 1) {
+            (s.sectors || []).forEach(x => {
+                const o = document.createElement('option');
+                o.value = x.sector; o.textContent = x.sector + ' (' + x.count + ')';
+                sel.appendChild(o);
+            });
+        }
         // Populate region filter
         _countryRegionMap = s.country_region_map || {};
         _allCountries = s.countries || [];
@@ -850,7 +1367,10 @@ async function loadSummary() {
         });
         // Populate country filter (all)
         populateCountryFilter();
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        document.querySelectorAll('#kpi-row .kpi-card .value').forEach(el => el.classList.remove('loading'));
+        console.error(e);
+    }
 }
 
 function populateCountryFilter(filterRegion, filterSubregion) {
@@ -965,16 +1485,28 @@ async function searchCompanies() {
     if (country) params.set('country', country);
     if (region && !country) params.set('region', region);
     if (subregion && !country) params.set('subregion', subregion);
-    params.set('limit', 200);
+    // Cross-filter params
+    if (histActiveFilters.sectors.length) params.set('sectors', histActiveFilters.sectors.join(','));
+    if (histActiveFilters.industries.length) params.set('industries', histActiveFilters.industries.join(','));
+    if (histActiveFilters.countries.length) params.set('countries', histActiveFilters.countries.join(','));
+    params.set('limit', 5000);
 
     renderActiveFilters();
+
+    // Loading state na tabela
+    const tbody = document.getElementById('companies-body');
+    tbody.innerHTML = '<tr><td colspan="9" class="table-loading"><span class="mini-spinner"></span>Carregando empresas...</td></tr>';
 
     try {
         const r = await fetch('/api/historico/search?' + params);
         const d = await r.json();
-        if (!d.success) return;
+        if (!d.success) { tbody.innerHTML = '<tr><td colspan="9" class="table-loading">Erro ao carregar dados</td></tr>'; return; }
         const tbody = document.getElementById('companies-body');
-        document.getElementById('search-count').textContent = d.companies.length + ' encontradas';
+        const totalFound = d.total_count != null ? d.total_count : d.companies.length;
+        const truncated = d.companies.length < totalFound;
+        document.getElementById('search-count').textContent = truncated
+            ? d.companies.length + ' exibidas de ' + totalFound.toLocaleString() + ' encontradas'
+            : d.companies.length + ' encontradas';
         tbody.innerHTML = d.companies.map(c => `
             <tr style="cursor:pointer" onclick="loadCompany('${c.yahoo_code}')">
                 <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" data-code="${c.yahoo_code}" onchange="updateSelectionBar()" ${_selectedCodes.has(c.yahoo_code) ? 'checked' : ''}></td>
@@ -989,6 +1521,7 @@ async function searchCompanies() {
             </tr>
         `).join('');
         updateSelectionBar();
+        enableTableSort('companies-table');
     } catch(e) { console.error(e); }
 }
 
@@ -1200,8 +1733,21 @@ function renderDetailTable(periods) {
         { key: 'ev_revenue', label: 'EV/Receita', fmt: ratio, src: 'C' },
     ];
     let html = '<thead><tr><th>Métrica</th>';
-    periods.forEach(p => html += '<th class="num">' + p.fiscal_year + '</th>');
+    periods.forEach(p => {
+        const dq = p.data_quality || 'ok';
+        const qIcon = dq === 'ok' ? '' : dq.startsWith('critical') ? ' <span title="'+dq+'" style="color:var(--accent3)">⚠</span>' : dq.startsWith('warning') ? ' <span title="'+dq+'" style="color:var(--accent4)">⚠</span>' : ' <span title="'+dq+'" style="color:var(--accent)">ℹ</span>';
+        html += '<th class="num">' + p.fiscal_year + qIcon + '</th>';
+    });
     html += '</tr></thead><tbody>';
+    // Data Quality row
+    html += '<tr style="border-bottom:2px solid var(--border)"><td>🔍 <strong>Qualidade</strong></td>';
+    periods.forEach(p => {
+        const dq = p.data_quality || 'ok';
+        const sev = dq.split(':')[0];
+        const cls = sev === 'ok' ? 'badge-ok' : sev === 'critical' ? 'badge-critical' : sev === 'warning' ? 'badge-warning' : 'badge-info';
+        html += '<td class="num"><span class="badge ' + cls + '" title="' + dq + '">' + sev + '</span></td>';
+    });
+    html += '</tr>';
     const srcBadge = s => s === 'Y' ? '<span class="src-badge src-y" title="Yahoo Finance">Y</span>' : s === 'C' ? '<span class="src-badge src-c" title="Calculado">C</span>' : '';
     fields.forEach(f => {
         html += '<tr><td>' + srcBadge(f.src) + ' <strong>' + f.label + '</strong></td>';
@@ -1374,6 +1920,7 @@ async function loadSectorEvolution() {
         tbody.innerHTML = sectorCounts.map(s =>
             `<tr class="clickable-row" style="cursor:pointer" onclick="drillHistCompanies({sector:'${s.sector.replace(/'/g,"\\'")}'})"><td>${s.sector}</td><td class="num">${s.count}</td></tr>`
         ).join('');
+        enableTableSort('sector-table');
 
         // Add click handler to sector chart
         setTimeout(() => addSectorChartClickHandler(), 200);
@@ -1424,6 +1971,17 @@ function updateSelectionBar() {
 // =====================================================================
 // Consolidated Analysis
 // =====================================================================
+function setConsolPeriodType(pt) {
+    _consolPeriodType = pt;
+    const btnAll = document.getElementById('btn-period-all');
+    const btnA = document.getElementById('btn-period-annual');
+    const btnQ = document.getElementById('btn-period-quarterly');
+    [btnAll, btnA, btnQ].forEach(b => { b.style.background = 'transparent'; b.style.color = 'var(--text2)'; });
+    const active = pt === 'all' ? btnAll : pt === 'quarterly' ? btnQ : btnA;
+    active.style.background = 'var(--accent)'; active.style.color = '#fff';
+    reloadConsolidated();
+}
+
 async function analyzeSelected(includeDetail = false) {
     if (_selectedCodes.size === 0) return;
     // Switch to consolidado tab
@@ -1439,13 +1997,21 @@ async function analyzeSelected(includeDetail = false) {
         const r = await fetch('/api/historico/consolidated', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({codes: [..._selectedCodes], period_type: 'annual', include_detail: includeDetail})
+            body: JSON.stringify({codes: [..._selectedCodes], period_type: _consolPeriodType, include_detail: includeDetail, exclude_critical: document.getElementById('chk-exclude-critical')?.checked || false})
         });
         const d = await r.json();
         if (!d.success) { alert('Erro: ' + (d.error || 'Falha')); return; }
 
         _consolData = d;
         document.getElementById('consol-content').style.display = 'block';
+        // Show excluded count badge
+        const badge = document.getElementById('excluded-count-badge');
+        if (d.excluded_critical > 0) {
+            badge.textContent = d.excluded_critical + ' registros excluídos';
+            badge.style.display = 'inline';
+        } else {
+            badge.style.display = 'none';
+        }
 
         renderConsolKPIs(d);
         renderConsolMarginsChart(d);
@@ -1474,6 +2040,10 @@ async function analyzeSelected(includeDetail = false) {
             addHistChartClickHandler('consol-chart-dispersion-ev', 'ev_ebitda');
         }, 300);
     } catch(e) { console.error(e); alert('Erro ao carregar dados consolidados'); }
+}
+
+function reloadConsolidated() {
+    if (_selectedCodes.size > 0) analyzeSelected(false);
 }
 
 function renderConsolKPIs(d) {
@@ -1694,16 +2264,38 @@ function renderConsolDispersionEV(d) {
 
 // ===== MULTI-SELECT MÉTRICAS =====
 const METRIC_LABELS = {
+    // DRE (P&L)
+    total_revenue:'Total Revenue', cost_of_revenue:'Custo Receita', gross_profit:'Lucro Bruto',
+    operating_income:'Rec. Operacional', operating_expense:'Desp. Operacional',
+    ebit:'EBIT', ebitda:'EBITDA', normalized_ebitda:'Normalized EBITDA',
+    net_income:'Lucro Líquido', interest_expense:'Desp. Juros', tax_provision:'Impostos',
+    research_and_development:'P&D', sga:'SG&A', diluted_average_shares:'Ações Diluídas (méd)',
+    // Fluxo de Caixa
+    free_cash_flow:'FCF', operating_cash_flow:'Fluxo Cx Oper.', capital_expenditure:'Capex',
+    // Balanço
+    total_assets:'Ativo Total', current_assets:'Ativo Circ.', total_liabilities:'Passivo Total',
+    current_liabilities:'Passivo Circ.', total_debt:'Dívida Total',
+    short_term_debt:'Dívida CP', long_term_debt:'Dívida LP',
+    stockholders_equity:'PL', cash_and_equivalents:'Caixa e Equiv.',
+    short_term_investments:'Invest. CP',
+    ordinary_shares_number:'Ações Ordinárias', preferred_stock:'Ações Preferenciais',
+    minority_interest:'Part. Minoritária',
+    // Mercado / EV
+    close_price:'Preço Fechamento', market_cap_estimated:'Market Cap (est.)', enterprise_value_estimated:'EV (est.)',
+    fx_rate_to_usd:'Taxa FX (USD)',
+    // Margens
     ebitda_margin:'Mg EBITDA', ebit_margin:'Mg EBIT', gross_margin:'Mg Bruta', net_margin:'Mg Líquida',
+    // Múltiplos
     ev_ebitda:'EV/EBITDA', ev_ebit:'EV/EBIT', ev_revenue:'EV/Receita',
     debt_equity:'Dív/PL', debt_ebitda:'Dív/EBITDA',
-    fcf_revenue_ratio:'FCF/Rec', capex_revenue:'Capex/Rec',
-    total_revenue_usd:'Receita USD', ebitda_usd:'EBITDA USD', enterprise_value_usd:'EV USD',
-    short_term_debt:'Dívida CP', long_term_debt:'Dívida LP',
-    diluted_average_shares:'Ações Diluídas (méd)',
-    ordinary_shares_number:'Ações Ordinárias', preferred_stock:'Preferred Stock',
-    minority_interest:'Minority Interest', net_income_usd:'Lucro Líq USD',
-    free_cash_flow_usd:'FCF USD'
+    // Indicadores
+    fcf_revenue_ratio:'FCF/Rec', fcf_ebitda_ratio:'FCF/EBITDA', capex_revenue:'Capex/Rec',
+    // Valores em USD
+    total_revenue_usd:'Receita USD', ebit_usd:'EBIT USD', ebitda_usd:'EBITDA USD',
+    net_income_usd:'Lucro Líq USD', free_cash_flow_usd:'FCF USD', enterprise_value_usd:'EV USD',
+    // TTM
+    total_revenue_ttm:'Receita TTM', ebitda_ttm:'EBITDA TTM', ebit_ttm:'EBIT TTM',
+    free_cash_flow_ttm:'FCF TTM', net_income_ttm:'Lucro Líq TTM', ttm_quarters_count:'Qtd Trim TTM'
 };
 
 function getSelectedMetrics() {
@@ -1734,6 +2326,17 @@ document.addEventListener('click', e => {
     if (ms && !ms.contains(e.target)) document.getElementById('metric-ms-dd').classList.remove('open');
 });
 
+const MONETARY_FIELDS = new Set([
+    'total_revenue','cost_of_revenue','gross_profit','operating_income','operating_expense',
+    'ebit','ebitda','normalized_ebitda','net_income','interest_expense','tax_provision',
+    'research_and_development','sga','free_cash_flow','operating_cash_flow','capital_expenditure',
+    'total_assets','current_assets','total_liabilities','current_liabilities','total_debt',
+    'short_term_debt','long_term_debt','stockholders_equity','cash_and_equivalents',
+    'short_term_investments','market_cap_estimated','enterprise_value_estimated',
+    'total_revenue_ttm','ebitda_ttm','ebit_ttm','free_cash_flow_ttm','net_income_ttm'
+]);
+const SHARES_FIELDS = new Set(['diluted_average_shares','ordinary_shares_number','preferred_stock','minority_interest','ttm_quarters_count']);
+const PRICE_FIELDS = new Set(['close_price','fx_rate_to_usd']);
 function fmtMetricVal(metric, v) {
     if (v == null) return '—';
     const isPercent = metric.includes('margin') || metric.includes('ratio');
@@ -1741,7 +2344,9 @@ function fmtMetricVal(metric, v) {
     const isUSD = metric.includes('_usd');
     if (isPercent) return (v*100).toFixed(2)+'%';
     if (isMultiple) return v.toFixed(2)+'x';
-    if (isUSD) return fmt(v);
+    if (isUSD || MONETARY_FIELDS.has(metric)) return fmt(v);
+    if (SHARES_FIELDS.has(metric)) return fmt(v, 0);
+    if (PRICE_FIELDS.has(metric)) return v.toFixed(4);
     return v.toFixed(4);
 }
 
@@ -1774,6 +2379,7 @@ function renderConsolStatTable() {
     });
     html += '</tbody>';
     document.getElementById('consol-stat-table').innerHTML = html;
+    enableTableSort('consol-stat-table');
 }
 
 // ===== MODO CONSOLIDADO/DETALHADO =====
@@ -1806,7 +2412,7 @@ async function loadDetailData() {
         const r = await fetch('/api/historico/consolidated', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({codes: [..._selectedCodes], period_type: 'annual', include_detail: true})
+            body: JSON.stringify({codes: [..._selectedCodes], period_type: _consolPeriodType, include_detail: true, exclude_critical: document.getElementById('chk-exclude-critical')?.checked || false})
         });
         const d = await r.json();
         if (!d.success) { alert('Erro: ' + (d.error||'')); return; }
@@ -1830,10 +2436,19 @@ function renderConsolDetailTable() {
     // Filter: keep records that have at least one selected metric non-null
     const filtered = detail.filter(r => metrics.some(m => r[m] != null)).sort((a, b) => {
         if (a.fiscal_year !== b.fiscal_year) return a.fiscal_year - b.fiscal_year;
+        // Within same year: annual before quarterly, then by quarter
+        const typeOrder = { 'annual': 0, 'quarterly': 1 };
+        const ta = typeOrder[a.period_type] ?? 1, tb = typeOrder[b.period_type] ?? 1;
+        if (ta !== tb) return ta - tb;
+        if ((a.fiscal_quarter || 0) !== (b.fiscal_quarter || 0)) return (a.fiscal_quarter || 0) - (b.fiscal_quarter || 0);
         return (a.company_name || '').localeCompare(b.company_name || '');
     });
 
-    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>País</th><th>Ano</th>';
+    const showTypeCol = _consolPeriodType === 'all';
+
+    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>País</th>';
+    if (showTypeCol) html += '<th>Tipo</th>';
+    html += '<th>Período</th>';
     metrics.forEach(m => { html += `<th class="num">${METRIC_LABELS[m]||m}</th>`; });
     html += '</tr></thead><tbody>';
     filtered.forEach(r => {
@@ -1842,7 +2457,16 @@ function renderConsolDetailTable() {
         html += `<td>${(r.company_name || '—').substring(0, 35)}</td>`;
         html += `<td>${(r.yahoo_sector || '—').substring(0, 20)}</td>`;
         html += `<td>${r.yahoo_country || '—'}</td>`;
-        html += `<td>${r.fiscal_year || '—'}</td>`;
+        if (showTypeCol) {
+            const typeBadge = r.period_type === 'quarterly'
+                ? '<span class="badge badge-blue" style="font-size:10px">Q</span>'
+                : '<span class="badge badge-ok" style="font-size:10px">A</span>';
+            html += `<td>${typeBadge}</td>`;
+        }
+        const periodLabel = r.period_type === 'quarterly' && r.fiscal_quarter
+            ? r.fiscal_year + ' Q' + r.fiscal_quarter
+            : (r.fiscal_year || '—');
+        html += `<td>${periodLabel}</td>`;
         metrics.forEach(m => { html += `<td class="num">${fmtMetricVal(m, r[m])}</td>`; });
         html += '</tr>';
     });
@@ -1852,6 +2476,7 @@ function renderConsolDetailTable() {
     html += '</tbody>';
     html += `<tfoot><tr><td colspan="${3+metrics.length}" style="font-size:11px;color:var(--text2)">${filtered.length} registros</td><td colspan="2"></td></tr></tfoot>`;
     document.getElementById('consol-stat-table').innerHTML = html;
+    enableTableSort('consol-stat-table');
 }
 
 function renderConsolRanking(d) {
@@ -1874,11 +2499,25 @@ function renderConsolRanking(d) {
     });
     html += '</tbody>';
     document.getElementById('consol-ranking-table').innerHTML = html;
+    enableTableSort('consol-ranking-table');
 }
 
 // =====================================================================
 // Export CSV
 // =====================================================================
+function _csvDate() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + String(d.getFullYear()).slice(-2);
+}
+function _csvContext() {
+    const sector = (document.getElementById('filter-sector')?.value || '').trim();
+    const country = (document.getElementById('filter-country')?.value || '').trim();
+    const parts = [];
+    if (sector) parts.push(sector.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_').substring(0,30));
+    if (country) parts.push(country.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_').substring(0,20));
+    return parts.length ? parts.join('_') : 'todos';
+}
+
 function exportSelectedCSV() {
     if (!_consolData) return;
     const d = _consolData;
@@ -1892,7 +2531,7 @@ function exportSelectedCSV() {
             csv += [m, y, s.count, fmtN(s.avg), fmtN(s.median), fmtN(s.p25), fmtN(s.p75), fmtN(s.min), fmtN(s.max), fmtN(s.sum)].join(';') + '\n';
         });
     });
-    downloadCSV(csv, 'consolidado_estatisticas.csv');
+    downloadCSV(csv, 'consolidado_' + _csvContext() + '_' + _csvDate() + '.csv');
 }
 
 function exportConsolCSV() {
@@ -1912,32 +2551,37 @@ function exportDetailCSV() {
         if (a.fiscal_year !== b.fiscal_year) return a.fiscal_year - b.fiscal_year;
         return (a.company_name || '').localeCompare(b.company_name || '');
     });
-    let csv = 'Código;Empresa;Setor;Indústria;País;Ano;Moeda;' + metrics.map(m => METRIC_LABELS[m]||m).join(';') + '\n';
+    let csv = 'Código;Empresa;Setor;Indústria;País;Tipo;Período;Moeda;Qualidade;' + metrics.map(m => METRIC_LABELS[m]||m).join(';') + '\n';
     filtered.forEach(r => {
+        const isQ = r.period_type === 'quarterly';
+        const periodLabel = isQ && r.fiscal_quarter ? r.fiscal_year + ' Q' + r.fiscal_quarter : (r.fiscal_year||'');
         let row = [
             '"'+(r.yahoo_code||'')+'"',
             '"'+(r.company_name||'').replace(/"/g,"'")+'"',
             '"'+(r.yahoo_sector||'')+'"',
             '"'+(r.yahoo_industry||'')+'"',
             '"'+(r.yahoo_country||'')+'"',
-            r.fiscal_year||'',
-            '"'+(r.original_currency||'')+'"'
+            '"'+(r.period_type||'annual')+'"',
+            '"'+periodLabel+'"',
+            '"'+(r.original_currency||'')+'"',
+            '"'+(r.data_quality||'ok')+'"'
         ];
         metrics.forEach(m => row.push(fmtN(r[m])));
         csv += row.join(';') + '\n';
     });
-    downloadCSV(csv, 'detalhado_' + metrics.join('_') + '.csv');
+    downloadCSV(csv, 'detalhado_' + _csvContext() + '_' + _csvDate() + '.csv');
 }
 
 function exportRankingCSV() {
     if (!_consolData || !_consolData.ranking) return;
     const fmtN = v => v == null ? '' : String(v).replace('.', ',');
-    let csv = 'Código;Empresa;Setor;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida;Dívida_CP;Dívida_LP\n';
+    let csv = 'Código;Empresa;Setor;Qualidade;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida;Dívida_CP;Dívida_LP\n';
     _consolData.ranking.forEach(r => {
         csv += ['"'+(r.yahoo_code||'')+'"', '"'+(r.company_name||'').replace(/"/g,"'")+'"', '"'+(r.sector||'')+'"',
+            '"'+(r.data_quality||'ok')+'"',
             fmtN(r.total_revenue_usd), fmtN(r.ebitda_usd), fmtN(r.ebitda_margin), fmtN(r.ev_ebitda), fmtN(r.ev_ebit), fmtN(r.ev_revenue), fmtN(r.debt_equity), fmtN(r.net_margin), fmtN(r.short_term_debt), fmtN(r.long_term_debt)].join(';') + '\n';
     });
-    downloadCSV(csv, 'ranking_empresas.csv');
+    downloadCSV(csv, 'ranking_' + _csvContext() + '_' + _csvDate() + '.csv');
 }
 
 function downloadCSV(csv, filename) {
@@ -2005,6 +2649,7 @@ async function drillHistCompanies(params, page = 1) {
     const p = { ...params, page, per_page: 50 };
     const filterParts = [];
     if (p.sector) filterParts.push('Setor: ' + p.sector);
+    if (p.industry) filterParts.push('Indústria: ' + p.industry);
     if (p.country) filterParts.push('País: ' + p.country);
     if (p.region) filterParts.push('Região: ' + p.region);
     if (p.currency) filterParts.push('Moeda: ' + p.currency);
@@ -2035,6 +2680,7 @@ async function drillHistCompanies(params, page = 1) {
         </div>`;
         html += renderDrillHistCompanyTable(data.companies);
         body.innerHTML = html;
+        enableTableSort('drill-hist-company-table');
 
         // Pagination
         const pag = document.getElementById('drill-pagination');
@@ -2064,7 +2710,7 @@ function drillHistSearchCompanies(term) {
 function renderDrillHistCompanyTable(companies) {
     if (!companies.length) return '<p style="color:var(--text2);padding:20px;text-align:center;">Nenhuma empresa encontrada</p>';
     return `<div style="max-height:400px;overflow-y:auto;">
-    <table class="drill-table">
+    <table class="drill-table" id="drill-hist-company-table">
         <thead><tr>
             <th>Empresa</th><th>Código</th><th>Setor</th><th>País</th>
             <th class="num">Períodos</th><th class="num">De</th><th class="num">Até</th><th>Moeda</th>
@@ -2080,6 +2726,75 @@ function renderDrillHistCompanyTable(companies) {
             <td>${c.original_currency||'—'}</td>
         </tr>`).join('')}</tbody>
     </table></div>`;
+}
+
+// Drill: Sectors (from KPI "Setores" click)
+function drillHistSectors() {
+    if (!_summaryStats) return;
+    const sectors = _summaryStats.sectors || [];
+    openDrillDown('Setores com Dados Históricos', sectors.length + ' setores',
+        { label: 'Setores', fn: 'drillHistSectors()' });
+    let html = `<div class="drill-stats">
+        <div class="drill-stat"><div class="ds-val">${sectors.length}</div><div class="ds-lbl">Setores</div></div>
+        <div class="drill-stat"><div class="ds-val">${_summaryStats.total_companies}</div><div class="ds-lbl">Empresas</div></div>
+    </div>`;
+    html += `<input type="text" class="drill-search" placeholder="Buscar setor..."
+        oninput="drillFilterList(this.value, 'drill-sectors-tbody', 0)">`;
+    html += `<div style="max-height:400px;overflow-y:auto;">
+    <table class="drill-table" id="drill-sectors-table">
+        <thead><tr><th>Setor</th><th class="num">Empresas</th></tr></thead>
+        <tbody id="drill-sectors-tbody">${sectors.map(s => `<tr class="clickable-row" onclick="drillHistCompanies({sector:'${(s.sector||'').replace(/'/g,"\\'")}'})" >
+            <td>${s.sector}</td><td class="num">${s.count}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+    document.getElementById('drill-body').innerHTML = html;
+    enableTableSort('drill-sectors-table');
+}
+
+// Drill: Industries (from KPI "Indústrias" click)
+function drillHistIndustries() {
+    if (!_summaryStats) return;
+    const industries = _summaryStats.industries || [];
+    openDrillDown('Indústrias com Dados Históricos', industries.length + ' indústrias',
+        { label: 'Indústrias', fn: 'drillHistIndustries()' });
+    let html = `<div class="drill-stats">
+        <div class="drill-stat"><div class="ds-val">${industries.length}</div><div class="ds-lbl">Indústrias</div></div>
+        <div class="drill-stat"><div class="ds-val">${_summaryStats.total_companies}</div><div class="ds-lbl">Empresas</div></div>
+    </div>`;
+    html += `<input type="text" class="drill-search" placeholder="Buscar indústria..."
+        oninput="drillFilterList(this.value, 'drill-industries-tbody', 0)">`;
+    html += `<div style="max-height:400px;overflow-y:auto;">
+    <table class="drill-table" id="drill-industries-table">
+        <thead><tr><th>Indústria</th><th class="num">Empresas</th></tr></thead>
+        <tbody id="drill-industries-tbody">${industries.map(i => `<tr class="clickable-row" onclick="drillHistCompanies({industry:'${(i.industry||'').replace(/'/g,"\\'")}'})" >
+            <td>${i.industry}</td><td class="num">${i.count}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+    document.getElementById('drill-body').innerHTML = html;
+    enableTableSort('drill-industries-table');
+}
+
+// Drill: Countries (from KPI "Países" click)
+function drillHistCountries() {
+    if (!_summaryStats) return;
+    const countries = _summaryStats.countries || [];
+    openDrillDown('Países com Dados Históricos', countries.length + ' países',
+        { label: 'Países', fn: 'drillHistCountries()' });
+    let html = `<div class="drill-stats">
+        <div class="drill-stat"><div class="ds-val">${countries.length}</div><div class="ds-lbl">Países</div></div>
+        <div class="drill-stat"><div class="ds-val">${_summaryStats.total_companies}</div><div class="ds-lbl">Empresas</div></div>
+    </div>`;
+    html += `<input type="text" class="drill-search" placeholder="Buscar país..."
+        oninput="drillFilterList(this.value, 'drill-countries2-tbody', 0)">`;
+    html += `<div style="max-height:400px;overflow-y:auto;">
+    <table class="drill-table" id="drill-countries2-table">
+        <thead><tr><th>País</th><th class="num">Empresas</th></tr></thead>
+        <tbody id="drill-countries2-tbody">${countries.map(c => `<tr class="clickable-row" onclick="drillHistCompanies({country:'${(c.country||'').replace(/'/g,"\\'")}'})" >
+            <td>${c.country}</td><td class="num">${c.count}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+    document.getElementById('drill-body').innerHTML = html;
+    enableTableSort('drill-countries2-table');
 }
 
 // Drill: Year distribution (from KPI "Período" click)
@@ -2131,7 +2846,7 @@ function drillHistCurrencies() {
             html += `<input type="text" class="drill-search" placeholder="Buscar país..."
                 oninput="drillFilterList(this.value, 'drill-countries-tbody', 0)">`;
             html += `<div style="max-height:400px;overflow-y:auto;">
-            <table class="drill-table">
+            <table class="drill-table" id="drill-countries-table">
                 <thead><tr><th>País</th><th class="num">Empresas</th></tr></thead>
                 <tbody id="drill-countries-tbody">${countries.map(c => `<tr class="clickable-row" onclick="drillHistCompanies({country:'${(c.country||'').replace(/'/g,"\\'")}'})" >
                     <td>${c.country}</td><td class="num">${c.count}</td>
@@ -2139,6 +2854,7 @@ function drillHistCurrencies() {
             </table></div>`;
 
             document.getElementById('drill-body').innerHTML = html;
+            enableTableSort('drill-countries-table');
         });
 }
 
@@ -2192,7 +2908,7 @@ async function drillHistYearDetail(metric, year) {
 
         // Table
         html += `<div style="max-height:350px;overflow-y:auto;">
-        <table class="drill-table">
+        <table class="drill-table" id="drill-year-detail-table">
             <thead><tr><th>Empresa</th><th>Código</th><th>Setor</th><th>País</th><th class="num">${label}</th></tr></thead>
             <tbody>${companies.map(c => `<tr class="clickable-row" onclick="closeDrillDown();switchTab('empresa');loadCompany('${(c.yahoo_code||'').replace(/'/g,"\\'")}')">
                 <td>${(c.company_name||'—').substring(0,30)}</td>
@@ -2204,6 +2920,7 @@ async function drillHistYearDetail(metric, year) {
         </table></div>`;
 
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-year-detail-table');
 
         // Render bar chart
         if (companies.length > 0) {
@@ -2290,15 +3007,24 @@ function addSectorChartClickHandler() {
 // =====================================================================
 // Init
 // =====================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    loadSummary();
-    // Check if navigated from Yahoo dashboard with search term
-    const histSearch = localStorage.getItem('hist_search');
-    if (histSearch) {
-        localStorage.removeItem('hist_search');
-        document.getElementById('search-company').value = histSearch;
+document.addEventListener('DOMContentLoaded', async () => {
+    const overlay = document.getElementById('page-loading');
+    try {
+        await Promise.all([
+            loadHistFilterOptions(false),
+            loadSummary(),
+        ]);
+        // Check if navigated from Yahoo dashboard with search term
+        const histSearch = localStorage.getItem('hist_search');
+        if (histSearch) {
+            localStorage.removeItem('hist_search');
+            document.getElementById('search-company').value = histSearch;
+        }
+        await searchCompanies();
+    } finally {
+        overlay.classList.add('hidden');
+        setTimeout(() => overlay.remove(), 500);
     }
-    searchCompanies();
 });
 </script>
 </body>

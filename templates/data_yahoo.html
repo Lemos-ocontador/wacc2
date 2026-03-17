@@ -284,6 +284,8 @@
         .page-btn:disabled { opacity:0.35;cursor:default; }
         .sortable { cursor:pointer;user-select:none; }
         .sortable:hover { color:var(--accent); }
+        .sort-arrow { font-size: 10px; margin-left: 3px; opacity: 0.4; }
+        .sort-arrow.active { opacity: 1; color: var(--accent); }
 
         /* Drill-Down Stats row */
         .drill-stats {
@@ -376,10 +378,12 @@
         <div>
             <h1>Dashboard Dados Yahoo Finance</h1>
             <div class="subtitle">Análise agregada por Setor, Indústria, Atividade Anloc e Localização | ~43.000 empresas globais</div>
+            <div class="subtitle" id="last-updated-info" style="margin-top:4px;font-size:11px;color:var(--text2);opacity:0.8"></div>
         </div>
         <div class="header-actions">
             <a href="/metodologias" class="btn-nav" style="opacity:0.7;font-size:11px" title="Metodologias de cálculo">📖</a>
             <a href="/data-yahoo-historico" class="btn-nav">📊 Históricos</a>
+            <a href="/data-consistency" class="btn-nav">🔍 Consistência</a>
             <a href="/" class="btn-nav">Início</a>
             <a href="/company-analysis" class="btn-nav">Empresas</a>
             <a href="/exporta-data" class="btn-nav">Exportar</a>
@@ -393,6 +397,7 @@
         <div class="kpi-card orange clickable" id="kpi-card-industries" onclick="toggleFilterPanel('industries')"><div class="value" id="kpi-industries">—</div><div class="label">Indústrias</div><div class="filter-indicator" id="kpi-industries-indicator"></div></div>
         <div class="kpi-card purple clickable" id="kpi-card-countries" onclick="toggleFilterPanel('countries')"><div class="value" id="kpi-countries">—</div><div class="label">Países</div><div class="filter-indicator" id="kpi-countries-indicator"></div></div>
         <div class="kpi-card green clickable" id="kpi-card-atividades" onclick="toggleFilterPanel('atividades')"><div class="value" id="kpi-atividades">—</div><div class="label">Atividades Anloc</div><div class="filter-indicator" id="kpi-atividades-indicator"></div></div>
+        <div class="kpi-card orange clickable" id="kpi-card-sic_descs" onclick="toggleFilterPanel('sic_descs')"><div class="value" id="kpi-sic_descs">—</div><div class="label">SIC Desc</div><div class="filter-indicator" id="kpi-sic_descs-indicator"></div></div>
     </div>
 
     <!-- Active Filters Bar -->
@@ -445,6 +450,17 @@
                 </div>
             </div>
             <div class="filter-panel-items" id="filter-items-atividades"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-sic_descs">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar SIC..." oninput="filterPanelSearch('sic_descs', this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('sic_descs')">Todos</button>
+                    <button onclick="clearFilter('sic_descs')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">✕</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-sic_descs"></div>
         </div>
     </div>
 
@@ -760,6 +776,82 @@
 </div>
 
 <script>
+// =====================================================================
+// Generic Table Sort (DOM-based, works on any table)
+// =====================================================================
+const _tableSortState = {};
+
+function sortTableDOM(tableId, colIdx) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length === 0) return;
+
+    const state = _tableSortState[tableId] || {};
+    let dir = 'asc';
+    if (state.col === colIdx && state.dir === 'asc') dir = 'desc';
+    _tableSortState[tableId] = { col: colIdx, dir };
+
+    const parseVal = (row) => {
+        const cell = row.cells[colIdx];
+        if (!cell) return null;
+        let txt = cell.textContent.trim().replace(/[%x,]/g, '').replace(/\s/g, '');
+        if (txt === '—' || txt === '' || txt === 'N/A') return null;
+        let num = parseFloat(txt.replace(/\./g, '').replace(',', '.'));
+        if (!isNaN(num)) return num;
+        return cell.textContent.trim().toLowerCase();
+    };
+
+    rows.sort((a, b) => {
+        let va = parseVal(a), vb = parseVal(b);
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        let cmp = 0;
+        if (typeof va === 'number' && typeof vb === 'number') {
+            cmp = va - vb;
+        } else {
+            va = String(va); vb = String(vb);
+            cmp = va.localeCompare(vb, 'pt-BR');
+        }
+        return dir === 'asc' ? cmp : -cmp;
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+
+    table.querySelectorAll('th .sort-arrow').forEach(el => {
+        el.classList.remove('active');
+        el.textContent = '⇅';
+    });
+    const th = table.querySelectorAll('thead th')[colIdx];
+    if (th) {
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) {
+            arrow.classList.add('active');
+            arrow.textContent = dir === 'asc' ? '▲' : '▼';
+        }
+    }
+}
+
+function enableTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const ths = table.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+        if (th.querySelector('input[type="checkbox"]')) return;
+        if (th.textContent.trim() === '') return;
+        if (th.classList.contains('sortable')) return; // already has custom sorting
+        if (!th.querySelector('.sort-arrow')) {
+            th.insertAdjacentHTML('beforeend', ' <span class="sort-arrow">⇅</span>');
+        }
+        th.style.cursor = 'pointer';
+        th.style.userSelect = 'none';
+        th.onclick = (e) => { e.stopPropagation(); sortTableDOM(tableId, idx); };
+    });
+}
+
 // ===== GLOBALS =====
 let sectorData = [];
 let industryData = [];
@@ -776,9 +868,9 @@ const COLORS = [
 const ALPHA_COLORS = COLORS.map(c => c + '99');
 
 // ===== FILTER STATE =====
-let activeFilters = { sectors: [], industries: [], countries: [], atividades: [] };
-let filterOptions = { sectors: [], industries: [], countries: [], atividades: [] };
-let filterOptionsTotals = { sectors: 0, industries: 0, countries: 0, atividades: 0 };
+let activeFilters = { sectors: [], industries: [], countries: [], atividades: [], sic_descs: [] };
+let filterOptions = { sectors: [], industries: [], countries: [], atividades: [], sic_descs: [] };
+let filterOptionsTotals = { sectors: 0, industries: 0, countries: 0, atividades: 0, sic_descs: 0 };
 let currentFilterPanel = null;
 
 async function loadFilterOptions(crossFilter = false) {
@@ -792,14 +884,16 @@ async function loadFilterOptions(crossFilter = false) {
             sectors: data.sectors,
             industries: data.industries,
             countries: data.countries,
-            atividades: data.atividades
+            atividades: data.atividades,
+            sic_descs: data.sic_descs
         };
         if (!crossFilter) {
             filterOptionsTotals = {
                 sectors: data.sectors.length,
                 industries: data.industries.length,
                 countries: data.countries.length,
-                atividades: data.atividades.length
+                atividades: data.atividades.length,
+                sic_descs: data.sic_descs.length
             };
         }
         // Re-populate open panel if any
@@ -871,7 +965,7 @@ function clearFilter(dimension) {
 }
 
 function clearAllFilters() {
-    activeFilters = { sectors: [], industries: [], countries: [], atividades: [] };
+    activeFilters = { sectors: [], industries: [], countries: [], atividades: [], sic_descs: [] };
     document.querySelectorAll('.kpi-card.filter-active').forEach(c => c.classList.remove('filter-active'));
     document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
     currentFilterPanel = null;
@@ -949,13 +1043,15 @@ function buildDrillParams() {
         params.country = activeFilters.countries[0];
     if (activeFilters.atividades.length > 0 && activeFilters.atividades.length === 1)
         params.atividade = activeFilters.atividades[0];
+    if (activeFilters.sic_descs.length > 0 && activeFilters.sic_descs.length === 1)
+        params.sic_desc = activeFilters.sic_descs[0];
     return params;
 }
 
 function updateActiveFilterTags() {
     const bar = document.getElementById('active-filters-bar');
     const allTags = [];
-    const dimLabels = { sectors: 'Setor', industries: 'Indústria', countries: 'País', atividades: 'Atividade' };
+    const dimLabels = { sectors: 'Setor', industries: 'Indústria', countries: 'País', atividades: 'Atividade', sic_descs: 'SIC' };
     for (const [dim, items] of Object.entries(activeFilters)) {
         if (items.length > 0 && items.length < filterOptionsTotals[dim]) {
             items.forEach(item => {
@@ -980,7 +1076,7 @@ function updateActiveFilterTags() {
 }
 
 function updateKPIHighlights() {
-    const dims = ['sectors', 'industries', 'countries', 'atividades'];
+    const dims = ['sectors', 'industries', 'countries', 'atividades', 'sic_descs'];
     dims.forEach(dim => {
         const card = document.getElementById('kpi-card-' + dim);
         const indicator = document.getElementById('kpi-' + dim + '-indicator');
@@ -1073,6 +1169,16 @@ async function loadSummary() {
         document.getElementById('kpi-industries').textContent = s.distinct_industries;
         document.getElementById('kpi-countries').textContent = s.distinct_countries;
         document.getElementById('kpi-atividades').textContent = s.distinct_atividades;
+        document.getElementById('kpi-sic_descs').textContent = s.distinct_sic_descs;
+
+        // Última atualização
+        if (s.last_updated) {
+            var dt = new Date(s.last_updated);
+            if (!isNaN(dt.getTime())) {
+                var fmt = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                document.getElementById('last-updated-info').textContent = '🕐 Última atualização da base: ' + fmt;
+            }
+        }
 
         // Coverage bars
         const coverages = [
@@ -1620,7 +1726,7 @@ async function loadCross() {
         if (!data.success) return;
 
         const rows = data.cross;
-        container.innerHTML = `<table class="data-table">
+        container.innerHTML = `<table class="data-table" id="cross-analysis-table">
             <thead><tr>
                 <th>Setor</th><th>País</th>
                 <th class="num">Empresas</th>
@@ -1638,6 +1744,7 @@ async function loadCross() {
                 <td class="num ${colorClass(r.avg_roe)}">${fmtPct(r.avg_roe)}</td>
                 <td class="num ${colorClass(r.avg_op_margin)}">${fmtPct(r.avg_op_margin)}</td>
             </tr>`).join('')}</tbody></table>`;
+        enableTableSort('cross-analysis-table');
 
         // Heatmap chart - pivot sectors vs top countries
         renderCrossHeatmap(rows);
@@ -2274,6 +2381,7 @@ async function drillCompanies(params, page = 1) {
         </div>`;
         html += renderDrillCompanyTable(data.companies);
         body.innerHTML = html;
+        enableTableSort('drill-company-table');
 
         // Pagination
         const pag = document.getElementById('drill-pagination');
@@ -2304,7 +2412,7 @@ function drillSearchCompanies(term) {
 function renderDrillCompanyTable(companies) {
     if (!companies.length) return '<p style="color:var(--text2);padding:20px;text-align:center;">Nenhuma empresa encontrada</p>';
     return `<div style="max-height:400px;overflow-y:auto;">
-    <table class="drill-table">
+    <table class="drill-table" id="drill-company-table">
         <thead><tr>
             <th>Empresa</th><th>Ticker</th><th>Setor</th><th>País</th>
             <th class="num">P/E</th><th class="num">EV/EBITDA</th>
@@ -2430,7 +2538,7 @@ async function drillCoverage(field) {
         // Sample without data
         if (data.sample_without && data.sample_without.length > 0) {
             html += '<h4 style="font-size:13px;margin-bottom:8px;color:var(--accent4);">Amostra — Maiores empresas sem ' + data.label + '</h4>';
-            html += `<table class="drill-table" style="font-size:11px;">
+            html += `<table class="drill-table" id="drill-coverage-sample-table" style="font-size:11px;">
                 <thead><tr><th>Empresa</th><th>Ticker</th><th>Setor</th><th>País</th></tr></thead>
                 <tbody>${data.sample_without.map(r => `<tr class="clickable-row" onclick="window.open('/company-analysis?company=${encodeURIComponent(r.ticker||'')}','_blank')">
                     <td>${truncate(r.company_name, 30)}</td><td>${r.ticker||'—'}</td>
@@ -2439,6 +2547,7 @@ async function drillCoverage(field) {
         }
 
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-coverage-sample-table');
 
         // Donut chart
         const ctx = document.getElementById('drill-coverage-chart');
@@ -2482,7 +2591,7 @@ async function drillCurrencies() {
 
         // Table
         html += `<div style="max-height:350px;overflow-y:auto;">
-        <table class="drill-table">
+        <table class="drill-table" id="drill-currency-table">
             <thead><tr><th>Moeda</th><th class="num">Empresas</th><th class="num">Países</th><th>Países (amostra)</th></tr></thead>
             <tbody>${currencies.map(c => `<tr>
                 <td><strong>${c.currency}</strong></td>
@@ -2493,6 +2602,7 @@ async function drillCurrencies() {
         </table></div>`;
 
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-currency-table');
 
         // Bar chart
         const top15 = currencies.slice(0, 15);
@@ -2524,7 +2634,7 @@ function drillSectorsList() {
         { label: 'Setores', fn: 'drillSectorsList()' });
 
     let html = `<div style="max-height:500px;overflow-y:auto;">
-    <table class="drill-table">
+    <table class="drill-table" id="drill-sectors-list-table">
         <thead><tr><th>Setor</th><th class="num">Empresas</th><th class="num">P/E</th>
         <th class="num">EV/EBITDA</th><th class="num">Marg.Op.</th><th class="num">Beta</th></tr></thead>
         <tbody>${sectorData.map(s => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({sector:'${(s.sector||'').replace(/'/g,"\\'")}'})" >
@@ -2537,6 +2647,7 @@ function drillSectorsList() {
         </tr>`).join('')}</tbody>
     </table></div>`;
     document.getElementById('drill-body').innerHTML = html;
+    enableTableSort('drill-sectors-list-table');
 }
 
 // Drill: Industries list (from KPI click)
@@ -2553,7 +2664,7 @@ async function drillIndustriesList() {
         let html = `<input type="text" class="drill-search" placeholder="Buscar indústria..." 
             oninput="drillFilterList(this.value, 'drill-ind-tbody', 0)">`;
         html += `<div style="max-height:450px;overflow-y:auto;">
-        <table class="drill-table">
+        <table class="drill-table" id="drill-industries-list-table">
             <thead><tr><th>Indústria</th><th>Setor</th><th class="num">Empresas</th>
             <th class="num">EV/EBITDA</th><th class="num">P/E</th></tr></thead>
             <tbody id="drill-ind-tbody">${inds.map(i => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({industry:'${(i.industry||'').replace(/'/g,"\\'")}'})" >
@@ -2565,6 +2676,7 @@ async function drillIndustriesList() {
             </tr>`).join('')}</tbody>
         </table></div>`;
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-industries-list-table');
     } catch (e) {
         document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
     }
@@ -2584,7 +2696,7 @@ async function drillCountriesList() {
         let html = `<input type="text" class="drill-search" placeholder="Buscar país..." 
             oninput="drillFilterList(this.value, 'drill-country-tbody', 0)">`;
         html += `<div style="max-height:450px;overflow-y:auto;">
-        <table class="drill-table">
+        <table class="drill-table" id="drill-countries-list-table">
             <thead><tr><th>País</th><th class="num">Empresas</th><th class="num">Setores</th>
             <th class="num">P/E</th><th class="num">EV/EBITDA</th></tr></thead>
             <tbody id="drill-country-tbody">${cs.map(c => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({country:'${(c.country||'').replace(/'/g,"\\'")}'})" >
@@ -2596,6 +2708,7 @@ async function drillCountriesList() {
             </tr>`).join('')}</tbody>
         </table></div>`;
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-countries-list-table');
     } catch (e) {
         document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
     }
@@ -2615,7 +2728,7 @@ async function drillAtividadesList() {
         let html = `<input type="text" class="drill-search" placeholder="Buscar atividade..." 
             oninput="drillFilterList(this.value, 'drill-ativ-tbody', 0)">`;
         html += `<div style="max-height:450px;overflow-y:auto;">
-        <table class="drill-table">
+        <table class="drill-table" id="drill-atividades-list-table">
             <thead><tr><th>Atividade</th><th class="num">Empresas</th>
             <th class="num">EV/EBITDA</th><th class="num">P/E</th><th class="num">Marg.Op.</th></tr></thead>
             <tbody id="drill-ativ-tbody">${ats.map(a => `<tr class="clickable-row" onclick="closeDrillDown();drillCompanies({atividade:'${(a.atividade||'').replace(/'/g,"\\'")}'})" >
@@ -2627,6 +2740,7 @@ async function drillAtividadesList() {
             </tr>`).join('')}</tbody>
         </table></div>`;
         document.getElementById('drill-body').innerHTML = html;
+        enableTableSort('drill-atividades-list-table');
     } catch (e) {
         document.getElementById('drill-body').innerHTML = '<p style="color:var(--accent3)">Erro</p>';
     }
@@ -2665,8 +2779,23 @@ function addBarClickHandler(chartId, getFilterFn) {
 }
 
 // ===== INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', () => {
-    loadFilterOptions();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Parse URL params to pre-set filters
+    const urlParams = new URLSearchParams(window.location.search);
+    const preFilters = ['sectors', 'industries', 'countries', 'atividades', 'sic_descs'];
+    let hasPreFilter = false;
+    preFilters.forEach(dim => {
+        const val = urlParams.get(dim);
+        if (val) {
+            activeFilters[dim] = val.split(',').map(v => v.trim()).filter(Boolean);
+            hasPreFilter = true;
+        }
+    });
+    await loadFilterOptions(hasPreFilter);
+    if (hasPreFilter) {
+        updateActiveFilterTags();
+        updateKPIHighlights();
+    }
     loadSummary();
     loadSectors();
 });

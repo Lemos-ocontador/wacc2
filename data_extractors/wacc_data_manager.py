@@ -31,7 +31,12 @@ class WACCDataManager:
         self.web_scraper = WebScraper()
         
         # Configurar cache directory
-        os.makedirs(cache_dir, exist_ok=True)
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+        except OSError:
+            self.cache_dir = '/tmp/cache'
+            cache_dir = self.cache_dir
+            os.makedirs(cache_dir, exist_ok=True)
         
         # Mapeamento de componentes WACC para extratores
         self.wacc_components = {

@@ -9,6 +9,14 @@ Plataforma Flask para **análise financeira e valuation** com dois focos:
 - **Cálculo automatizado de WACC** (Weighted Average Cost of Capital)
 - **Benchmarking global de empresas** usando base Damodaran (~47 mil empresas)
 
+### Ambientes
+
+| Ambiente | URL / Porta | Infra |
+|----------|-------------|-------|
+| **Produção (GCloud)** | `https://dataanloc.rj.r.appspot.com` | GAE Standard, Python 3.12, F4_1G |
+| Local — Principal | `http://localhost:5000` | Flask dev server |
+| Local — Análise | `http://localhost:5001` | Flask dev server |
+
 ### Aplicações Flask
 
 | App | Arquivo | Porta | Foco |
@@ -22,8 +30,10 @@ Plataforma Flask para **análise financeira e valuation** com dois focos:
 
 ### Backend
 
-- **Flask** — rotas web + APIs REST (80 rotas no app principal)
+- **Flask** — rotas web + APIs REST (84 rotas no app principal)
 - **SQLite** — `data/damodaran_data_new.db` (~47k empresas, ~157k registros históricos)
+  - **Produção (GAE)**: modo `?immutable=1` (read-only, sem journal/WAL)
+  - **Local**: modo padrão (leitura/escrita)
 - **Pandas/NumPy** — processamento estatístico e agregações
 - **yfinance** — coleta de dados financeiros do Yahoo Finance
 - **Extratores** — FRED, BCB, Damodaran, web scraping
@@ -62,16 +72,21 @@ Plataforma Flask para **análise financeira e valuation** com dois focos:
 
 ```
 bd_damodaran/
-├── app.py                        # App Flask principal (3740 linhas, 80 rotas)
+├── app.py                        # App Flask principal (~3680 linhas, 84 rotas)
 ├── company_analysis_app.py       # App de análise de empresas
 ├── wacc_calculator.py            # Motor de cálculo WACC
 ├── wacc_data_connector.py        # Conector de dados WACC
 ├── data_source_manager.py        # Gerenciador de fontes
 ├── field_categories_manager.py   # Categorias de campos
 ├── geographic_mappings.py        # Mapeamentos geográficos ONU
-├── requirements.txt              # Dependências Python
+├── requirements.txt              # Dependências Python (local)
+├── requirements-gae.txt          # Dependências Python (GAE — sem selenium/curl_cffi)
 ├── README.md                     # Documentação principal
 ├── atualizar_github.bat          # Script de push GitHub
+├── deploy_gcloud.bat             # Script de deploy GAE
+├── app.yaml                      # Config Google App Engine
+├── main.py                       # Entrypoint WSGI (GAE)
+├── .gcloudignore                 # Ignore para deploy GAE
 │
 ├── data_extractors/              # Extratores de dados financeiros
 │   ├── base_extractor.py         # Classe base abstrata
@@ -81,17 +96,19 @@ bd_damodaran/
 │   ├── wacc_data_manager.py      # Orquestrador dos extratores
 │   └── web_scraper.py            # Scraper web genérico
 │
-├── scripts/                      # Scripts de ETL e manutenção (22 scripts)
+├── scripts/                      # Scripts de ETL e manutenção (24 scripts)
 │   ├── fetch_historical_financials.py   # Download de históricos via Yahoo
 │   ├── extract_global_damodaran.py      # Importar Excel Damodaran
 │   ├── sync_company_basic_data.py       # Sincronizar company_basic_data
 │   └── ...
 │
-├── templates/                    # Templates HTML/Jinja2 (16 templates)
+├── templates/                    # Templates HTML/Jinja2 (17 templates)
 │   ├── main_dashboard.html       # Dashboard principal
 │   ├── wacc_interface.html       # Interface WACC
-│   ├── data_yahoo.html           # Dashboard dados Yahoo
+│   ├── data_yahoo.html           # Dashboard dados Yahoo (treemap, cross-filters)
 │   ├── data_yahoo_historico.html # Dados históricos com consolidado
+│   ├── company_analysis.html     # Perfil de empresa (5 abas)
+│   ├── metodologias.html         # Página de metodologias
 │   ├── analise_setor.html        # Análise por setor
 │   └── ...
 │
@@ -108,6 +125,7 @@ bd_damodaran/
 │
 └── docs/                         # Documentação
     ├── RESUMO_APLICACAO.md       # Este arquivo
+    ├── gcloud.md                 # Diretrizes de deploy GCloud
     ├── README_company_analysis.md
     ├── metodologias.md
     ├── oportunidades_melhorias.md
@@ -118,13 +136,13 @@ bd_damodaran/
 
 ## 4) Mapa de Rotas — `app.py`
 
-### 4.1 Páginas Web (14 rotas)
+### 4.1 Páginas Web (15 rotas)
 
 | Rota | Template | Descrição |
 |------|----------|-----------|
 | `GET /` | `main_dashboard.html` | Dashboard principal |
 | `GET /wacc` | `wacc_interface.html` | Calculadora WACC |
-| `GET /company-analysis` | `company_analysis.html` | Análise de empresas |
+| `GET /company-analysis` | `company_analysis.html` | Perfil de empresa (5 abas) |
 | `GET /dashboard` | `dashboard.html` | Dashboard de saúde WACC |
 | `GET /calculator` | `calculator.html` | Calculadora interativa |
 | `GET /wacc_interface` | `wacc_interface.html` | Interface WACC aprimorada |
@@ -135,6 +153,7 @@ bd_damodaran/
 | `GET /exporta-data` | `exporta_data.html` | Exportação de dados |
 | `GET /data-yahoo-historico` | `data_yahoo_historico.html` | Dados históricos Yahoo |
 | `GET /analise-setor` | `analise_setor.html` | Análise por setor/localidade |
+| `GET /metodologias` | `metodologias.html` | Documentação de metodologias |
 
 ### 4.2 API — Cálculo WACC (23 rotas)
 
@@ -176,28 +195,31 @@ bd_damodaran/
 | `GET /api/hierarchy` | Hierarquia p/ filtros frontend |
 | `GET /api/filters` | Opções de filtros (países, indústrias) |
 
-### 4.4 API — Análise de Empresas (7 rotas)
+### 4.4 API — Análise de Empresas (8 rotas)
 
 | Rota | Descrição |
 |------|-----------|
 | `GET /api/companies` | Lista empresas c/ filtros hierárquicos |
 | `GET /api/benchmarks` | Benchmarks estatísticos por grupo |
 | `GET /api/company/<name>/analysis` | Análise detalhada com rankings |
+| `GET /api/company_profile` | Perfil completo da empresa (básico + Damodaran + históricos) |
 | `GET /api/benchmark_companies` | Empresas p/ seleção de benchmark |
 | `GET /api/get_field_categories` | Categorias de campos |
 | `GET /api/get_category_fields/<id>` | Campos de uma categoria |
 | `GET /api/get_field_info/<field>` | Metadados de um campo |
 
-### 4.5 API — Dashboard Yahoo (6 rotas)
+### 4.5 API — Dashboard Yahoo (8 rotas)
 
 | Rota | Descrição |
 |------|-----------|
+| `GET /api/yahoo_filter_options` | Opções de filtros com cross-filter (aceita filtros ativos) |
 | `GET /api/yahoo_dashboard_summary` | Resumo geral (KPIs) |
 | `GET /api/yahoo_dashboard_sectors` | Métricas por setor Yahoo |
 | `GET /api/yahoo_dashboard_industries` | Métricas por indústria |
 | `GET /api/yahoo_dashboard_countries` | Métricas por país |
 | `GET /api/yahoo_dashboard_atividades` | Métricas por atividade Anloc |
 | `GET /api/yahoo_dashboard_cross` | Cruzamento setor × país |
+| `GET /api/yahoo_dashboard_treemap` | Treemap de market cap por setor/país |
 
 ### 4.6 API — Drill-Down (6 rotas)
 
@@ -273,8 +295,18 @@ App focado em análise de empresas (porta 5001):
 ### Dashboard Yahoo Finance
 - 42.878 empresas com dados atuais do Yahoo Finance
 - Agregações por setor, indústria, país, atividade Anloc
-- Drill-down paginado com exportação CSV
+- **Treemap interativo** de market cap por setor/país
+- **Cross-filter** em KPI cards (filtros cruzados entre dimensões)
+- **Tabela de empresas** com busca e paginação
+- Drill-down paginado com exportação CSV (respeita filtros ativos)
 - Análise cruzada setor × país
+
+### Perfil de Empresa
+- Busca multi-estratégia: yahoo_code, google_finance_code, company_name (LIKE)
+- **5 abas**: Institucional, Mercado, Financeiro, Histórico, Balanço & DRE
+- Gráficos Chart.js com séries históricas (receita, margens, múltiplos, capital)
+- Demonstrações contábeis: DRE, Balanço Patrimonial, Fluxo de Caixa
+- Suporta dados anuais e trimestrais
 
 ### Dados Históricos
 - 156.585 registros históricos (2021-2026) de 37k+ empresas
@@ -309,10 +341,15 @@ App focado em análise de empresas (porta 5001):
 | `fix_yahoo_codes.py` | Corrigir códigos Yahoo | Sob demanda |
 | `create_country_risk_db.py` | Popular risco-país | Anual |
 | `import_size_premium.py` | Popular size premium | Anual |
+| `recalculate_fx_rates.py` | Recalcular taxas FX históricas (USD) | Sob demanda |
+| `run_ev_fix_all_sectors.py` | Corrigir EV/Market Cap por setor | Sob demanda |
+| `run_all_sectors.ps1` | Orquestrador PowerShell p/ reprocessamento em massa | Sob demanda |
 
 ---
 
 ## 8) Como Executar
+
+### Local
 
 ```bash
 # Instalar dependências
@@ -327,9 +364,27 @@ python company_analysis_app.py
 
 Acessar: `http://localhost:5000`
 
+### Produção (Google App Engine)
+
+```bash
+# Deploy (usando script automatizado)
+deploy_gcloud.bat
+
+# Ou manualmente
+copy requirements-gae.txt requirements.txt
+gcloud app deploy app.yaml --project=dataanloc --quiet
+copy requirements-local-backup.txt requirements.txt
+```
+
+Acessar: `https://dataanloc.rj.r.appspot.com`
+
+> Veja `docs/gcloud.md` para detalhes completos de infraestrutura e troubleshooting.
+
 ---
 
 ## 9) Dependências
+
+### Local (`requirements.txt`)
 
 ```
 Flask==3.1.2
@@ -343,4 +398,20 @@ selenium==4.40.0
 wikipedia==1.4.0
 curl_cffi==0.13.0
 ```
+
+### Produção GAE (`requirements-gae.txt`)
+
+```
+Flask==3.1.2
+gunicorn==23.0.0
+pandas==3.0.0
+numpy==2.4.2
+openpyxl==3.1.5
+requests==2.32.5
+beautifulsoup4==4.14.3
+yfinance==1.1.0
+wikipedia==1.4.0
+```
+
+> Excluídos do GAE: `selenium` (precisa de browser), `curl_cffi` (dependência nativa). Adicionado: `gunicorn`.
 

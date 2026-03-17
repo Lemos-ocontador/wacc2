@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import os
 import pandas as pd
 import requests
 from typing import Dict, List, Optional, Any
@@ -7,6 +8,15 @@ import logging
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_IS_GAE = os.environ.get('GAE_ENV', '').startswith('standard')
+
+def _connect_db(path):
+    if _IS_GAE:
+        abs_path = os.path.abspath(path)
+        uri = 'file:' + abs_path + '?immutable=1'
+        return sqlite3.connect(uri, uri=True)
+    return sqlite3.connect(path)
 
 # ══════════════════════════════════════════════════════════════════════════
 # FALLBACKS ABSURDOS — se aparecerem na interface, algo está quebrado!
@@ -277,7 +287,7 @@ class WACCDataConnector:
             return self._sectors_cache
         
         try:
-            conn = sqlite3.connect(self.damodaran_db)
+            conn = _connect_db(self.damodaran_db)
             
             # Metodologia Damodaran:
             # - Beta: média simples de TODOS os betas válidos (inclui negativos)
@@ -359,7 +369,7 @@ class WACCDataConnector:
             Dict com beta alavancado e desalavancado
         """
         try:
-            conn = sqlite3.connect(self.damodaran_db)
+            conn = _connect_db(self.damodaran_db)
             
             # Query: pegar TODAS as empresas do setor (inclui betas negativos)
             base_query = """
@@ -479,7 +489,7 @@ class WACCDataConnector:
             return self._countries_cache
         
         try:
-            conn = sqlite3.connect(self.country_risk_db)
+            conn = _connect_db(self.country_risk_db)
             
             query = """
             SELECT 
@@ -549,7 +559,7 @@ class WACCDataConnector:
             Dict com prêmio de risco do país
         """
         try:
-            conn = sqlite3.connect(self.country_risk_db)
+            conn = _connect_db(self.country_risk_db)
             
             query = """
             SELECT 
@@ -742,7 +752,7 @@ class WACCDataConnector:
             Dict com prêmio de tamanho aplicável
         """
         try:
-            conn = sqlite3.connect(self.damodaran_db)
+            conn = _connect_db(self.damodaran_db)
             
             if market_cap is None:
                 # Retornar todos os decis disponíveis

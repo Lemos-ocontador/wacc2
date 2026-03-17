@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Explorer – Anloc Valuation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f1923; --bg2: #1a2733; --bg3: #243447;
+            --accent: #f5f1f0; --accent2: #ebe6e5; --accent3: #f7efee;
+            --accent4: #f3f0eb; --accent5: #9b59b6; --accent6: #3498db;
+            --text: #ecf0f1; --text2: #95a5a6; --border: #2c3e50;
+            --positive: #faf1ee; --negative: #f8edeb;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--bg); color:var(--text); }
+        .container { max-width:1600px; margin:0 auto; padding:15px; }
+        .header {
+            background: linear-gradient(135deg, #cc2900, #FF3300, #e63e00);
+            padding:18px 25px; border-radius:12px; margin-bottom:15px;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .header h1 { font-size:22px; font-weight:700; }
+        .header .subtitle { font-size:13px; opacity:0.85; margin-top:3px; }
+        .header-actions { display:flex; gap:8px; }
+        .btn-nav {
+            padding:8px 16px; border:none; border-radius:8px;
+            cursor:pointer; font-size:13px; font-weight:600;
+            background:rgba(255,255,255,0.15); color:white;
+            text-decoration:none; transition:background 0.2s;
+        }
+        .btn-nav:hover { background:rgba(255,255,255,0.25); }
+
+        /* KPI Row */
+        .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:15px; }
+        .kpi-card {
+            background:var(--bg2); border:1px solid var(--border);
+            border-radius:10px; padding:14px 16px; text-align:center;
+        }
+        .kpi-card .value { font-size:26px; font-weight:700; color:var(--accent); }
+        .kpi-card .label { font-size:11px; color:var(--text2); margin-top:4px; text-transform:uppercase; letter-spacing:0.5px; }
+        .kpi-card .sub { font-size:11px; color:var(--text2); margin-top:2px; }
+        .kpi-card.green .value { color:var(--accent2); }
+        .kpi-card.blue .value { color:var(--accent6); }
+        .kpi-card.orange .value { color:var(--accent4); }
+        .kpi-card.purple .value { color:var(--accent5); }
+        .kpi-card.clickable { cursor:pointer; transition:all 0.2s; }
+        .kpi-card.clickable:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 4px 15px rgba(255,51,0,0.2); }
+        .kpi-card.filter-active { border-color:var(--accent); box-shadow:0 0 8px rgba(255,51,0,0.3); }
+        .kpi-card .filter-indicator { font-size:10px; color:var(--accent); margin-top:2px; }
+
+        /* Tabs */
+        .tabs {
+            display:flex; gap:4px; margin-bottom:15px;
+            background:var(--bg2); border-radius:10px; padding:4px;
+            border:1px solid var(--border);
+        }
+        .tab-btn {
+            padding:10px 20px; border:none; border-radius:8px;
+            cursor:pointer; font-size:13px; font-weight:600;
+            background:transparent; color:var(--text2); transition:all 0.2s;
+        }
+        .tab-btn:hover { color:var(--text); background:var(--bg3); }
+        .tab-btn.active { background:var(--accent); color:white; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* Cards */
+        .card {
+            background:var(--bg2); border:1px solid var(--border);
+            border-radius:10px; margin-bottom:15px; overflow:hidden;
+        }
+        .card-header {
+            padding:12px 18px; border-bottom:1px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .card-header h3 { font-size:15px; font-weight:600; }
+        .card-body { padding:15px 18px; }
+
+        /* Filter Panels (cross-filter) */
+        .filter-panels { margin-bottom:10px; }
+        .filter-panel {
+            background:var(--bg2); border:1px solid var(--accent); border-radius:10px;
+            padding:12px 16px; margin-bottom:10px; display:none;
+            animation: filterSlideDown 0.2s ease;
+        }
+        @keyframes filterSlideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+        .filter-panel.open { display:block; }
+        .filter-panel-header {
+            display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px;
+        }
+        .filter-panel-header input {
+            flex:1; max-width:300px; background:var(--bg3); border:1px solid var(--border);
+            color:var(--text); padding:6px 12px; border-radius:6px; font-size:12px;
+        }
+        .filter-panel-header input:focus { outline:none; border-color:var(--accent); }
+        .filter-panel-header input::placeholder { color:#555; }
+        .filter-panel-actions { display:flex; gap:6px; }
+        .filter-panel-actions button {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text2);
+            padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer; transition:all 0.15s;
+        }
+        .filter-panel-actions button:hover { border-color:var(--accent); color:var(--accent); }
+        .filter-panel-items {
+            display:flex; flex-wrap:wrap; gap:5px;
+            max-height:220px; overflow-y:auto; padding:2px 0;
+        }
+        .filter-chip {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:4px 10px; border-radius:14px; font-size:11px;
+            cursor:pointer; transition:all 0.15s; white-space:nowrap;
+            background:var(--bg3); border:1px solid var(--border); color:var(--text2);
+        }
+        .filter-chip:hover { border-color:var(--accent); color:var(--text); }
+        .filter-chip.selected {
+            background:rgba(255,51,0,0.2); border-color:var(--accent); color:var(--accent); font-weight:600;
+        }
+        .filter-chip .chip-count { opacity:0.6; font-size:10px; }
+
+        /* Active Filters Bar */
+        .active-filters-bar {
+            background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+            padding:8px 14px; margin-bottom:10px;
+            display:none; flex-wrap:wrap; gap:6px; align-items:center;
+        }
+        .active-filters-bar.visible { display:flex; }
+        .active-filters-bar .af-label { font-size:11px; color:var(--text2); margin-right:4px; }
+        .active-tag {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:3px 8px 3px 10px; border-radius:12px; font-size:11px;
+            background:rgba(255,51,0,0.15); color:var(--accent); cursor:pointer; transition:all 0.15s;
+        }
+        .active-tag:hover { background:rgba(231,76,60,0.15); color:var(--accent3); }
+        .active-tag .at-x { font-weight:bold; font-size:13px; line-height:1; }
+        .btn-clear-filters {
+            background:none; border:1px solid var(--border); color:var(--text2);
+            padding:3px 10px; border-radius:12px; font-size:11px; cursor:pointer; margin-left:auto;
+        }
+        .btn-clear-filters:hover { border-color:var(--accent3); color:var(--accent3); }
+
+        /* Tag Filter Bar */
+        .tag-filter-bar {
+            display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+            margin-bottom:10px; padding:8px 14px;
+            background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+        }
+        .tag-filter-bar .tfb-label { font-size:12px; color:var(--text2); margin-right:4px; font-weight:600; }
+        .tfb-btn {
+            padding:5px 12px; border-radius:14px; font-size:11px; font-weight:600;
+            cursor:pointer; transition:all 0.15s; border:1px solid var(--border);
+            background:var(--bg3); color:var(--text2);
+        }
+        .tfb-btn:hover { border-color:var(--accent); color:var(--text); }
+        .tfb-btn.active { border-color:var(--accent); background:rgba(255,51,0,0.15); color:var(--accent); }
+
+        /* Table */
+        .data-table { width:100%; border-collapse:collapse; font-size:12px; }
+        .data-table th {
+            background:var(--bg3); color:var(--text2); padding:8px 10px;
+            text-align:left; font-weight:600; font-size:11px;
+            text-transform:uppercase; letter-spacing:0.5px;
+            position:sticky; top:0; z-index:5; cursor:pointer; user-select:none;
+        }
+        .data-table th:hover { color:var(--accent); }
+        .data-table td { padding:7px 10px; border-bottom:1px solid var(--border); }
+        .data-table tr:hover td { background:rgba(255,51,0,0.08); }
+        .data-table .num { text-align:right; font-variant-numeric:tabular-nums; }
+        .table-scroll { max-height:500px; overflow-y:auto; }
+
+        /* Badges */
+        .src-badge {
+            display:inline-block; padding:1px 6px; border-radius:4px;
+            font-size:10px; font-weight:700; vertical-align:middle;
+        }
+        .src-yfinance { background:rgba(52,152,219,0.2); color:#3498db; }
+        .src-sec { background:rgba(243,156,18,0.2); color:#f39c12; }
+        .src-cvm { background:rgba(255,51,0,0.2); color:#ff5533; }
+
+        /* Search input */
+        .search-input {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text);
+            padding:8px 14px; border-radius:6px; font-size:13px; width:280px;
+        }
+        .search-input:focus { outline:none; border-color:var(--accent); }
+        .search-input::placeholder { color:#555; }
+        .search-input-wide { width:100%; max-width:400px; }
+
+        /* Detail Panel */
+        .detail-panel {
+            background:var(--bg2); border:1px solid var(--accent); border-radius:10px;
+            padding:20px; margin-bottom:15px; display:none;
+        }
+        .detail-panel.visible { display:block; }
+        .dp-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+        .dp-header h2 { font-size:20px; }
+        .dp-close {
+            background:var(--accent3); color:white; border:none; border-radius:6px;
+            padding:6px 14px; cursor:pointer; font-size:13px;
+        }
+        .dp-meta { display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap; }
+        .dp-meta span { font-size:13px; color:var(--text2); }
+        .dp-tags { display:flex; gap:6px; margin-bottom:15px; flex-wrap:wrap; }
+        .dp-tag {
+            font-size:11px; padding:3px 10px; border-radius:12px; font-weight:600;
+            display:inline-block; letter-spacing:.3px;
+        }
+        .dp-tag[data-type="asset_class"] { background:#1a3a4d; color:#5bc0de; }
+        .dp-tag[data-type="geography"]   { background:#1a4d2b; color:#5cb85c; }
+        .dp-tag[data-type="cap_size"]    { background:#4d3a1a; color:#f0ad4e; }
+        .dp-tag[data-type="style"]       { background:#3a1a4d; color:#d9534f; }
+        .dp-tag[data-type="sector"]      { background:#1a2a4d; color:#5bc0de; }
+        .dp-tag[data-type="strategy"]    { background:#4d1a3a; color:#ee5f5b; }
+        .dp-tag[data-type="index"]       { background:#2a2a3d; color:#c7c7c7; }
+        .dp-tag[data-type="issuer"]      { background:#2d2d2d; color:#888; }
+        .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+        .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; }
+        .chart-container { position:relative; width:100%; }
+        .chart-container.h300 { height:300px; }
+        .chart-container.h250 { height:250px; }
+
+        /* Overlap */
+        .overlap-inputs { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:15px; }
+        .overlap-inputs input {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text);
+            border-radius:8px; padding:10px 16px; font-size:14px; width:180px;
+            text-transform:uppercase;
+        }
+        .overlap-inputs input:focus { outline:none; border-color:var(--accent); }
+        .overlap-pct { font-size:2.4rem; font-weight:700; color:var(--accent); }
+        .btn-action {
+            padding:8px 18px; border:none; border-radius:8px; cursor:pointer;
+            font-size:13px; font-weight:600; transition:opacity 0.2s;
+        }
+        .btn-action:hover { opacity:0.85; }
+        .btn-action.primary { background:var(--accent); color:white; }
+        .btn-action.success { background:var(--accent2); color:white; }
+        .btn-action.outline {
+            background:transparent; border:1px solid var(--border); color:var(--text2);
+        }
+        .btn-action.outline:hover { border-color:var(--accent); color:var(--accent); }
+        .btn-sm { padding:5px 12px; font-size:11px; }
+
+        /* Compare inputs */
+        .compare-inputs { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:15px; }
+        .compare-inputs input {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text);
+            border-radius:8px; padding:8px 14px; font-size:13px; width:140px;
+            text-transform:uppercase;
+        }
+        .compare-inputs input:focus { outline:none; border-color:var(--accent); }
+
+        /* Heatmap */
+        .heatmap-table { border-collapse:collapse; font-size:12px; width:auto; }
+        .heatmap-table th, .heatmap-table td { padding:8px 12px; text-align:center; border:1px solid var(--border); }
+        .heatmap-table th { background:var(--bg3); color:var(--text2); font-size:11px; }
+        .heatmap-cell { font-weight:700; border-radius:4px; min-width:60px; }
+
+        /* Holding search in detail */
+        .detail-search {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text);
+            padding:6px 12px; border-radius:6px; font-size:12px; width:250px; margin-bottom:8px;
+        }
+        .detail-search:focus { outline:none; border-color:var(--accent); }
+
+        /* Breakdown bar */
+        .breakdown-bar { margin-bottom:6px; }
+        .breakdown-bar-label { display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px; }
+        .breakdown-bar-label span:first-child { color:var(--text); }
+        .breakdown-bar-label span:last-child { color:var(--text2); }
+        .breakdown-bar-track { height:14px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+        .breakdown-bar-fill { height:100%; border-radius:3px; transition:width 0.4s ease; }
+
+        /* Pagination */
+        .pagination-bar {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:12px 16px; border-top:1px solid var(--border);
+        }
+        .pagination-bar span { font-size:12px; color:var(--text2); }
+        .pagination-bar button {
+            background:var(--bg3); border:1px solid var(--border); color:var(--text);
+            border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px;
+        }
+        .pagination-bar button:disabled { opacity:.4; cursor:default; }
+        .pagination-bar button:hover:not(:disabled) { border-color:var(--accent); }
+
+        /* Drill Overlay */
+        .drill-overlay {
+            display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+            background:rgba(0,0,0,0.6); z-index:1000; backdrop-filter:blur(2px);
+            opacity:0; transition:opacity 0.25s ease;
+        }
+        .drill-overlay.active { display:flex; align-items:center; justify-content:center; opacity:1; }
+        .drill-modal {
+            background:var(--bg); border:1px solid var(--border); border-radius:14px;
+            width:90%; max-width:1100px; max-height:85vh; display:flex; flex-direction:column;
+            box-shadow:0 20px 60px rgba(0,0,0,0.5);
+            transform:translateY(20px) scale(0.97); transition:transform 0.25s ease;
+        }
+        .drill-overlay.active .drill-modal { transform:translateY(0) scale(1); }
+        .drill-header {
+            padding:16px 22px; border-bottom:1px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+        }
+        .drill-header h2 { font-size:17px; font-weight:700; }
+        .drill-close {
+            background:none; border:none; color:var(--text2); font-size:22px;
+            cursor:pointer; padding:4px 10px; border-radius:6px; transition:all 0.2s;
+        }
+        .drill-close:hover { background:var(--bg3); color:var(--accent3); }
+        .drill-body { padding:18px 22px; overflow-y:auto; flex:1; }
+        .drill-stats {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+            gap:10px; margin-bottom:16px;
+        }
+        .drill-stat { background:var(--bg3); border-radius:8px; padding:10px 12px; text-align:center; }
+        .drill-stat .ds-val { font-size:20px; font-weight:700; color:var(--accent); }
+        .drill-stat .ds-lbl { font-size:10px; color:var(--text2); margin-top:2px; text-transform:uppercase; }
+
+        /* Loading */
+        .loading { text-align:center; padding:40px; color:var(--text2); }
+        .loading::after { content:''; display:inline-block; width:20px; height:20px;
+            border:2px solid var(--accent); border-top-color:transparent;
+            border-radius:50%; animation:spin 0.8s linear infinite; margin-left:8px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .empty-msg { text-align:center; padding:40px; color:var(--text2); }
+
+        @media (max-width:900px) {
+            .grid-2, .grid-3 { grid-template-columns:1fr; }
+            .kpi-row { grid-template-columns:repeat(3,1fr); }
+            .overlap-inputs, .compare-inputs { flex-direction:column; }
+            .overlap-inputs input, .compare-inputs input { width:100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>&#128230; ETF Explorer</h1>
+            <div class="subtitle">Composi&ccedil;&atilde;o, sobreposi&ccedil;&atilde;o e busca reversa de ETFs &bull; Multi-fonte</div>
+        </div>
+        <div class="header-actions">
+            <a href="/company-analysis" class="btn-nav">&#127970; Company Analysis</a>
+            <a href="/data-yahoo" class="btn-nav">&#128202; Yahoo Dashboard</a>
+            <a href="/" class="btn-nav">&#127968; Home</a>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpi-row">
+        <div class="kpi-card clickable" onclick="drillTopHoldings()">
+            <div class="value" id="kpi-etfs">&mdash;</div><div class="label">ETFs</div>
+        </div>
+        <div class="kpi-card green clickable" onclick="drillTopHoldings()">
+            <div class="value" id="kpi-holdings">&mdash;</div><div class="label">Holdings</div>
+        </div>
+        <div class="kpi-card blue clickable" onclick="drillTopHoldings()">
+            <div class="value" id="kpi-unique">&mdash;</div><div class="label">Ativos &Uacute;nicos</div>
+        </div>
+        <div class="kpi-card clickable" id="kpi-card-sources" onclick="toggleFilterPanel('sources')">
+            <div class="value" id="kpi-sources">&mdash;</div><div class="label">Fontes</div>
+            <div class="filter-indicator" id="kpi-sources-indicator"></div>
+        </div>
+        <div class="kpi-card orange clickable" id="kpi-card-categories" onclick="toggleFilterPanel('categories')">
+            <div class="value" id="kpi-categories">&mdash;</div><div class="label">Categorias</div>
+            <div class="filter-indicator" id="kpi-categories-indicator"></div>
+        </div>
+        <div class="kpi-card purple clickable" id="kpi-card-regions" onclick="toggleFilterPanel('regions')">
+            <div class="value" id="kpi-regions">&mdash;</div><div class="label">Regi&otilde;es</div>
+            <div class="filter-indicator" id="kpi-regions-indicator"></div>
+        </div>
+        <div class="kpi-card clickable" onclick="drillTopHoldings()">
+            <div class="value" id="kpi-aum" style="font-size:14px;">&mdash;</div><div class="label">AUM Total</div>
+        </div>
+        <div class="kpi-card">
+            <div class="value" id="kpi-update" style="font-size:14px;">&mdash;</div><div class="label">Atualiza&ccedil;&atilde;o</div>
+        </div>
+    </div>
+
+    <!-- Active Filters Bar -->
+    <div class="active-filters-bar" id="active-filters-bar">
+        <span class="af-label">Filtros:</span>
+    </div>
+
+    <!-- Tag Filter Bar -->
+    <div class="tag-filter-bar" id="tag-filter-bar">
+        <span class="tfb-label">&#127991; Tags:</span>
+        <button class="tfb-btn" id="tfb-tag_asset_class" onclick="toggleFilterPanel('tag_asset_class')">Asset Class</button>
+        <button class="tfb-btn" id="tfb-tag_geography" onclick="toggleFilterPanel('tag_geography')">Geografia</button>
+        <button class="tfb-btn" id="tfb-tag_strategy" onclick="toggleFilterPanel('tag_strategy')">Estrat&eacute;gia</button>
+        <button class="tfb-btn" id="tfb-tag_style" onclick="toggleFilterPanel('tag_style')">Estilo</button>
+        <button class="tfb-btn" id="tfb-tag_sector" onclick="toggleFilterPanel('tag_sector')">Setor</button>
+        <button class="tfb-btn" id="tfb-tag_cap_size" onclick="toggleFilterPanel('tag_cap_size')">Cap Size</button>
+        <button class="tfb-btn" id="tfb-tag_index" onclick="toggleFilterPanel('tag_index')">&Iacute;ndice</button>
+    </div>
+
+    <!-- Filter Panels -->
+    <div class="filter-panels">
+        <div class="filter-panel" id="filter-panel-sources">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar fonte..." oninput="filterPanelSearch('sources',this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('sources')">Todos</button>
+                    <button onclick="clearFilter('sources')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">&#10005;</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-sources"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-categories">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar categoria..." oninput="filterPanelSearch('categories',this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('categories')">Todos</button>
+                    <button onclick="clearFilter('categories')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">&#10005;</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-categories"></div>
+        </div>
+        <div class="filter-panel" id="filter-panel-regions">
+            <div class="filter-panel-header">
+                <input type="text" placeholder="Buscar regi&atilde;o..." oninput="filterPanelSearch('regions',this.value)">
+                <div class="filter-panel-actions">
+                    <button onclick="selectAllFilter('regions')">Todos</button>
+                    <button onclick="clearFilter('regions')">Nenhum</button>
+                    <button onclick="closeFilterPanel()" style="font-weight:bold">&#10005;</button>
+                </div>
+            </div>
+            <div class="filter-panel-items" id="filter-items-regions"></div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('list')">&#128203; Lista de ETFs</button>
+        <button class="tab-btn" onclick="switchTab('reverse')">&#128269; Busca Reversa</button>
+        <button class="tab-btn" onclick="switchTab('overlap')">&#9878;&#65039; Sobreposi&ccedil;&atilde;o</button>
+        <button class="tab-btn" onclick="switchTab('compare')">&#128200; Comparador</button>
+        <button class="tab-btn" onclick="switchTab('top')">&#127942; Top Holdings</button>
+    </div>
+
+    <!-- TAB: Lista de ETFs -->
+    <div class="tab-content active" id="tab-list">
+        <div class="card">
+            <div class="card-header">
+                <h3>ETFs Cadastrados</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Buscar ticker ou nome...">
+                </div>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div class="table-scroll">
+                    <table class="data-table" id="etfTable">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Regi&atilde;o</th>
+                                <th class="num">AUM</th>
+                                <th class="num">Holdings</th>
+                                <th>Fonte</th>
+                                <th>Atualizado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="etfTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyList" class="empty-msg" style="display:none;">Nenhum ETF encontrado.</div>
+                <div class="pagination-bar">
+                    <span id="pageInfo">&ndash;</span>
+                    <div style="display:flex;gap:6px;">
+                        <button id="btnPrev" disabled>&larr; Anterior</button>
+                        <button id="btnNext" disabled>Pr&oacute;ximo &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Panel (expandido) -->
+        <div class="detail-panel" id="detailPanel">
+            <div class="dp-header">
+                <h2 id="detailTitle">&ndash;</h2>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-action outline btn-sm" onclick="exportETF()" title="Exportar CSV">&#128229; CSV</button>
+                    <button class="dp-close" onclick="closeDetail()">&#10005; Fechar</button>
+                </div>
+            </div>
+            <div class="dp-meta" id="detailMeta"></div>
+            <div class="dp-tags" id="detailTags"></div>
+
+            <!-- Breakdowns row -->
+            <div class="grid-3" id="detailBreakdowns">
+                <div class="card" style="margin-bottom:0;">
+                    <div class="card-header"><h3>Setor</h3></div>
+                    <div class="card-body"><div class="chart-container h250"><canvas id="sectorChart"></canvas></div></div>
+                </div>
+                <div class="card" style="margin-bottom:0;">
+                    <div class="card-header"><h3>Asset Class</h3></div>
+                    <div class="card-body"><div class="chart-container h250"><canvas id="assetChart"></canvas></div></div>
+                </div>
+                <div class="card" style="margin-bottom:0;">
+                    <div class="card-header"><h3>Pa&iacute;s</h3></div>
+                    <div class="card-body"><div id="countryBreakdown"></div></div>
+                </div>
+            </div>
+
+            <!-- Holdings grid -->
+            <div class="grid-2" style="margin-top:15px;">
+                <div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                        <input type="text" class="detail-search" id="holdingSearch" placeholder="Filtrar holdings..." oninput="filterHoldings(this.value)">
+                        <span style="font-size:11px;color:var(--text2);" id="holdingCount"></span>
+                    </div>
+                    <div class="table-scroll" style="max-height:400px;">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Ticker</th><th>Nome</th><th class="num">Peso (%)</th><th>Setor</th><th>Pa&iacute;s</th></tr></thead>
+                            <tbody id="holdingsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div style="text-align:center;color:var(--text2);font-size:12px;margin-bottom:8px;text-transform:uppercase;">Top 10 Holdings</div>
+                    <div class="chart-container h300"><canvas id="holdingsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: Busca Reversa (aprimorada) -->
+    <div class="tab-content" id="tab-reverse">
+        <div class="card">
+            <div class="card-header">
+                <h3>Em quais ETFs um ativo aparece?</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <input type="text" class="search-input search-input-wide" id="reverseInput" placeholder="Digite um ticker (ex: AAPL, PETR4, VALE3)...">
+                    <button class="btn-action primary" id="btnReverse">&#128269; Buscar</button>
+                </div>
+            </div>
+        </div>
+        <!-- Reverse Stats -->
+        <div id="reverseStatsRow" class="kpi-row" style="display:none;">
+            <div class="kpi-card"><div class="value" id="rev-kpi-etfs">&mdash;</div><div class="label">ETFs</div></div>
+            <div class="kpi-card green"><div class="value" id="rev-kpi-maxw">&mdash;</div><div class="label">Maior Peso</div></div>
+            <div class="kpi-card blue"><div class="value" id="rev-kpi-avgw">&mdash;</div><div class="label">Peso M&eacute;dio</div></div>
+        </div>
+        <div class="card" id="reverseResults" style="display:none;">
+            <div class="card-header">
+                <h3 id="reverseTitle">Resultados</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span style="color:var(--text2);font-size:12px;" id="reverseCount"></span>
+                    <button class="btn-action outline btn-sm" onclick="exportReverse()">&#128229; CSV</button>
+                </div>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div class="grid-2">
+                    <div class="table-scroll" style="max-height:400px;">
+                        <table class="data-table">
+                            <thead><tr><th>ETF</th><th>Nome ETF</th><th>Categoria</th><th class="num">Peso (%)</th><th class="num">Barra</th><th>Fonte</th></tr></thead>
+                            <tbody id="reverseBody"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <div style="text-align:center;color:var(--text2);font-size:12px;margin-bottom:8px;text-transform:uppercase;">Peso por ETF</div>
+                        <div class="chart-container h300"><canvas id="reverseChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="reverseEmpty" class="empty-msg" style="display:none;">Nenhum resultado encontrado para este ticker.</div>
+    </div>
+
+    <!-- TAB: Sobreposição -->
+    <div class="tab-content" id="tab-overlap">
+        <div class="card">
+            <div class="card-header"><h3>Calcular Sobreposi&ccedil;&atilde;o entre ETFs</h3></div>
+            <div class="card-body">
+                <div class="overlap-inputs">
+                    <input type="text" id="overlap1" placeholder="ETF 1 (ex: BOVA11.SA)">
+                    <span style="font-weight:700;color:var(--accent);font-size:18px;">vs</span>
+                    <input type="text" id="overlap2" placeholder="ETF 2 (ex: SMAL11.SA)">
+                    <button class="btn-action primary" id="btnOverlap">&#9878;&#65039; Comparar</button>
+                </div>
+            </div>
+        </div>
+        <div id="overlapResult" style="display:none;">
+            <div class="kpi-row" style="margin-top:15px;">
+                <div class="kpi-card"><div class="overlap-pct" id="overlapPct">&ndash;</div><div class="label">Sobreposi&ccedil;&atilde;o</div></div>
+                <div class="kpi-card green"><div class="value" id="overlapCommon">&ndash;</div><div class="label">Holdings Comuns</div></div>
+                <div class="kpi-card blue"><div class="value" id="overlapH1">&ndash;</div><div class="label" id="overlapH1Label">ETF 1</div></div>
+                <div class="kpi-card orange"><div class="value" id="overlapH2">&ndash;</div><div class="label" id="overlapH2Label">ETF 2</div></div>
+            </div>
+            <div class="card" style="margin-top:15px;">
+                <div class="card-header"><h3>Holdings em Comum</h3></div>
+                <div class="card-body" style="padding:0;">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>Ticker</th><th>Nome</th><th class="num" id="colEtf1">Peso ETF1 (%)</th><th class="num" id="colEtf2">Peso ETF2 (%)</th></tr></thead>
+                            <tbody id="overlapBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: Top Holdings -->
+    <div class="tab-content" id="tab-top">
+        <div class="card">
+            <div class="card-header">
+                <h3>Ativos mais presentes em ETFs</h3>
+                <span style="color:var(--text2);font-size:12px;">Top 50 holdings agregados (respeitando cross-filters)</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead><tr><th>#</th><th>Ticker</th><th>Nome</th><th class="num">Em N ETFs</th><th class="num">Peso M&eacute;dio (%)</th></tr></thead>
+                        <tbody id="topBody"></tbody>
+                    </table>
+                </div>
+                <div id="topEmpty" class="empty-msg" style="display:none;">Nenhum holding encontrado.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: Comparador (N ETFs) -->
+    <div class="tab-content" id="tab-compare">
+        <div class="card">
+            <div class="card-header"><h3>Comparar ETFs (at&eacute; 10)</h3></div>
+            <div class="card-body">
+                <div class="compare-inputs" id="compareInputs">
+                    <input type="text" class="cmp-input" placeholder="ETF 1 (ex: SPY)">
+                    <input type="text" class="cmp-input" placeholder="ETF 2 (ex: QQQ)">
+                    <input type="text" class="cmp-input" placeholder="ETF 3">
+                    <button class="btn-action outline btn-sm" onclick="addCompareInput()">+ Adicionar</button>
+                    <button class="btn-action primary" onclick="runCompare()">&#128200; Comparar</button>
+                </div>
+            </div>
+        </div>
+        <div id="compareResult" style="display:none;">
+            <!-- KPIs -->
+            <div class="kpi-row" id="compareKpis"></div>
+            <!-- Overlap Heatmap -->
+            <div class="card" style="margin-top:15px;">
+                <div class="card-header"><h3>Matriz de Sobreposi&ccedil;&atilde;o</h3></div>
+                <div class="card-body" style="overflow-x:auto;"><div id="heatmapContainer"></div></div>
+            </div>
+            <!-- Sector comparison -->
+            <div class="card" style="margin-top:15px;">
+                <div class="card-header">
+                    <h3>Setor Breakdown Comparado</h3>
+                    <button class="btn-action outline btn-sm" onclick="exportCompare()">&#128229; CSV</button>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height:350px;"><canvas id="compareSectorChart"></canvas></div>
+                </div>
+            </div>
+            <!-- Common holdings -->
+            <div class="card" style="margin-top:15px;">
+                <div class="card-header"><h3 id="compareCommonTitle">Holdings Comuns</h3></div>
+                <div class="card-body" style="padding:0;">
+                    <div class="table-scroll" style="max-height:400px;">
+                        <table class="data-table" id="compareTable">
+                            <thead id="compareTableHead"></thead>
+                            <tbody id="compareTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drill Overlay -->
+<div class="drill-overlay" id="drillOverlay">
+    <div class="drill-modal">
+        <div class="drill-header">
+            <div>
+                <h2 id="drillTitle">&ndash;</h2>
+            </div>
+            <button class="drill-close" onclick="closeDrill()">&#10005;</button>
+        </div>
+        <div class="drill-body" id="drillBody"></div>
+    </div>
+</div>
+
+<script>
+(function(){
+    /* State */
+    var currentPage = 1, totalPages = 1;
+    var holdingsChart = null, sectorChart = null, assetChart = null, reverseChart = null, compareSectorChart = null;
+    var currentDetailTicker = null;
+    var allHoldings = [];
+    var activeFilters = { sources: [], categories: [], regions: [] };
+    var filterOptions = { sources: [], categories: [], regions: [] };
+    var openPanelName = null;
+
+    var TAG_DIMS = [
+        {key:'tag_asset_class', label:'Asset Class', type:'asset_class'},
+        {key:'tag_geography', label:'Geografia', type:'geography'},
+        {key:'tag_strategy', label:'Estrat\u00e9gia', type:'strategy'},
+        {key:'tag_style', label:'Estilo', type:'style'},
+        {key:'tag_sector', label:'Setor', type:'sector'},
+        {key:'tag_cap_size', label:'Cap Size', type:'cap_size'},
+        {key:'tag_index', label:'\u00cdndice', type:'index'}
+    ];
+    var ALL_DIMS = ['sources','categories','regions'].concat(TAG_DIMS.map(function(t){return t.key;}));
+
+    TAG_DIMS.forEach(function(t) {
+        activeFilters[t.key] = [];
+        filterOptions[t.key] = [];
+    });
+
+    // Create tag filter panels dynamically
+    (function() {
+        var container = document.querySelector('.filter-panels');
+        TAG_DIMS.forEach(function(t) {
+            var panel = document.createElement('div');
+            panel.className = 'filter-panel';
+            panel.id = 'filter-panel-' + t.key;
+            panel.innerHTML = '<div class="filter-panel-header">' +
+                '<input type="text" placeholder="Buscar '+t.label+'..." oninput="filterPanelSearch(\''+t.key+'\',this.value)">' +
+                '<div class="filter-panel-actions">' +
+                '<button onclick="selectAllFilter(\''+t.key+'\')">' + 'Todos</button>' +
+                '<button onclick="clearFilter(\''+t.key+'\')">' + 'Nenhum</button>' +
+                '<button onclick="closeFilterPanel()" style="font-weight:bold">&#10005;</button>' +
+                '</div></div>' +
+                '<div class="filter-panel-items" id="filter-items-'+t.key+'"></div>';
+            container.appendChild(panel);
+        });
+    })();
+
+    /* Helpers */
+    var $ = function(id) { return document.getElementById(id); };
+    var esc = function(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+    var fmt = function(n) { return n == null ? '\u2013' : Number(n).toLocaleString('pt-BR'); };
+    var fmtPct = function(n) { return n == null ? '\u2013' : Number(n).toFixed(2) + '%'; };
+    var fmtAum = function(n) {
+        if (!n) return '\u2013';
+        if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+        if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+        if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+        return '$' + fmt(n);
+    };
+    var fmtDate = function(d) { return d ? d.split(' ')[0] : '\u2013'; };
+    var srcBadge = function(s) {
+        var map = { sec_edgar: ['SEC','src-sec'], cvm: ['CVM','src-cvm'] };
+        var pair = map[s] || ['yfinance','src-yfinance'];
+        return '<span class="src-badge '+pair[1]+'">'+pair[0]+'</span>';
+    };
+
+    function buildFilterParams() {
+        var p = new URLSearchParams();
+        if (activeFilters.sources.length) p.set('sources', activeFilters.sources.join(','));
+        if (activeFilters.categories.length) p.set('categories', activeFilters.categories.join(','));
+        if (activeFilters.regions.length) p.set('regions', activeFilters.regions.join(','));
+        TAG_DIMS.forEach(function(t) {
+            if (activeFilters[t.key] && activeFilters[t.key].length) p.set(t.key, activeFilters[t.key].join(','));
+        });
+        return p;
+    }
+
+    /* ══ Stats / KPIs ══ */
+    function loadStats() {
+        var p = buildFilterParams();
+        fetch('/api/etfs/stats?' + p)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) return;
+                $('kpi-etfs').textContent = fmt(d.etfs);
+                $('kpi-holdings').textContent = fmt(d.holdings_total);
+                $('kpi-unique').textContent = fmt(d.unique_holdings);
+                $('kpi-sources').textContent = fmt(d.distinct_sources);
+                $('kpi-categories').textContent = fmt(d.distinct_categories);
+                $('kpi-regions').textContent = fmt(d.distinct_regions);
+                $('kpi-aum').textContent = fmtAum(d.aum_total);
+                $('kpi-update').textContent = fmtDate(d.last_update);
+            })
+            .catch(function(e) { console.error('Stats error', e); });
+    }
+
+    /* ══ Filter Options ══ */
+    function loadFilterOptions() {
+        var p = buildFilterParams();
+        fetch('/api/etfs/filter_options?' + p)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) return;
+                filterOptions.sources = d.sources || [];
+                filterOptions.categories = d.categories || [];
+                filterOptions.regions = d.regions || [];
+                if (d.tags) {
+                    TAG_DIMS.forEach(function(t) {
+                        filterOptions[t.key] = d.tags[t.type] || [];
+                    });
+                }
+                renderFilterPanel('sources');
+                renderFilterPanel('categories');
+                renderFilterPanel('regions');
+                TAG_DIMS.forEach(function(t) { renderFilterPanel(t.key); });
+                updateFilterIndicators();
+            })
+            .catch(function(e) { console.error('Filter options error', e); });
+    }
+
+    function renderFilterPanel(dim) {
+        var container = $('filter-items-' + dim);
+        var items = filterOptions[dim] || [];
+        var selected = activeFilters[dim] || [];
+        container.innerHTML = items.map(function(it) {
+            var sel = selected.indexOf(it.name) >= 0 ? ' selected' : '';
+            return '<span class="filter-chip'+sel+'" data-dim="'+dim+'" data-val="'+esc(it.name)+'" onclick="toggleChip(this)">'+
+                esc(it.name)+' <span class="chip-count">('+it.count+')</span></span>';
+        }).join('');
+    }
+
+    window.toggleChip = function(el) {
+        var dim = el.dataset.dim, val = el.dataset.val;
+        var idx = activeFilters[dim].indexOf(val);
+        if (idx >= 0) activeFilters[dim].splice(idx, 1);
+        else activeFilters[dim].push(val);
+        applyFilters();
+    };
+
+    window.toggleFilterPanel = function(dim) {
+        var panel = $('filter-panel-' + dim);
+        if (openPanelName === dim) {
+            panel.classList.remove('open');
+            openPanelName = null;
+        } else {
+            document.querySelectorAll('.filter-panel').forEach(function(p) { p.classList.remove('open'); });
+            panel.classList.add('open');
+            openPanelName = dim;
+        }
+    };
+
+    window.closeFilterPanel = function() {
+        document.querySelectorAll('.filter-panel').forEach(function(p) { p.classList.remove('open'); });
+        openPanelName = null;
+    };
+
+    window.selectAllFilter = function(dim) {
+        activeFilters[dim] = (filterOptions[dim] || []).map(function(x) { return x.name; });
+        applyFilters();
+    };
+
+    window.clearFilter = function(dim) {
+        activeFilters[dim] = [];
+        applyFilters();
+    };
+
+    window.filterPanelSearch = function(dim, q) {
+        q = q.toLowerCase();
+        $('filter-items-' + dim).querySelectorAll('.filter-chip').forEach(function(chip) {
+            chip.style.display = chip.dataset.val.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+        });
+    };
+
+    function updateFilterIndicators() {
+        ['sources','categories','regions'].forEach(function(dim) {
+            var card = $('kpi-card-' + dim);
+            var indicator = $('kpi-' + dim + '-indicator');
+            if (activeFilters[dim].length) {
+                card.classList.add('filter-active');
+                indicator.textContent = '\u25BC ' + activeFilters[dim].length + ' selecionado(s)';
+            } else {
+                card.classList.remove('filter-active');
+                indicator.textContent = '';
+            }
+        });
+        TAG_DIMS.forEach(function(t) {
+            var btn = $('tfb-' + t.key);
+            if (!btn) return;
+            if (activeFilters[t.key] && activeFilters[t.key].length) {
+                btn.classList.add('active');
+                btn.textContent = t.label + ' (' + activeFilters[t.key].length + ')';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = t.label;
+            }
+        });
+    }
+
+    function renderActiveFiltersBar() {
+        var bar = $('active-filters-bar');
+        var all = [];
+        ALL_DIMS.forEach(function(dim) {
+            (activeFilters[dim] || []).forEach(function(val) { all.push({dim:dim, val:val}); });
+        });
+        if (!all.length) { bar.classList.remove('visible'); return; }
+        bar.classList.add('visible');
+        bar.innerHTML = '<span class="af-label">Filtros:</span>' +
+            all.map(function(f) {
+                return '<span class="active-tag" onclick="removeFilter(\''+f.dim+'\',\''+esc(f.val)+'\')">'+
+                    esc(f.val)+' <span class="at-x">\u2715</span></span>';
+            }).join('') +
+            '<button class="btn-clear-filters" onclick="clearAllFilters()">Limpar todos</button>';
+    }
+
+    window.removeFilter = function(dim, val) {
+        var idx = activeFilters[dim].indexOf(val);
+        if (idx >= 0) activeFilters[dim].splice(idx, 1);
+        applyFilters();
+    };
+
+    window.clearAllFilters = function() {
+        activeFilters = { sources:[], categories:[], regions:[] };
+        TAG_DIMS.forEach(function(t) { activeFilters[t.key] = []; });
+        applyFilters();
+    };
+
+    function applyFilters() {
+        renderActiveFiltersBar();
+        loadStats();
+        loadFilterOptions();
+        loadETFs(1);
+        loadTopHoldings();
+    }
+
+    /* ══ ETF List ══ */
+    function loadETFs(page) {
+        page = page || 1;
+        var search = $('searchInput').value.trim();
+        var p = buildFilterParams();
+        p.set('page', page);
+        p.set('per_page', 50);
+        if (search) p.set('search', search);
+
+        var tbody = $('etfTableBody');
+        tbody.innerHTML = '<tr><td colspan="8" class="loading">Carregando</td></tr>';
+
+        fetch('/api/etfs?' + p)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) { tbody.innerHTML = ''; $('emptyList').style.display = 'block'; return; }
+
+                currentPage = d.page; totalPages = d.pages;
+                $('pageInfo').textContent = 'P\u00e1gina ' + d.page + ' de ' + d.pages + ' (' + fmt(d.total) + ' ETFs)';
+                $('btnPrev').disabled = d.page <= 1;
+                $('btnNext').disabled = d.page >= d.pages;
+
+                if (!d.etfs.length) { tbody.innerHTML = ''; $('emptyList').style.display = 'block'; return; }
+                $('emptyList').style.display = 'none';
+
+                tbody.innerHTML = d.etfs.map(function(e) {
+                    return '<tr data-ticker="'+esc(e.ticker)+'" style="cursor:pointer" onclick="loadDetail(\''+esc(e.ticker)+'\')">'+
+                        '<td><strong style="color:var(--accent);">'+esc(e.ticker)+'</strong></td>'+
+                        '<td>'+esc(e.name)+'</td>'+
+                        '<td>'+esc(e.category)+'</td>'+
+                        '<td>'+esc(e.computed_region)+'</td>'+
+                        '<td class="num">'+fmtAum(e.aum)+'</td>'+
+                        '<td class="num">'+(e.total_holdings || '\u2013')+'</td>'+
+                        '<td>'+srcBadge(e.data_source)+'</td>'+
+                        '<td>'+fmtDate(e.last_updated)+'</td>'+
+                    '</tr>';
+                }).join('');
+            })
+            .catch(function(e) { console.error('List error', e); tbody.innerHTML = ''; });
+    }
+
+    /* ══ Detail Panel ══ */
+    var CHART_COLORS = ['#FF3300','#2980b9','#e74c3c','#f39c12','#9b59b6',
+        '#1abc9c','#e67e22','#3498db','#e91e63','#00bcd4','#95a5a6',
+        '#16a085','#c0392b','#8e44ad','#d35400','#27ae60'];
+    var COUNTRY_COLORS = ['#FF3300','#2980b9','#e74c3c','#f39c12','#9b59b6',
+        '#1abc9c','#e67e22','#3498db','#e91e63','#00bcd4',
+        '#16a085','#c0392b','#8e44ad','#d35400','#27ae60'];
+
+    window.loadDetail = function(ticker) {
+        currentDetailTicker = ticker;
+        fetch('/api/etfs/' + encodeURIComponent(ticker))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) return;
+
+                var e = d.etf;
+                allHoldings = d.holdings || [];
+                $('detailTitle').textContent = e.ticker + ' \u2013 ' + (e.name || '');
+                $('detailMeta').innerHTML =
+                    srcBadge(e.data_source) + ' ' +
+                    '<span>Categoria: '+(e.category||'\u2013')+'</span>' +
+                    '<span>AUM: '+fmtAum(e.aum)+'</span>' +
+                    '<span>Holdings: '+(e.total_holdings||d.holdings.length)+'</span>' +
+                    '<span>Emissor: '+(e.issuer||'\u2013')+'</span>';
+
+                // Tags
+                var tags = d.tags || [];
+                $('detailTags').innerHTML = tags.map(function(t) {
+                    return '<span class="dp-tag" data-type="'+esc(t.tag_type)+'" title="'+esc(t.tag_type)+'">'+esc(t.tag_value)+'</span>';
+                }).join('');
+
+                // ── Breakdowns charts ──
+                var bd = d.breakdowns || {};
+
+                // Sector doughnut
+                if (sectorChart) sectorChart.destroy();
+                var sectorData = (bd.sector || []).filter(function(s) { return s.name !== 'N/A'; });
+                if (sectorData.length) {
+                    sectorChart = new Chart($('sectorChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: sectorData.map(function(s) { return s.name; }),
+                            datasets: [{ data: sectorData.map(function(s) { return s.weight; }), backgroundColor: CHART_COLORS }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position:'bottom', labels:{ font:{size:10}, color:'#95a5a6', boxWidth:10 } },
+                                tooltip: { callbacks:{ label: function(ctx) { return ctx.label + ': ' + ctx.parsed.toFixed(2) + '%'; } } }
+                            }
+                        }
+                    });
+                } else {
+                    $('sectorChart').getContext('2d').clearRect(0, 0, 999, 999);
+                }
+
+                // Asset class doughnut
+                if (assetChart) assetChart.destroy();
+                var assetData = (bd.asset_class || []).filter(function(s) { return s.name !== 'N/A'; });
+                if (assetData.length) {
+                    assetChart = new Chart($('assetChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: assetData.map(function(s) { return s.name; }),
+                            datasets: [{ data: assetData.map(function(s) { return s.weight; }), backgroundColor: CHART_COLORS.slice().reverse() }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position:'bottom', labels:{ font:{size:10}, color:'#95a5a6', boxWidth:10 } },
+                                tooltip: { callbacks:{ label: function(ctx) { return ctx.label + ': ' + ctx.parsed.toFixed(2) + '%'; } } }
+                            }
+                        }
+                    });
+                } else {
+                    $('assetChart').getContext('2d').clearRect(0, 0, 999, 999);
+                }
+
+                // Country breakdown bars
+                var countryData = (bd.country || []).filter(function(s) { return s.name !== 'N/A'; }).slice(0, 15);
+                var maxCW = countryData.length ? countryData[0].weight : 1;
+                $('countryBreakdown').innerHTML = countryData.length ?
+                    countryData.map(function(c, i) {
+                        var pct = Math.round(c.weight / maxCW * 100);
+                        return '<div class="breakdown-bar">' +
+                            '<div class="breakdown-bar-label"><span>'+esc(c.name)+'</span><span>'+c.weight.toFixed(2)+'%</span></div>' +
+                            '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pct+'%;background:'+COUNTRY_COLORS[i % COUNTRY_COLORS.length]+';"></div></div>' +
+                        '</div>';
+                    }).join('') :
+                    '<div style="color:var(--text2);font-size:12px;text-align:center;padding:20px;">Sem dados de pa\u00eds</div>';
+
+                // ── Holdings table (enhanced) ──
+                renderHoldingsTable(allHoldings);
+                $('holdingSearch').value = '';
+                $('holdingCount').textContent = allHoldings.length + ' holdings';
+
+                // Top 10 Chart
+                var top10 = d.holdings.filter(function(h) { return h.weight; }).slice(0, 10);
+                var othersW = d.holdings.filter(function(h) { return h.weight; }).slice(10).reduce(function(s,h) { return s + (h.weight||0); }, 0);
+                var labels = top10.map(function(h) { return h.holding_ticker || h.holding_name || '?'; });
+                var values = top10.map(function(h) { return h.weight; });
+                if (othersW > 0) { labels.push('Outros'); values.push(Math.round(othersW*100)/100); }
+
+                if (holdingsChart) holdingsChart.destroy();
+                holdingsChart = new Chart($('holdingsChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: values, backgroundColor: CHART_COLORS }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position:'bottom', labels:{ font:{size:11}, color:'#95a5a6' } },
+                            tooltip: { callbacks:{ label: function(ctx) { return ctx.label + ': ' + ctx.parsed.toFixed(2) + '%'; } } }
+                        }
+                    }
+                });
+
+                $('detailPanel').classList.add('visible');
+                $('detailPanel').scrollIntoView({ behavior:'smooth', block:'start' });
+            })
+            .catch(function(e) { console.error('Detail error', e); });
+    };
+
+    function renderHoldingsTable(list) {
+        $('holdingsBody').innerHTML = list.map(function(h, i) {
+            var tk = h.holding_ticker || '';
+            var tkCell = tk ? '<a href="/company-analysis?code='+encodeURIComponent(tk)+'" style="color:var(--accent6);font-weight:700;text-decoration:underline dotted" onclick="event.stopPropagation()" title="Abrir Company Analysis">' + esc(tk) + '</a>' : '\u2013';
+            return '<tr>'+
+                '<td>'+(i+1)+'</td>'+
+                '<td>'+tkCell+'</td>'+
+                '<td>'+esc(h.holding_name)+'</td>'+
+                '<td class="num">'+fmtPct(h.weight)+'</td>'+
+                '<td>'+esc(h.sector || '')+'</td>'+
+                '<td>'+esc(h.country || '')+'</td>'+
+            '</tr>';
+        }).join('');
+    }
+
+    window.filterHoldings = function(query) {
+        var q = (query || '').toLowerCase();
+        var filtered = q ? allHoldings.filter(function(h) {
+            return ((h.holding_ticker || '') + ' ' + (h.holding_name || '') + ' ' + (h.sector || '') + ' ' + (h.country || '')).toLowerCase().indexOf(q) >= 0;
+        }) : allHoldings;
+        renderHoldingsTable(filtered);
+        $('holdingCount').textContent = filtered.length + ' de ' + allHoldings.length + ' holdings';
+    };
+
+    window.closeDetail = function() { $('detailPanel').classList.remove('visible'); currentDetailTicker = null; };
+
+    /* ══ Reverse Search (enhanced) ══ */
+    var reverseResults = [];
+
+    function reverseSearch() {
+        var q = $('reverseInput').value.trim();
+        if (!q) return;
+        $('reverseResults').style.display = 'none';
+        $('reverseEmpty').style.display = 'none';
+        $('reverseStatsRow').style.display = 'none';
+
+        fetch('/api/etfs/search?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success || !d.results.length) { $('reverseEmpty').style.display = 'block'; return; }
+
+                reverseResults = d.results;
+                var weights = d.results.map(function(r) { return r.weight || 0; });
+                var maxW = Math.max.apply(null, weights);
+                var avgW = weights.reduce(function(s,w) { return s+w; }, 0) / weights.length;
+
+                // KPIs
+                $('rev-kpi-etfs').textContent = d.total;
+                $('rev-kpi-maxw').textContent = fmtPct(maxW);
+                $('rev-kpi-avgw').textContent = fmtPct(avgW);
+                $('reverseStatsRow').style.display = '';
+
+                $('reverseTitle').textContent = 'Resultados para "' + q + '"';
+                $('reverseCount').textContent = d.total + ' resultado(s)';
+
+                // Table with visual bars
+                $('reverseBody').innerHTML = d.results.map(function(r) {
+                    var barW = maxW > 0 ? Math.round((r.weight||0)/maxW*100) : 0;
+                    return '<tr style="cursor:pointer" onclick="loadDetail(\''+esc(r.etf_ticker)+'\');switchTab(\'list\')">'+
+                        '<td><strong style="color:var(--accent);">'+esc(r.etf_ticker)+'</strong></td>'+
+                        '<td>'+esc(r.etf_name)+'</td>'+
+                        '<td>'+esc(r.category)+'</td>'+
+                        '<td class="num">'+fmtPct(r.weight)+'</td>'+
+                        '<td style="min-width:100px;"><div style="background:rgba(255,51,0,0.3);border-radius:3px;height:14px;width:'+barW+'%;min-width:2px;"></div></td>'+
+                        '<td>'+srcBadge(r.data_source)+'</td>'+
+                    '</tr>';
+                }).join('');
+
+                // Bar chart
+                if (reverseChart) reverseChart.destroy();
+                var chartData = d.results.slice(0, 20);
+                reverseChart = new Chart($('reverseChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.map(function(r) { return r.etf_ticker; }),
+                        datasets: [{
+                            label: 'Peso (%)',
+                            data: chartData.map(function(r) { return r.weight || 0; }),
+                            backgroundColor: 'rgba(255,51,0,0.6)',
+                            borderColor: '#FF3300',
+                            borderWidth: 1,
+                            borderRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks:{ label: function(ctx) { return ctx.parsed.x.toFixed(2) + '%'; } } }
+                        },
+                        scales: {
+                            x: { grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#95a5a6', font:{size:10} }, title:{ display:true, text:'Peso (%)', color:'#95a5a6' } },
+                            y: { grid:{ display:false }, ticks:{ color:'#ecf0f1', font:{size:11} } }
+                        }
+                    }
+                });
+
+                $('reverseResults').style.display = 'block';
+            })
+            .catch(function(e) { console.error('Reverse error', e); });
+    }
+
+    /* ══ Overlap ══ */
+    function calcOverlap() {
+        var e1 = $('overlap1').value.trim().toUpperCase();
+        var e2 = $('overlap2').value.trim().toUpperCase();
+        if (!e1 || !e2) return;
+        $('overlapResult').style.display = 'none';
+
+        fetch('/api/etfs/overlap?etf1='+encodeURIComponent(e1)+'&etf2='+encodeURIComponent(e2))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) { alert(d.error || 'Erro ao calcular overlap'); return; }
+
+                $('overlapPct').textContent = d.overlap_pct + '%';
+                $('overlapCommon').textContent = fmt(d.common);
+                $('overlapH1').textContent = fmt(d.holdings_etf1);
+                $('overlapH1Label').textContent = d.etf1;
+                $('overlapH2').textContent = fmt(d.holdings_etf2);
+                $('overlapH2Label').textContent = d.etf2;
+                $('colEtf1').textContent = 'Peso ' + d.etf1 + ' (%)';
+                $('colEtf2').textContent = 'Peso ' + d.etf2 + ' (%)';
+
+                $('overlapBody').innerHTML = d.common_holdings.map(function(h) {
+                    var tk = h.ticker || '';
+                    var tkCell = tk ? '<a href="/company-analysis?code='+encodeURIComponent(tk)+'" style="color:var(--accent6);font-weight:700;text-decoration:underline dotted" title="Abrir Company Analysis">' + esc(tk) + '</a>' : '\u2013';
+                    return '<tr>'+
+                        '<td>'+tkCell+'</td>'+
+                        '<td>'+esc(h.name)+'</td>'+
+                        '<td class="num">'+fmtPct(h.weight_etf1)+'</td>'+
+                        '<td class="num">'+fmtPct(h.weight_etf2)+'</td>'+
+                    '</tr>';
+                }).join('');
+
+                $('overlapResult').style.display = 'block';
+            })
+            .catch(function(e) { console.error('Overlap error', e); });
+    }
+
+    /* ══ Top Holdings ══ */
+    function loadTopHoldings() {
+        var p = buildFilterParams();
+        p.set('limit', 50);
+        fetch('/api/etfs/drill/top_holdings?' + p)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success || !d.holdings.length) { $('topBody').innerHTML = ''; $('topEmpty').style.display = 'block'; return; }
+                $('topEmpty').style.display = 'none';
+
+                $('topBody').innerHTML = d.holdings.map(function(h, i) {
+                    return '<tr>'+ 
+                        '<td>'+(i+1)+'</td>'+
+                        '<td><a href="/company-analysis?code='+encodeURIComponent(h.ticker)+'" style="color:var(--accent6);font-weight:700;text-decoration:underline dotted" title="Abrir Company Analysis">'+esc(h.ticker)+'</a></td>'+
+                        '<td>'+esc(h.name)+'</td>'+
+                        '<td class="num" style="color:var(--accent);">'+h.in_etfs+'</td>'+
+                        '<td class="num">'+fmtPct(h.avg_weight)+'</td>'+
+                    '</tr>';
+                }).join('');
+            })
+            .catch(function(e) { console.error('Top error', e); });
+    }
+
+    window.reverseFromTop = function(ticker) {
+        $('reverseInput').value = ticker;
+        switchTab('reverse');
+        reverseSearch();
+    };
+
+    /* ══ Compare (N ETFs) ══ */
+    window.addCompareInput = function() {
+        var container = $('compareInputs');
+        var inputs = container.querySelectorAll('.cmp-input');
+        if (inputs.length >= 10) return;
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'cmp-input';
+        inp.placeholder = 'ETF ' + (inputs.length + 1);
+        inp.style.textTransform = 'uppercase';
+        // Insert before buttons
+        var addBtn = container.querySelector('.btn-action.outline');
+        container.insertBefore(inp, addBtn);
+    };
+
+    window.runCompare = function() {
+        var inputs = $('compareInputs').querySelectorAll('.cmp-input');
+        var tickers = [];
+        inputs.forEach(function(inp) {
+            var v = inp.value.trim().toUpperCase();
+            if (v) tickers.push(v);
+        });
+        if (tickers.length < 2) { alert('Digite pelo menos 2 tickers para comparar.'); return; }
+
+        $('compareResult').style.display = 'none';
+
+        fetch('/api/etfs/compare?tickers=' + encodeURIComponent(tickers.join(',')))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) { alert(d.error || 'Erro ao comparar'); return; }
+
+                var valid = d.tickers;
+
+                // KPIs
+                $('compareKpis').innerHTML =
+                    d.etfs.map(function(e) {
+                        return '<div class="kpi-card"><div class="value" style="font-size:16px;color:var(--accent);">'+esc(e.ticker)+'</div>'+
+                            '<div class="label">'+(e.total_holdings||'\u2013')+' holdings</div>'+
+                            '<div class="sub">'+fmtAum(e.aum)+'</div></div>';
+                    }).join('') +
+                    '<div class="kpi-card green"><div class="value">'+d.common_all+'</div><div class="label">Holdings Comuns</div></div>';
+
+                // Overlap heatmap
+                var hmHtml = '<table class="heatmap-table"><thead><tr><th></th>';
+                valid.forEach(function(t) { hmHtml += '<th>'+esc(t)+'</th>'; });
+                hmHtml += '</tr></thead><tbody>';
+                valid.forEach(function(t1) {
+                    hmHtml += '<tr><th>'+esc(t1)+'</th>';
+                    valid.forEach(function(t2) {
+                        if (t1 === t2) {
+                            hmHtml += '<td class="heatmap-cell" style="background:rgba(255,51,0,0.4);color:var(--text);">100%</td>';
+                        } else {
+                            var key = valid.indexOf(t1) < valid.indexOf(t2) ? t1+'|'+t2 : t2+'|'+t1;
+                            var ov = d.overlap_matrix[key] || {pct:0, common:0};
+                            var intensity = Math.round(ov.pct / 100 * 0.6 * 100) / 100;
+                            hmHtml += '<td class="heatmap-cell" style="background:rgba(255,51,0,'+intensity+');color:var(--text);" title="'+ov.common+' comuns">'+ov.pct+'%</td>';
+                        }
+                    });
+                    hmHtml += '</tr>';
+                });
+                hmHtml += '</tbody></table>';
+                $('heatmapContainer').innerHTML = hmHtml;
+
+                // Sector comparison chart (grouped bar)
+                if (compareSectorChart) compareSectorChart.destroy();
+                var allSectors = {};
+                valid.forEach(function(tk) {
+                    (d.sector_breakdown[tk] || []).forEach(function(pair) {
+                        var name = pair[0] || pair.name;
+                        if (name && name !== 'N/A') allSectors[name] = true;
+                    });
+                });
+                var sectorLabels = Object.keys(allSectors).slice(0, 12);
+                var datasets = valid.map(function(tk, i) {
+                    var smap = {};
+                    (d.sector_breakdown[tk] || []).forEach(function(pair) {
+                        smap[pair[0] || pair.name] = pair[1] || pair.weight || 0;
+                    });
+                    return {
+                        label: tk,
+                        data: sectorLabels.map(function(s) { return Math.round((smap[s] || 0) * 100) / 100; }),
+                        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                        borderRadius: 3
+                    };
+                });
+                compareSectorChart = new Chart($('compareSectorChart'), {
+                    type: 'bar',
+                    data: { labels: sectorLabels, datasets: datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels:{ color:'#95a5a6', font:{size:11} } },
+                            tooltip: { callbacks:{ label: function(ctx) { return ctx.dataset.label+': '+ctx.parsed.y.toFixed(2)+'%'; } } }
+                        },
+                        scales: {
+                            x: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#95a5a6',font:{size:10},maxRotation:45} },
+                            y: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#95a5a6',font:{size:10}}, title:{display:true,text:'Peso (%)',color:'#95a5a6'} }
+                        }
+                    }
+                });
+
+                // Common holdings table
+                $('compareCommonTitle').textContent = 'Holdings Comuns (' + d.common_all + ')';
+                var thead = '<tr><th>#</th><th>Ticker</th><th>Nome</th>';
+                valid.forEach(function(tk) { thead += '<th class="num">Peso '+esc(tk)+' (%)</th>'; });
+                thead += '</tr>';
+                $('compareTableHead').innerHTML = thead;
+
+                $('compareTableBody').innerHTML = d.common_holdings.map(function(h, i) {
+                    var row = '<tr><td>'+(i+1)+'</td><td><strong style="color:var(--accent6);">'+esc(h.ticker)+'</strong></td><td>'+esc(h.name)+'</td>';
+                    valid.forEach(function(tk) {
+                        row += '<td class="num">'+fmtPct(h['weight_'+tk])+'</td>';
+                    });
+                    return row + '</tr>';
+                }).join('');
+
+                $('compareResult').style.display = 'block';
+                $('compareResult').scrollIntoView({ behavior:'smooth', block:'start' });
+            })
+            .catch(function(e) { console.error('Compare error', e); });
+    };
+
+    /* ══ Export Functions ══ */
+    window.exportETF = function() {
+        if (!currentDetailTicker) return;
+        window.open('/api/etfs/export?tickers=' + encodeURIComponent(currentDetailTicker), '_blank');
+    };
+
+    window.exportReverse = function() {
+        if (!reverseResults.length) return;
+        var tickers = [];
+        reverseResults.forEach(function(r) {
+            if (tickers.indexOf(r.etf_ticker) < 0) tickers.push(r.etf_ticker);
+        });
+        window.open('/api/etfs/export?tickers=' + encodeURIComponent(tickers.join(',')), '_blank');
+    };
+
+    window.exportCompare = function() {
+        var inputs = $('compareInputs').querySelectorAll('.cmp-input');
+        var tickers = [];
+        inputs.forEach(function(inp) {
+            var v = inp.value.trim().toUpperCase();
+            if (v && tickers.indexOf(v) < 0) tickers.push(v);
+        });
+        if (!tickers.length) return;
+        window.open('/api/etfs/export?tickers=' + encodeURIComponent(tickers.join(',')), '_blank');
+    };
+
+    /* ══ Drill Ticker (reverse search in overlay) ══ */
+    window.drillTicker = function(ticker) {
+        if (!ticker) return;
+        var body = $('drillBody');
+        body.innerHTML = '<div class="loading">Carregando</div>';
+        openDrill('\uD83D\uDD0D ' + ticker + ' \u2013 Presen\u00E7a em ETFs');
+
+        fetch('/api/etfs/search?q=' + encodeURIComponent(ticker))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success || !d.results || !d.results.length) {
+                    body.innerHTML = '<div class="empty-msg">Nenhum ETF encontrado contendo \u201C' + esc(ticker) + '\u201D.</div>';
+                    return;
+                }
+                var maxW = Math.max.apply(null, d.results.map(function(r){ return r.weight || 0; }));
+                body.innerHTML =
+                    '<div class="drill-stats">' +
+                        '<div class="drill-stat"><div class="ds-val">' + d.total + '</div><div class="ds-lbl">ETFs</div></div>' +
+                        '<div class="drill-stat"><div class="ds-val">' + fmtPct(maxW) + '</div><div class="ds-lbl">Maior Peso</div></div>' +
+                        '<div class="drill-stat"><div class="ds-val">' + fmtPct(d.results.reduce(function(s,r){return s+(r.weight||0);},0)/d.results.length) + '</div><div class="ds-lbl">Peso M\u00E9dio</div></div>' +
+                    '</div>' +
+                    '<div class="table-scroll" style="max-height:55vh;">' +
+                    '<table class="data-table"><thead><tr>' +
+                        '<th>ETF</th><th>Nome</th><th>Categoria</th><th class="num">Peso (%)</th><th class="num">Barra</th><th>Fonte</th>' +
+                    '</tr></thead><tbody>' +
+                    d.results.map(function(r) {
+                        var barW = maxW > 0 ? Math.round((r.weight||0)/maxW*100) : 0;
+                        return '<tr style="cursor:pointer" onclick="closeDrill();loadDetail(\''+esc(r.etf_ticker)+'\');switchTab(\'list\')">' +
+                            '<td><strong style="color:var(--accent);">' + esc(r.etf_ticker) + '</strong></td>' +
+                            '<td>' + esc(r.etf_name) + '</td>' +
+                            '<td>' + esc(r.category) + '</td>' +
+                            '<td class="num">' + fmtPct(r.weight) + '</td>' +
+                            '<td style="min-width:120px;"><div style="background:rgba(255,51,0,0.25);border-radius:3px;height:16px;width:'+barW+'%;min-width:2px;"></div></td>' +
+                            '<td>' + srcBadge(r.data_source) + '</td>' +
+                        '</tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            })
+            .catch(function(e) { body.innerHTML = '<div class="empty-msg">Erro: ' + e.message + '</div>'; });
+    };
+
+    /* ══ Drill Overlay ══ */
+    window.drillTopHoldings = function() {
+        var body = $('drillBody');
+        body.innerHTML = '<div class="loading">Carregando</div>';
+        openDrill('Top Holdings Agregados');
+
+        var p = buildFilterParams();
+        p.set('limit', 100);
+        fetch('/api/etfs/drill/top_holdings?' + p)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) { body.innerHTML = '<div class="empty-msg">Sem dados.</div>'; return; }
+                body.innerHTML =
+                    '<div class="drill-stats">' +
+                        '<div class="drill-stat"><div class="ds-val">'+d.holdings.length+'</div><div class="ds-lbl">Holdings</div></div>' +
+                    '</div>' +
+                    '<div class="table-scroll" style="max-height:60vh;">' +
+                    '<table class="data-table"><thead><tr><th>#</th><th>Ticker</th><th>Nome</th><th class="num">Em N ETFs</th><th class="num">Peso M\u00e9dio</th></tr></thead><tbody>' +
+                    d.holdings.map(function(h,i) {
+                        return '<tr><td>'+(i+1)+'</td><td><a href="/company-analysis?code='+encodeURIComponent(h.ticker)+'" style="color:var(--accent6);font-weight:700;text-decoration:underline dotted" title="Abrir Company Analysis">'+esc(h.ticker)+'</a></td><td>'+esc(h.name)+'</td><td class="num" style="color:var(--accent);">'+h.in_etfs+'</td><td class="num">'+fmtPct(h.avg_weight)+'</td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            })
+            .catch(function(e) { body.innerHTML = '<div class="empty-msg">Erro: '+e.message+'</div>'; });
+    };
+
+    function openDrill(title) {
+        $('drillTitle').textContent = title;
+        $('drillOverlay').classList.add('active');
+    }
+    window.closeDrill = function() { $('drillOverlay').classList.remove('active'); };
+    $('drillOverlay').addEventListener('click', function(e) { if (e.target === $('drillOverlay')) closeDrill(); });
+
+    /* ══ Tabs ══ */
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(p) { p.classList.remove('active'); });
+        var btn = document.querySelector('.tab-btn[onclick*="\''+tab+'\'"]');
+        if (btn) btn.classList.add('active');
+        $('tab-' + tab).classList.add('active');
+    };
+
+    /* ══ Events ══ */
+    var debounce;
+    $('searchInput').addEventListener('input', function() { clearTimeout(debounce); debounce = setTimeout(function(){ loadETFs(1); }, 350); });
+    $('btnPrev').addEventListener('click', function() { if (currentPage > 1) loadETFs(currentPage - 1); });
+    $('btnNext').addEventListener('click', function() { if (currentPage < totalPages) loadETFs(currentPage + 1); });
+    $('btnReverse').addEventListener('click', reverseSearch);
+    $('reverseInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') reverseSearch(); });
+    $('btnOverlap').addEventListener('click', calcOverlap);
+    $('overlap1').addEventListener('keydown', function(e) { if (e.key === 'Enter') calcOverlap(); });
+    $('overlap2').addEventListener('keydown', function(e) { if (e.key === 'Enter') calcOverlap(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDrill(); });
+
+    /* ══ Init ══ */
+    loadStats();
+    loadFilterOptions();
+    loadETFs(1);
+    loadTopHoldings();
+})();
+</script>
+</body>
+</html>

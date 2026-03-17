@@ -1,0 +1,44 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+.env
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Controle de versão e IDE
+.git/
+.gitignore
+.vscode/
+
+# Arquivos de desenvolvimento
+*.md
+*.bat
+*.log
+backups/
+videos/
+docs/
+scripts/
+_temp_*.py
+
+# Cache da aplicação (será recriado no GAE)
+cache/
+
+# Dados brutos do Damodaran (Excel/CSV baixados)
+data/damodaran_data/
+data/*backup*
+data/*.csv
+data/*.xlsx
+data/*.xls
+
+# IMPORTANTE: NÃO ignorar o banco SQLite principal
+# O arquivo data/damodaran_data_new.db SERÁ deployado com a app
+
+# Testes e debug
+*.test.py
+test_*.py
+debug_*.py

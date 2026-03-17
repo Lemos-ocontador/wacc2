@@ -9,6 +9,7 @@ registra logs de auditoria e fornece status em tempo real.
 
 import sqlite3
 import json
+import os
 import pandas as pd
 import logging
 import requests
@@ -17,6 +18,15 @@ from typing import Dict, Any, List, Optional, Generator
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_IS_GAE = os.environ.get('GAE_ENV', '').startswith('standard')
+
+def _connect_db(path):
+    if _IS_GAE:
+        abs_path = os.path.abspath(path)
+        uri = 'file:' + abs_path + '?immutable=1'
+        return sqlite3.connect(uri, uri=True)
+    return sqlite3.connect(path)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -182,6 +192,7 @@ class DataSourceManager:
 
     def __init__(self, db_path: str = "data/damodaran_data_new.db"):
         self.db_path = db_path
+        self.read_only = False
         self._ensure_log_table()
 
     # ──────────────────────────────────────────────────────────────────────
@@ -189,35 +200,38 @@ class DataSourceManager:
     # ──────────────────────────────────────────────────────────────────────
 
     def _get_conn(self):
-        return sqlite3.connect(self.db_path)
+        return _connect_db(self.db_path)
 
     def _ensure_log_table(self):
         """Cria tabela de log de atualizações se não existir."""
-        conn = self._get_conn()
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS data_update_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source_id TEXT NOT NULL,
-                source_name TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'pending',
-                records_count INTEGER DEFAULT 0,
-                last_value TEXT,
-                reference_year INTEGER,
-                reference_date TEXT,
-                audit_url TEXT,
-                update_started_at TEXT,
-                update_completed_at TEXT,
-                duration_seconds REAL,
-                error_message TEXT,
-                details TEXT,
-                created_at TEXT DEFAULT (datetime('now', 'localtime'))
-            )
-        """)
-        conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_data_update_source 
-            ON data_update_log(source_id, created_at DESC)
-        """)
-        conn.commit()
+        try:
+            conn = self._get_conn()
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS data_update_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_id TEXT NOT NULL,
+                    source_name TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    records_count INTEGER DEFAULT 0,
+                    last_value TEXT,
+                    reference_year INTEGER,
+                    reference_date TEXT,
+                    audit_url TEXT,
+                    update_started_at TEXT,
+                    update_completed_at TEXT,
+                    duration_seconds REAL,
+                    error_message TEXT,
+                    details TEXT,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+                )
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_data_update_source 
+                ON data_update_log(source_id, created_at DESC)
+            """)
+            conn.commit()
+        except Exception:
+            self.read_only = True
         conn.close()
         logger.info("Tabela data_update_log verificada/criada")
 
@@ -713,6 +727,8 @@ class DataSourceManager:
     # ──────────────────────────────────────────────────────────────────────
 
     def _log_start(self, source_id: str, source_name: str, audit_url: str) -> int:
+        if self.read_only:
+            return -1
         conn = self._get_conn()
         cursor = conn.execute("""
             INSERT INTO data_update_log 
@@ -728,6 +744,8 @@ class DataSourceManager:
                       last_value: str = "", reference_year: int = None,
                       reference_date: str = None, duration: float = 0,
                       error_message: str = None, details: str = None):
+        if self.read_only:
+            return
         conn = self._get_conn()
         conn.execute("""
             UPDATE data_update_log SET
@@ -752,6 +770,8 @@ class DataSourceManager:
 
     def get_update_history(self, source_id: str = None, limit: int = 20) -> List[Dict]:
         """Retorna histórico de atualizações."""
+        if self.read_only:
+            return []
         conn = self._get_conn()
         if source_id:
             rows = conn.execute("""

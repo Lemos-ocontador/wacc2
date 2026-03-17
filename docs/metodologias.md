@@ -9,9 +9,9 @@
 
 | Fonte | Dados Obtidos | API |
 |-------|--------------|-----|
-| **Yahoo Finance (yfinance)** — `ticker.income_stmt` | DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc. | Anual: até 5 períodos |
-| **Yahoo Finance (yfinance)** — `ticker.cash_flow` | Fluxo de Caixa: FCF, Operacional, Capex | Anual: até 5 períodos |
-| **Yahoo Finance (yfinance)** — `ticker.balance_sheet` | Balanço: Dívida Total, Patrimônio, Ativos, Caixa | Anual: até 5 períodos |
+| **Yahoo Finance (yfinance)** — `ticker.income_stmt` | DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc. | Anual: até 5 períodos; Trimestral: até 5 trimestres |
+| **Yahoo Finance (yfinance)** — `ticker.cash_flow` | Fluxo de Caixa: FCF, Operacional, Capex | Anual: até 5 períodos; Trimestral: até 5 trimestres |
+| **Yahoo Finance (yfinance)** — `ticker.balance_sheet` | Balanço: Dívida Total, Patrimônio, Ativos, Caixa | Anual: até 5 períodos; Trimestral: até 5 trimestres |
 | **Yahoo Finance (yfinance)** — `ticker.get_info()` | Shares Outstanding, moeda financeira, EV atual | Valor corrente |
 | **Yahoo Finance (yfinance)** — `ticker.history()` | Preços históricos de fechamento (diário, 10 anos) | Série temporal |
 | **Yahoo Finance (yfinance)** — `{MOEDA}USD=X` | Taxa de câmbio histórica para USD (diário, 10 anos) | Série temporal |
@@ -34,8 +34,9 @@ $$EV = \text{MCap} + \text{Dívida Total} + \text{Preferred}_{(se\ disponível)}
 $$\text{Market Cap} = P_{\text{close}}(t) \times \text{Ordinary Shares Number}(t)$$
 
 Onde:
-- $P_{\text{close}}(t)$ = preço de fechamento **mais próximo** da data do período fiscal $t$
+- $P_{\text{close}}(t)$ = preço de fechamento **mais próximo** da data do período fiscal $t$ (armazenado em `close_price`)
 - **Ordinary Shares Number(t)** = número de ações ordinárias em circulação no período $t$, extraído do Balance Sheet (`Ordinary Shares Number`). Se não disponível, utiliza `sharesOutstanding` corrente via `ticker.get_info()`
+- Quando a moeda de negociação difere da moeda financeira, o MCap é convertido (ver seção 6.4)
 
 #### Obtenção do Preço Histórico
 
@@ -145,8 +146,43 @@ Para Apple Inc (AAPL), FY2025:
 |-----------|---------|-------------|---------------|
 | EV/Receita | $\frac{\text{EV Estimado}}{\text{Receita Total}}$ | `ev_revenue` | Múltiplo de receita |
 | EV/EBITDA | $\frac{\text{EV Estimado}}{\text{EBITDA}}$ | `ev_ebitda` | Múltiplo de EBITDA (mais usado para valuation) |
+| EV/EBIT | $\frac{\text{EV Estimado}}{\text{EBIT}}$ | `ev_ebit` | Múltiplo de EBIT (apenas quando EBIT > 0) |
 
 **Nota:** Os múltiplos usam o Enterprise Value **estimado** do período (não o corrente), permitindo análise temporal de valuation.
+
+### 5.5 Guardas e Limites de Múltiplos
+
+Para evitar distorções causadas por empresas pré-receita ou com denominadores desprezíveis, os múltiplos são submetidos a dois filtros:
+
+#### 5.5.1 Limite absoluto (clamp)
+
+Todo múltiplo EV com valor absoluto > **500x** é descartado (`NULL`):
+
+```
+ev_revenue = NULL se |EV/Rev| > 500
+ev_ebitda  = NULL se |EV/EBITDA| > 500
+ev_ebit    = NULL se |EV/EBIT| > 500
+```
+
+**Racional:** Múltiplos > 500x não representam valuation legítimo e distorcem medianas setoriais. Exemplo: IMSR com EV=$921M e Revenue=$18K produzia EV/Rev=49.492x.
+
+#### 5.5.2 Materialidade de receita
+
+O múltiplo `ev_revenue` só é calculado quando a receita em USD é >= **$100.000**:
+
+$$\text{Revenue}_{\text{USD}} = |\text{Revenue}| \times \text{FX}_{\text{\u2192USD}} \geq 100.000$$
+
+Empresas com receita inferior a esse limiar (pré-operacionais, early-stage) têm `ev_revenue = NULL`.
+
+**Exemplos filtrados:** ELANGO.BO (Rev=$231 USD), GLOBUSCON.BO (Rev=$487 USD), FWTC.V (Rev=$5K USD).
+
+#### 5.5.3 Materialidade de EBITDA
+
+O `ev_ebitda` só é calculado quando o EBITDA em USD é >= **$100**:
+
+$$|\text{EBITDA}_{\text{USD}}| \geq 100$$
+
+Isso evita divisão por valores próximos de zero.
 
 ---
 
@@ -176,13 +212,146 @@ Para Apple Inc (AAPL), FY2025:
 |-----------|---------|
 | Série FX limitada a ~10 anos; períodos anteriores usam a taxa mais antiga disponível | Para empresas com histórico >10 anos, períodos muito antigos podem usar taxa de ~10 anos atrás |
 | Para moedas sem cotação no Yahoo Finance, assume-se taxa = 1.0 | Algumas moedas exóticas podem não converter corretamente |
-| `market_cap_estimated` é em moeda local (mesma do preço da ação) | Para ações em BRL, `market_cap_estimated` estará em BRL; use `enterprise_value_usd` para comparações cross-country |
+| `market_cap_estimated` é na moeda dos demonstrativos financeiros | Quando moeda de negociação difere da moeda de relatório (ex: PGAS.JK negocia em IDR mas reporta em USD), o MCap é convertido automaticamente |
+
+### 6.4 Conversão de Moeda no Market Cap
+
+Quando a moeda de negociação da ação (`info["currency"]`) difere da moeda dos demonstrativos financeiros (`info["financialCurrency"]`), o Market Cap é convertido para a moeda financeira antes de compor o EV:
+
+$$\text{MCap}_{\text{fin}} = P_{\text{close}} \times \text{Shares} \times \frac{\text{FX}_{\text{trading→USD}}}{\text{FX}_{\text{financial→USD}}}$$
+
+Isso garante que todos os componentes do EV (MCap, Dívida, Caixa) estejam na mesma moeda.
+
+Exemplo: PGAS.JK (Perusahaan Gas Negara)
+- Preço: 1.436 IDR, Shares: 24,2B → MCap bruto = 34,8T IDR
+- `financialCurrency = "USD"`, `currency = "IDR"`
+- Conversão: MCap_USD = MCap_IDR × (IDR→USD) / (USD→USD) = 34,8T × 0,0000645 = ~$2,25B USD
+- Com isso, EV/Revenue fica ~0,6x ao invés de 9.000x
 
 ---
 
-## 7. Estrutura de Dados
+## 7. Dados Trimestrais e TTM (Trailing Twelve Months)
 
-### 7.1 Tabela `company_financials_historical`
+### 7.1 Extração Trimestral
+
+A extração trimestral usa os mesmos demonstrativos do Yahoo Finance com a flag `--quarterly`:
+- `ticker.quarterly_income_stmt` — até 5 trimestres
+- `ticker.quarterly_cash_flow` — até 5 trimestres
+- `ticker.quarterly_balance_sheet` — até 5 trimestres
+
+**Uso:**
+```bash
+python scripts/fetch_historical_financials.py --sector "Utilities" --quarterly
+```
+
+### 7.2 Cálculo TTM
+
+O TTM (Trailing Twelve Months) é calculado pelo script `scripts/calculate_ttm.py` e representa a soma acumulada dos 4 trimestres mais recentes até a data de referência.
+
+**Uso:**
+```bash
+python scripts/calculate_ttm.py --sector "Utilities"
+python scripts/calculate_ttm.py --company AAPL
+```
+
+#### Regras por Tipo de Período
+
+| Tipo | Cálculo TTM | `ttm_quarters_count` |
+|------|------------|---------------------|
+| **Annual** | TTM = valor do próprio período (já são 12 meses) | 4 |
+| **Quarterly** | TTM = soma dos 4 últimos trimestres trimestrais disponíveis (incluindo o corrente) | 0-4 (real) |
+
+#### Campos TTM
+
+| Campo Original (trimestral) | Campo TTM | Descrição |
+|----------------------------|-----------|-----------|
+| `total_revenue` | `total_revenue_ttm` | Receita acumulada 12 meses |
+| `ebitda` | `ebitda_ttm` | EBITDA acumulado 12 meses |
+| `ebit` | `ebit_ttm` | EBIT acumulado 12 meses |
+| `free_cash_flow` | `free_cash_flow_ttm` | FCF acumulado 12 meses |
+| `net_income` | `net_income_ttm` | Lucro líquido acumulado 12 meses |
+| — | `ttm_quarters_count` | Quantidade de trimestres com dados usados na soma |
+
+#### Lógica de Cálculo
+
+1. Para cada empresa, os registros trimestrais são ordenados por `period_date`
+2. Para cada trimestre, toma-se uma janela de até 4 registros: `[i-3 .. i]`
+3. Os valores não-nulos são somados; **mínimo de 2 trimestres** para calcular TTM
+4. Se menos de 2 trimestres têm dados, o campo TTM fica `NULL`
+5. O campo `ttm_quarters_count` registra quantos trimestres de receita contribuíram para o cálculo
+
+### 7.3 Recálculo de Múltiplos com TTM
+
+Os múltiplos EV (ev_revenue, ev_ebitda, ev_ebit) dos registros trimestrais são recalculados usando os denominadores TTM ao invés dos valores do trimestre:
+
+$$\text{EV/Revenue} = \frac{\text{EV Estimado}}{\text{Revenue TTM}}$$
+
+$$\text{EV/EBITDA} = \frac{\text{EV Estimado}}{\text{EBITDA TTM}}$$
+
+**Guardas de confiabilidade:**
+1. Os múltiplos só são calculados para registros com `ttm_quarters_count >= 4`. Registros com TTM parcial (< 4 trimestres) mantêm múltiplos como `NULL`.
+2. Os mesmos limites da Seção 5.5 se aplicam: clamp de 500x e materialidade de $100K USD para revenue TTM.
+
+### 7.4 Limitações do TTM
+
+| Limitação | Impacto | Exchanges Afetadas |
+|-----------|---------|-------------------|
+| Yahoo Finance fornece apenas ~5 trimestres recentes | Empresas sem histórico trimestral longo terão TTM parcial nos primeiros trimestres | Todas |
+| Ações chinesas (`.SZ`, `.SS`) frequentemente têm apenas 5 trimestres | Para Q2/2024 (primeiro trimestre disponível), o TTM só terá 1 trimestre | ~99% de divergência quando `ttm_quarters_count < 4` |
+| Ações indianas (`.NS`, `.BO`) com padrão similar | TTM parcial resulta em subestimação de ~50-75% | ~98% de divergência quando `ttm_quarters_count < 4` |
+| Trimestres fiscais podem não coincidir com trimestres calendário | Empresas com FY terminando em meses não-padrão (ex: março) podem ter TTM mal-alinhado | Japão, Índia |
+| Com `ttm_quarters_count = 4`, divergência residual de ~9% entre TTM trimestral e anual | Diferenças de ajuste contábil entre reports trimestrais e anuais | Todas (normal) |
+
+### 7.5 Boas Práticas de Consumo
+
+1. **Filtrar por `ttm_quarters_count`**: Para análises confiáveis, usar `WHERE ttm_quarters_count = 4`
+2. **Para anuais, preferir valores diretos**: Os campos TTM dos anuais são os próprios valores (redundantes mas consistentes)
+3. **Para múltiplos cross-country**: Usar `enterprise_value_usd` e campos `*_usd` para comparabilidade
+4. **Para séries temporais**: Combinar anuais + trimestrais com `ttm_quarters_count = 4` para máxima cobertura
+
+---
+
+## 8. Qualidade de Dados
+
+### 8.1 Deduplicação de Empresas
+
+A tabela `company_basic_data` pode conter múltiplos registros com o mesmo `yahoo_code` (oriundos de diferentes fontes Damodaran que listam a mesma empresa em múltiplas indústrias/setores).
+
+**Script:** `scripts/deduplicate_companies.py`
+
+**Estratégia:**
+1. Agrupa registros por `yahoo_code`
+2. Mantém o registro com mais dados em `company_financials_historical`
+3. Migra registros financeiros não-conflitantes do registro removido para o mantido
+4. Deleta registros financeiros duplicados (mesma empresa + período + data)
+5. Remove o registro `company_basic_data` excedente
+
+**Uso:**
+```bash
+python scripts/deduplicate_companies.py --dry-run  # simulação
+python scripts/deduplicate_companies.py             # execução real
+```
+
+### 8.2 Indicadores de Qualidade no Frontend
+
+A página `/company-analysis` exibe **badges de qualidade** acima das tabelas de mercado:
+
+| Badge | Descrição | Cor |
+|-------|-----------|-----|
+| Períodos | Total de registros | Verde |
+| Preço | Registros com `close_price > 0` | Verde ≥90%, Amarelo ≥50%, Vermelho <50% |
+| Ações | Registros com `ordinary_shares_number > 0` | Idem |
+| EV | Registros com `enterprise_value_estimated` preenchido | Idem |
+| Múltiplos | Registros com `ev_revenue` calculado | Idem |
+| TTM | Registros com `total_revenue_ttm` (só trimestral) | Idem |
+| 4Q completos | Registros com `ttm_quarters_count >= 4` (só trimestral) | Idem |
+| Múltiplas moedas | Alerta se a série histórica tem moedas diferentes | Vermelho |
+
+---
+
+## 9. Estrutura de Dados
+
+### 9.1 Tabela `company_financials_historical`
 
 - **Chave primária**: `id` (autoincrement)
 - **Restrição de unicidade**: `UNIQUE(company_basic_data_id, period_type, period_date)` — garante um registro por empresa/tipo/data
@@ -191,7 +360,7 @@ Para Apple Inc (AAPL), FY2025:
 - **`fiscal_year`**: ano fiscal extraído da data do período
 - **`fiscal_quarter`**: trimestre (1-4) para dados trimestrais, NULL para anuais
 
-### 7.2 Índices
+### 9.2 Índices
 
 | Índice | Colunas | Finalidade |
 |--------|---------|-----------|
@@ -199,7 +368,7 @@ Para Apple Inc (AAPL), FY2025:
 | `idx_cfh_period` | `period_type, fiscal_year` | Filtros por tipo e ano |
 | `idx_cfh_company` | `company_basic_data_id` | Join com `company_basic_data` |
 
-### 7.3 Relacionamentos
+### 9.3 Relacionamentos
 
 ```
 company_basic_data (1) ──── (N) company_financials_historical
@@ -211,9 +380,9 @@ company_basic_data (1) ──── (N) company_financials_historical
 
 ---
 
-## 8. Qualidade dos Dados
+## 10. Qualidade dos Dados
 
-### 8.1 Cobertura Temporal
+### 10.1 Cobertura Temporal
 
 O yfinance retorna tipicamente:
 - **4-5 períodos anuais** (últimos ~5 anos fiscais)
@@ -221,12 +390,12 @@ O yfinance retorna tipicamente:
 
 O período mais antigo pode ter dados incompletos (todos N/A), especialmente para empresas menores.
 
-### 8.2 Classificação de Qualidade
+### 10.2 Classificação de Qualidade
 
 O campo `data_quality` indica a completude dos dados:
 - `ok` — dados com métricas principais disponíveis
 
-### 8.3 Validação
+### 10.3 Validação
 
 Métricas de validação cruzada com Damodaran (exemplo AAPL FY2025):
 
@@ -244,7 +413,7 @@ O pequeno desvio no EV se deve a:
 
 ---
 
-## 9. Exemplo Completo — Cálculo do EV
+## 11. Exemplo Completo — Cálculo do EV
 
 ### Apple Inc (AAPL) — FY2025 (encerramento 30/set/2025)
 
@@ -272,7 +441,7 @@ O pequeno desvio no EV se deve a:
 
 ---
 
-## 10. Resumo das Fórmulas
+## 12. Resumo das Fórmulas
 
 | Métrica | Fórmula |
 |---------|---------|

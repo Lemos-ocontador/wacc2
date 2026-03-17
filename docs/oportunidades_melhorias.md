@@ -1,6 +1,6 @@
 # Oportunidades de Melhorias
 
-> Análise realizada em Março/2026
+> Análise realizada em Março/2026 — Atualizada em 14/Mar/2026
 
 ---
 
@@ -55,7 +55,7 @@
 ## Prioridade 3 — Manutenibilidade e Arquitetura
 
 ### 3.1 Refatorar `app.py` em Flask Blueprints
-- **Problema**: 3.740 linhas e 80 rotas num único arquivo — difícil de navegar e manter
+- **Problema**: ~3.680 linhas e 84 rotas num único arquivo — difícil de navegar e manter
 - **Proposta de estrutura**:
   ```
   blueprints/
@@ -69,7 +69,8 @@
   ```
 
 ### 3.2 Extrair JS/CSS dos templates
-- **Problema**: Templates com 1.900 a 2.800 linhas cada, com CSS e JS inline
+- **Problema**: Templates com 1.200 a 2.800 linhas cada, com CSS e JS inline
+- **Nota**: `company_analysis.html` foi reescrito (~800 linhas, moderno), mas ainda com JS/CSS inline
 - **Ação**: Mover para `static/js/` e `static/css/` — bundles por página ou compartilhados
 - **Benefício**: Cache do browser, melhor performance, mais fácil de manter
 
@@ -79,7 +80,7 @@
 - **Benefício**: Eliminação de código duplicado, queries centralizadas, mais fácil de testar
 
 ### 3.4 Adicionar testes
-- **Problema**: Zero testes para 3.740 linhas de backend + 17k linhas de templates
+- **Problema**: Zero testes para ~3.680 linhas de backend + 17k linhas de templates
 - **Ação**: Criar `tests/` com:
   - Testes unitários para `wacc_calculator.py`
   - Testes de API para os principais endpoints
@@ -117,7 +118,7 @@
 - **Ação**: Flask-Limiter com limites por IP
 
 ### 5.3 Documentação da API
-- **Problema**: 80 endpoints sem documentação formal
+- **Problema**: 84 endpoints sem documentação formal
 - **Ação**: Swagger/OpenAPI via Flask-RESTX ou flasgger
 
 ### 5.4 Validação de input
@@ -134,6 +135,19 @@
 ### 5.6 Migração de schema gerenciada
 - **Problema**: Scripts manuais em `scripts/` sem controle de versão de schema
 - **Ação**: Alembic ou sistema simples de migrations versionadas
+
+---
+
+## Melhorias Realizadas (Março/2026)
+
+- **Página de Perfil de Empresa**: `company_analysis.html` totalmente reescrito com 5 abas (Institucional, Mercado, Financeiro, Histórico, Balanço & DRE) e endpoint `/api/company_profile` com busca multi-estratégia
+- **Dashboard Yahoo — Treemap**: Novo endpoint `/api/yahoo_dashboard_treemap` e aba de treemap interativo
+- **Dashboard Yahoo — Cross-filters**: KPI cards com filtros cruzados via `/api/yahoo_filter_options`
+- **Dashboard Yahoo — Tabela de Empresas**: Nova aba com busca e paginação
+- **Drill-down com filtros ativos**: Endpoints de drill-down agora respeitam filtros de KPI selecionados
+- **Taxas FX históricas**: Script `recalculate_fx_rates.py` para recalcular ~130k registros
+- **Página de Metodologias**: Nova rota `/metodologias` com `metodologias.html`
+- **Correção EV/Market Cap**: Scripts `run_ev_fix_all_sectors.py` e `run_all_sectors.ps1` para reprocessamento em massa
 
 ---
 

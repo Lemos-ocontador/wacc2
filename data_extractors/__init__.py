@@ -19,6 +19,7 @@ from .bcb_extractor import BCBExtractor
 from .damodaran_extractor import DamodaranExtractor
 from .web_scraper import WebScraper
 from .wacc_data_manager import WACCDataManager
+from .etf_extractor import ETFExtractor
 
 __all__ = [
     'BaseExtractor',
@@ -26,5 +27,6 @@ __all__ = [
     'BCBExtractor',
     'DamodaranExtractor',
     'WebScraper',
-    'WACCDataManager'
+    'WACCDataManager',
+    'ETFExtractor',
 ]

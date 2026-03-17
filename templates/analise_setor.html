@@ -306,6 +306,26 @@
                 </div>
                 <div class="tags" id="tags-years"></div>
             </div>
+
+            <!-- SIC Desc -->
+            <div class="filter-group">
+                <label>SIC Desc</label>
+                <div class="multi-select-container" id="ms-sic_descs">
+                    <div class="multi-select-btn" onclick="toggleDropdown('ms-sic_descs')">
+                        <span class="ms-label">Todos os SICs</span>
+                        <span class="count-badge" style="display:none">0</span>
+                    </div>
+                    <div class="multi-select-dropdown">
+                        <input type="text" class="ms-search" placeholder="Buscar SIC..." oninput="filterOptions('ms-sic_descs', this.value)">
+                        <div class="ms-actions">
+                            <button onclick="selectAll('ms-sic_descs')">✓ Todos</button>
+                            <button onclick="selectNone('ms-sic_descs')">✕ Nenhum</button>
+                        </div>
+                        <div class="ms-options"></div>
+                    </div>
+                </div>
+                <div class="tags" id="tags-sic_descs"></div>
+            </div>
         </div>
 
         <!-- Ações -->
@@ -465,6 +485,7 @@ async function loadFilters() {
         populateMultiSelect('ms-regions', json.regions.map(r => ({value: r.name, label: r.name, count: r.count})));
         populateMultiSelect('ms-countries', json.countries.map(c => ({value: c.name, label: c.name, count: c.count})));
         populateMultiSelect('ms-years', json.years.map(y => ({value: y, label: y, count: null})));
+        populateMultiSelect('ms-sic_descs', (json.sic_descs || []).map(s => ({value: s.name, label: s.name, count: s.count})));
     } catch(e) {
         console.error('Erro ao carregar filtros:', e);
     }
@@ -541,7 +562,8 @@ function updateMultiSelectLabel(containerId) {
     if (selected.length === 0 || selected.length === totalOptions) {
         label.textContent = containerId.includes('sector') ? 'Todos os setores' :
                            containerId.includes('region') ? 'Todas as regiões' :
-                           containerId.includes('countr') ? 'Todos os países' : 'Todos os anos';
+                           containerId.includes('countr') ? 'Todos os países' :
+                           containerId.includes('sic') ? 'Todos os SICs' : 'Todos os anos';
         badge.style.display = 'none';
         if (tagsDiv) tagsDiv.innerHTML = '';
     } else {
@@ -596,11 +618,13 @@ function getFilterParams() {
     const regions = getSelectedValues('ms-regions');
     const countries = getSelectedValues('ms-countries');
     const years = getSelectedValues('ms-years');
+    const sic_descs = getSelectedValues('ms-sic_descs');
     const params = new URLSearchParams();
     if (sectors.length && sectors.length < (filtersData?.sectors?.length || 0)) params.set('sectors', sectors.join(','));
     if (countries.length && countries.length < (filtersData?.countries?.length || 0)) params.set('countries', countries.join(','));
     else if (regions.length && regions.length < (filtersData?.regions?.length || 0)) params.set('regions', regions.join(','));
     if (years.length && years.length < (filtersData?.years?.length || 0)) params.set('years', years.join(','));
+    if (sic_descs.length && sic_descs.length < (filtersData?.sic_descs?.length || 0)) params.set('sic_descs', sic_descs.join(','));
     return params;
 }
 
@@ -640,7 +664,7 @@ async function applyFilters() {
 }
 
 function resetFilters() {
-    ['ms-sectors','ms-regions','ms-countries','ms-years'].forEach(id => selectNone(id));
+    ['ms-sectors','ms-regions','ms-countries','ms-years','ms-sic_descs'].forEach(id => selectNone(id));
     document.getElementById('group-by').value = 'sector';
     document.getElementById('filter-status').textContent = '';
 }

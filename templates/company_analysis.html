@@ -181,6 +181,45 @@
         .error-msg h2 { color: var(--accent3); margin-bottom: 8px; }
 
         /* Responsive */
+        /* Search Bar */
+        .search-bar {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px 20px; margin-bottom: 15px; position: relative;
+        }
+        .search-bar-inner {
+            display: flex; gap: 10px; align-items: center;
+        }
+        .search-bar input {
+            flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 16px; font-size: 14px; color: var(--text); outline: none;
+            font-family: inherit;
+        }
+        .search-bar input::placeholder { color: var(--text2); }
+        .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52,152,219,0.2); }
+        .search-bar .search-icon {
+            font-size: 18px; color: var(--text2); flex-shrink: 0;
+        }
+        .autocomplete-list {
+            position: absolute; left: 20px; right: 20px; top: 100%;
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 0 0 10px 10px;
+            max-height: 360px; overflow-y: auto; z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none;
+        }
+        .autocomplete-list.show { display: block; }
+        .ac-item {
+            padding: 10px 16px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); transition: background 0.15s;
+        }
+        .ac-item:last-child { border-bottom: none; }
+        .ac-item:hover, .ac-item.ac-active { background: var(--bg3); }
+        .ac-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+        .ac-ticker { font-weight: 700; font-size: 14px; color: var(--accent); }
+        .ac-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ac-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; margin-left: 12px; }
+        .ac-sector { font-size: 11px; color: var(--text2); }
+        .ac-country { font-size: 11px; color: var(--accent4); }
+
         @media (max-width: 768px) {
             .hero-top { flex-direction: column; }
             .hero-right { text-align: left; }
@@ -204,8 +243,17 @@
         </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-bar" id="search-bar">
+        <div class="search-bar-inner">
+            <span class="search-icon">&#128270;</span>
+            <input type="text" id="search-input" placeholder="Buscar empresa por ticker ou nome (ex: AAPL, Petrobras, VALE3.SA)..." autocomplete="off">
+        </div>
+        <div class="autocomplete-list" id="ac-list"></div>
+    </div>
+
     <!-- Loading -->
-    <div id="loading" class="loading">
+    <div id="loading" class="loading" style="display:none;">
         <div class="spinner"></div>
         Carregando dados da empresa...
     </div>
@@ -233,6 +281,7 @@
                     <div class="hero-mcap-label">Market Cap</div>
                     <div class="hero-mcap" id="hero-mcap">&mdash;</div>
                     <div class="hero-ev" id="hero-ev"></div>
+                    <div id="hero-data-date" style="font-size:11px;color:var(--text2);margin-top:6px;opacity:0.8"></div>
                     <div class="hero-website" id="hero-website" style="margin-top:8px;"></div>
                 </div>
             </div>
@@ -257,20 +306,48 @@
                 <div class="section-title"><span class="section-icon">&#127991;&#65039;</span> Classifica&ccedil;&atilde;o Setorial</div>
                 <div class="info-grid" id="info-classification"></div>
             </div>
+            <div class="section" style="margin-top:15px;display:none;" id="section-etf-memberships">
+                <div class="section-title"><span class="section-icon">&#128230;</span> ETFs que cont&ecirc;m este ativo</div>
+                <div class="info-grid" id="info-etf-memberships"></div>
+            </div>
         </div>
 
         <!-- TAB: Mercado -->
         <div id="tab-market" class="tab-content">
             <div class="section">
-                <div class="section-title"><span class="section-icon">&#128185;</span> Indicadores de Mercado</div>
+                <div class="section-title"><span class="section-icon">&#128185;</span> Indicadores de Mercado <span id="tab-market-date" style="font-size:11px;color:var(--text2);font-weight:400;opacity:0.8"></span></div>
                 <div class="cards-grid" id="cards-market"></div>
+            </div>
+            <div class="section" style="margin-top:15px;">
+                <div class="section-title"><span class="section-icon">&#128202;</span> Evolu&ccedil;&atilde;o &mdash; Market Cap &amp; EV</div>
+                <div class="charts-grid" id="mkt-charts-area"></div>
+            </div>
+            <div class="section" style="margin-top:15px;">
+                <div class="section-title"><span class="section-icon">&#128200;</span> Dados de Mercado &mdash; Anual</div>
+                <div id="mkt-quality-annual" style="margin-bottom:8px;"></div>
+                <div class="hist-table-wrap">
+                    <table class="hist-table" id="mkt-annual-table">
+                        <thead id="mkt-annual-thead"></thead>
+                        <tbody id="mkt-annual-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="section" style="margin-top:15px;">
+                <div class="section-title"><span class="section-icon">&#128197;</span> Dados de Mercado &mdash; Trimestral</div>
+                <div id="mkt-quality-quarterly" style="margin-bottom:8px;"></div>
+                <div class="hist-table-wrap">
+                    <table class="hist-table" id="mkt-quarterly-table">
+                        <thead id="mkt-quarterly-thead"></thead>
+                        <tbody id="mkt-quarterly-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- TAB: Financeiro -->
         <div id="tab-financial" class="tab-content">
             <div class="section">
-                <div class="section-title"><span class="section-icon">&#128202;</span> Resultado</div>
+                <div class="section-title"><span class="section-icon">&#128202;</span> Resultado <span id="tab-financial-date" style="font-size:11px;color:var(--text2);font-weight:400;opacity:0.8"></span></div>
                 <div class="cards-grid" id="cards-result"></div>
             </div>
             <div class="section" style="margin-top:15px;">
@@ -286,7 +363,7 @@
         <!-- TAB: Historico -->
         <div id="tab-historical" class="tab-content">
             <div class="section">
-                <div class="section-title"><span class="section-icon">&#128200;</span> Evolu&ccedil;&atilde;o Hist&oacute;rica</div>
+                <div class="section-title"><span class="section-icon">&#128200;</span> Evolu&ccedil;&atilde;o Hist&oacute;rica <span id="tab-historical-date" style="font-size:11px;color:var(--text2);font-weight:400;opacity:0.8"></span></div>
                 <div class="charts-grid" id="charts-area"></div>
             </div>
             <div class="section" style="margin-top:15px;">
@@ -337,14 +414,128 @@
 <script>
 // ====== STATE ======
 var DATA = {};
+var _charts = {};
 
 // ====== INIT ======
 document.addEventListener('DOMContentLoaded', function() {
     var params = new URLSearchParams(window.location.search);
     var code = params.get('company') || params.get('code') || '';
-    if (!code) { showError('Nenhuma empresa informada na URL.'); return; }
-    loadCompanyProfile(code);
+    if (code) {
+        document.getElementById('loading').style.display = 'block';
+        loadCompanyProfile(code);
+        document.getElementById('search-input').value = code;
+    }
+    initSearch();
 });
+
+// ====== SEARCH / AUTOCOMPLETE ======
+function initSearch() {
+    var input = document.getElementById('search-input');
+    var list = document.getElementById('ac-list');
+    var debounce = null;
+    var activeIdx = -1;
+    var results = [];
+
+    input.addEventListener('input', function() {
+        clearTimeout(debounce);
+        var q = input.value.trim();
+        if (q.length < 2) { hideAC(); return; }
+        debounce = setTimeout(function() { fetchResults(q); }, 250);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        var items = list.querySelectorAll('.ac-item');
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, items.length - 1);
+            highlightItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, 0);
+            highlightItem(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIdx >= 0 && activeIdx < results.length) {
+                selectCompany(results[activeIdx].code);
+            } else if (input.value.trim()) {
+                selectCompany(input.value.trim());
+            }
+        } else if (e.key === 'Escape') {
+            hideAC();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-bar')) hideAC();
+    });
+
+    function fetchResults(q) {
+        fetch('/api/company_search?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.success) return;
+                results = d.results;
+                activeIdx = -1;
+                if (!results.length) { list.innerHTML = '<div class="ac-item" style="color:var(--text2);cursor:default;">Nenhum resultado</div>'; list.classList.add('show'); return; }
+                list.innerHTML = results.map(function(r, i) {
+                    var mcStr = r.market_cap ? fmtSearchMcap(r.market_cap) : '';
+                    return '<div class="ac-item" data-idx="' + i + '">' +
+                        '<div class="ac-left">' +
+                            '<span class="ac-ticker">' + esc(r.code) + '</span>' +
+                            '<span class="ac-name">' + esc(r.name || '') + '</span>' +
+                        '</div>' +
+                        '<div class="ac-right">' +
+                            (r.sector ? '<span class="ac-sector">' + esc(r.sector) + '</span>' : '') +
+                            (r.country ? '<span class="ac-country">' + esc(r.country) + (mcStr ? ' · ' + mcStr : '') + '</span>' : (mcStr ? '<span class="ac-country">' + mcStr + '</span>' : '')) +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+                list.classList.add('show');
+                list.querySelectorAll('.ac-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var idx = parseInt(el.dataset.idx);
+                        if (!isNaN(idx) && results[idx]) selectCompany(results[idx].code);
+                    });
+                });
+            })
+            .catch(function() {});
+    }
+
+    function highlightItem(items) {
+        items.forEach(function(el, i) {
+            el.classList.toggle('ac-active', i === activeIdx);
+        });
+        if (items[activeIdx]) items[activeIdx].scrollIntoView({block:'nearest'});
+    }
+
+    function hideAC() { list.classList.remove('show'); activeIdx = -1; }
+}
+
+function selectCompany(code) {
+    document.getElementById('ac-list').classList.remove('show');
+    document.getElementById('search-input').value = code;
+    // Update URL without reload
+    var url = new URL(window.location);
+    url.searchParams.set('code', code);
+    window.history.pushState({}, '', url);
+    // Reset and load
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    // Destroy existing charts
+    if (typeof _charts !== 'undefined') {
+        for (var k in _charts) { if (_charts[k]) { _charts[k].destroy(); delete _charts[k]; } }
+    }
+    loadCompanyProfile(code);
+}
+
+function fmtSearchMcap(n) {
+    if (!n) return '';
+    if (n >= 1e12) return (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n/1e6).toFixed(0) + 'M';
+    return n.toLocaleString();
+}
 
 function loadCompanyProfile(code) {
     fetch('/api/company_profile?code=' + encodeURIComponent(code))
@@ -385,6 +576,7 @@ function renderAll() {
     if (b.yahoo_sector) badges.innerHTML += '<span class="badge badge-sector">\ud83d\udcc1 ' + esc(b.yahoo_sector) + '</span>';
     if (b.yahoo_industry) badges.innerHTML += '<span class="badge badge-industry">\ud83c\udfed ' + esc(b.yahoo_industry) + '</span>';
     if (b.yahoo_country) badges.innerHTML += '<span class="badge badge-country">\ud83c\udf0d ' + esc(b.yahoo_country) + '</span>';
+    if (d.sic_desc) badges.innerHTML += '<span class="badge badge-sector" style="cursor:pointer;opacity:0.85" title="Ver empresas com mesmo SIC no Yahoo Dashboard" onclick="window.open(\'/data-yahoo?sic_descs=' + encodeURIComponent(d.sic_desc) + '\',\'_blank\')">\ud83c\udfaf SIC: ' + esc(d.sic_desc) + '</span>';
     if (b.google_finance_code) {
         var exch = b.google_finance_code.split(':')[0];
         if (exch) badges.innerHTML += '<span class="badge badge-exchange">\ud83d\udccd ' + esc(exch) + '</span>';
@@ -403,6 +595,17 @@ function renderAll() {
     document.getElementById('hero-mcap').textContent = mcap ? fmtBig(mcap, curr) : '\u2014';
     document.getElementById('hero-ev').textContent = ev ? 'EV: ' + fmtBig(ev, curr) : '';
 
+    // Data de extração Yahoo
+    var dataDateEl = document.getElementById('hero-data-date');
+    if (b.updated_at) {
+        var dt = new Date(b.updated_at);
+        if (!isNaN(dt.getTime())) {
+            dataDateEl.textContent = '\ud83d\udd53 Dados Yahoo: ' + dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        }
+    } else if (b.dta_referencia) {
+        dataDateEl.textContent = '\ud83d\udd53 Ref.: ' + esc(b.dta_referencia);
+    }
+
     // Website
     if (b.yahoo_website) {
         document.getElementById('hero-website').innerHTML =
@@ -411,9 +614,25 @@ function renderAll() {
 
     renderInstitutional(b, d);
     renderMarket(b, d);
+    renderMarketTables();
     renderFinancial(b, d);
     renderHistorical();
     renderBalancoDRE();
+
+    // Atualizar data/hora nas abas
+    var updLabel = '';
+    if (b.updated_at) {
+        var dtUp = new Date(b.updated_at);
+        if (!isNaN(dtUp.getTime())) {
+            updLabel = '\u2014 atualizado em ' + dtUp.toLocaleDateString('pt-BR') + ' ' + dtUp.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        }
+    } else if (b.dta_referencia) {
+        updLabel = '\u2014 ref. ' + esc(b.dta_referencia);
+    }
+    ['tab-market-date', 'tab-financial-date', 'tab-historical-date'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = updLabel;
+    });
 }
 
 // ====== ESCAPE HTML ======
@@ -459,12 +678,37 @@ function renderInstitutional(b, d) {
         ['SIC Desc', esc(d.sic_desc)],
         ['SIC Round', esc(d.sic_round)],
         ['Atividade Anloc', esc(d.atividade_anloc)],
-        ['ETF Sector', esc(b.etf_sector)],
     ];
     document.getElementById('info-classification').innerHTML = classItems
         .filter(function(x) { return x[1] != null && x[1] !== ''; })
         .map(function(x) { return '<div class="info-row"><span class="info-key">' + x[0] + '</span><span class="info-val">' + x[1] + '</span></div>'; })
         .join('');
+
+    // ETF Memberships (dinâmico da tabela etf_holdings)
+    var etfs = DATA.etf_memberships || [];
+    var etfContainer = document.getElementById('info-etf-memberships');
+    if (etfs.length > 0) {
+        document.getElementById('section-etf-memberships').style.display = 'block';
+        etfContainer.innerHTML = etfs.map(function(e) {
+            var weightStr = e.weight != null ? (e.weight).toFixed(2) + '%' : '–';
+            var aumStr = e.aum ? fmtBig(e.aum, 'USD') : '';
+            var srcBadge = e.data_source === 'sec_edgar' ? 'SEC' : e.data_source === 'cvm' ? 'CVM' : 'yfinance';
+            return '<div class="info-row" style="cursor:pointer" onclick="window.open(\'/company-analysis?code=' + encodeURIComponent(e.etf_ticker) + '\',\'_blank\')">' +
+                '<span class="info-key" style="display:flex;align-items:center;gap:8px;">' +
+                    '<span style="color:var(--accent);font-weight:700;">' + esc(e.etf_ticker) + '</span>' +
+                    '<span style="font-size:11px;color:var(--text2);">' + esc(e.etf_name || '') + '</span>' +
+                '</span>' +
+                '<span class="info-val" style="display:flex;align-items:center;gap:10px;">' +
+                    (e.category ? '<span style="font-size:11px;color:var(--text2);">' + esc(e.category) + '</span>' : '') +
+                    '<span style="color:var(--accent2);font-weight:600;">' + weightStr + '</span>' +
+                    (aumStr ? '<span style="font-size:11px;color:var(--text2);">' + aumStr + '</span>' : '') +
+                    '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(52,152,219,0.15);color:var(--accent);">' + srcBadge + '</span>' +
+                '</span>' +
+            '</div>';
+        }).join('');
+    } else {
+        document.getElementById('section-etf-memberships').style.display = 'none';
+    }
 }
 
 // ====== MARKET ======
@@ -484,6 +728,222 @@ function renderMarket(b, d) {
         .filter(function(c) { return c.value !== '\u2014'; })
         .map(function(c) { return '<div class="metric-card ' + c.cls + '"><div class="m-label">' + c.label + '</div><div class="m-value">' + c.value + '</div></div>'; })
         .join('');
+}
+
+// ====== MARKET TABLES (Dados de Mercado) ======
+function renderMarketTables() {
+    var curr = (DATA.basic && DATA.basic.currency) ? DATA.basic.currency : 'USD';
+
+    // Charts
+    renderMarketCharts(curr);
+
+    var mktCols = [
+        { key: '_period', label: 'Período' },
+        { key: 'close_price', label: 'Preço', fmt: 'price' },
+        { key: 'ordinary_shares_number', label: 'Ações', fmt: 'big' },
+        { key: 'market_cap_estimated', label: 'Market Cap', fmt: 'big' },
+        { key: 'enterprise_value_estimated', label: 'EV Estimado', fmt: 'big' },
+        { key: 'total_debt', label: 'Dívida Total', fmt: 'big' },
+        { key: 'cash_and_equivalents', label: 'Caixa', fmt: 'big' },
+        { key: 'ev_revenue', label: 'EV/Rev', fmt: 'num' },
+        { key: 'ev_ebitda', label: 'EV/EBITDA', fmt: 'num' },
+        { key: 'ev_ebit', label: 'EV/EBIT', fmt: 'num' },
+        { key: 'original_currency', label: 'Moeda' },
+        { key: 'fx_rate_to_usd', label: 'FX→USD', fmt: 'fx' },
+    ];
+
+    // Annual
+    var annual = DATA.historical_annual || [];
+    buildMarketTable('mkt-annual', mktCols, annual, curr, false);
+    renderDataQuality('mkt-quality-annual', annual, false);
+
+    // Quarterly - add TTM columns
+    var quarterly = DATA.historical_quarterly || [];
+    var qCols = mktCols.slice();
+    // Insert TTM fields after EV/EBIT
+    var evEbitIdx = qCols.findIndex(function(c) { return c.key === 'ev_ebit'; });
+    if (evEbitIdx >= 0) {
+        qCols.splice(evEbitIdx + 1, 0,
+            { key: 'total_revenue_ttm', label: 'Rev TTM', fmt: 'big' },
+            { key: 'ebitda_ttm', label: 'EBITDA TTM', fmt: 'big' },
+            { key: 'ttm_quarters_count', label: 'Q TTM', fmt: 'int' }
+        );
+    }
+    buildMarketTable('mkt-quarterly', qCols, quarterly, curr, true);
+    renderDataQuality('mkt-quality-quarterly', quarterly, true);
+}
+
+function renderMarketCharts(curr) {
+    var area = document.getElementById('mkt-charts-area');
+    area.innerHTML = '';
+    var annual = (DATA.historical_annual || []).slice().reverse();
+    if (annual.length === 0) {
+        area.innerHTML = '<p style="color:var(--text2);padding:10px;">Sem dados históricos.</p>';
+        return;
+    }
+    var labels = annual.map(function(r) { return r.fiscal_year || (r.period_date ? r.period_date.substring(0, 4) : ''); });
+
+    var mktChartDefs = [
+        { id: 'mkt-chart-mcap', title: 'Market Cap & EV (' + curr + ')', type: 'bar',
+          datasets: [
+              { label: 'Market Cap', field: 'market_cap_estimated', color: '#3498db' },
+              { label: 'Enterprise Value', field: 'enterprise_value_estimated', color: '#2ecc71' },
+              { label: 'Dívida Total', field: 'total_debt', color: '#e74c3c' },
+              { label: 'Caixa', field: 'cash_and_equivalents', color: '#f39c12' }
+          ]
+        },
+        { id: 'mkt-chart-multiples', title: 'Múltiplos EV', type: 'line',
+          datasets: [
+              { label: 'EV/Revenue', field: 'ev_revenue', color: '#9b59b6' },
+              { label: 'EV/EBITDA', field: 'ev_ebitda', color: '#3498db' },
+              { label: 'EV/EBIT', field: 'ev_ebit', color: '#e74c3c' }
+          ]
+        }
+    ];
+
+    mktChartDefs.forEach(function(def) {
+        var hasData = def.datasets.some(function(ds) { return annual.some(function(r) { return r[ds.field] != null; }); });
+        if (!hasData) return;
+        var box = document.createElement('div');
+        box.className = 'chart-box';
+        box.innerHTML = '<h3>' + def.title + '</h3><canvas id="' + def.id + '"></canvas>';
+        area.appendChild(box);
+        var ctx = document.getElementById(def.id).getContext('2d');
+        var isMultiple = def.id.indexOf('multiples') >= 0;
+        var datasets = def.datasets
+            .filter(function(ds) { return annual.some(function(r) { return r[ds.field] != null; }); })
+            .map(function(ds) {
+                return {
+                    label: ds.label,
+                    data: annual.map(function(r) { return r[ds.field]; }),
+                    borderColor: ds.color,
+                    backgroundColor: def.type === 'bar' ? ds.color + '99' : ds.color + '22',
+                    borderWidth: 2, tension: 0.3,
+                    fill: def.type === 'line', pointRadius: 3
+                };
+            });
+        _charts[def.id] = new Chart(ctx, {
+            type: def.type,
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#95a5a6', font: { size: 11 } } },
+                    tooltip: { callbacks: { label: function(context) {
+                        var v = context.parsed.y;
+                        if (v == null) return '';
+                        if (isMultiple) return context.dataset.label + ': ' + v.toFixed(2) + 'x';
+                        if (Math.abs(v) >= 1e12) return context.dataset.label + ': ' + (v/1e12).toFixed(2) + 'T ' + curr;
+                        if (Math.abs(v) >= 1e9) return context.dataset.label + ': ' + (v/1e9).toFixed(2) + 'B ' + curr;
+                        if (Math.abs(v) >= 1e6) return context.dataset.label + ': ' + (v/1e6).toFixed(1) + 'M ' + curr;
+                        return context.dataset.label + ': ' + v.toFixed(0) + ' ' + curr;
+                    }}}
+                },
+                scales: {
+                    x: { ticks: { color: '#95a5a6' }, grid: { color: 'rgba(44,62,80,0.3)' } },
+                    y: {
+                        ticks: { color: '#95a5a6', callback: function(v) {
+                            if (isMultiple) return v.toFixed(1) + 'x';
+                            if (Math.abs(v) >= 1e12) return (v/1e12).toFixed(1) + 'T';
+                            if (Math.abs(v) >= 1e9) return (v/1e9).toFixed(1) + 'B';
+                            if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(0) + 'M';
+                            return v;
+                        }},
+                        grid: { color: 'rgba(44,62,80,0.3)' }
+                    }
+                }
+            }
+        });
+    });
+}
+
+function renderDataQuality(containerId, data, isQuarterly) {
+    var el = document.getElementById(containerId);
+    if (!data || data.length === 0) { el.innerHTML = ''; return; }
+    var total = data.length;
+    var withPrice = data.filter(function(r) { return r.close_price > 0; }).length;
+    var withShares = data.filter(function(r) { return r.ordinary_shares_number > 0; }).length;
+    var withEV = data.filter(function(r) { return r.enterprise_value_estimated != null; }).length;
+    var withMultiples = data.filter(function(r) { return r.ev_revenue != null; }).length;
+    var badges = [];
+    badges.push(qBadge('Períodos', total, total));
+    badges.push(qBadge('Preço', withPrice, total));
+    badges.push(qBadge('Ações', withShares, total));
+    badges.push(qBadge('EV', withEV, total));
+    badges.push(qBadge('Múltiplos', withMultiples, total));
+    if (isQuarterly) {
+        var with4Q = data.filter(function(r) { return r.ttm_quarters_count >= 4; }).length;
+        var withTTM = data.filter(function(r) { return r.total_revenue_ttm != null; }).length;
+        badges.push(qBadge('TTM', withTTM, total));
+        badges.push(qBadge('4Q completos', with4Q, total));
+    }
+    // Currency check
+    var currencies = {};
+    data.forEach(function(r) { if (r.original_currency) currencies[r.original_currency] = 1; });
+    var currList = Object.keys(currencies);
+    if (currList.length > 1) {
+        badges.push('<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(231,76,60,0.15);color:#e74c3c;">&#9888; Múltiplas moedas: ' + currList.join(', ') + '</span>');
+    }
+    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">' + badges.join('') + '</div>';
+}
+function qBadge(label, count, total) {
+    var pct = total > 0 ? Math.round(count / total * 100) : 0;
+    var color = pct >= 90 ? 'rgba(46,204,113,0.15);color:#27ae60' : pct >= 50 ? 'rgba(241,196,15,0.2);color:#f39c12' : 'rgba(231,76,60,0.15);color:#e74c3c';
+    return '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:' + color + ';">' + label + ': ' + count + '/' + total + ' (' + pct + '%)</span>';
+}
+
+function buildMarketTable(prefix, colDefs, data, curr, isQuarterly) {
+    var noData = '<tr><td colspan="20" style="text-align:center;color:var(--text2);padding:20px;">Sem dados disponíveis.</td></tr>';
+    if (!data || data.length === 0) {
+        document.getElementById(prefix + '-thead').innerHTML = '';
+        document.getElementById(prefix + '-tbody').innerHTML = noData;
+        return;
+    }
+
+    // Filter cols that have at least one value
+    var activeCols = colDefs.filter(function(col) {
+        if (col.key === '_period') return true;
+        return data.some(function(r) { return r[col.key] != null; });
+    });
+
+    document.getElementById(prefix + '-thead').innerHTML =
+        '<tr>' + activeCols.map(function(c) {
+            var align = c.key === '_period' ? 'text-align:left;' : '';
+            return '<th style="' + align + '">' + c.label + '</th>';
+        }).join('') + '</tr>';
+
+    document.getElementById(prefix + '-tbody').innerHTML = data.map(function(row) {
+        return '<tr>' + activeCols.map(function(col) {
+            if (col.key === '_period') {
+                var pd = row.period_date || '';
+                if (isQuarterly && row.fiscal_quarter) {
+                    pd = pd.substring(0, 7) + ' Q' + row.fiscal_quarter;
+                } else if (!isQuarterly) {
+                    pd = row.fiscal_year || pd.substring(0, 4);
+                }
+                return '<td style="text-align:left;">' + pd + '</td>';
+            }
+            var v = row[col.key];
+            if (v == null) return '<td>\u2014</td>';
+            var txt, cls = '';
+            if (col.fmt === 'big') {
+                txt = fmtBig(v, (col.key === 'market_cap_estimated' || col.key === 'enterprise_value_estimated' || col.key === 'total_debt' || col.key === 'cash_and_equivalents' || col.key === 'total_revenue_ttm' || col.key === 'ebitda_ttm') ? curr : '');
+            } else if (col.fmt === 'price') {
+                txt = v.toFixed(2);
+            } else if (col.fmt === 'num') {
+                txt = v.toFixed(2) + 'x';
+                cls = v >= 0 ? '' : 'negative';
+            } else if (col.fmt === 'fx') {
+                txt = v.toFixed(6);
+            } else if (col.fmt === 'int') {
+                txt = String(Math.round(v));
+                cls = v >= 4 ? 'positive' : (v >= 2 ? '' : 'negative');
+            } else {
+                txt = esc(String(v));
+            }
+            return '<td class="' + cls + '">' + txt + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
 }
 
 // ====== FINANCIAL ======
@@ -650,7 +1110,7 @@ function renderHistorical() {
                 };
             });
 
-        new Chart(ctx, {
+        _charts[def.id] = new Chart(ctx, {
             type: def.type,
             data: { labels: labels, datasets: datasets },
             options: {

@@ -200,6 +200,7 @@ def ensure_table(db_path: Path):
         minority_interest REAL,
 
         -- Market / EV
+        close_price REAL,
         market_cap_estimated REAL,
         enterprise_value_estimated REAL,
 
@@ -241,7 +242,10 @@ def ensure_table(db_path: Path):
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cfh_company ON company_financials_historical(company_basic_data_id)")
     # Migration: adicionar colunas novas se tabela já existia
     for col_name in ('ordinary_shares_number', 'preferred_stock', 'minority_interest',
-                      'diluted_average_shares', 'short_term_debt', 'long_term_debt'):
+                      'diluted_average_shares', 'short_term_debt', 'long_term_debt',
+                      'close_price',
+                      'total_revenue_ttm', 'ebitda_ttm', 'ebit_ttm',
+                      'free_cash_flow_ttm', 'net_income_ttm'):
         try:
             conn.execute(f"ALTER TABLE company_financials_historical ADD COLUMN {col_name} REAL")
             log.info(f"Coluna '{col_name}' adicionada.")
@@ -317,6 +321,16 @@ def _safe_value(series, field_name):
     return float(val)
 
 
+def _clamp_ratio(numerator, denominator, limit=100):
+    """Calcula ratio com clamp: retorna None se numerador é None ou |resultado| > limit."""
+    if numerator is None:
+        return None
+    ratio = numerator / denominator
+    if abs(ratio) > limit:
+        return None
+    return ratio
+
+
 def _get_historical_prices(ticker_obj, periods: list[str]) -> dict[str, float | None]:
     """Busca preço de fechamento nas datas dos períodos para calcular market cap."""
     result = {}
@@ -375,6 +389,7 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
 
     shares_outstanding_current = info.get("sharesOutstanding")  # fallback se balance_sheet não tiver
     financial_currency = info.get("financialCurrency") or info.get("currency")
+    trading_currency = info.get("currency")  # moeda de negociação (preço)
 
     # Buscar financial statements
     try:
@@ -401,6 +416,24 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
 
     # Taxas de câmbio históricas por período
     fx_rates = _get_historical_fx_rates(financial_currency, period_dates) if financial_currency else {d: 1.0 for d in period_dates}
+
+    # Taxas de conversão preço→financialCurrency (quando moedas diferem)
+    # Ex: PGAS.JK negocia em IDR mas reporta em USD → precisa converter MCap de IDR→USD
+    price_to_fin_rates = {}
+    if trading_currency and financial_currency and trading_currency != financial_currency:
+        # Converter de trading_currency para financial_currency
+        # Primeiro obter trading_currency→USD
+        trading_fx = _get_historical_fx_rates(trading_currency, period_dates)
+        # Depois obter financial_currency→USD (já temos)
+        for d in period_dates:
+            trad_to_usd = trading_fx.get(d, 1.0)
+            fin_to_usd = fx_rates.get(d, 1.0)
+            # trading→USD / financial→USD = trading→financial
+            if fin_to_usd and fin_to_usd != 0:
+                price_to_fin_rates[d] = trad_to_usd / fin_to_usd
+            else:
+                price_to_fin_rates[d] = 1.0
+        log.debug(f"{yahoo_code}: trading={trading_currency} financial={financial_currency}, convertendo MCap")
 
     periods = []
     for col in income_df.columns:
@@ -460,9 +493,20 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
 
         # Market Cap: usar shares histórico do balance_sheet, fallback para atual
         price = hist_prices.get(period_date)
+        rec["close_price"] = price
         shares = rec.get("ordinary_shares_number") or shares_outstanding_current
         if price and shares:
-            rec["market_cap_estimated"] = price * shares
+            mcap_raw = price * shares
+            # Converter MCap da moeda de negociação para financialCurrency se diferem
+            if price_to_fin_rates:
+                conv_rate = price_to_fin_rates.get(period_date, 1.0)
+                mcap_raw = mcap_raw * conv_rate
+            # Guarda: se MCap/Receita > 50.000x com MCap > 1B, provável shares inflados
+            rev_check = abs(rec.get("total_revenue") or 0)
+            if rev_check > 0 and mcap_raw > 1e9 and (mcap_raw / rev_check) > 50000:
+                rec["market_cap_estimated"] = None
+            else:
+                rec["market_cap_estimated"] = mcap_raw
         else:
             rec["market_cap_estimated"] = None
 
@@ -485,45 +529,56 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
         rec["free_cash_flow_usd"] = rec["free_cash_flow"] * fx_rate if rec.get("free_cash_flow") else None
         rec["enterprise_value_usd"] = rec["enterprise_value_estimated"] * fx_rate if rec.get("enterprise_value_estimated") else None
 
-        # Indicadores calculados
+        # Indicadores calculados — com guardas para denominadores desprezíveis
+        # Threshold: receita < $1.000 USD (ou equivalente) = receita desprezível
         rev = rec.get("total_revenue")
-        if rev and rev != 0:
-            rec["ebit_margin"] = rec["ebit"] / rev if rec.get("ebit") is not None else None
-            rec["ebitda_margin"] = rec["ebitda"] / rev if rec.get("ebitda") is not None else None
-            rec["gross_margin"] = rec["gross_profit"] / rev if rec.get("gross_profit") is not None else None
-            rec["net_margin"] = rec["net_income"] / rev if rec.get("net_income") is not None else None
-            rec["fcf_revenue_ratio"] = rec["free_cash_flow"] / rev if rec.get("free_cash_flow") is not None else None
+        rev_usd = abs(rev * fx_rate) if rev and fx_rate else 0
+        rev_ok = rev and rev != 0 and rev_usd >= 1000
+        # Threshold para múltiplos EV: receita mínima $100K USD para evitar
+        # distorções em empresas pré-receita (IMSR ~$18K, ECNR.TA ~$2.6K, etc)
+        rev_material = rev_ok and rev_usd >= 100_000
+
+        if rev_ok:
+            rec["ebit_margin"] = _clamp_ratio(rec.get("ebit"), rev)
+            rec["ebitda_margin"] = _clamp_ratio(rec.get("ebitda"), rev)
+            rec["gross_margin"] = _clamp_ratio(rec.get("gross_profit"), rev)
+            rec["net_margin"] = _clamp_ratio(rec.get("net_income"), rev)
+            rec["fcf_revenue_ratio"] = _clamp_ratio(rec.get("free_cash_flow"), rev)
             rec["capex_revenue"] = abs(rec["capital_expenditure"]) / rev if rec.get("capital_expenditure") is not None else None
         else:
             rec["ebit_margin"] = rec["ebitda_margin"] = rec["gross_margin"] = None
             rec["net_margin"] = rec["fcf_revenue_ratio"] = rec["capex_revenue"] = None
 
         ebitda_val = rec.get("ebitda")
-        if ebitda_val and ebitda_val != 0:
-            rec["fcf_ebitda_ratio"] = rec["free_cash_flow"] / ebitda_val if rec.get("free_cash_flow") is not None else None
-            rec["debt_ebitda"] = rec["total_debt"] / ebitda_val if rec.get("total_debt") is not None else None
+        ebitda_usd = abs(ebitda_val * fx_rate) if ebitda_val and fx_rate else 0
+        ebitda_ok = ebitda_val and ebitda_val != 0 and ebitda_usd >= 100
+
+        if ebitda_ok:
+            rec["fcf_ebitda_ratio"] = _clamp_ratio(rec.get("free_cash_flow"), ebitda_val)
+            rec["debt_ebitda"] = _clamp_ratio(rec.get("total_debt"), ebitda_val)
         else:
             rec["fcf_ebitda_ratio"] = rec["debt_ebitda"] = None
 
         equity = rec.get("stockholders_equity")
-        if equity and equity != 0:
-            rec["debt_equity"] = rec["total_debt"] / equity if rec.get("total_debt") is not None else None
+        equity_usd = abs(equity * fx_rate) if equity and fx_rate else 0
+        if equity and equity != 0 and equity_usd >= 100:
+            rec["debt_equity"] = _clamp_ratio(rec.get("total_debt"), equity)
         else:
             rec["debt_equity"] = None
 
         ev = rec.get("enterprise_value_estimated")
-        if ev and rev and rev != 0:
-            rec["ev_revenue"] = ev / rev
+        if ev and rev_material:
+            rec["ev_revenue"] = _clamp_ratio(ev, rev, limit=500)
         else:
             rec["ev_revenue"] = None
-        if ev and ebitda_val and ebitda_val != 0:
-            rec["ev_ebitda"] = ev / ebitda_val
+        if ev and ebitda_ok:
+            rec["ev_ebitda"] = _clamp_ratio(ev, ebitda_val, limit=500)
         else:
             rec["ev_ebitda"] = None
 
         ebit_val = rec.get("ebit")
         if ev and ebit_val and ebit_val > 0:
-            rec["ev_ebit"] = ev / ebit_val
+            rec["ev_ebit"] = _clamp_ratio(ev, ebit_val, limit=500)
         else:
             rec["ev_ebit"] = None
 
@@ -548,7 +603,7 @@ FIELDS = [
     "cash_and_equivalents", "short_term_debt", "long_term_debt",
     "short_term_investments", "current_assets", "current_liabilities",
     "ordinary_shares_number", "preferred_stock", "minority_interest",
-    "market_cap_estimated", "enterprise_value_estimated",
+    "close_price", "market_cap_estimated", "enterprise_value_estimated",
     "original_currency", "fx_rate_to_usd",
     "total_revenue_usd", "ebit_usd", "ebitda_usd", "net_income_usd",
     "free_cash_flow_usd", "enterprise_value_usd",

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anloc - Análise de Consistência dos Dados</title>
+    <style>
+        :root {
+            --bg: #0f1923; --bg2: #1a2733; --bg3: #243447;
+            --accent: #3498db; --accent2: #2ecc71; --accent3: #e74c3c;
+            --accent4: #f39c12; --accent5: #9b59b6;
+            --text: #ecf0f1; --text2: #95a5a6; --border: #2c3e50;
+            --positive: #2ecc71; --negative: #e74c3c;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+        .container { max-width:1600px; margin:0 auto; padding:20px; }
+
+        /* Header */
+        .header { display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid var(--border); margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+        .header h1 { font-size:24px; }
+        .subtitle { color:var(--text2); font-size:13px; margin-top:4px; }
+        .btn-nav { background:rgba(255,255,255,0.1); color:var(--text); padding:6px 14px; border-radius:6px; text-decoration:none; font-size:12px; transition:background 0.2s; white-space:nowrap; }
+        .btn-nav:hover { background:rgba(255,255,255,0.25); }
+        .header-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+        /* KPI Row */
+        .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:20px; }
+        .kpi-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+        .kpi-card .kpi-value { font-size:28px; font-weight:700; margin:6px 0; }
+        .kpi-card .kpi-label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+        .kpi-card .kpi-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+        .kpi-critical { border-color: var(--accent3); }
+        .kpi-critical .kpi-value { color: var(--accent3); }
+        .kpi-warning { border-color: var(--accent4); }
+        .kpi-warning .kpi-value { color: var(--accent4); }
+        .kpi-info { border-color: var(--accent); }
+        .kpi-info .kpi-value { color: var(--accent); }
+        .kpi-ok { border-color: var(--accent2); }
+        .kpi-ok .kpi-value { color: var(--accent2); }
+
+        /* Status bar */
+        .status-bar { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:20px; }
+        .progress-bar { background:var(--bg3); border-radius:8px; height:24px; overflow:hidden; display:flex; margin:10px 0; }
+        .progress-bar .seg { height:100%; transition:width 0.5s; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; min-width:0; }
+        .seg-ok { background:var(--accent2); color:#111; }
+        .seg-warning { background:var(--accent4); color:#111; }
+        .seg-critical { background:var(--accent3); color:#fff; }
+        .seg-info { background:var(--accent); color:#fff; }
+        .legend { display:flex; gap:20px; flex-wrap:wrap; font-size:12px; color:var(--text2); margin-top:8px; }
+        .legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+        .leg-ok::before { background:var(--accent2); }
+        .leg-critical::before { background:var(--accent3); }
+        .leg-warning::before { background:var(--accent4); }
+        .leg-info::before { background:var(--accent); }
+
+        /* Tabs */
+        .tabs { display:flex; gap:2px; margin-bottom:16px; flex-wrap:wrap; }
+        .tab { padding:8px 16px; background:var(--bg2); border:1px solid var(--border); border-radius:8px 8px 0 0; cursor:pointer; font-size:13px; color:var(--text2); transition:all 0.2s; }
+        .tab:hover { background:var(--bg3); color:var(--text); }
+        .tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+
+        /* Rules table */
+        .rules-table { width:100%; border-collapse:collapse; }
+        .rules-table th { background:var(--bg3); padding:10px 12px; text-align:left; font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; z-index:2; }
+        .rules-table td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top; }
+        .rules-table tr:hover { background:rgba(52,152,219,0.08); }
+        .rules-table tr.clickable { cursor:pointer; }
+
+        /* Badges */
+        .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+        .badge-critical { background:rgba(231,76,60,0.2); color:var(--accent3); }
+        .badge-warning { background:rgba(243,156,18,0.2); color:var(--accent4); }
+        .badge-info { background:rgba(52,152,219,0.2); color:var(--accent); }
+        .badge-ok { background:rgba(46,204,113,0.2); color:var(--accent2); }
+
+        /* Issues table */
+        .issues-wrapper { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+        .issues-header { padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+        .issues-header h3 { font-size:15px; }
+        .issues-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        input[type="text"], select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; font-size:12px; }
+        input[type="text"]:focus, select:focus { outline:none; border-color:var(--accent); }
+        .btn { padding:6px 14px; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-primary:hover { background:#2980b9; }
+        .btn-danger { background:var(--accent3); color:#fff; }
+        .btn-danger:hover { background:#c0392b; }
+        .btn-success { background:var(--accent2); color:#fff; }
+        .btn-success:hover { background:#27ae60; }
+        .btn-secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+        .btn-secondary:hover { background:rgba(255,255,255,0.1); }
+
+        .tbl-scroll { max-height:600px; overflow-y:auto; }
+        .tbl-scroll::-webkit-scrollbar { width:6px; }
+        .tbl-scroll::-webkit-scrollbar-track { background:var(--bg); }
+        .tbl-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+        /* Detail panel */
+        .detail-panel { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; margin-top:16px; display:none; }
+        .detail-panel.visible { display:block; }
+        .detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin-top:12px; }
+        .detail-item { background:var(--bg3); border-radius:8px; padding:10px 14px; }
+        .detail-item .label { font-size:11px; color:var(--text2); text-transform:uppercase; }
+        .detail-item .value { font-size:16px; font-weight:600; margin-top:4px; }
+
+        /* Companies panel */
+        .company-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; max-height:300px; overflow-y:auto; }
+        .company-chip { background:var(--bg3); border:1px solid var(--border); border-radius:16px; padding:4px 12px; font-size:11px; cursor:pointer; transition:all 0.2s; }
+        .company-chip:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .company-chip .count { background:rgba(231,76,60,0.3); padding:1px 6px; border-radius:8px; margin-left:4px; font-size:10px; }
+
+        /* Loading */
+        .loading { text-align:center; padding:40px; color:var(--text2); }
+        .spinner { display:inline-block; width:30px; height:30px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Sample data */
+        .sample-row { font-size:11px; color:var(--text2); padding:4px 0 4px 20px; }
+        .sample-row code { color:var(--accent4); font-size:11px; }
+
+        /* Responsive */
+        @media(max-width:768px) {
+            .kpi-row { grid-template-columns:repeat(2,1fr); }
+            .header { flex-direction:column; align-items:flex-start; }
+        }
+
+        .num { text-align:right; font-variant-numeric:tabular-nums; }
+        .mono { font-family:'Consolas','Courier New',monospace; font-size:12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>🔍 Análise de Consistência dos Dados</h1>
+            <div class="subtitle">Validação de razoabilidade dos dados financeiros históricos extraídos</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="runValidation()" id="btn-run">▶ Executar Validação</button>
+            <button class="btn btn-success" onclick="exportCSV()" id="btn-csv" disabled>📄 Exportar CSV</button>
+            <button class="btn btn-danger" onclick="updateQuality()" id="btn-fix" disabled title="Atualizar campo data_quality no banco">💾 Atualizar Banco</button>
+            <a href="/data-yahoo-historico" class="btn-nav">📊 Históricos</a>
+            <a href="/data-yahoo" class="btn-nav">📋 Yahoo Dashboard</a>
+            <a href="/" class="btn-nav">🏠 Home</a>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading" style="display:none">
+        <div class="spinner"></div>
+        <div style="margin-top:12px">Executando validação... pode levar alguns segundos</div>
+    </div>
+
+    <!-- Content (hidden until validation runs) -->
+    <div id="content" style="display:none">
+        <!-- KPIs -->
+        <div class="kpi-row" id="kpi-row"></div>
+
+        <!-- Progress bar -->
+        <div class="status-bar">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>Distribuição de Qualidade</strong>
+                <span id="timestamp" style="font-size:11px;color:var(--text2)"></span>
+            </div>
+            <div class="progress-bar" id="progress-bar"></div>
+            <div class="legend">
+                <span class="leg-ok">OK</span>
+                <span class="leg-info">Info</span>
+                <span class="leg-warning">Warning</span>
+                <span class="leg-critical">Critical</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('rules')">📋 Regras de Validação</div>
+            <div class="tab" onclick="switchTab('issues')">⚠️ Registros Problemáticos</div>
+            <div class="tab" onclick="switchTab('companies')">🏢 Empresas Afetadas</div>
+        </div>
+
+        <!-- Tab: Rules -->
+        <div class="tab-panel active" id="panel-rules">
+            <div class="issues-wrapper">
+                <div class="tbl-scroll">
+                    <table class="rules-table" id="rules-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px">#</th>
+                                <th style="width:80px">Severidade</th>
+                                <th>Regra</th>
+                                <th>Descrição</th>
+                                <th class="num" style="width:80px">Qtd</th>
+                                <th style="width:200px">Exemplos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rules-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Issues -->
+        <div class="tab-panel" id="panel-issues">
+            <div class="issues-wrapper">
+                <div class="issues-header">
+                    <h3>Registros com Problemas</h3>
+                    <div class="issues-controls">
+                        <input type="text" id="issue-search" placeholder="🔍 Buscar código..." oninput="filterIssues()">
+                        <select id="issue-severity" onchange="filterIssues()">
+                            <option value="">Todas severidades</option>
+                            <option value="critical">🔴 Critical</option>
+                            <option value="warning">🟡 Warning</option>
+                            <option value="info">🔵 Info</option>
+                        </select>
+                        <select id="issue-rule" onchange="filterIssues()">
+                            <option value="">Todas regras</option>
+                        </select>
+                        <span id="issue-count" style="font-size:12px;color:var(--text2)"></span>
+                    </div>
+                </div>
+                <div class="tbl-scroll" style="max-height:700px">
+                    <table class="rules-table" id="issues-table">
+                        <thead>
+                            <tr>
+                                <th style="width:120px">Código</th>
+                                <th class="num" style="width:60px">Ano</th>
+                                <th style="width:80px">Severidade</th>
+                                <th style="width:180px">Regra</th>
+                                <th>Descrição</th>
+                                <th style="width:300px">Dados</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issues-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Companies -->
+        <div class="tab-panel" id="panel-companies">
+            <div class="issues-wrapper">
+                <div class="issues-header">
+                    <h3>Empresas Afetadas</h3>
+                    <div class="issues-controls">
+                        <input type="text" id="company-search" placeholder="🔍 Buscar empresa..." oninput="filterCompanies()">
+                        <span id="company-count" style="font-size:12px;color:var(--text2)"></span>
+                    </div>
+                </div>
+                <div style="padding:16px">
+                    <div class="company-chips" id="company-chips"></div>
+                </div>
+            </div>
+            <!-- Company detail -->
+            <div class="detail-panel" id="company-detail">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <h3 id="detail-title"></h3>
+                    <button class="btn btn-secondary" onclick="closeDetail()">✕ Fechar</button>
+                </div>
+                <div class="detail-grid" id="detail-grid"></div>
+                <div style="margin-top:12px">
+                    <table class="rules-table" id="detail-issues-table">
+                        <thead>
+                            <tr>
+                                <th class="num">Ano</th>
+                                <th>Severidade</th>
+                                <th>Regra</th>
+                                <th>Dados</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-issues-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let _validationData = null;
+let _filteredIssues = [];
+
+// ── Initialization ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    runValidation();
+});
+
+// ── API Calls ───────────────────────────────────────────────────────────
+async function runValidation() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('btn-run').disabled = true;
+
+    try {
+        const r = await fetch('/api/data_consistency/validate');
+        const d = await r.json();
+        if (!d.success) { alert('Erro: ' + d.error); return; }
+        _validationData = d.results;
+        renderAll();
+        document.getElementById('content').style.display = 'block';
+        document.getElementById('btn-csv').disabled = false;
+        document.getElementById('btn-fix').disabled = false;
+    } catch(e) {
+        alert('Erro na validação: ' + e.message);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('btn-run').disabled = false;
+    }
+}
+
+async function updateQuality() {
+    if (!confirm('Atualizar o campo data_quality no banco de dados?\n\nIsso marcará ' +
+        _validationData.total_affected_records.toLocaleString() + ' registros com seus problemas encontrados.')) return;
+
+    try {
+        const r = await fetch('/api/data_consistency/update_quality', {method: 'POST'});
+        const d = await r.json();
+        if (d.success) {
+            alert('✅ Atualizados ' + d.updated + ' registros no campo data_quality.');
+        } else {
+            alert('Erro: ' + d.error);
+        }
+    } catch(e) {
+        alert('Erro: ' + e.message);
+    }
+}
+
+// ── Render ───────────────────────────────────────────────────────────────
+function renderAll() {
+    const d = _validationData;
+    document.getElementById('timestamp').textContent = 'Executado em: ' + new Date(d.timestamp).toLocaleString('pt-BR');
+
+    renderKPIs(d);
+    renderProgressBar(d);
+    renderRules(d);
+    renderIssues(d);
+    renderCompanies(d);
+    populateRuleFilter(d);
+}
+
+function renderKPIs(d) {
+    const ok = d.total_records_annual - d.total_affected_records;
+    const html = [
+        kpiCard('Total Registros', fmtN(d.total_records_annual), d.total_companies.toLocaleString() + ' empresas', ''),
+        kpiCard('OK', fmtN(ok), ((100 - d.pct_affected).toFixed(1)) + '% dos registros', 'kpi-ok'),
+        kpiCard('Critical', fmtN(d.summary.critical), 'Dados claramente errados', 'kpi-critical'),
+        kpiCard('Warning', fmtN(d.summary.warning), 'Provavelmente inconsistentes', 'kpi-warning'),
+        kpiCard('Info', fmtN(d.summary.info), 'Merecem atenção/revisão', 'kpi-info'),
+        kpiCard('Registros Afetados', fmtN(d.total_affected_records), d.pct_affected + '% do total', 'kpi-critical'),
+        kpiCard('Empresas Afetadas', fmtN(d.total_affected_companies), 'de ' + d.total_companies.toLocaleString(), 'kpi-warning'),
+        kpiCard('Regras', d.rules.length, d.rules.filter(r=>r.count>0).length + ' com ocorrências', ''),
+    ].join('');
+    document.getElementById('kpi-row').innerHTML = html;
+}
+
+function kpiCard(label, value, sub, cls) {
+    return `<div class="kpi-card ${cls}">
+        <div class="kpi-label">${label}</div>
+        <div class="kpi-value">${value}</div>
+        <div class="kpi-sub">${sub}</div>
+    </div>`;
+}
+
+function renderProgressBar(d) {
+    const total = d.total_records_annual;
+    const ok = total - d.total_affected_records;
+    // Count unique records per severity (dedup since a record can have multiple issues)
+    const recBySev = {};
+    d.issues.forEach(i => {
+        if (!recBySev[i.record_id] || sevOrder(i.severity) < sevOrder(recBySev[i.record_id])) {
+            recBySev[i.record_id] = i.severity;
+        }
+    });
+    const counts = {ok: ok, critical: 0, warning: 0, info: 0};
+    Object.values(recBySev).forEach(s => counts[s]++);
+
+    const segs = ['ok','info','warning','critical'].map(s => {
+        const pct = (counts[s] / total * 100);
+        if (pct < 0.3) return '';
+        return `<div class="seg seg-${s}" style="width:${pct}%">${pct >= 3 ? pct.toFixed(1)+'%' : ''}</div>`;
+    }).join('');
+    document.getElementById('progress-bar').innerHTML = segs;
+}
+
+function renderRules(d) {
+    const tbody = document.getElementById('rules-body');
+    tbody.innerHTML = d.rules.map((r, i) => {
+        const samples = (r.sample || []).slice(0, 3).map(s => {
+            const vals = Object.entries(s)
+                .filter(([k,v]) => k !== 'id' && v !== null)
+                .map(([k,v]) => `<code>${k}</code>=${fmtVal(v)}`)
+                .join(', ');
+            return `<div class="sample-row">${vals}</div>`;
+        }).join('');
+        return `<tr class="clickable" onclick="filterByRule('${r.id}')">
+            <td class="num">${i+1}</td>
+            <td><span class="badge badge-${r.severity}">${r.severity}</span></td>
+            <td class="mono">${r.id}</td>
+            <td>${r.description}<br><span style="font-size:11px;color:var(--text2)">${r.detail || ''}</span></td>
+            <td class="num" style="font-size:16px;font-weight:700">${r.count.toLocaleString()}</td>
+            <td>${samples || '<span style="color:var(--text2)">—</span>'}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderIssues(d) {
+    _filteredIssues = d.issues;
+    renderIssueRows();
+}
+
+function renderIssueRows() {
+    const MAX = 500;
+    const showing = _filteredIssues.slice(0, MAX);
+    const tbody = document.getElementById('issues-body');
+    tbody.innerHTML = showing.map(i => {
+        const dataStr = Object.entries(i.data)
+            .filter(([k,v]) => v !== null)
+            .map(([k,v]) => `<code>${k}</code>=${fmtVal(v)}`)
+            .join(', ');
+        return `<tr>
+            <td class="mono"><strong>${i.yahoo_code}</strong></td>
+            <td class="num">${i.fiscal_year}</td>
+            <td><span class="badge badge-${i.severity}">${i.severity}</span></td>
+            <td class="mono" style="font-size:11px">${i.rule_id}</td>
+            <td style="font-size:12px">${i.description}</td>
+            <td style="font-size:11px">${dataStr}</td>
+        </tr>`;
+    }).join('');
+    document.getElementById('issue-count').textContent =
+        _filteredIssues.length.toLocaleString() + ' registros' +
+        (_filteredIssues.length > MAX ? ` (mostrando ${MAX})` : '');
+}
+
+function renderCompanies(d) {
+    // Build company→issues map
+    const compMap = {};
+    d.issues.forEach(i => {
+        if (!compMap[i.yahoo_code]) compMap[i.yahoo_code] = {count: 0, worst: 'info'};
+        compMap[i.yahoo_code].count++;
+        if (sevOrder(i.severity) < sevOrder(compMap[i.yahoo_code].worst)) {
+            compMap[i.yahoo_code].worst = i.severity;
+        }
+    });
+    const sorted = Object.entries(compMap).sort((a,b) => b[1].count - a[1].count);
+    renderCompanyChips(sorted);
+    document.getElementById('company-count').textContent = sorted.length.toLocaleString() + ' empresas';
+}
+
+function renderCompanyChips(sorted) {
+    const container = document.getElementById('company-chips');
+    container.innerHTML = sorted.map(([code, info]) =>
+        `<div class="company-chip" onclick="showCompanyDetail('${code}')" title="${code}: ${info.count} problemas">
+            <span class="badge badge-${info.worst}" style="margin-right:4px;font-size:9px">●</span>
+            ${code} <span class="count">${info.count}</span>
+        </div>`
+    ).join('');
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────
+function filterIssues() {
+    const q = (document.getElementById('issue-search').value || '').toUpperCase();
+    const sev = document.getElementById('issue-severity').value;
+    const rule = document.getElementById('issue-rule').value;
+
+    _filteredIssues = _validationData.issues.filter(i => {
+        if (q && !i.yahoo_code.toUpperCase().includes(q)) return false;
+        if (sev && i.severity !== sev) return false;
+        if (rule && i.rule_id !== rule) return false;
+        return true;
+    });
+    renderIssueRows();
+}
+
+function filterByRule(ruleId) {
+    switchTab('issues');
+    document.getElementById('issue-rule').value = ruleId;
+    filterIssues();
+}
+
+function populateRuleFilter(d) {
+    const sel = document.getElementById('issue-rule');
+    d.rules.filter(r => r.count > 0).forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = `${r.id} (${r.count})`;
+        sel.appendChild(opt);
+    });
+}
+
+function filterCompanies() {
+    const q = (document.getElementById('company-search').value || '').toUpperCase();
+    const compMap = {};
+    _validationData.issues.forEach(i => {
+        if (!compMap[i.yahoo_code]) compMap[i.yahoo_code] = {count: 0, worst: 'info'};
+        compMap[i.yahoo_code].count++;
+        if (sevOrder(i.severity) < sevOrder(compMap[i.yahoo_code].worst)) {
+            compMap[i.yahoo_code].worst = i.severity;
+        }
+    });
+    let sorted = Object.entries(compMap).sort((a,b) => b[1].count - a[1].count);
+    if (q) sorted = sorted.filter(([code]) => code.toUpperCase().includes(q));
+    renderCompanyChips(sorted);
+}
+
+// ── Company Detail ───────────────────────────────────────────────────────
+function showCompanyDetail(code) {
+    const panel = document.getElementById('company-detail');
+    panel.classList.add('visible');
+
+    document.getElementById('detail-title').textContent = '🔍 ' + code;
+
+    const issues = _validationData.issues.filter(i => i.yahoo_code === code);
+    const years = [...new Set(issues.map(i => i.fiscal_year))].sort();
+    const rules = [...new Set(issues.map(i => i.rule_id))];
+    const worstSev = issues.reduce((w, i) => sevOrder(i.severity) < sevOrder(w) ? i.severity : w, 'info');
+
+    document.getElementById('detail-grid').innerHTML = [
+        detailItem('Total Problemas', issues.length, 'badge-' + worstSev),
+        detailItem('Anos Afetados', years.join(', ')),
+        detailItem('Regras Violadas', rules.join(', ')),
+        detailItem('Pior Severidade', worstSev.toUpperCase(), 'badge-' + worstSev),
+    ].join('');
+
+    const tbody = document.getElementById('detail-issues-body');
+    tbody.innerHTML = issues.sort((a,b) => a.fiscal_year - b.fiscal_year).map(i => {
+        const dataStr = Object.entries(i.data)
+            .filter(([k,v]) => v !== null)
+            .map(([k,v]) => `<code>${k}</code>=${fmtVal(v)}`)
+            .join(', ');
+        return `<tr>
+            <td class="num">${i.fiscal_year}</td>
+            <td><span class="badge badge-${i.severity}">${i.severity}</span></td>
+            <td class="mono" style="font-size:11px">${i.rule_id}</td>
+            <td style="font-size:11px">${dataStr}</td>
+        </tr>`;
+    }).join('');
+
+    panel.scrollIntoView({behavior:'smooth'});
+}
+
+function closeDetail() {
+    document.getElementById('company-detail').classList.remove('visible');
+}
+
+function detailItem(label, value, cls) {
+    return `<div class="detail-item">
+        <div class="label">${label}</div>
+        <div class="value ${cls || ''}">${value}</div>
+    </div>`;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`.tab-panel#panel-${name}`).classList.add('active');
+    // Find tab by panel name
+    const tabs = document.querySelectorAll('.tab');
+    const names = ['rules','issues','companies'];
+    const idx = names.indexOf(name);
+    if (idx >= 0) tabs[idx].classList.add('active');
+}
+
+// ── Export ────────────────────────────────────────────────────────────────
+function exportCSV() {
+    if (!_validationData) return;
+    const fmtN2 = v => v == null ? '' : typeof v === 'number' ? String(v).replace('.', ',') : String(v);
+    let csv = 'Código;Ano;Regra;Severidade;Descrição;Dados\n';
+    _validationData.issues.forEach(i => {
+        const dataStr = Object.entries(i.data)
+            .filter(([k,v]) => v !== null)
+            .map(([k,v]) => `${k}=${fmtN2(v)}`)
+            .join(' | ');
+        csv += [i.yahoo_code, i.fiscal_year, i.rule_id, i.severity, i.description, dataStr]
+            .map(v => String(v).includes(';') ? '"'+v+'"' : v).join(';') + '\n';
+    });
+    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'analise_consistencia_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function fmtN(v) { return v == null ? '—' : Number(v).toLocaleString('pt-BR'); }
+
+function fmtVal(v) {
+    if (v === null || v === undefined) return '—';
+    if (typeof v !== 'number') return String(v);
+    const abs = Math.abs(v);
+    if (abs >= 1e12) return (v/1e12).toFixed(1) + 'T';
+    if (abs >= 1e9) return (v/1e9).toFixed(1) + 'B';
+    if (abs >= 1e6) return (v/1e6).toFixed(1) + 'M';
+    if (abs >= 1e3) return (v/1e3).toFixed(1) + 'K';
+    if (abs < 0.001 && abs > 0) return v.toExponential(1);
+    return Number(v).toFixed(2);
+}
+
+function sevOrder(s) {
+    return {'critical': 0, 'warning': 1, 'info': 2}[s] ?? 9;
+}
+</script>
+</body>
+</html>

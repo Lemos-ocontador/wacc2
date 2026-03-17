@@ -7,10 +7,19 @@ Gerencia categorias e campos disponíveis para seleção no frontend
 import csv
 import sqlite3
 import json
+import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
+_IS_GAE = os.environ.get('GAE_ENV', '').startswith('standard')
+
+def _connect_db(path):
+    if _IS_GAE:
+        abs_path = os.path.abspath(path)
+        uri = 'file:' + abs_path + '?immutable=1'
+        return sqlite3.connect(uri, uri=True)
+    return sqlite3.connect(path)
 
 def normalize_column_name(column_name: str) -> str:
     text = str(column_name).strip().lower()
@@ -352,7 +361,7 @@ class FieldCategoriesManager:
     def get_available_fields_from_db(self) -> List[str]:
         """Obtém lista de campos disponíveis no banco de dados"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = _connect_db(self.db_path)
             cursor = conn.cursor()
             
             # Obter estrutura da tabela
@@ -427,7 +436,7 @@ class FieldCategoriesManager:
                 field_names.extend(category_data.get("fields", {}).keys())
         
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = _connect_db(self.db_path)
             cursor = conn.cursor()
             
             # Total de registros

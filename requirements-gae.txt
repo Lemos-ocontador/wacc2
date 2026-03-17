@@ -1,0 +1,13 @@
+# Requirements para deploy no Google App Engine
+# Exclui pacotes que não funcionam/não são necessários no GAE:
+#   - selenium (precisa de Chrome/browser, não disponível no GAE)
+#   - curl_cffi (dependência nativa, problemas de compilação no GAE)
+Flask==3.1.2
+gunicorn==23.0.0
+pandas==3.0.0
+numpy==2.4.2
+openpyxl==3.1.5
+requests==2.32.5
+beautifulsoup4==4.14.3
+yfinance==1.1.0
+wikipedia==1.4.0
