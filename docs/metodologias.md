@@ -1,25 +1,52 @@
 # Metodologias de Cálculo — Dados Financeiros Históricos
 
-> Referência técnica dos cálculos realizados pelo script `scripts/fetch_historical_financials.py`
-> e armazenados na tabela `company_financials_historical`.
+> Referência técnica dos cálculos realizados pelos scripts
+> `scripts/fetch_historical_financials.py` e `scripts/calculate_ttm.py`,
+> armazenados na tabela `company_financials_historical`.
+>
+> **Legenda de fontes:**
+> - 🟣 **Raw Yahoo** — dado extraído diretamente do Yahoo Finance via yfinance (sem transformação)
+> - 🟠 **Calculado** — derivado pela aplicação a partir dos dados raw
+> - 🟢 **Damodaran** — dado da tabela Damodaran (cross-validation)
 
 ---
 
 ## 1. Fontes de Dados
 
-| Fonte | Dados Obtidos | API |
-|-------|--------------|-----|
-| **Yahoo Finance (yfinance)** — `ticker.income_stmt` | DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc. | Anual: até 5 períodos; Trimestral: até 5 trimestres |
-| **Yahoo Finance (yfinance)** — `ticker.cash_flow` | Fluxo de Caixa: FCF, Operacional, Capex | Anual: até 5 períodos; Trimestral: até 5 trimestres |
-| **Yahoo Finance (yfinance)** — `ticker.balance_sheet` | Balanço: Dívida Total, Patrimônio, Ativos, Caixa | Anual: até 5 períodos; Trimestral: até 5 trimestres |
-| **Yahoo Finance (yfinance)** — `ticker.get_info()` | Shares Outstanding, moeda financeira, EV atual | Valor corrente |
-| **Yahoo Finance (yfinance)** — `ticker.history()` | Preços históricos de fechamento (diário, 10 anos) | Série temporal |
-| **Yahoo Finance (yfinance)** — `{MOEDA}USD=X` | Taxa de câmbio histórica para USD (diário, 10 anos) | Série temporal |
-| **Damodaran** — tabela `damodaran_global` | Market Cap histórico (dez/2014—2023), EV, múltiplos | Cross-validation |
+| Fonte | Dados Obtidos | API | Tipo |
+|-------|--------------|-----|------|
+| **Yahoo Finance** — `ticker.income_stmt` / `ticker.quarterly_income_stmt` | DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc. | Anual: até 5 períodos; Trimestral: até 5 trimestres | 🟣 Raw |
+| **Yahoo Finance** — `ticker.cash_flow` / `ticker.quarterly_cash_flow` | Fluxo de Caixa: FCF, Operacional, Capex | Anual: até 5 períodos; Trimestral: até 5 trimestres | 🟣 Raw |
+| **Yahoo Finance** — `ticker.balance_sheet` / `ticker.quarterly_balance_sheet` | Balanço: Dívida Total, Patrimônio, Ativos, Caixa | Anual: até 5 períodos; Trimestral: até 5 trimestres | 🟣 Raw |
+| **Yahoo Finance** — `ticker.get_info()` | Shares Outstanding (fallback), moedas | Valor corrente (snapshot) | 🟣 Raw |
+| **Yahoo Finance** — `ticker.history()` | Preços históricos de fechamento (diário, 10 anos) | Série temporal | 🟣 Raw |
+| **Yahoo Finance** — `{MOEDA}USD=X` | Taxa de câmbio histórica para USD (diário, 10 anos) | Série temporal | 🟣 Raw |
+| **Damodaran** — tabela `damodaran_global` | Market Cap histórico (dez/2014—2023), EV, múltiplos | Cross-validation | 🟢 Damodaran |
+
+### 1.1 O que o Yahoo Finance fornece como TTM (snapshot)
+
+O `ticker.get_info()` retorna alguns campos que representam os **últimos 12 meses correntes**:
+
+| Campo `get_info()` | Descrição | Uso na aplicação |
+|---|---|---|
+| `totalRevenue` | Receita TTM corrente | **Não usado** — usamos o histórico dos statements |
+| `ebitda` | EBITDA TTM corrente | **Não usado** |
+| `freeCashflow` | FCF TTM corrente | **Não usado** |
+| `netIncomeToCommon` | Lucro Líquido TTM corrente | **Não usado** |
+| `trailingPE` | P/E trailing corrente | **Não usado** |
+| `trailingEps` | EPS trailing corrente | **Não usado** |
+| `enterpriseToEbitda` | EV/EBITDA corrente | **Não usado** (cross-check pontual) |
+| `enterpriseToRevenue` | EV/Revenue corrente | **Não usado** (cross-check pontual) |
+
+**Por que não usamos esses valores?** Porque são apenas um **snapshot do momento atual**.
+Nossa base precisa de TTM **histórico** — ou seja, para cada trimestre passado (Q3/2024, Q2/2024, Q1/2024...),
+qual era o acumulado dos 12 meses anteriores naquele ponto no tempo. O Yahoo **não fornece** TTM histórico
+via `quarterly_income_stmt` — esses demonstrativos contêm apenas os valores do trimestre individual.
+Portanto, o TTM histórico é **calculado pela aplicação** somando os 4 trimestres mais recentes (ver Seção 7).
 
 ---
 
-## 2. Enterprise Value (EV) — Estimativa Histórica
+## 2. Enterprise Value (EV) — Estimativa Histórica 🟠
 
 ### 2.1 Fórmula
 
@@ -51,23 +78,26 @@ Onde:
 | Shares Outstanding histórico pode não estar disponível em alguns balanços | Nesses casos, usa-se o `sharesOutstanding` corrente via `get_info()` | Para empresas com base acionária estável, o impacto é mínimo. Splits são ajustados automaticamente pelo yfinance nos preços históricos |
 | yfinance retorna até 5 períodos anuais, mas o 5° pode ter dados incompletos | FY mais antigo pode ter todas as métricas como N/A | O campo `data_quality` pode ser usado para filtrar |
 
-### 2.3 Componentes do Balanço
+### 2.3 Componentes do Balanço (usados no EV)
 
-| Campo | Origem yfinance | Campo no BD |
-|-------|----------------|-------------|
-| Dívida Total | `balance_sheet["Total Debt"]` | `total_debt` |
-| Dívida Curto Prazo | `balance_sheet["Current Debt"]` | `short_term_debt` |
-| Dívida Longo Prazo | `balance_sheet["Long Term Debt"]` | `long_term_debt` |
-| Caixa e Equivalentes | `balance_sheet["Cash And Cash Equivalents"]` | `cash_and_equivalents` |
-| Patrimônio Líquido | `balance_sheet["Stockholders Equity"]` | `stockholders_equity` |
-| Ações Ordinárias | `balance_sheet["Ordinary Shares Number"]` | `ordinary_shares_number` |
-| Preferred Stock | `balance_sheet["Preferred Stock"]` | `preferred_stock` |
-| Minority Interest | `balance_sheet["Minority Interest"]` | `minority_interest` |
-| Ativos Totais | `balance_sheet["Total Assets"]` | `total_assets` |
-| Passivos Totais | `balance_sheet["Total Liabilities Net Minority Interest"]` | `total_liabilities` |
-| Investimentos CP | `balance_sheet["Other Short Term Investments"]` | `short_term_investments` |
-| Ativo Circulante | `balance_sheet["Current Assets"]` | `current_assets` |
-| Passivo Circulante | `balance_sheet["Current Liabilities"]` | `current_liabilities` |
+| Campo | Origem yfinance | Campo no BD | Fonte |
+|-------|----------------|-------------|-------|
+| Dívida Total | `balance_sheet["Total Debt"]` | `total_debt` | 🟣 Raw |
+| Dívida Curto Prazo | `balance_sheet["Current Debt"]` | `short_term_debt` | 🟣 Raw |
+| Dívida Longo Prazo | `balance_sheet["Long Term Debt"]` | `long_term_debt` | 🟣 Raw |
+| Caixa e Equivalentes | `balance_sheet["Cash And Cash Equivalents"]` | `cash_and_equivalents` | 🟣 Raw |
+| Patrimônio Líquido | `balance_sheet["Stockholders Equity"]` | `stockholders_equity` | 🟣 Raw |
+| Ações Ordinárias | `balance_sheet["Ordinary Shares Number"]` | `ordinary_shares_number` | 🟣 Raw |
+| Preferred Stock | `balance_sheet["Preferred Stock"]` | `preferred_stock` | 🟣 Raw |
+| Minority Interest | `balance_sheet["Minority Interest"]` | `minority_interest` | 🟣 Raw |
+| Ativos Totais | `balance_sheet["Total Assets"]` | `total_assets` | 🟣 Raw |
+| Passivos Totais | `balance_sheet["Total Liabilities Net Minority Interest"]` | `total_liabilities` | 🟣 Raw |
+| Investimentos CP | `balance_sheet["Other Short Term Investments"]` | `short_term_investments` | 🟣 Raw |
+| Ativo Circulante | `balance_sheet["Current Assets"]` | `current_assets` | 🟣 Raw |
+| Passivo Circulante | `balance_sheet["Current Liabilities"]` | `current_liabilities` | 🟣 Raw |
+| Preço de Fechamento | `ticker.history()` → nearest date | `close_price` | 🟣 Raw |
+| Market Cap Estimado | `close_price × ordinary_shares_number` | `market_cap_estimated` | 🟠 Calculado |
+| Enterprise Value Estimado | `MCap + Dívida + Preferred + Minority − Caixa` | `enterprise_value_estimated` | 🟠 Calculado |
 
 ### 2.4 Validação Cruzada
 
@@ -81,74 +111,79 @@ Para Apple Inc (AAPL), FY2025:
 
 ---
 
-## 3. Demonstrações Financeiras — Income Statement
+## 3. Demonstrações Financeiras — Income Statement 🟣
 
-| Campo | Origem yfinance | Campo no BD | Descrição |
-|-------|----------------|-------------|-----------|
-| Receita Total | `Total Revenue` | `total_revenue` | Receita bruta total |
-| Custo da Receita | `Cost Of Revenue` | `cost_of_revenue` | CPV |
-| Lucro Bruto | `Gross Profit` | `gross_profit` | Receita - CPV |
-| Receita Operacional | `Operating Income` | `operating_income` | Lucro operacional |
-| Despesas Operacionais | `Operating Expense` | `operating_expense` | Total de despesas operacionais |
-| EBIT | `EBIT` | `ebit` | Lucro antes de juros e impostos |
-| EBITDA | `EBITDA` | `ebitda` | Lucro antes de juros, impostos, depreciação e amortização |
-| EBITDA Normalizado | `Normalized EBITDA` | `normalized_ebitda` | EBITDA ajustado por itens não recorrentes |
-| Lucro Líquido | `Net Income` | `net_income` | Resultado final |
-| Despesas de Juros | `Interest Expense` | `interest_expense` | Custo da dívida |
-| Provisão p/ IR | `Tax Provision` | `tax_provision` | Imposto de renda provisionado |
-| P&D | `Research And Development` | `research_and_development` | Gastos com pesquisa e desenvolvimento |
-| SG&A | `Selling General And Administration` | `sga` | Despesas com vendas, gerais e administrativas |
-| Média Diluída Ações | `Diluted Average Shares` | `diluted_average_shares` | Média ponderada de ações diluídas no período |
+| Campo | Origem yfinance | Campo no BD | Fonte |
+|-------|----------------|-------------|-------|
+| Receita Total | `Total Revenue` | `total_revenue` | 🟣 Raw |
+| Custo da Receita | `Cost Of Revenue` | `cost_of_revenue` | 🟣 Raw |
+| Lucro Bruto | `Gross Profit` | `gross_profit` | 🟣 Raw |
+| Receita Operacional | `Operating Income` | `operating_income` | 🟣 Raw |
+| Despesas Operacionais | `Operating Expense` | `operating_expense` | 🟣 Raw |
+| EBIT | `EBIT` | `ebit` | 🟣 Raw |
+| EBITDA | `EBITDA` | `ebitda` | 🟣 Raw |
+| EBITDA Normalizado | `Normalized EBITDA` | `normalized_ebitda` | 🟣 Raw |
+| Lucro Líquido | `Net Income` | `net_income` | 🟣 Raw |
+| Despesas de Juros | `Interest Expense` | `interest_expense` | 🟣 Raw |
+| Provisão p/ IR | `Tax Provision` | `tax_provision` | 🟣 Raw |
+| P&D | `Research And Development` | `research_and_development` | 🟣 Raw |
+| SG&A | `Selling General And Administration` | `sga` | 🟣 Raw |
+| Média Diluída Ações | `Diluted Average Shares` | `diluted_average_shares` | 🟣 Raw |
+
+> **Nota:** Todos os 14 campos acima são extraídos diretamente do Yahoo Finance sem nenhuma transformação.
+> O Yahoo Finance calcula internamente EBIT e EBITDA a partir dos line items da DRE.
 
 ---
 
-## 4. Fluxo de Caixa
+## 4. Fluxo de Caixa 🟣
 
-| Campo | Origem yfinance | Campo no BD | Descrição |
-|-------|----------------|-------------|-----------|
-| Free Cash Flow | `Free Cash Flow` | `free_cash_flow` | Fluxo de caixa livre |
-| Caixa Operacional | `Operating Cash Flow` | `operating_cash_flow` | Fluxo de caixa das operações |
-| Capex | `Capital Expenditure` | `capital_expenditure` | Investimentos em ativos fixos (valor negativo) |
+| Campo | Origem yfinance | Campo no BD | Fonte |
+|-------|----------------|-------------|-------|
+| Free Cash Flow | `Free Cash Flow` | `free_cash_flow` | 🟣 Raw |
+| Caixa Operacional | `Operating Cash Flow` | `operating_cash_flow` | 🟣 Raw |
+| Capex | `Capital Expenditure` | `capital_expenditure` | 🟣 Raw |
 
 **Nota:** O Free Cash Flow reportado pelo Yahoo Finance é: $FCF = \text{Operating Cash Flow} + \text{Capital Expenditure}$ (Capex é negativo).
 
 ---
 
-## 5. Margens e Indicadores de Rentabilidade
+## 5. Margens e Indicadores de Rentabilidade 🟠
+
+> Todos os indicadores desta seção são **calculados pela aplicação** no `fetch_historical_financials.py`.
 
 ### 5.1 Margens sobre Receita
 
-| Indicador | Fórmula | Campo no BD |
-|-----------|---------|-------------|
-| Margem EBIT | $\frac{\text{EBIT}}{\text{Receita Total}}$ | `ebit_margin` |
-| Margem EBITDA | $\frac{\text{EBITDA}}{\text{Receita Total}}$ | `ebitda_margin` |
-| Margem Bruta | $\frac{\text{Lucro Bruto}}{\text{Receita Total}}$ | `gross_margin` |
-| Margem Líquida | $\frac{\text{Lucro Líquido}}{\text{Receita Total}}$ | `net_margin` |
+| Indicador | Fórmula | Campo no BD | Fonte |
+|-----------|---------|-------------|-------|
+| Margem EBIT | $\frac{\text{EBIT}}{\text{Receita Total}}$ | `ebit_margin` | 🟠 Calculado |
+| Margem EBITDA | $\frac{\text{EBITDA}}{\text{Receita Total}}$ | `ebitda_margin` | 🟠 Calculado |
+| Margem Bruta | $\frac{\text{Lucro Bruto}}{\text{Receita Total}}$ | `gross_margin` | 🟠 Calculado |
+| Margem Líquida | $\frac{\text{Lucro Líquido}}{\text{Receita Total}}$ | `net_margin` | 🟠 Calculado |
 
 ### 5.2 Indicadores de Conversão de Caixa
 
-| Indicador | Fórmula | Campo no BD | Interpretação |
-|-----------|---------|-------------|---------------|
-| FCF/Receita | $\frac{\text{FCF}}{\text{Receita Total}}$ | `fcf_revenue_ratio` | Quanto da receita vira caixa livre |
-| FCF/EBITDA | $\frac{\text{FCF}}{\text{EBITDA}}$ | `fcf_ebitda_ratio` | Eficiência de conversão do EBITDA em caixa |
-| Capex/Receita | $\frac{|\text{Capex}|}{\text{Receita Total}}$ | `capex_revenue` | Intensidade de capital |
+| Indicador | Fórmula | Campo no BD | Interpretação | Fonte |
+|-----------|---------|-------------|---------------|-------|
+| FCF/Receita | $\frac{\text{FCF}}{\text{Receita Total}}$ | `fcf_revenue_ratio` | Quanto da receita vira caixa livre | 🟠 Calculado |
+| FCF/EBITDA | $\frac{\text{FCF}}{\text{EBITDA}}$ | `fcf_ebitda_ratio` | Eficiência de conversão do EBITDA em caixa | 🟠 Calculado |
+| Capex/Receita | $\frac{|\text{Capex}|}{\text{Receita Total}}$ | `capex_revenue` | Intensidade de capital | 🟠 Calculado |
 
 ### 5.3 Indicadores de Alavancagem
 
-| Indicador | Fórmula | Campo no BD | Interpretação |
-|-----------|---------|-------------|---------------|
-| Dívida/PL | $\frac{\text{Dívida Total}}{\text{Patrimônio Líquido}}$ | `debt_equity` | Alavancagem financeira |
-| Dívida/EBITDA | $\frac{\text{Dívida Total}}{\text{EBITDA}}$ | `debt_ebitda` | Capacidade de pagamento (em anos de EBITDA) |
+| Indicador | Fórmula | Campo no BD | Interpretação | Fonte |
+|-----------|---------|-------------|---------------|-------|
+| Dívida/PL | $\frac{\text{Dívida Total}}{\text{Patrimônio Líquido}}$ | `debt_equity` | Alavancagem financeira | 🟠 Calculado |
+| Dívida/EBITDA | $\frac{\text{Dívida Total}}{\text{EBITDA}}$ | `debt_ebitda` | Capacidade de pagamento (em anos de EBITDA) | 🟠 Calculado |
 
 ### 5.4 Múltiplos de Avaliação
 
-| Indicador | Fórmula | Campo no BD | Interpretação |
-|-----------|---------|-------------|---------------|
-| EV/Receita | $\frac{\text{EV Estimado}}{\text{Receita Total}}$ | `ev_revenue` | Múltiplo de receita |
-| EV/EBITDA | $\frac{\text{EV Estimado}}{\text{EBITDA}}$ | `ev_ebitda` | Múltiplo de EBITDA (mais usado para valuation) |
-| EV/EBIT | $\frac{\text{EV Estimado}}{\text{EBIT}}$ | `ev_ebit` | Múltiplo de EBIT (apenas quando EBIT > 0) |
+| Indicador | Fórmula | Campo no BD | Interpretação | Fonte |
+|-----------|---------|-------------|---------------|-------|
+| EV/Receita | $\frac{\text{EV Estimado}}{\text{Receita Total (ou TTM)}}$ | `ev_revenue` | Múltiplo de receita | 🟠 Calculado |
+| EV/EBITDA | $\frac{\text{EV Estimado}}{\text{EBITDA (ou TTM)}}$ | `ev_ebitda` | Múltiplo de EBITDA (mais usado para valuation) | 🟠 Calculado |
+| EV/EBIT | $\frac{\text{EV Estimado}}{\text{EBIT (ou TTM)}}$ | `ev_ebit` | Múltiplo de EBIT (apenas quando EBIT > 0) | 🟠 Calculado |
 
-**Nota:** Os múltiplos usam o Enterprise Value **estimado** do período (não o corrente), permitindo análise temporal de valuation.
+**Nota sobre múltiplos em registros trimestrais:** Para registros `quarterly`, os denominadores usam os valores **TTM** (soma 4Q) quando `ttm_quarters_count = 4`. Isso é feito pelo `calculate_ttm.py` (ver Seção 7.3). Para registros `annual`, usam os valores do período diretamente.
 
 ### 5.5 Guardas e Limites de Múltiplos
 
@@ -186,25 +221,27 @@ Isso evita divisão por valores próximos de zero.
 
 ---
 
-## 6. Conversão Cambial (FX)
+## 6. Conversão Cambial (FX) 🟠
 
 ### 6.1 Metodologia
 
-1. A moeda original dos demonstrativos financeiros é obtida via `ticker.get_info()["financialCurrency"]`
-2. A série histórica de câmbio é buscada via ticker auxiliar `{MOEDA}USD=X` (ex: `BRLUSD=X`) usando `ticker.history(period="10y", interval="1d")`
+1. A moeda original dos demonstrativos financeiros é obtida via `ticker.get_info()["financialCurrency"]` 🟣
+2. A série histórica de câmbio é buscada via ticker auxiliar `{MOEDA}USD=X` (ex: `BRLUSD=X`) usando `ticker.history(period="10y", interval="1d")` 🟣
 3. Para cada período fiscal, a taxa mais próxima da data do balanço é utilizada (método `nearest`)
 4. A série FX é **cacheada** por moeda (thread-safe) durante a execução
+5. A taxa aplicada é gravada no campo `fx_rate_to_usd` 🟣 Raw
+6. Todos os campos USD abaixo são derivados: `valor_local × fx_rate_to_usd`
 
 ### 6.2 Campos Convertidos
 
-| Campo Original (moeda local) | Campo USD |
-|-----------------------------|-----------|
-| `total_revenue` | `total_revenue_usd` |
-| `ebit` | `ebit_usd` |
-| `ebitda` | `ebitda_usd` |
-| `net_income` | `net_income_usd` |
-| `free_cash_flow` | `free_cash_flow_usd` |
-| `enterprise_value_estimated` | `enterprise_value_usd` |
+| Campo Original (moeda local) | Campo USD | Fonte |
+|-----------------------------|-----------|-------|
+| `total_revenue` | `total_revenue_usd` | 🟠 Calculado |
+| `ebit` | `ebit_usd` | 🟠 Calculado |
+| `ebitda` | `ebitda_usd` | 🟠 Calculado |
+| `net_income` | `net_income_usd` | 🟠 Calculado |
+| `free_cash_flow` | `free_cash_flow_usd` | 🟠 Calculado |
+| `enterprise_value_estimated` | `enterprise_value_usd` | 🟠 Calculado |
 
 ### 6.3 Limitações
 
@@ -230,23 +267,53 @@ Exemplo: PGAS.JK (Perusahaan Gas Negara)
 
 ---
 
-## 7. Dados Trimestrais e TTM (Trailing Twelve Months)
+## 7. Dados Trimestrais e TTM (Trailing Twelve Months) 🟠
 
-### 7.1 Extração Trimestral
+### 7.1 Contexto: TTM do Yahoo vs TTM Calculado
+
+O Yahoo Finance disponibiliza campos TTM **apenas como snapshot corrente** via `ticker.get_info()`:
+
+| Campo Yahoo (`get_info()`) | Valor (AAPL, mar/2026) | Natureza |
+|---|---|---|
+| `totalRevenue` | $435.6B | TTM corrente (snapshot) |
+| `ebitda` | $152.9B | TTM corrente (snapshot) |
+| `freeCashflow` | $106.3B | TTM corrente (snapshot) |
+| `trailingPE` | 32.22 | P/E trailing corrente |
+| `enterpriseToEbitda` | 24.43 | EV/EBITDA corrente |
+
+**Esses valores não são usados na nossa base**, pois representam apenas o ponto atual no tempo.
+Para análise histórica (séries temporais), precisamos saber qual era o TTM em cada trimestre passado.
+
+O `ticker.quarterly_income_stmt` retorna **valores do trimestre individual** (não acumulados 12 meses).
+Exemplo AAPL:
+```
+quarterly_income_stmt["Total Revenue"]:
+  Q4/2025: $124.3B  (apenas o trimestre)
+  Q3/2025: $85.8B
+  Q2/2025: $94.9B
+  Q1/2025: $124.0B
+  Q4/2024: $119.6B
+```
+
+Portanto, o TTM histórico é **inteiramente calculado pela aplicação** somando 4 trimestres consecutivos.
+
+### 7.2 Extração Trimestral 🟣
 
 A extração trimestral usa os mesmos demonstrativos do Yahoo Finance com a flag `--quarterly`:
-- `ticker.quarterly_income_stmt` — até 5 trimestres
-- `ticker.quarterly_cash_flow` — até 5 trimestres
-- `ticker.quarterly_balance_sheet` — até 5 trimestres
+- `ticker.quarterly_income_stmt` — até 5 trimestres 🟣 Raw
+- `ticker.quarterly_cash_flow` — até 5 trimestres 🟣 Raw
+- `ticker.quarterly_balance_sheet` — até 5 trimestres 🟣 Raw
+
+Os campos extraídos são **idênticos** aos anuais (Seções 3, 4, 5), porém representam valores de um trimestre individual.
 
 **Uso:**
 ```bash
-python scripts/fetch_historical_financials.py --sector "Utilities" --quarterly
+python scripts/fetch_historical_financials.py --sector "Utilities" --quarterly --workers 3 --max-rps 2.0
 ```
 
-### 7.2 Cálculo TTM
+### 7.3 Cálculo TTM 🟠
 
-O TTM (Trailing Twelve Months) é calculado pelo script `scripts/calculate_ttm.py` e representa a soma acumulada dos 4 trimestres mais recentes até a data de referência.
+O TTM (Trailing Twelve Months) é calculado pelo script `scripts/calculate_ttm.py` e representa a **soma acumulada dos 4 trimestres mais recentes** até a data de referência.
 
 **Uso:**
 ```bash
@@ -259,40 +326,40 @@ python scripts/calculate_ttm.py --company AAPL
 | Tipo | Cálculo TTM | `ttm_quarters_count` |
 |------|------------|---------------------|
 | **Annual** | TTM = valor do próprio período (já são 12 meses) | 4 |
-| **Quarterly** | TTM = soma dos 4 últimos trimestres trimestrais disponíveis (incluindo o corrente) | 0-4 (real) |
+| **Quarterly** | TTM = soma dos 4 últimos trimestres disponíveis (incluindo o corrente) | 0–4 (real) |
 
-#### Campos TTM
+#### Campos TTM (todos 🟠 Calculados)
 
-| Campo Original (trimestral) | Campo TTM | Descrição |
-|----------------------------|-----------|-----------|
-| `total_revenue` | `total_revenue_ttm` | Receita acumulada 12 meses |
-| `ebitda` | `ebitda_ttm` | EBITDA acumulado 12 meses |
-| `ebit` | `ebit_ttm` | EBIT acumulado 12 meses |
-| `free_cash_flow` | `free_cash_flow_ttm` | FCF acumulado 12 meses |
-| `net_income` | `net_income_ttm` | Lucro líquido acumulado 12 meses |
-| — | `ttm_quarters_count` | Quantidade de trimestres com dados usados na soma |
+| Campo Original (trimestral) | Campo TTM | Fórmula | Fonte |
+|----------------------------|-----------|---------|-------|
+| `total_revenue` | `total_revenue_ttm` | Σ revenue dos 4Q | 🟠 Calculado |
+| `ebitda` | `ebitda_ttm` | Σ ebitda dos 4Q | 🟠 Calculado |
+| `ebit` | `ebit_ttm` | Σ ebit dos 4Q | 🟠 Calculado |
+| `free_cash_flow` | `free_cash_flow_ttm` | Σ fcf dos 4Q | 🟠 Calculado |
+| `net_income` | `net_income_ttm` | Σ net_income dos 4Q | 🟠 Calculado |
+| — | `ttm_quarters_count` | Contagem de Q com dados | 🟠 Calculado |
 
 #### Lógica de Cálculo
 
 1. Para cada empresa, os registros trimestrais são ordenados por `period_date`
-2. Para cada trimestre, toma-se uma janela de até 4 registros: `[i-3 .. i]`
-3. Os valores não-nulos são somados; **mínimo de 2 trimestres** para calcular TTM
+2. Para cada trimestre `i`, toma-se a janela `[max(0, i-3) .. i]` — até 4 registros
+3. Os valores não-nulos são somados; **mínimo de 2 trimestres** para gerar TTM parcial
 4. Se menos de 2 trimestres têm dados, o campo TTM fica `NULL`
-5. O campo `ttm_quarters_count` registra quantos trimestres de receita contribuíram para o cálculo
+5. O campo `ttm_quarters_count` registra quantos trimestres de receita contribuíram
 
-### 7.3 Recálculo de Múltiplos com TTM
+### 7.4 Recálculo de Múltiplos com TTM 🟠
 
-Os múltiplos EV (ev_revenue, ev_ebitda, ev_ebit) dos registros trimestrais são recalculados usando os denominadores TTM ao invés dos valores do trimestre:
+Os múltiplos EV (`ev_revenue`, `ev_ebitda`, `ev_ebit`) dos registros trimestrais são **recalculados** pelo `calculate_ttm.py` usando os denominadores TTM ao invés dos valores do trimestre:
 
 $$\text{EV/Revenue} = \frac{\text{EV Estimado}}{\text{Revenue TTM}}$$
 
 $$\text{EV/EBITDA} = \frac{\text{EV Estimado}}{\text{EBITDA TTM}}$$
 
 **Guardas de confiabilidade:**
-1. Os múltiplos só são calculados para registros com `ttm_quarters_count >= 4`. Registros com TTM parcial (< 4 trimestres) mantêm múltiplos como `NULL`.
-2. Os mesmos limites da Seção 5.5 se aplicam: clamp de 500x e materialidade de $100K USD para revenue TTM.
+1. Múltiplos só calculados quando `ttm_quarters_count >= 4`. TTM parcial (< 4Q) → múltiplos `NULL`.
+2. Mesmos limites da Seção 5.5: clamp de 500x e materialidade de $100K USD para revenue TTM.
 
-### 7.4 Limitações do TTM
+### 7.5 Limitações do TTM
 
 | Limitação | Impacto | Exchanges Afetadas |
 |-----------|---------|-------------------|
@@ -302,7 +369,18 @@ $$\text{EV/EBITDA} = \frac{\text{EV Estimado}}{\text{EBITDA TTM}}$$
 | Trimestres fiscais podem não coincidir com trimestres calendário | Empresas com FY terminando em meses não-padrão (ex: março) podem ter TTM mal-alinhado | Japão, Índia |
 | Com `ttm_quarters_count = 4`, divergência residual de ~9% entre TTM trimestral e anual | Diferenças de ajuste contábil entre reports trimestrais e anuais | Todas (normal) |
 
-### 7.5 Boas Práticas de Consumo
+### 7.6 Por que não usar o TTM do Yahoo `get_info()`?
+
+| Aspecto | Yahoo `get_info()` TTM | Nosso TTM calculado |
+|---|---|---|
+| Cobertura temporal | Apenas **1 ponto** (atual) | **Até 5 pontos** trimestrais (histórico) |
+| Permite série temporal? | ❌ Não | ✅ Sim |
+| Permite análise de tendência? | ❌ Não | ✅ Sim (ex: EBITDA TTM caindo quarter-a-quarter) |
+| Fonte dos dados | Cálculo interno do Yahoo | Soma dos `quarterly_income_stmt` individuais |
+| Consistency c/ our EV | Não garantida | ✅ Usa mesmo EV estimado do período |
+| Disponível para toda empresa | Nem sempre | Sim (exceto `ttm_quarters_count < 2`) |
+
+### 7.7 Boas Práticas de Consumo
 
 1. **Filtrar por `ttm_quarters_count`**: Para análises confiáveis, usar `WHERE ttm_quarters_count = 4`
 2. **Para anuais, preferir valores diretos**: Os campos TTM dos anuais são os próprios valores (redundantes mas consistentes)
@@ -441,25 +519,97 @@ O pequeno desvio no EV se deve a:
 
 ---
 
-## 12. Resumo das Fórmulas
+## 12. Resumo: Campos Raw vs Calculados
 
-| Métrica | Fórmula |
-|---------|---------|
-| **Market Cap (est.)** | $P_{\text{close}} \times \text{OrdinarySharesNumber}$ |
-| **Enterprise Value** | $\text{MCap} + \text{Dívida Total} + \text{Preferred Stock} + \text{Minority Interest} - \text{Caixa}$ |
-| **Margem EBIT** | $\frac{\text{EBIT}}{\text{Receita}}$ |
-| **Margem EBITDA** | $\frac{\text{EBITDA}}{\text{Receita}}$ |
-| **Margem Bruta** | $\frac{\text{Lucro Bruto}}{\text{Receita}}$ |
-| **Margem Líquida** | $\frac{\text{Lucro Líquido}}{\text{Receita}}$ |
-| **FCF/Receita** | $\frac{\text{FCF}}{\text{Receita}}$ |
-| **FCF/EBITDA** | $\frac{\text{FCF}}{\text{EBITDA}}$ |
-| **Capex/Receita** | $\frac{|\text{Capex}|}{\text{Receita}}$ |
-| **Dívida/PL** | $\frac{\text{Dívida Total}}{\text{PL}}$ |
-| **Dívida/EBITDA** | $\frac{\text{Dívida Total}}{\text{EBITDA}}$ |
-| **EV/Receita** | $\frac{\text{EV}}{\text{Receita}}$ |
-| **EV/EBITDA** | $\frac{\text{EV}}{\text{EBITDA}}$ |
-| **Valor USD** | $\text{Valor Local} \times \text{FX Rate}(t)$ |
+### 12.1 Campos 🟣 Raw Yahoo (31 campos — extraídos sem transformação)
+
+| # | Campo no BD | Demonstrativo | Campo yfinance |
+|---|---|---|---|
+| 1 | `total_revenue` | Income Statement | `Total Revenue` |
+| 2 | `cost_of_revenue` | Income Statement | `Cost Of Revenue` |
+| 3 | `gross_profit` | Income Statement | `Gross Profit` |
+| 4 | `operating_income` | Income Statement | `Operating Income` |
+| 5 | `operating_expense` | Income Statement | `Operating Expense` |
+| 6 | `ebit` | Income Statement | `EBIT` |
+| 7 | `ebitda` | Income Statement | `EBITDA` |
+| 8 | `normalized_ebitda` | Income Statement | `Normalized EBITDA` |
+| 9 | `net_income` | Income Statement | `Net Income` |
+| 10 | `interest_expense` | Income Statement | `Interest Expense` |
+| 11 | `tax_provision` | Income Statement | `Tax Provision` |
+| 12 | `research_and_development` | Income Statement | `Research And Development` |
+| 13 | `sga` | Income Statement | `Selling General And Administration` |
+| 14 | `diluted_average_shares` | Income Statement | `Diluted Average Shares` |
+| 15 | `free_cash_flow` | Cash Flow | `Free Cash Flow` |
+| 16 | `operating_cash_flow` | Cash Flow | `Operating Cash Flow` |
+| 17 | `capital_expenditure` | Cash Flow | `Capital Expenditure` |
+| 18 | `total_assets` | Balance Sheet | `Total Assets` |
+| 19 | `total_debt` | Balance Sheet | `Total Debt` |
+| 20 | `stockholders_equity` | Balance Sheet | `Stockholders Equity` |
+| 21 | `total_liabilities` | Balance Sheet | `Total Liabilities Net Minority Interest` |
+| 22 | `cash_and_equivalents` | Balance Sheet | `Cash And Cash Equivalents` |
+| 23 | `short_term_debt` | Balance Sheet | `Current Debt` |
+| 24 | `long_term_debt` | Balance Sheet | `Long Term Debt` |
+| 25 | `short_term_investments` | Balance Sheet | `Other Short Term Investments` |
+| 26 | `current_assets` | Balance Sheet | `Current Assets` |
+| 27 | `current_liabilities` | Balance Sheet | `Current Liabilities` |
+| 28 | `ordinary_shares_number` | Balance Sheet | `Ordinary Shares Number` |
+| 29 | `preferred_stock` | Balance Sheet | `Preferred Stock` |
+| 30 | `minority_interest` | Balance Sheet | `Minority Interest` |
+| 31 | `close_price` | Preço Histórico | `ticker.history()` nearest date |
+
+Adicionais raw (metadata): `original_currency`, `fx_rate_to_usd`
+
+### 12.2 Campos 🟠 Calculados pela Aplicação (26 campos)
+
+| # | Campo no BD | Fórmula / Origem | Script |
+|---|---|---|---|
+| 1 | `market_cap_estimated` | `close_price × ordinary_shares_number` | fetch |
+| 2 | `enterprise_value_estimated` | `MCap + Dívida + Preferred + Minority − Caixa` | fetch |
+| 3 | `total_revenue_usd` | `total_revenue × fx_rate_to_usd` | fetch |
+| 4 | `ebit_usd` | `ebit × fx_rate_to_usd` | fetch |
+| 5 | `ebitda_usd` | `ebitda × fx_rate_to_usd` | fetch |
+| 6 | `net_income_usd` | `net_income × fx_rate_to_usd` | fetch |
+| 7 | `free_cash_flow_usd` | `free_cash_flow × fx_rate_to_usd` | fetch |
+| 8 | `enterprise_value_usd` | `enterprise_value_estimated × fx_rate_to_usd` | fetch |
+| 9 | `ebit_margin` | `ebit / total_revenue` | fetch |
+| 10 | `ebitda_margin` | `ebitda / total_revenue` | fetch |
+| 11 | `gross_margin` | `gross_profit / total_revenue` | fetch |
+| 12 | `net_margin` | `net_income / total_revenue` | fetch |
+| 13 | `fcf_revenue_ratio` | `free_cash_flow / total_revenue` | fetch |
+| 14 | `fcf_ebitda_ratio` | `free_cash_flow / ebitda` | fetch |
+| 15 | `capex_revenue` | `abs(capital_expenditure) / total_revenue` | fetch |
+| 16 | `debt_equity` | `total_debt / stockholders_equity` | fetch |
+| 17 | `debt_ebitda` | `total_debt / ebitda` | fetch |
+| 18 | `ev_revenue` | `EV / total_revenue` (ou TTM em quarterly) | fetch + ttm |
+| 19 | `ev_ebitda` | `EV / ebitda` (ou TTM em quarterly) | fetch + ttm |
+| 20 | `ev_ebit` | `EV / ebit` (ou TTM em quarterly) | fetch + ttm |
+| 21 | `total_revenue_ttm` | Σ revenue 4 trimestres | calculate_ttm |
+| 22 | `ebitda_ttm` | Σ ebitda 4 trimestres | calculate_ttm |
+| 23 | `ebit_ttm` | Σ ebit 4 trimestres | calculate_ttm |
+| 24 | `free_cash_flow_ttm` | Σ free_cash_flow 4 trimestres | calculate_ttm |
+| 25 | `net_income_ttm` | Σ net_income 4 trimestres | calculate_ttm |
+| 26 | `ttm_quarters_count` | Contagem de Q com revenue não-nulo | calculate_ttm |
+
+## 13. Resumo das Fórmulas
+
+| Métrica | Fórmula | Fonte |
+|---------|---------|-------|
+| **Market Cap (est.)** | $P_{\text{close}} \times \text{OrdinarySharesNumber}$ | 🟠 |
+| **Enterprise Value** | $\text{MCap} + \text{Dívida Total} + \text{Preferred} + \text{Minority} - \text{Caixa}$ | 🟠 |
+| **Revenue TTM** | $\sum_{i=0}^{3} \text{Revenue}_{Q_{t-i}}$ | 🟠 |
+| **Margem EBIT** | $\frac{\text{EBIT}}{\text{Receita}}$ | 🟠 |
+| **Margem EBITDA** | $\frac{\text{EBITDA}}{\text{Receita}}$ | 🟠 |
+| **Margem Bruta** | $\frac{\text{Lucro Bruto}}{\text{Receita}}$ | 🟠 |
+| **Margem Líquida** | $\frac{\text{Lucro Líquido}}{\text{Receita}}$ | 🟠 |
+| **FCF/Receita** | $\frac{\text{FCF}}{\text{Receita}}$ | 🟠 |
+| **FCF/EBITDA** | $\frac{\text{FCF}}{\text{EBITDA}}$ | 🟠 |
+| **Capex/Receita** | $\frac{|\text{Capex}|}{\text{Receita}}$ | 🟠 |
+| **Dívida/PL** | $\frac{\text{Dívida Total}}{\text{PL}}$ | 🟠 |
+| **Dívida/EBITDA** | $\frac{\text{Dívida Total}}{\text{EBITDA}}$ | 🟠 |
+| **EV/Receita** | $\frac{\text{EV}}{\text{Receita (ou TTM)}}$ | 🟠 |
+| **EV/EBITDA** | $\frac{\text{EV}}{\text{EBITDA (ou TTM)}}$ | 🟠 |
+| **Valor USD** | $\text{Valor Local} \times \text{FX Rate}(t)$ | 🟠 |
 
 ---
 
-*Documento gerado em julho/2025. Script: `scripts/fetch_historical_financials.py`*
+*Documento atualizado em março/2026. Scripts: `fetch_historical_financials.py`, `calculate_ttm.py`*

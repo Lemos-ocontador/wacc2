@@ -84,6 +84,68 @@ _request_counter = 0
 _counter_lock = threading.Lock()
 _PROACTIVE_RESET_EVERY = 400  # resetar sessão a cada N requests (antes do rate limit)
 
+# --------------------------------------------------------------------------
+# Correções de qualidade: subunidades, moedas e Market Cap
+# --------------------------------------------------------------------------
+
+# Exchanges onde o preço é cotado em subunidade da moeda
+# LSE (.L): pence (1 GBP = 100 pence)
+# TASE (.TA): agorot (1 ILS = 100 agorot)
+# JSE (.JO): cents (1 ZAR = 100 cents)
+SUBUNIT_EXCHANGES: dict[str, int] = {
+    ".L": 100,    # London Stock Exchange: pence → GBP
+    ".IL": 100,   # LSE International: pence → GBP
+    ".TA": 100,   # Tel Aviv Stock Exchange: agorot → ILS
+    ".JO": 100,   # Johannesburg Stock Exchange: cents → ZAR
+}
+
+# Mapeamento de moedas subunitárias à moeda principal.
+# Necessário porque yfinance reporta trading_currency como "GBp", "ILA", "ZAc",
+# mas financialCurrency como "GBP", "ILS", "ZAR". Sem esse mapeamento, o código
+# tenta converter entre ILA↔ILS (que são a mesma moeda em unidades diferentes).
+SUBUNIT_CURRENCY_MAP: dict[str, str] = {
+    "GBp": "GBP",   # pence → British Pound
+    "ILA": "ILS",   # agorot → Israeli Shekel
+    "ZAc": "ZAR",   # cents → South African Rand
+}
+
+# Limiar de divergência para sanity-check MCap calculado vs YF
+_MCAP_SANITY_THRESHOLD = 5.0  # se calculado/YF > 5x ou < 0.2x, preferir YF
+
+
+def _get_subunit_factor(yahoo_code: str) -> int:
+    """Retorna o fator de subunidade para converter preço em unidade principal da moeda."""
+    for suffix, factor in SUBUNIT_EXCHANGES.items():
+        if yahoo_code.upper().endswith(suffix.upper()):
+            return factor
+    return 1
+
+
+def _sanity_check_mcap(mcap_calculated: float | None, yf_market_cap: float | None,
+                       yahoo_code: str) -> tuple[float | None, str]:
+    """
+    Valida MCap calculado contra o marketCap reportado pelo Yahoo Finance.
+    
+    Retorna: (mcap_final, data_quality_flag)
+    - Se ambos existem e divergem > threshold → usa YF como mais confiável
+    - Se apenas calculado existe → usa calculado
+    - Se apenas YF existe → usa YF
+    """
+    if mcap_calculated and yf_market_cap and yf_market_cap > 0:
+        ratio = mcap_calculated / yf_market_cap
+        if ratio > _MCAP_SANITY_THRESHOLD or ratio < (1 / _MCAP_SANITY_THRESHOLD):
+            log.warning(
+                f"{yahoo_code}: MCap calculado ({mcap_calculated:.0f}) diverge {ratio:.1f}x "
+                f"do YF ({yf_market_cap:.0f}). Usando YF como referência."
+            )
+            return yf_market_cap, "mcap_yf_fallback"
+        return mcap_calculated, "ok"
+    if mcap_calculated:
+        return mcap_calculated, "ok"
+    if yf_market_cap and yf_market_cap > 0:
+        return yf_market_cap, "mcap_yf_only"
+    return None, "no_mcap"
+
 
 def _reset_yf_session():
     with _reset_lock:
@@ -245,9 +307,14 @@ def ensure_table(db_path: Path):
                       'diluted_average_shares', 'short_term_debt', 'long_term_debt',
                       'close_price',
                       'total_revenue_ttm', 'ebitda_ttm', 'ebit_ttm',
-                      'free_cash_flow_ttm', 'net_income_ttm'):
+                      'free_cash_flow_ttm', 'net_income_ttm',
+                      'trading_currency', 'shares_outstanding_current',
+                      'subunit_factor', 'mcap_quality'):
         try:
-            conn.execute(f"ALTER TABLE company_financials_historical ADD COLUMN {col_name} REAL")
+            if col_name in ('trading_currency', 'mcap_quality'):
+                conn.execute(f"ALTER TABLE company_financials_historical ADD COLUMN {col_name} TEXT")
+            else:
+                conn.execute(f"ALTER TABLE company_financials_historical ADD COLUMN {col_name} REAL")
             log.info(f"Coluna '{col_name}' adicionada.")
         except sqlite3.OperationalError:
             pass  # coluna já existe
@@ -391,6 +458,16 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
     financial_currency = info.get("financialCurrency") or info.get("currency")
     trading_currency = info.get("currency")  # moeda de negociação (preço)
 
+    # Market Cap e EV correntes do YF (para sanity-check do MCap calculado)
+    yf_market_cap = info.get("marketCap")        # MCap corrente do YF (já correto)
+    yf_enterprise_value = info.get("enterpriseValue")  # EV corrente do YF
+
+    # Fator de subunidade: exchanges que cotam em pence, agorot, cents, etc.
+    subunit_factor = _get_subunit_factor(yahoo_code)
+
+    log.debug(f"{yahoo_code}: Trade={trading_currency} Fin={financial_currency} "
+              f"YF_MCap={yf_market_cap} Shares_YF={shares_outstanding_current} Sub={subunit_factor}")
+
     # Buscar financial statements
     try:
         if quarterly:
@@ -419,11 +496,14 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
 
     # Taxas de conversão preço→financialCurrency (quando moedas diferem)
     # Ex: PGAS.JK negocia em IDR mas reporta em USD → precisa converter MCap de IDR→USD
+    # Resolver moeda subunitária para moeda principal antes de comparar
+    # (ex: ILA→ILS, GBp→GBP) — o subunit_factor já dividiu o preço
+    trading_currency_resolved = SUBUNIT_CURRENCY_MAP.get(trading_currency, trading_currency) if trading_currency else trading_currency
     price_to_fin_rates = {}
-    if trading_currency and financial_currency and trading_currency != financial_currency:
-        # Converter de trading_currency para financial_currency
-        # Primeiro obter trading_currency→USD
-        trading_fx = _get_historical_fx_rates(trading_currency, period_dates)
+    if trading_currency_resolved and financial_currency and trading_currency_resolved != financial_currency:
+        # Converter de trading_currency_resolved para financial_currency
+        # Primeiro obter trading_currency_resolved→USD
+        trading_fx = _get_historical_fx_rates(trading_currency_resolved, period_dates)
         # Depois obter financial_currency→USD (já temos)
         for d in period_dates:
             trad_to_usd = trading_fx.get(d, 1.0)
@@ -433,7 +513,7 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
                 price_to_fin_rates[d] = trad_to_usd / fin_to_usd
             else:
                 price_to_fin_rates[d] = 1.0
-        log.debug(f"{yahoo_code}: trading={trading_currency} financial={financial_currency}, convertendo MCap")
+        log.debug(f"{yahoo_code}: trading={trading_currency}(→{trading_currency_resolved}) financial={financial_currency}, convertendo MCap")
 
     periods = []
     for col in income_df.columns:
@@ -494,21 +574,52 @@ def fetch_company_financials(company: dict, quarterly: bool = False) -> dict | s
         # Market Cap: usar shares histórico do balance_sheet, fallback para atual
         price = hist_prices.get(period_date)
         rec["close_price"] = price
+        rec["trading_currency"] = trading_currency
+        rec["shares_outstanding_current"] = shares_outstanding_current
+        rec["subunit_factor"] = subunit_factor if subunit_factor > 1 else None
         shares = rec.get("ordinary_shares_number") or shares_outstanding_current
+
+        # ADR fix: se shares do balanço >> shares_outstanding_current (ADR ratio),
+        # usar shares_outstanding_current (que reflete ADR shares, não ações locais).
+        # Isto corrige ADRs como CEPU onde BS tem 1.5B ações locais mas ADR tem 150M.
+        if (shares and shares_outstanding_current and shares_outstanding_current > 0
+                and shares / shares_outstanding_current > 3):
+            adr_ratio = shares / shares_outstanding_current
+            log.info(f"{yahoo_code}: ADR detectado — BS shares ({shares:.0f}) / YF shares "
+                     f"({shares_outstanding_current:.0f}) = {adr_ratio:.1f}x. Usando YF shares.")
+            shares = shares_outstanding_current
+
         if price and shares:
-            mcap_raw = price * shares
+            # Converter preço de subunidade para unidade principal (ex: pence→GBP)
+            price_adjusted = price / subunit_factor
+            mcap_raw = price_adjusted * shares
+
+            # Sanity check ANTES da conversão de moeda:
+            # Neste ponto mcap_raw e yf_market_cap estão ambos na moeda de negociação
+            # (com subunidade já corrigida — YF marketCap já é em GBP, ILS, IDR, etc.)
+            is_recent = (rec["fiscal_year"] or 0) >= (datetime.now().year - 2)
+            if is_recent and yf_market_cap:
+                mcap_raw, mcap_quality = _sanity_check_mcap(mcap_raw, yf_market_cap, yahoo_code)
+            else:
+                mcap_quality = "ok" if mcap_raw else "no_mcap"
+
             # Converter MCap da moeda de negociação para financialCurrency se diferem
-            if price_to_fin_rates:
+            if mcap_raw and price_to_fin_rates:
                 conv_rate = price_to_fin_rates.get(period_date, 1.0)
                 mcap_raw = mcap_raw * conv_rate
+
             # Guarda: se MCap/Receita > 50.000x com MCap > 1B, provável shares inflados
-            rev_check = abs(rec.get("total_revenue") or 0)
-            if rev_check > 0 and mcap_raw > 1e9 and (mcap_raw / rev_check) > 50000:
-                rec["market_cap_estimated"] = None
-            else:
-                rec["market_cap_estimated"] = mcap_raw
+            if mcap_raw:
+                rev_check = abs(rec.get("total_revenue") or 0)
+                if rev_check > 0 and mcap_raw > 1e9 and (mcap_raw / rev_check) > 50000:
+                    mcap_raw = None
+                    mcap_quality = "mcap_guard_revenue"
+
+            rec["market_cap_estimated"] = mcap_raw
+            rec["mcap_quality"] = mcap_quality
         else:
             rec["market_cap_estimated"] = None
+            rec["mcap_quality"] = "no_mcap"
 
         # EV = Market Cap + Total Debt + Preferred Stock + Minority Interest - Cash
         mcap = rec.get("market_cap_estimated")
@@ -605,6 +716,7 @@ FIELDS = [
     "ordinary_shares_number", "preferred_stock", "minority_interest",
     "close_price", "market_cap_estimated", "enterprise_value_estimated",
     "original_currency", "fx_rate_to_usd",
+    "trading_currency", "shares_outstanding_current", "subunit_factor", "mcap_quality",
     "total_revenue_usd", "ebit_usd", "ebitda_usd", "net_income_usd",
     "free_cash_flow_usd", "enterprise_value_usd",
     "ebit_margin", "ebitda_margin", "gross_margin", "net_margin",

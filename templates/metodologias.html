@@ -127,9 +127,9 @@
     <!-- Legend -->
     <div class="legend-box">
         <strong>Legenda de Fontes:</strong>
-        <div class="legend-item"><span class="source-badge source-yahoo">Y</span> Yahoo Finance (yfinance)</div>
+        <div class="legend-item"><span class="source-badge source-yahoo">Y</span> Yahoo Finance — Raw (sem transformação)</div>
         <div class="legend-item"><span class="source-badge source-damodaran">D</span> Damodaran</div>
-        <div class="legend-item"><span class="source-badge source-calculado">C</span> Calculado</div>
+        <div class="legend-item"><span class="source-badge source-calculado">C</span> Calculado pela aplicação</div>
     </div>
 
     <!-- TOC -->
@@ -137,14 +137,18 @@
         <h3>Índice</h3>
         <ul>
             <li><a href="#fontes">1. Fontes de Dados</a></li>
-            <li><a href="#ev">2. Enterprise Value (EV)</a></li>
-            <li><a href="#dre">3. Demonstrações Financeiras (DRE)</a></li>
-            <li><a href="#fluxo">4. Fluxo de Caixa</a></li>
-            <li><a href="#balanco">5. Balanço Patrimonial</a></li>
-            <li><a href="#margens">6. Margens e Rentabilidade</a></li>
-            <li><a href="#alavancagem">7. Alavancagem e Múltiplos</a></li>
-            <li><a href="#fx">8. Conversão Cambial (FX)</a></li>
-            <li><a href="#qualidade">9. Qualidade dos Dados</a></li>
+            <li><a href="#yahoo-ttm">2. TTM do Yahoo vs TTM Calculado</a></li>
+            <li><a href="#ev">3. Enterprise Value (EV)</a></li>
+            <li><a href="#dre">4. Demonstrações Financeiras (DRE)</a></li>
+            <li><a href="#fluxo">5. Fluxo de Caixa</a></li>
+            <li><a href="#balanco">6. Balanço Patrimonial</a></li>
+            <li><a href="#margens">7. Margens e Rentabilidade</a></li>
+            <li><a href="#alavancagem">8. Alavancagem e Múltiplos</a></li>
+            <li><a href="#ttm">9. TTM — Trailing Twelve Months</a></li>
+            <li><a href="#fx">10. Conversão Cambial (FX)</a></li>
+            <li><a href="#qualidade-mcap">11. Correções de Qualidade — Market Cap</a></li>
+            <li><a href="#resumo">12. Resumo: Raw vs Calculado</a></li>
+            <li><a href="#qualidade">13. Qualidade dos Dados</a></li>
         </ul>
     </div>
 
@@ -153,35 +157,86 @@
         <h2>1. Fontes de Dados</h2>
         <table>
             <thead>
-                <tr><th>Fonte</th><th>Dados Obtidos</th><th>API/Método</th></tr>
+                <tr><th>Fonte</th><th>Dados Obtidos</th><th>API/Método</th><th>Tipo</th></tr>
             </thead>
             <tbody>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.income_stmt</code></td><td>DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc.</td><td>Anual: até 5 períodos</td></tr>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.cash_flow</code></td><td>Fluxo de Caixa: FCF, Operacional, Capex</td><td>Anual: até 5 períodos</td></tr>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.balance_sheet</code></td><td>Balanço: Dívida, PL, Ações, Ativos, Caixa</td><td>Anual: até 5 períodos</td></tr>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.get_info()</code></td><td>Shares Outstanding (fallback), moeda financeira</td><td>Valor corrente</td></tr>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>ticker.history()</code></td><td>Preços históricos de fechamento (diário, 10 anos)</td><td>Série temporal</td></tr>
-                <tr><td><span class="source-badge source-yahoo">Y</span> <code>{MOEDA}USD=X</code></td><td>Taxa de câmbio histórica para USD (diário, 10 anos)</td><td>Série temporal</td></tr>
-                <tr><td><span class="source-badge source-damodaran">D</span> <code>damodaran_global</code></td><td>Market Cap histórico, EV, múltiplos (cross-validation)</td><td>dez/2014–2023</td></tr>
+                <tr><td><code>ticker.income_stmt</code> / <code>quarterly_income_stmt</code></td><td>DRE: Receita, EBIT, EBITDA, Lucro Líquido, etc.</td><td>Anual: até 5 períodos; Trimestral: até 5 trimestres</td><td><span class="source-badge source-yahoo">Y</span> Raw</td></tr>
+                <tr><td><code>ticker.cash_flow</code> / <code>quarterly_cash_flow</code></td><td>Fluxo de Caixa: FCF, Operacional, Capex</td><td>Anual: até 5 períodos; Trimestral: até 5 trimestres</td><td><span class="source-badge source-yahoo">Y</span> Raw</td></tr>
+                <tr><td><code>ticker.balance_sheet</code> / <code>quarterly_balance_sheet</code></td><td>Balanço: Dívida, PL, Ações, Ativos, Caixa</td><td>Anual: até 5 períodos; Trimestral: até 5 trimestres</td><td><span class="source-badge source-yahoo">Y</span> Raw</td></tr>
+                <tr><td><code>ticker.get_info()</code></td><td>Shares Outstanding (fallback), moedas, <strong>marketCap</strong>, <strong>enterpriseValue</strong>, TTM snapshot</td><td>Valor corrente</td><td><span class="source-badge source-yahoo">Y</span> Raw + Sanity Check</td></tr>
+                <tr><td><code>ticker.history()</code></td><td>Preços históricos de fechamento (diário, 10 anos)</td><td>Série temporal</td><td><span class="source-badge source-yahoo">Y</span> Raw</td></tr>
+                <tr><td><code>{MOEDA}USD=X</code></td><td>Taxa de câmbio histórica para USD (diário, 10 anos)</td><td>Série temporal</td><td><span class="source-badge source-yahoo">Y</span> Raw</td></tr>
+                <tr><td><code>damodaran_global</code></td><td>Market Cap histórico, EV, múltiplos (cross-validation)</td><td>dez/2014–2023</td><td><span class="source-badge source-damodaran">D</span></td></tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 2. Enterprise Value -->
-    <div class="section" id="ev">
-        <h2>2. Enterprise Value (EV) — Estimativa Histórica</h2>
+    <!-- 2. Yahoo TTM vs Calculado -->
+    <div class="section" id="yahoo-ttm">
+        <h2>2. TTM do Yahoo Finance vs TTM Calculado</h2>
+        <div class="note">
+            <strong>Esclarecimento importante:</strong> O Yahoo Finance <em>fornece</em> alguns campos TTM via <code>ticker.get_info()</code>,
+            porém são apenas um <strong>snapshot do momento atual</strong>. Não servem para análise histórica.
+        </div>
 
-        <h3>2.1 Fórmula do EV</h3>
+        <h3>2.1 Campos TTM disponíveis no <code>get_info()</code></h3>
+        <table>
+            <thead><tr><th>Campo Yahoo</th><th>Exemplo (AAPL, mar/2026)</th><th>Usado na nossa base?</th></tr></thead>
+            <tbody>
+                <tr><td><code>totalRevenue</code></td><td>$435.6B (TTM corrente)</td><td>❌ Não</td></tr>
+                <tr><td><code>ebitda</code></td><td>$152.9B (TTM corrente)</td><td>❌ Não</td></tr>
+                <tr><td><code>freeCashflow</code></td><td>$106.3B (TTM corrente)</td><td>❌ Não</td></tr>
+                <tr><td><code>trailingPE</code></td><td>32.22</td><td>❌ Não</td></tr>
+                <tr><td><code>trailingEps</code></td><td>$7.89</td><td>❌ Não</td></tr>
+                <tr><td><code>enterpriseToEbitda</code></td><td>24.43</td><td>❌ Não (cross-check pontual)</td></tr>
+                <tr><td><code>enterpriseToRevenue</code></td><td>8.58</td><td>❌ Não (cross-check pontual)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 Por que não usamos o TTM do Yahoo?</h3>
+        <p>O <code>quarterly_income_stmt</code> retorna <strong>valores do trimestre individual</strong> (não acumulados 12 meses):</p>
+        <table>
+            <thead><tr><th>Período</th><th>Total Revenue (AAPL)</th><th>Natureza</th></tr></thead>
+            <tbody>
+                <tr><td>Q4/2025</td><td>$124.3B</td><td>Apenas o trimestre</td></tr>
+                <tr><td>Q3/2025</td><td>$85.8B</td><td>Apenas o trimestre</td></tr>
+                <tr><td>Q2/2025</td><td>$94.9B</td><td>Apenas o trimestre</td></tr>
+                <tr><td>Q1/2025</td><td>$124.0B</td><td>Apenas o trimestre</td></tr>
+            </tbody>
+        </table>
+
+        <h3>2.3 Comparação</h3>
+        <table>
+            <thead><tr><th>Aspecto</th><th>Yahoo <code>get_info()</code> TTM</th><th>Nosso TTM calculado</th></tr></thead>
+            <tbody>
+                <tr><td>Cobertura temporal</td><td>Apenas <strong>1 ponto</strong> (atual)</td><td><strong>Até 5 pontos</strong> trimestrais (histórico)</td></tr>
+                <tr><td>Série temporal?</td><td>❌ Não</td><td>✅ Sim</td></tr>
+                <tr><td>Análise de tendência?</td><td>❌ Não</td><td>✅ Sim (ex: EBITDA TTM caindo Q-a-Q)</td></tr>
+                <tr><td>Consistência c/ nosso EV</td><td>Não garantida</td><td>✅ Usa mesmo EV estimado do período</td></tr>
+                <tr><td>Fonte dos dados</td><td>Cálculo interno do Yahoo</td><td>Soma dos <code>quarterly_income_stmt</code></td></tr>
+            </tbody>
+        </table>
+        <div class="note">
+            <strong>Conclusão:</strong> O TTM histórico é <strong>inteiramente calculado pela aplicação</strong> (script <code>calculate_ttm.py</code>),
+            somando os 4 trimestres mais recentes. O Yahoo não fornece TTM histórico via seus demonstrativos trimestrais.
+        </div>
+    </div>
+
+    <!-- 3. Enterprise Value -->
+    <div class="section" id="ev">
+        <h2>3. Enterprise Value (EV) — Estimativa Histórica <span class="source-badge source-calculado">C</span></h2>
+
+        <h3>3.1 Fórmula do EV</h3>
         <div class="formula">
             EV = Market Cap + Dívida Total + Preferred Stock + Minority Interest − Caixa e Equivalentes
         </div>
         <div class="note">
-            Quando Preferred Stock, Minority Interest ou Caixa não estão disponíveis, são tratados como zero. Isso aproxima a fórmula do cálculo utilizado pelo Damodaran e pelo Yahoo Finance.
+            Quando Preferred Stock, Minority Interest ou Caixa não estão disponíveis, são tratados como zero.
         </div>
 
-        <h3>2.2 Market Cap Estimado</h3>
+        <h3>3.2 Market Cap Estimado</h3>
         <div class="formula">
-            Market Cap = P<sub>close</sub>(t) × Ordinary Shares Number(t)
+            Market Cap = (P<sub>close</sub>(t) ÷ Fator Subunidade) × Ordinary Shares Number(t)
         </div>
         <table>
             <thead><tr><th>Componente</th><th>Descrição</th><th>Fonte</th></tr></thead>
@@ -189,36 +244,72 @@
                 <tr>
                     <td><strong>P<sub>close</sub>(t)</strong></td>
                     <td>Preço de fechamento <strong>diário</strong> mais próximo da data do período fiscal</td>
-                    <td><span class="source-badge source-yahoo">Y</span> <code>ticker.history(period="10y", interval="1d")</code></td>
+                    <td><span class="source-badge source-yahoo">Y</span> <code>ticker.history(period="10y")</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Fator Subunidade</strong></td>
+                    <td>100 para LSE (.L, .IL), TASE (.TA), JSE (.JO). Converte pence→GBP, agorot→ILS, cents→ZAR. Para demais exchanges = 1.</td>
+                    <td><span class="source-badge source-calculado">C</span> <code>SUBUNIT_EXCHANGES</code></td>
                 </tr>
                 <tr>
                     <td><strong>Ordinary Shares Number(t)</strong></td>
-                    <td>Número de ações ordinárias no período <em>t</em> (extraído do Balance Sheet). Se não disponível, usa <code>sharesOutstanding</code> corrente via <code>get_info()</code></td>
-                    <td><span class="source-badge source-yahoo">Y</span> <code>balance_sheet["Ordinary Shares Number"]</code></td>
+                    <td>Número de ações ordinárias. Fallback: <code>sharesOutstanding</code> via <code>get_info()</code></td>
+                    <td><span class="source-badge source-yahoo">Y</span> <code>balance_sheet</code></td>
                 </tr>
             </tbody>
         </table>
 
-        <h3>2.3 Componentes do EV</h3>
+        <h3>3.3 Sanity Check — MCap Calculado vs Yahoo Finance</h3>
+        <div class="note">
+            <strong>Novo (mar/2026):</strong> Para períodos recentes (ano fiscal ≥ ano_atual−1), o MCap calculado é
+            validado contra o <code>marketCap</code> reportado pelo Yahoo Finance via <code>get_info()</code>.
+            Se a divergência for &gt; 5x, o valor do YF é usado como fallback.
+            O campo <code>mcap_quality</code> registra o status:
+        </div>
+        <table>
+            <thead><tr><th>mcap_quality</th><th>Descrição</th></tr></thead>
+            <tbody>
+                <tr><td><code>ok</code></td><td>MCap calculado consistente (&lt; 5x divergência do YF)</td></tr>
+                <tr><td><code>mcap_yf_fallback</code></td><td>MCap calculado divergia &gt; 5x do YF — usado o valor do YF</td></tr>
+                <tr><td><code>mcap_yf_only</code></td><td>Sem MCap calculado (sem preço/shares), usado apenas o YF</td></tr>
+                <tr><td><code>no_mcap</code></td><td>Nenhum MCap disponível</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.4 Problemas Conhecidos por Exchange</h3>
+        <table>
+            <thead><tr><th>Exchange</th><th>Problema</th><th>Correção Aplicada</th></tr></thead>
+            <tbody>
+                <tr><td><strong>.L / .IL</strong> (LSE)</td><td>Preços em pence, não libras. MCap inflava ~100x (ex: CNA.L)</td><td>Divisão por 100 automática via <code>SUBUNIT_EXCHANGES</code></td></tr>
+                <tr><td><strong>.TA</strong> (TASE, Israel)</td><td>Preços em agorot + shares mismatch entre classes. MCap inflava ~3-4x</td><td>Divisão por 100 + sanity check vs <code>marketCap</code> do YF</td></tr>
+                <tr><td><strong>.JO</strong> (JSE, África do Sul)</td><td>Preços em cents, não ZAR</td><td>Divisão por 100 automática</td></tr>
+                <tr><td><strong>.JK</strong> (Indonésia)</td><td>Moeda reportada como USD pelo YF, preço real em IDR</td><td>Sanity check detecta divergência ~14.000x, usa <code>marketCap</code> do YF</td></tr>
+                <tr><td><strong>.SN</strong> (Chile)</td><td>Moeda reportada como USD pelo YF, preço real em CLP</td><td>Sanity check detecta divergência ~850x, usa <code>marketCap</code> do YF</td></tr>
+                <tr><td><strong>ADRs</strong> (CEPU, EDN)</td><td>Preço é do ADR (USD), shares são da empresa local (ex: ARS)</td><td>Detecção automática via ratio BS_shares/YF_shares &gt; 3x. Usa <code>shares_outstanding_current</code> do YF</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.5 Componentes do EV</h3>
         <table>
             <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
             <tbody>
                 <tr><td>Dívida Total</td><td><code>Total Debt</code></td><td><code>total_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
-                <tr><td>Dívida Curto Prazo</td><td><code>Current Debt</code></td><td><code>short_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
-                <tr><td>Dívida Longo Prazo</td><td><code>Long Term Debt</code></td><td><code>long_term_debt</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Caixa e Equivalentes</td><td><code>Cash And Cash Equivalents</code></td><td><code>cash_and_equivalents</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Preferred Stock</td><td><code>Preferred Stock</code></td><td><code>preferred_stock</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Minority Interest</td><td><code>Minority Interest</code></td><td><code>minority_interest</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Preço de Fechamento</td><td><code>ticker.history()</code></td><td><code>close_price</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Ações Ordinárias</td><td><code>Ordinary Shares Number</code></td><td><code>ordinary_shares_number</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
-                <tr><td>Market Cap Estimado</td><td>—</td><td><code>market_cap_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
-                <tr><td>Enterprise Value Estimado</td><td>—</td><td><code>enterprise_value_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><strong>Market Cap Estimado</strong></td><td>—</td><td><code>market_cap_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><strong>Enterprise Value Estimado</strong></td><td>—</td><td><code>enterprise_value_estimated</code></td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><strong>Qualidade MCap</strong></td><td>—</td><td><code>mcap_quality</code></td><td><span class="source-badge source-calculado">C</span> Audit trail</td></tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 3. DRE -->
+    <!-- 4. DRE -->
     <div class="section" id="dre">
-        <h2>3. Demonstrações Financeiras — Income Statement</h2>
+        <h2>4. Demonstrações Financeiras — Income Statement <span class="source-badge source-yahoo">Y</span></h2>
+        <p>Todos os 14 campos abaixo são extraídos <strong>diretamente</strong> do Yahoo Finance sem nenhuma transformação.</p>
         <table>
             <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -238,11 +329,12 @@
                 <tr><td>Média Diluída Ações</td><td><code>Diluted Average Shares</code></td><td><code>diluted_average_shares</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
             </tbody>
         </table>
+        <div class="note">O Yahoo Finance calcula internamente EBIT e EBITDA a partir dos line items da DRE. Para nós, são Raw pois vêm prontos do <code>income_stmt</code>.</div>
     </div>
 
-    <!-- 4. Fluxo de Caixa -->
+    <!-- 5. Fluxo de Caixa -->
     <div class="section" id="fluxo">
-        <h2>4. Fluxo de Caixa</h2>
+        <h2>5. Fluxo de Caixa <span class="source-badge source-yahoo">Y</span></h2>
         <table>
             <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -256,9 +348,9 @@
         </div>
     </div>
 
-    <!-- 5. Balanço -->
+    <!-- 6. Balanço -->
     <div class="section" id="balanco">
-        <h2>5. Balanço Patrimonial</h2>
+        <h2>6. Balanço Patrimonial <span class="source-badge source-yahoo">Y</span></h2>
         <table>
             <thead><tr><th>Campo</th><th>Origem yfinance</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -271,7 +363,7 @@
                 <tr><td>Preferred Stock</td><td><code>Preferred Stock</code></td><td><code>preferred_stock</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Minority Interest</td><td><code>Minority Interest</code></td><td><code>minority_interest</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Ativos Totais</td><td><code>Total Assets</code></td><td><code>total_assets</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
-                <tr><td>Passivos Totais</td><td><code>Total Liabilities Net Minority Interest</code></td><td><code>total_liabilities</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
+                <tr><td>Passivos Totais</td><td><code>Total Liabilities Net MI</code></td><td><code>total_liabilities</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Investimentos CP</td><td><code>Other Short Term Investments</code></td><td><code>short_term_investments</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Ativo Circulante</td><td><code>Current Assets</code></td><td><code>current_assets</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
                 <tr><td>Passivo Circulante</td><td><code>Current Liabilities</code></td><td><code>current_liabilities</code></td><td><span class="source-badge source-yahoo">Y</span></td></tr>
@@ -279,11 +371,12 @@
         </table>
     </div>
 
-    <!-- 6. Margens -->
+    <!-- 7. Margens -->
     <div class="section" id="margens">
-        <h2>6. Margens e Indicadores de Rentabilidade</h2>
+        <h2>7. Margens e Indicadores de Rentabilidade <span class="source-badge source-calculado">C</span></h2>
+        <p>Todos os indicadores desta seção são <strong>calculados pela aplicação</strong> no <code>fetch_historical_financials.py</code>.</p>
 
-        <h3>6.1 Margens sobre Receita</h3>
+        <h3>7.1 Margens sobre Receita</h3>
         <table>
             <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -294,7 +387,7 @@
             </tbody>
         </table>
 
-        <h3>6.2 Indicadores de Conversão de Caixa</h3>
+        <h3>7.2 Indicadores de Conversão de Caixa</h3>
         <table>
             <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -305,11 +398,11 @@
         </table>
     </div>
 
-    <!-- 7. Alavancagem e Múltiplos -->
+    <!-- 8. Alavancagem e Múltiplos -->
     <div class="section" id="alavancagem">
-        <h2>7. Alavancagem e Múltiplos de Avaliação</h2>
+        <h2>8. Alavancagem e Múltiplos de Avaliação <span class="source-badge source-calculado">C</span></h2>
 
-        <h3>7.1 Indicadores de Alavancagem</h3>
+        <h3>8.1 Indicadores de Alavancagem</h3>
         <table>
             <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -318,33 +411,103 @@
             </tbody>
         </table>
 
-        <h3>7.2 Múltiplos de Avaliação</h3>
+        <h3>8.2 Múltiplos de Avaliação</h3>
         <table>
             <thead><tr><th>Indicador</th><th>Fórmula</th><th>Campo no BD</th><th>Interpretação</th><th>Fonte</th></tr></thead>
             <tbody>
-                <tr><td>EV/Receita</td><td>EV Estimado / Receita Total</td><td><code>ev_revenue</code></td><td>Múltiplo de receita</td><td><span class="source-badge source-calculado">C</span></td></tr>
-                <tr><td>EV/EBITDA</td><td>EV Estimado / EBITDA</td><td><code>ev_ebitda</code></td><td>Múltiplo de EBITDA (principal para valuation)</td><td><span class="source-badge source-calculado">C</span></td></tr>
-                <tr><td>EV/EBIT</td><td>EV Estimado / EBIT</td><td><code>ev_ebit</code></td><td>Múltiplo de EBIT</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>EV/Receita</td><td>EV Estimado / Receita Total (ou TTM)</td><td><code>ev_revenue</code></td><td>Múltiplo de receita</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>EV/EBITDA</td><td>EV Estimado / EBITDA (ou TTM)</td><td><code>ev_ebitda</code></td><td>Múltiplo de EBITDA (principal para valuation)</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>EV/EBIT</td><td>EV Estimado / EBIT (ou TTM)</td><td><code>ev_ebit</code></td><td>Múltiplo de EBIT</td><td><span class="source-badge source-calculado">C</span></td></tr>
             </tbody>
         </table>
         <div class="note">
-            Os múltiplos usam o Enterprise Value <strong>estimado</strong> do período (não o corrente), permitindo análise temporal de valuation.
+            <strong>Para registros trimestrais:</strong> Os denominadores usam valores <strong>TTM</strong> (soma 4Q) quando <code>ttm_quarters_count = 4</code>.
+            Os múltiplos usam o EV <strong>estimado do período</strong> (não o corrente), permitindo análise temporal.
+            <br><br>
+            <strong>Guardas:</strong> Múltiplos com |valor| > 500x são descartados. Revenue mínima de $100K USD. EBITDA mínimo de $100 USD.
         </div>
     </div>
 
-    <!-- 8. FX -->
-    <div class="section" id="fx">
-        <h2>8. Conversão Cambial (FX)</h2>
+    <!-- 9. TTM -->
+    <div class="section" id="ttm">
+        <h2>9. TTM — Trailing Twelve Months <span class="source-badge source-calculado">C</span></h2>
+        <p>Script: <code>scripts/calculate_ttm.py</code></p>
 
-        <h3>8.1 Metodologia</h3>
+        <h3>9.1 Regras por Tipo de Período</h3>
+        <table>
+            <thead><tr><th>Tipo</th><th>Cálculo TTM</th><th><code>ttm_quarters_count</code></th></tr></thead>
+            <tbody>
+                <tr><td><strong>Annual</strong></td><td>TTM = próprio valor do período (já são 12 meses)</td><td>4</td></tr>
+                <tr><td><strong>Quarterly</strong></td><td>TTM = soma dos 4 últimos trimestres (incluindo o corrente)</td><td>0–4 (real)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>9.2 Campos TTM</h3>
+        <table>
+            <thead><tr><th>Campo Trimestral</th><th>Campo TTM</th><th>Fórmula</th><th>Fonte</th></tr></thead>
+            <tbody>
+                <tr><td><code>total_revenue</code></td><td><code>total_revenue_ttm</code></td><td>Σ revenue dos 4Q</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>ebitda</code></td><td><code>ebitda_ttm</code></td><td>Σ ebitda dos 4Q</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>ebit</code></td><td><code>ebit_ttm</code></td><td>Σ ebit dos 4Q</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>free_cash_flow</code></td><td><code>free_cash_flow_ttm</code></td><td>Σ fcf dos 4Q</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td><code>net_income</code></td><td><code>net_income_ttm</code></td><td>Σ net_income dos 4Q</td><td><span class="source-badge source-calculado">C</span></td></tr>
+                <tr><td>—</td><td><code>ttm_quarters_count</code></td><td>Contagem de Q com dados</td><td><span class="source-badge source-calculado">C</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>9.3 Lógica de Cálculo</h3>
         <ol>
-            <li>A moeda original dos demonstrativos é obtida via <code>ticker.get_info()["financialCurrency"]</code></li>
-            <li>A série histórica de câmbio é buscada via ticker auxiliar <code>{MOEDA}USD=X</code> com <code>period="10y"</code></li>
-            <li>Para cada período fiscal, a taxa mais próxima da data do balanço é utilizada (método <code>nearest</code>)</li>
-            <li>A série FX é <strong>cacheada</strong> por moeda (thread-safe) durante a execução</li>
+            <li>Para cada empresa, registros trimestrais ordenados por <code>period_date</code></li>
+            <li>Para cada trimestre <em>i</em>, janela <code>[max(0, i-3) .. i]</code> — até 4 registros</li>
+            <li>Valores não-nulos somados; <strong>mínimo 2 trimestres</strong> para gerar TTM</li>
+            <li>Se menos de 2 trimestres têm dados → TTM = <code>NULL</code></li>
+            <li><code>ttm_quarters_count</code> = trimestres com <code>total_revenue</code> não-nulo na janela</li>
         </ol>
 
-        <h3>8.2 Campos Convertidos</h3>
+        <h3>9.4 Recálculo de Múltiplos</h3>
+        <p>Os múltiplos EV dos registros trimestrais são recalculados com denominadores TTM:</p>
+        <div class="formula">
+            EV/Revenue = EV Estimado / Revenue TTM &nbsp;&nbsp;|&nbsp;&nbsp; EV/EBITDA = EV Estimado / EBITDA TTM
+        </div>
+        <div class="note">
+            Múltiplos só calculados quando <code>ttm_quarters_count ≥ 4</code>. TTM parcial (&lt; 4Q) → múltiplos <code>NULL</code>.
+        </div>
+
+        <h3>9.5 Limitações do TTM</h3>
+        <table>
+            <thead><tr><th>Limitação</th><th>Impacto</th></tr></thead>
+            <tbody>
+                <tr><td>Yahoo fornece apenas ~5 trimestres recentes</td><td>Primeiro trimestre terá TTM parcial (1-2Q)</td></tr>
+                <tr><td>Ações chinesas/indianas com ~5 trimestres</td><td>TTM parcial resulta em subestimação de ~50-75%</td></tr>
+                <tr><td>Trimestres fiscais ≠ calendário</td><td>FY em meses não-padrão (mar, jun) podem desalinhar</td></tr>
+                <tr><td>Divergência ~9% entre TTM e anual (mesmo com 4Q)</td><td>Normal: diferenças de ajuste contábil Q vs annual</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 10. FX -->
+    <div class="section" id="fx">
+        <h2>10. Conversão Cambial (FX) <span class="source-badge source-calculado">C</span></h2>
+
+        <h3>10.1 Metodologia</h3>
+        <ol>
+            <li>Moeda financeira: <code>ticker.get_info()["financialCurrency"]</code> — moeda das demonstrações <span class="source-badge source-yahoo">Y</span></li>
+            <li>Moeda de negociação: <code>ticker.get_info()["currency"]</code> — moeda do preço da ação <span class="source-badge source-yahoo">Y</span></li>
+            <li>Série FX: <code>{MOEDA}USD=X</code> com <code>period="10y"</code> <span class="source-badge source-yahoo">Y</span></li>
+            <li>Para cada período fiscal, taxa mais próxima da data (método <code>nearest</code>)</li>
+            <li>Série FX cacheada por moeda (thread-safe)</li>
+            <li>Taxa gravada em <code>fx_rate_to_usd</code></li>
+        </ol>
+
+        <h3>10.2 Duas Moedas Distintas</h3>
+        <div class="note">
+            <strong>Quando <code>financialCurrency</code> ≠ <code>currency</code></strong> (ex: PGAS.JK negocia em IDR, demonstrações em USD),
+            o Market Cap é convertido automaticamente:<br><br>
+            MCap<sub>fin</sub> = (P<sub>close</sub> ÷ SubunitFactor) × Shares × FX<sub>trading→USD</sub> / FX<sub>financial→USD</sub><br><br>
+            O campo <code>trading_currency</code> é salvo separadamente no banco para auditoria.
+        </div>
+
+        <h3>10.3 Campos Convertidos</h3>
         <table>
             <thead><tr><th>Campo Original (moeda local)</th><th>Campo USD</th><th>Fonte</th></tr></thead>
             <tbody>
@@ -357,42 +520,170 @@
             </tbody>
         </table>
 
-        <h3>8.3 Limitações</h3>
+        <h3>10.4 Campos de Auditoria de Moeda</h3>
         <table>
-            <thead><tr><th>Limitação</th><th>Impacto</th></tr></thead>
+            <thead><tr><th>Campo</th><th>Descrição</th><th>Exemplo</th></tr></thead>
             <tbody>
-                <tr><td>Série FX limitada a ~10 anos; períodos anteriores usam a taxa mais antiga disponível</td><td>Períodos muito antigos podem usar taxa de ~10 anos atrás</td></tr>
-                <tr><td>Moedas sem cotação no Yahoo Finance assumem taxa = 1.0</td><td>Moedas exóticas podem não converter corretamente</td></tr>
-                <tr><td><code>market_cap_estimated</code> é em moeda local</td><td>Use <code>enterprise_value_usd</code> para comparações cross-country</td></tr>
+                <tr><td><code>original_currency</code></td><td>Moeda das demonstrações financeiras (<code>financialCurrency</code>)</td><td>BRL, USD, GBP</td></tr>
+                <tr><td><code>trading_currency</code></td><td>Moeda de negociação do preço (<code>currency</code>)</td><td>IDR, CLP, GBp</td></tr>
+                <tr><td><code>fx_rate_to_usd</code></td><td>Taxa de câmbio <code>financialCurrency → USD</code></td><td>0.17 (BRL→USD)</td></tr>
+                <tr><td><code>subunit_factor</code></td><td>Fator de divisão para exchanges com subunidade (100 para .L, .TA, .JO)</td><td>100 ou NULL</td></tr>
             </tbody>
         </table>
     </div>
 
-    <!-- 9. Qualidade -->
-    <div class="section" id="qualidade">
-        <h2>9. Qualidade dos Dados</h2>
+    <!-- 11. Correções de Qualidade — Market Cap -->
+    <div class="section" id="qualidade-mcap">
+        <h2>11. Correções de Qualidade — Market Cap e EV <span class="source-badge source-calculado">C</span></h2>
+        <div class="note">
+            <strong>Implementado em mar/2026</strong> após auditoria de qualidade na base Utilities (736 empresas, 48 países).
+            5 padrões de erro identificados, afetando ~214 linhas (4,4% da base).
+        </div>
 
-        <h3>9.1 Cobertura Temporal</h3>
+        <h3>11.1 Correção 1 — Subunidade de Preço por Exchange</h3>
+        <p>Várias bolsas cotam preços em subunidades da moeda (ex: pence em vez de libras). O código agora divide automaticamente:</p>
+        <table>
+            <thead><tr><th>Sufixo</th><th>Exchange</th><th>País</th><th>Subunidade</th><th>Fator</th></tr></thead>
+            <tbody>
+                <tr><td><code>.L</code></td><td>London Stock Exchange</td><td>UK</td><td>pence → GBP</td><td>÷100</td></tr>
+                <tr><td><code>.IL</code></td><td>LSE International</td><td>UK</td><td>pence → GBP</td><td>÷100</td></tr>
+                <tr><td><code>.TA</code></td><td>Tel Aviv Stock Exchange</td><td>Israel</td><td>agorot → ILS</td><td>÷100</td></tr>
+                <tr><td><code>.JO</code></td><td>Johannesburg Stock Exchange</td><td>África do Sul</td><td>cents → ZAR</td><td>÷100</td></tr>
+            </tbody>
+        </table>
+        <p><strong>Exemplo:</strong> CNA.L preço = 130 (pence). Antes: MCap = 130 × 5.5B = 715B GBP (errado). Agora: MCap = 1.30 × 5.5B = 7.15B GBP (correto).</p>
+
+        <h4>Mapeamento de Moedas Subunitárias (<code>SUBUNIT_CURRENCY_MAP</code>)</h4>
+        <p>O Yahoo Finance reporta <code>currency</code> em códigos de subunidade (GBp, ILA, ZAc) que diferem de <code>financialCurrency</code> (GBP, ILS, ZAR).
+           Sem mapeamento, o código tentaria converter entre moedas que são na verdade a mesma (ex: ILA→ILS via câmbio, que não existe).
+           O mapeamento resolve a moeda subunitária para a principal <strong>antes</strong> de comparar com <code>financialCurrency</code>:</p>
+        <table>
+            <thead><tr><th>Moeda Subunitária</th><th>Moeda Principal</th><th>Relação</th></tr></thead>
+            <tbody>
+                <tr><td><code>GBp</code></td><td><code>GBP</code></td><td>1 GBP = 100 pence</td></tr>
+                <tr><td><code>ILA</code></td><td><code>ILS</code></td><td>1 ILS = 100 agorot</td></tr>
+                <tr><td><code>ZAc</code></td><td><code>ZAR</code></td><td>1 ZAR = 100 cents</td></tr>
+            </tbody>
+        </table>
+
+        <h3>11.2 Correção 2 — Detecção Automática de ADRs</h3>
+        <p>ADRs (American Depositary Receipts) cotam em USD mas o balanço informa ações locais. Ex: CEPU tem 1.5B ações locais (ARS) mas apenas 150M ADRs (USD).
+           Se usado diretamente, MCap = preço_ADR × ações_locais → inflado pelo ratio ADR (~10x).</p>
+        <p><strong>Detecção automática:</strong> se <code>ordinary_shares_number / shares_outstanding_current &gt; 3</code>, o ticker é classificado como ADR e usa <code>shares_outstanding_current</code> do YF.</p>
+        <p><strong>Exemplo CEPU:</strong> BS shares = 1.5B, YF shares = 150M → ratio 10:1 detectado. Antes: MCap = $14.49 × 1.5B = $21.7B (errado). Agora: MCap = $14.49 × 150M = $2.17B (correto, YF = $2.47B).</p>
+
+        <h3>11.3 Correção 3 — Sanity Check vs <code>marketCap</code> do Yahoo Finance</h3>
+        <p>Para períodos recentes (ano fiscal ≥ ano_atual−2), o MCap calculado é comparado com o <code>info["marketCap"]</code> do YF:</p>
+        <ol>
+            <li>Se divergência &gt; 5x (ou &lt; 0.2x): usa o <code>marketCap</code> do YF como fallback</li>
+            <li>O campo <code>mcap_quality</code> registra: <code>ok</code>, <code>mcap_yf_fallback</code>, <code>mcap_yf_only</code>, <code>no_mcap</code>, <code>mcap_guard_revenue</code></li>
+            <li>Janela de 2 anos (não apenas 1) garante cobertura mesmo em bases com defasagem</li>
+            <li>Isso resolve automaticamente: Indonésia (.JK), Chile (.SN), Israel (.TA com shares mismatch)</li>
+        </ol>
+
+        <h3>11.4 Correção 4 — Rastreabilidade de Moedas</h3>
+        <p>Novo campo <code>trading_currency</code> salvo separadamente de <code>original_currency</code> (= <code>financialCurrency</code>):</p>
+        <table>
+            <thead><tr><th>Ticker</th><th><code>original_currency</code></th><th><code>trading_currency</code></th><th>Situação</th></tr></thead>
+            <tbody>
+                <tr><td>AAPL</td><td>USD</td><td>USD</td><td>Normal — mesma moeda</td></tr>
+                <tr><td>VALE3.SA</td><td>BRL</td><td>BRL</td><td>Normal — mesma moeda</td></tr>
+                <tr><td>PGAS.JK</td><td>USD</td><td>IDR</td><td>Dif. moedas — conversão automática</td></tr>
+                <tr><td>CNA.L</td><td>GBP</td><td>GBp</td><td>Subunidade — ÷100 automático</td></tr>
+            </tbody>
+        </table>
+
+        <h3>11.5 Correção 5 — Campo <code>shares_outstanding_current</code></h3>
+        <p>O <code>sharesOutstanding</code> corrente do YF agora é salvo no banco para auditoria. Permite verificar discrepâncias entre shares históricos (balance sheet) e shares correntes.</p>
+
+        <h3>11.6 Campos de Auditoria Adicionados</h3>
+        <table>
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+                <tr><td><code>trading_currency</code></td><td>TEXT</td><td>Moeda de negociação do preço (pode diferir de <code>original_currency</code>)</td></tr>
+                <tr><td><code>shares_outstanding_current</code></td><td>REAL</td><td>Shares outstanding correntes do YF (fallback para MCap)</td></tr>
+                <tr><td><code>subunit_factor</code></td><td>REAL</td><td>Fator de subunidade aplicado (100 para .L/.TA/.JO, NULL para demais)</td></tr>
+                <tr><td><code>mcap_quality</code></td><td>TEXT</td><td>Status do sanity check: <code>ok</code>, <code>mcap_yf_fallback</code>, <code>mcap_yf_only</code>, <code>no_mcap</code>, <code>mcap_guard_revenue</code> (MCap/Receita &gt; 50.000× e MCap &gt; 1B → shares provavelmente inflados, MCap zerado)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 12. Resumo Raw vs Calculado -->
+    <div class="section" id="resumo">
+        <h2>12. Resumo: Campos Raw vs Calculados</h2>
+
+        <h3>12.1 Campos <span class="source-badge source-yahoo">Y</span> Raw Yahoo (31 campos)</h3>
+        <table>
+            <thead><tr><th>#</th><th>Campo no BD</th><th>Demonstrativo</th></tr></thead>
+            <tbody>
+                <tr><td>1-14</td><td><code>total_revenue</code>, <code>cost_of_revenue</code>, <code>gross_profit</code>, <code>operating_income</code>, <code>operating_expense</code>, <code>ebit</code>, <code>ebitda</code>, <code>normalized_ebitda</code>, <code>net_income</code>, <code>interest_expense</code>, <code>tax_provision</code>, <code>research_and_development</code>, <code>sga</code>, <code>diluted_average_shares</code></td><td>Income Statement</td></tr>
+                <tr><td>15-17</td><td><code>free_cash_flow</code>, <code>operating_cash_flow</code>, <code>capital_expenditure</code></td><td>Cash Flow</td></tr>
+                <tr><td>18-30</td><td><code>total_assets</code>, <code>total_debt</code>, <code>stockholders_equity</code>, <code>total_liabilities</code>, <code>cash_and_equivalents</code>, <code>short_term_debt</code>, <code>long_term_debt</code>, <code>short_term_investments</code>, <code>current_assets</code>, <code>current_liabilities</code>, <code>ordinary_shares_number</code>, <code>preferred_stock</code>, <code>minority_interest</code></td><td>Balance Sheet</td></tr>
+                <tr><td>31</td><td><code>close_price</code></td><td>Preço Histórico</td></tr>
+            </tbody>
+        </table>
+        <p>+ metadata: <code>original_currency</code>, <code>trading_currency</code>, <code>fx_rate_to_usd</code>, <code>subunit_factor</code>, <code>mcap_quality</code></p>
+
+        <h3>12.2 Campos <span class="source-badge source-calculado">C</span> Calculados (30 campos)</h3>
+        <table>
+            <thead><tr><th>Grupo</th><th>Campos</th><th>Script</th></tr></thead>
+            <tbody>
+                <tr><td>Mercado/EV</td><td><code>market_cap_estimated</code>, <code>enterprise_value_estimated</code>, <code>mcap_quality</code></td><td>fetch</td></tr>
+                <tr><td>Valores USD</td><td><code>total_revenue_usd</code>, <code>ebit_usd</code>, <code>ebitda_usd</code>, <code>net_income_usd</code>, <code>free_cash_flow_usd</code>, <code>enterprise_value_usd</code></td><td>fetch</td></tr>
+                <tr><td>Margens</td><td><code>ebit_margin</code>, <code>ebitda_margin</code>, <code>gross_margin</code>, <code>net_margin</code></td><td>fetch</td></tr>
+                <tr><td>Indicadores</td><td><code>fcf_revenue_ratio</code>, <code>fcf_ebitda_ratio</code>, <code>capex_revenue</code>, <code>debt_equity</code>, <code>debt_ebitda</code></td><td>fetch</td></tr>
+                <tr><td>Múltiplos EV</td><td><code>ev_revenue</code>, <code>ev_ebitda</code>, <code>ev_ebit</code></td><td>fetch + ttm</td></tr>
+                <tr><td>TTM</td><td><code>total_revenue_ttm</code>, <code>ebitda_ttm</code>, <code>ebit_ttm</code>, <code>free_cash_flow_ttm</code>, <code>net_income_ttm</code>, <code>ttm_quarters_count</code></td><td>calculate_ttm</td></tr>
+            </tbody>
+        </table>
+        <div class="note">
+            <strong>Total: ~61 campos</strong> na tabela <code>company_financials_historical</code> — 31 raw + 30 calculados + 4 auditoria.
+        </div>
+    </div>
+
+    <!-- 13. Qualidade -->
+    <div class="section" id="qualidade">
+        <h2>13. Qualidade dos Dados</h2>
+
+        <h3>13.1 Cobertura Temporal</h3>
         <p>O yfinance retorna tipicamente:</p>
         <ul>
             <li><strong>4-5 períodos anuais</strong> (últimos ~5 anos fiscais)</li>
             <li><strong>4-5 períodos trimestrais</strong> (últimos ~16 meses)</li>
         </ul>
-        <p>O período mais antigo pode ter dados incompletos, especialmente para empresas menores.</p>
 
-        <h3>9.2 Limitações Conhecidas</h3>
+        <h3>13.2 Badges de Qualidade no Frontend</h3>
+        <table>
+            <thead><tr><th>Badge</th><th>Descrição</th><th>Cor</th></tr></thead>
+            <tbody>
+                <tr><td>Períodos</td><td>Total de registros</td><td>Verde</td></tr>
+                <tr><td>Preço</td><td>Registros com <code>close_price > 0</code></td><td>Verde ≥90%, Amarelo ≥50%, Vermelho &lt;50%</td></tr>
+                <tr><td>Ações</td><td>Registros com <code>ordinary_shares_number > 0</code></td><td>Idem</td></tr>
+                <tr><td>EV</td><td>Registros com <code>enterprise_value_estimated</code></td><td>Idem</td></tr>
+                <tr><td>Múltiplos</td><td>Registros com <code>ev_revenue</code> calculado</td><td>Idem</td></tr>
+                <tr><td>TTM</td><td>Registros com <code>total_revenue_ttm</code></td><td>Idem</td></tr>
+                <tr><td>4Q completos</td><td>Registros com <code>ttm_quarters_count ≥ 4</code></td><td>Idem</td></tr>
+            </tbody>
+        </table>
+
+        <h3>13.3 Limitações Conhecidas</h3>
         <table>
             <thead><tr><th>Limitação</th><th>Mitigação</th></tr></thead>
             <tbody>
-                <tr><td>Shares Outstanding histórico pode não estar disponível em alguns balanços</td><td>Usa <code>sharesOutstanding</code> corrente como fallback</td></tr>
-                <tr><td>yfinance retorna até 5 períodos anuais; o 5° pode ter dados incompletos</td><td>Campo <code>data_quality</code> para filtrar</td></tr>
-                <tr><td>Série FX limitada a ~10 anos (yfinance)</td><td>Valores em moeda local disponíveis para análises precisas; a maioria dos períodos usa taxa histórica real</td></tr>
+                <tr><td>Shares Outstanding histórico pode não estar disponível</td><td>Usa <code>sharesOutstanding</code> corrente como fallback; salvo em <code>shares_outstanding_current</code></td></tr>
+                <tr><td>5° período anual pode ter dados incompletos</td><td>Campo <code>data_quality</code> para filtrar</td></tr>
+                <tr><td>Série FX limitada a ~10 anos</td><td>Períodos mais antigos usam a taxa mais antiga disponível</td></tr>
+                <tr><td>Yahoo TTM snapshot não usado (apenas snapshot atual)</td><td>TTM calculado por soma de 4Q com rastreio de confiabilidade</td></tr>
+                <tr><td>Exchanges com subunidade (pence, agorot, cents)</td><td>Divisão automática via <code>SUBUNIT_EXCHANGES</code> + sanity check vs YF</td></tr>
+                <tr><td>Moedas incorretas do YF (IDR→USD, CLP→USD)</td><td>Sanity check detecta divergência &gt; 5x e usa <code>marketCap</code> do YF</td></tr>
+                <tr><td>ADRs com shares locais vs preço em USD</td><td>Detecção automática via ratio BS/YF shares &gt; 3x, usa <code>shares_outstanding_current</code></td></tr>
+                <tr><td>Shares mismatch multi-class (Israel .TA)</td><td>Subunit fix (÷100) + sanity check vs YF</td></tr>
             </tbody>
         </table>
     </div>
 
     <div style="text-align:center; padding: 20px 0; color: var(--text2); font-size: 12px;">
-        Documento atualizado em julho/2025 • Script: <code>scripts/fetch_historical_financials.py</code>
+        Documento atualizado em março/2026 (v2 — pós-auditoria qualidade) • Scripts: <code>fetch_historical_financials.py</code>, <code>calculate_ttm.py</code>
     </div>
 </div>
 </body>
