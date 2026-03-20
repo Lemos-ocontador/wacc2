@@ -216,6 +216,17 @@
         }
         .ba-legend { font-size: .7rem; color: var(--text3); margin-bottom: .5rem; display: flex; gap: 1rem; }
         .ba-legend sup { font-weight: 700; }
+        .ba-col-ms { position: relative; display: inline-block; }
+        .ba-col-ms-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 28px 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; min-width: 140px; text-align: left; position: relative; }
+        .ba-col-ms-btn::after { content: '\25BC'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 9px; color: var(--text3); }
+        .ba-col-ms-dd { display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 220px; max-height: 500px; overflow-y: auto; padding: 4px 0; margin-top: 2px; }
+        .ba-col-ms-dd.open { display: block; }
+        .ba-col-ms-dd label { display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+        .ba-col-ms-dd label:hover { background: var(--bg3); }
+        .ba-col-ms-dd input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+        .ba-col-ms-actions { display: flex; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--border); font-size: 11px; }
+        .ba-col-ms-actions a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+        .ba-col-ms-sep { border-top: 1px solid var(--border); margin: 2px 0; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -768,39 +779,42 @@
 
     // ========== BASE ANALÍTICA ==========
     const BA_COLS = [
-        { key: 'ticker',        label: 'Ticker',      type: 's' },
-        { key: 'company_name',  label: 'Empresa',     type: 's' },
-        { key: 'industry',      label: 'Indústria',   type: 's' },
-        { key: 'country',       label: 'País',        type: 's' },
-        { key: 'region',        label: 'Região',      type: 's' },
-        { key: 'currency',      label: 'Moeda',       type: 's' },
-        { key: 'fiscal_year',   label: 'Ano',         type: 'n' },
-        { key: 'period_type_label', label: 'Tipo',    type: 's' },
-        { key: 'shares',        label: 'Ações',       type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'close_price',   label: 'Preço',       type: 'n', fmt: v => v != null ? v.toFixed(2) : '', tag: 1 },
-        { key: 'revenue',       label: 'Receita',     type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'ebitda',        label: 'EBITDA',      type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'fcf',           label: 'FCF',         type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'operating_cash_flow', label: 'OpCF',  type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'capex',         label: 'Capex',       type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'net_income',    label: 'Lucro Líq',   type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'total_debt',    label: 'Dívida',      type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'cash',          label: 'Caixa',       type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'equity',        label: 'PL',          type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'total_assets',  label: 'Ativos',      type: 'n', fmt: fmtNum, tag: 1 },
-        { key: 'market_cap',    label: 'Mkt Cap',     type: 'n', fmt: fmtEV, tag: 2, formula: 'Ações × Preço' },
-        { key: 'ev',            label: 'EV',          type: 'n', fmt: fmtEV, tag: 2, formula: 'Mkt Cap + Dívida − Caixa' },
-        { key: 'ev_ebitda',     label: 'EV/EBITDA',   type: 'n', fmt: v => fmtX(v, 1), tag: 2, formula: 'EV ÷ EBITDA' },
-        { key: 'ev_revenue',    label: 'EV/Vendas',   type: 'n', fmt: v => fmtX(v, 1), tag: 2, formula: 'EV ÷ Receita' },
-        { key: 'fcf_revenue',   label: 'FCF/Vendas',  type: 'n', fmt: fmtRatio, tag: 2, formula: 'FCF ÷ Receita' },
-        { key: 'fcf_ebitda',    label: 'FCF/EBITDA',  type: 'n', fmt: fmtRatio, tag: 2, formula: 'FCF ÷ EBITDA' },
-        { key: 'ebitda_margin', label: 'Mg EBITDA',   type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'EBITDA ÷ Receita' },
-        { key: 'gross_margin',  label: 'Mg Bruta',    type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'Lucro Bruto ÷ Receita' },
-        { key: 'net_margin',    label: 'Mg Líq',      type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'Lucro Líquido ÷ Receita' },
-        { key: 'revenue_usd',   label: 'Rec USD',     type: 'n', fmt: fmtNum, tag: 2, formula: 'Receita × FX→USD' },
-        { key: 'ev_usd',        label: 'EV USD',      type: 'n', fmt: fmtEV, tag: 2, formula: 'EV × FX→USD' },
-        { key: 'fx_rate_to_usd', label: 'FX→USD',     type: 'n', fmt: v => v != null ? v.toFixed(4) : '', tag: 1 }
+        { key: 'ticker',        label: 'Ticker',      type: 's', cat: 'id' },
+        { key: 'company_name',  label: 'Empresa',     type: 's', cat: 'id' },
+        { key: 'industry',      label: 'Indústria',   type: 's', cat: 'id' },
+        { key: 'country',       label: 'País',        type: 's', cat: 'id' },
+        { key: 'region',        label: 'Região',      type: 's', cat: 'id' },
+        { key: 'currency',      label: 'Moeda',       type: 's', cat: 'id' },
+        { key: 'fiscal_year',   label: 'Ano',         type: 'n', cat: 'id' },
+        { key: 'period_type_label', label: 'Tipo',    type: 's', cat: 'id' },
+        { key: 'shares',        label: 'Ações',       type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'close_price',   label: 'Preço',       type: 'n', fmt: v => v != null ? v.toFixed(2) : '', tag: 1, cat: 'raw' },
+        { key: 'revenue',       label: 'Receita',     type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'ebitda',        label: 'EBITDA',      type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'fcf',           label: 'FCF',         type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'operating_cash_flow', label: 'OpCF',  type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'capex',         label: 'Capex',       type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'net_income',    label: 'Lucro Líq',   type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'total_debt',    label: 'Dívida',      type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'cash',          label: 'Caixa',       type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'equity',        label: 'PL',          type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'total_assets',  label: 'Ativos',      type: 'n', fmt: fmtNum, tag: 1, cat: 'raw' },
+        { key: 'market_cap',    label: 'Mkt Cap',     type: 'n', fmt: fmtEV, tag: 2, formula: 'Ações × Preço', cat: 'calc' },
+        { key: 'ev',            label: 'EV',          type: 'n', fmt: fmtEV, tag: 2, formula: 'Mkt Cap + Dívida − Caixa', cat: 'calc' },
+        { key: 'ev_ebitda',     label: 'EV/EBITDA',   type: 'n', fmt: v => fmtX(v, 1), tag: 2, formula: 'EV ÷ EBITDA', cat: 'mult' },
+        { key: 'ev_revenue',    label: 'EV/Vendas',   type: 'n', fmt: v => fmtX(v, 1), tag: 2, formula: 'EV ÷ Receita', cat: 'mult' },
+        { key: 'fcf_revenue',   label: 'FCF/Vendas',  type: 'n', fmt: fmtRatio, tag: 2, formula: 'FCF ÷ Receita', cat: 'mult' },
+        { key: 'fcf_ebitda',    label: 'FCF/EBITDA',  type: 'n', fmt: fmtRatio, tag: 2, formula: 'FCF ÷ EBITDA', cat: 'mult' },
+        { key: 'ebitda_margin', label: 'Mg EBITDA',   type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'EBITDA ÷ Receita', cat: 'margin' },
+        { key: 'gross_margin',  label: 'Mg Bruta',    type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'Lucro Bruto ÷ Receita', cat: 'margin' },
+        { key: 'net_margin',    label: 'Mg Líq',      type: 'n', fmt: v => v != null ? (v * 100).toFixed(1) + '%' : '—', tag: 2, formula: 'Lucro Líquido ÷ Receita', cat: 'margin' },
+        { key: 'revenue_usd',   label: 'Rec USD',     type: 'n', fmt: fmtNum, tag: 2, formula: 'Receita × FX→USD', cat: 'usd' },
+        { key: 'ev_usd',        label: 'EV USD',      type: 'n', fmt: fmtEV, tag: 2, formula: 'EV × FX→USD', cat: 'usd' },
+        { key: 'fx_rate_to_usd', label: 'FX→USD',     type: 'n', fmt: v => v != null ? v.toFixed(4) : '', tag: 1, cat: 'usd' }
     ];
+    const BA_CAT_LABELS = { id: 'Identificação', raw: 'Dados Brutos¹', calc: 'Calculados²', mult: 'Múltiplos²', margin: 'Margens²', usd: 'USD / Câmbio' };
+    const BA_CAT_ORDER = ['id', 'raw', 'calc', 'mult', 'margin', 'usd'];
+    let baVisibleCols = new Set(BA_COLS.map(c => c.key));
 
     function renderBaseAnalitica() {
         if (!baseData || !baseData.records || !baseData.records.length) {
@@ -830,15 +844,37 @@
             if (vb == null) return -1;
             return baSortAsc ? va - vb : vb - va;
         });
+        // Visible columns
+        const visCols = BA_COLS.filter(c => baVisibleCols.has(c.key));
+        const nVis = visCols.length;
+        // Build column dropdown HTML
+        let ddHtml = '<div class="ba-col-ms" id="ba-col-ms">';
+        ddHtml += `<button class="ba-col-ms-btn" type="button" onclick="toggleBAColDD()" id="ba-col-ms-label">${nVis} / ${BA_COLS.length} colunas</button>`;
+        ddHtml += '<div class="ba-col-ms-dd" id="ba-col-ms-dd">';
+        ddHtml += '<div class="ba-col-ms-actions"><a onclick="baColCheckAll()">Todas</a><a onclick="baColClearAll()">Limpar</a></div>';
+        let lastCat = '';
+        for (const catKey of BA_CAT_ORDER) {
+            const cols = BA_COLS.filter(c => c.cat === catKey);
+            if (!cols.length) continue;
+            if (lastCat) ddHtml += '<div class="ba-col-ms-sep"></div>';
+            ddHtml += `<div style="padding:4px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${BA_CAT_LABELS[catKey]}</div>`;
+            for (const c of cols) {
+                const chk = baVisibleCols.has(c.key) ? ' checked' : '';
+                ddHtml += `<label><input type="checkbox" value="${c.key}"${chk} onchange="onBAColChange()"> ${c.label}</label>`;
+            }
+            lastCat = catKey;
+        }
+        ddHtml += '</div></div>';
         // Build HTML
         let html = '<div class="ba-toolbar">';
         html += `<input class="ba-search" type="text" placeholder="Buscar ticker, empresa, indústria, país..." value="${baSearchTerm.replace(/"/g, '&quot;')}" oninput="baSearchTerm=this.value;renderBaseAnalitica();">`;
+        html += ddHtml;
         html += `<span class="ba-count">${rows.length} / ${baseData.records.length} registros · ${baseData.metadata.total_companies} empresas</span>`;
         html += `<button class="btn-export" onclick="exportBaseAnaliticaCSV()"><i class="fas fa-file-csv"></i> Exportar Base (CSV)</button>`;
         html += '</div>';
         html += '<div class="ba-legend"><span><sup>1</sup> Dado bruto (fonte: Yahoo Finance)</span><span><sup>2</sup> Calculado pela aplicação <i class="fas fa-info-circle" style="color:var(--accent);"></i></span></div>';
         html += '<div style="overflow-x:auto; max-height:70vh;"><table class="ba-table"><thead><tr>';
-        for (const col of BA_COLS) {
+        for (const col of visCols) {
             const cls = baSortCol === col.key ? (baSortAsc ? 'sorted-asc' : 'sorted-desc') : '';
             let lbl = col.label;
             if (col.tag === 1) lbl += '<sup>1</sup>';
@@ -850,7 +886,7 @@
         for (const r of rows) {
             const ttmCls = r.period_type_label === 'TTM' ? ' ba-ttm' : '';
             html += `<tr class="clickable-row${ttmCls}" onclick="drillCompanyDetail(${r.cid})" title="${r.ticker} — ${r.company_name || ''}">`;
-            for (const col of BA_COLS) {
+            for (const col of visCols) {
                 const v = r[col.key];
                 if (col.type === 's') {
                     const disp = col.key === 'ticker' ? `<strong>${v || ''}</strong>` : (v || '');
@@ -880,6 +916,31 @@
         renderBaseAnalitica();
     }
 
+    // Column visibility toggle
+    function toggleBAColDD() {
+        document.getElementById('ba-col-ms-dd').classList.toggle('open');
+    }
+    function baColCheckAll() {
+        document.querySelectorAll('#ba-col-ms-dd input[type=checkbox]').forEach(c => c.checked = true);
+        onBAColChange();
+    }
+    function baColClearAll() {
+        document.querySelectorAll('#ba-col-ms-dd input[type=checkbox]').forEach(c => c.checked = false);
+        onBAColChange();
+    }
+    function onBAColChange() {
+        baVisibleCols = new Set();
+        document.querySelectorAll('#ba-col-ms-dd input[type=checkbox]:checked').forEach(c => baVisibleCols.add(c.value));
+        renderBaseAnalitica();
+    }
+    document.addEventListener('click', e => {
+        const ms = document.getElementById('ba-col-ms');
+        if (ms && !ms.contains(e.target)) {
+            const dd = document.getElementById('ba-col-ms-dd');
+            if (dd) dd.classList.remove('open');
+        }
+    });
+
     // ========== TABS ==========
     function switchTab(btn, name) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -900,10 +961,11 @@
     function exportBaseAnaliticaCSV() {
         if (!baseData || !baseData.records) return;
         const m = baseData.metadata;
-        const headers = BA_COLS.map(c => c.label);
+        const visCols = BA_COLS.filter(c => baVisibleCols.has(c.key));
+        const headers = visCols.map(c => c.label);
         let csv = headers.join(';') + '\n';
         for (const r of baseData.records) {
-            const row = BA_COLS.map(c => {
+            const row = visCols.map(c => {
                 const v = r[c.key];
                 return v != null ? String(v).replace(/;/g, ',') : '';
             });
