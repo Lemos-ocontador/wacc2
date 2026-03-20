@@ -3423,7 +3423,8 @@ def api_historico_search():
 
         where_clause = " AND ".join(filter_conds)
         base_from = """FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id"""
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id"""
 
         # Total count
         total_count = conn.execute(
@@ -3435,6 +3436,7 @@ def api_historico_search():
         query = f"""
             SELECT DISTINCT cfh.yahoo_code, cfh.company_name,
                    cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                   dg.sub_group AS damodaran_region,
                    cfh.original_currency,
                    COUNT(*) AS periods,
                    MIN(cfh.fiscal_year) AS min_year,
@@ -3697,12 +3699,14 @@ def api_historico_drill_companies():
         query = f"""
             SELECT cfh.yahoo_code, cfh.company_name,
                    cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                   dg.sub_group AS damodaran_region,
                    cfh.original_currency,
                    COUNT(*) AS periods,
                    MIN(cfh.fiscal_year) AS min_year,
                    MAX(cfh.fiscal_year) AS max_year
             FROM company_financials_historical cfh
             JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             {where}
             GROUP BY cfh.yahoo_code
             ORDER BY {sort_col} {sort_dir}
@@ -3835,18 +3839,22 @@ def api_historico_consolidated():
         # Buscar todos os registros das empresas
         if period_type == 'all':
             query = f"""
-                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
+                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                       dg.sub_group AS damodaran_region
                 FROM company_financials_historical cfh
                 JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.yahoo_code IN ({placeholders})
                 ORDER BY cfh.fiscal_year, cfh.yahoo_code
             """
             df = pd.read_sql_query(query, conn, params=codes)
         else:
             query = f"""
-                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country
+                SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
+                       dg.sub_group AS damodaran_region
                 FROM company_financials_historical cfh
                 JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.yahoo_code IN ({placeholders}) AND cfh.period_type = ?
                 ORDER BY cfh.fiscal_year, cfh.yahoo_code
             """
@@ -3935,6 +3943,7 @@ def api_historico_consolidated():
                 'company_name': latest.get('company_name'),
                 'sector': latest.get('yahoo_sector'),
                 'industry': latest.get('yahoo_industry'),
+                'region': latest.get('damodaran_region'),
                 'country': latest.get('yahoo_country'),
                 'currency': latest.get('original_currency'),
                 'periods': int(len(cdf)),
@@ -3950,6 +3959,7 @@ def api_historico_consolidated():
                 'company_name': row.get('company_name'),
                 'sector': row.get('yahoo_sector'),
                 'industry': row.get('yahoo_industry'),
+                'region': row.get('damodaran_region'),
                 'total_revenue_usd': row.get('total_revenue_usd'),
                 'ebitda_usd': row.get('ebitda_usd'),
                 'net_income_usd': row.get('net_income_usd'),
@@ -3979,7 +3989,7 @@ def api_historico_consolidated():
         if include_detail:
             detail_cols = ['yahoo_code', 'company_name', 'fiscal_year', 'fiscal_quarter',
                            'period_type', 'original_currency',
-                           'yahoo_sector', 'yahoo_industry', 'yahoo_country'] + metrics
+                           'yahoo_sector', 'yahoo_industry', 'damodaran_region', 'yahoo_country'] + metrics
             available_cols = [c for c in detail_cols if c in df.columns]
             detail_df = df[available_cols].copy()
             for col in detail_df.columns:
