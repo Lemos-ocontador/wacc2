@@ -612,4 +612,59 @@ Adicionais raw (metadata): `original_currency`, `fx_rate_to_usd`
 
 ---
 
+## 14. Estudo Anloc — Metodologia da Base Analítica
+
+### 14.1 Visão Geral
+
+A página **Estudo Anloc** apresenta uma **Base Analítica** com todos os dados abertos por empresa e por período, distinguindo campos em duas categorias:
+
+| Legenda | Tipo | Descrição | Exemplos |
+|---------|------|-----------|----------|
+| **¹** | Dado bruto | Extraído diretamente do Yahoo Finance sem transformação | Ações, Preço, Receita, EBITDA, FCF, Dívida, Caixa |
+| **²** | Calculado | Derivado pela aplicação a partir dos dados brutos¹ | Mkt Cap, EV, EV/EBITDA, Margens, valores USD |
+
+### 14.2 Fórmulas dos Campos Calculados (²)
+
+| Campo | Fórmula | Observação |
+|-------|---------|------------|
+| **Mkt Cap²** | Ações¹ × Preço¹ | `shares_outstanding_current × close_price` |
+| **EV²** | Mkt Cap² + Dívida¹ − Caixa¹ | Fórmula simplificada; inclui Preferred Stock e Minority Interest quando disponíveis |
+| **EV/EBITDA²** | EV² ÷ EBITDA¹ | Apenas quando EBITDA > 0 |
+| **EV/Vendas²** | EV² ÷ Receita¹ | Apenas quando Receita USD ≥ $100K |
+| **FCF/Vendas²** | FCF¹ ÷ Receita¹ | |
+| **FCF/EBITDA²** | FCF¹ ÷ EBITDA¹ | |
+| **Mg EBITDA²** | EBITDA¹ ÷ Receita¹ | Em % |
+| **Mg Bruta²** | Lucro Bruto¹ ÷ Receita¹ | Em % |
+| **Mg Líq²** | Lucro Líquido¹ ÷ Receita¹ | Em % |
+| **Rec USD²** | Receita¹ × FX→USD¹ | Conversão para USD pela taxa do período |
+| **EV USD²** | EV² × FX→USD¹ | Conversão para USD pela taxa do período |
+
+### 14.3 Metodologia para Ano Corrente (FY2026)
+
+A partir de FY2026 (ano corrente), a metodologia **combina dados de mercado atuais com dados financeiros históricos** para o cálculo dos múltiplos:
+
+| Componente | Fonte | Natureza Temporal |
+|-----------|-------|-------------------|
+| **Preço da ação** (`close_price`) | Yahoo Finance — preço de fechamento mais recente | **Dado atual (mercado)** |
+| **Ações em circulação** (`shares_outstanding_current`) | Yahoo Finance — `get_info()` | **Dado atual (mercado)** |
+| **Market Cap** | Preço atual × Ações atuais | **Calculado com dados atuais** |
+| **Dívida, Caixa** (para EV) | Último balanço disponível (tipicamente FY2025 ou Q mais recente) | **Dado histórico** |
+| **Enterprise Value** | Market Cap (atual) + Dívida (histórico) − Caixa (histórico) | **Misto: mercado atual + balanço histórico** |
+| **Receita, EBITDA, FCF** (denominadores) | TTM (soma dos 4 últimos trimestres) ou FY mais recente | **Dado histórico/TTM** |
+| **Múltiplos** (EV/EBITDA, EV/Vendas, etc.) | EV (misto) ÷ Fundamentals (histórico) | **Híbrido** |
+
+**Racional:** Para o ano corrente, os demonstrativos financeiros anuais ainda não foram publicados. A melhor estimativa de valor de mercado usa preços e ações em circulação **atuais**, enquanto os denominadores dos múltiplos usam os dados financeiros mais recentes disponíveis (TTM ou FY anterior). Essa abordagem é equivalente à utilizada por provedores de dados como Bloomberg, Capital IQ e Damodaran.
+
+**Implicação:** Os múltiplos de FY2026 refletem a avaliação **corrente** do mercado sobre fundamentos **recentes**, sendo especialmente úteis para análise de valuation em tempo real.
+
+### 14.4 Dados na Base Analítica (Estudo Anloc)
+
+A Base Analítica exibe **todos os anos disponíveis** (tipicamente 2021–2025 + TTM):
+- **Registros anuais**: 1 linha por empresa × ano fiscal, com dados do demonstrativo anual
+- **Registro TTM**: 1 linha por empresa, com soma dos 4 últimos trimestres (identificado com badge TTM)
+- **Todas as colunas**: dados brutos¹ + calculados² + geolocalização (país, região, moeda)
+- **Exportação CSV**: todos os campos, todos os períodos, formato analítico (1 linha por empresa × período)
+
+---
+
 *Documento atualizado em março/2026. Scripts: `fetch_historical_financials.py`, `calculate_ttm.py`*

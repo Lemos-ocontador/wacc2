@@ -149,6 +149,7 @@
             <li><a href="#qualidade-mcap">11. Correções de Qualidade — Market Cap</a></li>
             <li><a href="#resumo">12. Resumo: Raw vs Calculado</a></li>
             <li><a href="#qualidade">13. Qualidade dos Dados</a></li>
+            <li><a href="#estudo-anloc">14. Estudo Anloc — Metodologia da Base Analítica</a></li>
         </ul>
     </div>
 
@@ -682,8 +683,60 @@
         </table>
     </div>
 
+    <!-- 14. Estudo Anloc — Metodologia -->
+    <div class="section" id="estudo-anloc">
+        <h2>14. Estudo Anloc — Metodologia da Base Analítica</h2>
+
+        <h3>14.1 Legenda dos Campos</h3>
+        <p>Na Base Analítica, cada coluna de dados exibe um indicador sobrescrito:</p>
+        <table>
+            <thead><tr><th>Indicador</th><th>Tipo</th><th>Descrição</th><th>Exemplos</th></tr></thead>
+            <tbody>
+                <tr><td><strong><sup>1</sup></strong></td><td>Dado bruto</td><td>Extraído diretamente do Yahoo Finance sem transformação</td><td>Ações, Preço, Receita, EBITDA, FCF, Dívida, Caixa</td></tr>
+                <tr><td><strong><sup>2</sup></strong></td><td>Calculado</td><td>Derivado pela aplicação a partir dos dados brutos<sup>1</sup></td><td>Mkt Cap, EV, Múltiplos, Margens, valores USD</td></tr>
+            </tbody>
+        </table>
+        <p>Campos calculados<sup>2</sup> possuem um ícone <span style="color:var(--accent);">ℹ</span> no cabeçalho que exibe a fórmula ao passar o mouse.</p>
+
+        <h3>14.2 Fórmulas dos Campos Calculados</h3>
+        <table>
+            <thead><tr><th>Campo</th><th>Fórmula</th><th>Observação</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Mkt Cap<sup>2</sup></strong></td><td>Ações<sup>1</sup> × Preço<sup>1</sup></td><td><code>shares_outstanding_current × close_price</code></td></tr>
+                <tr><td><strong>EV<sup>2</sup></strong></td><td>Mkt Cap<sup>2</sup> + Dívida<sup>1</sup> − Caixa<sup>1</sup></td><td>+ Preferred Stock + Minority Interest quando disponíveis</td></tr>
+                <tr><td><strong>EV/EBITDA<sup>2</sup></strong></td><td>EV<sup>2</sup> ÷ EBITDA<sup>1</sup></td><td>Apenas quando EBITDA &gt; 0</td></tr>
+                <tr><td><strong>EV/Vendas<sup>2</sup></strong></td><td>EV<sup>2</sup> ÷ Receita<sup>1</sup></td><td>Apenas quando Receita USD ≥ $100K</td></tr>
+                <tr><td><strong>FCF/Vendas<sup>2</sup></strong></td><td>FCF<sup>1</sup> ÷ Receita<sup>1</sup></td><td></td></tr>
+                <tr><td><strong>FCF/EBITDA<sup>2</sup></strong></td><td>FCF<sup>1</sup> ÷ EBITDA<sup>1</sup></td><td></td></tr>
+                <tr><td><strong>Mg EBITDA<sup>2</sup></strong></td><td>EBITDA<sup>1</sup> ÷ Receita<sup>1</sup></td><td>Em %</td></tr>
+                <tr><td><strong>Mg Bruta<sup>2</sup></strong></td><td>Lucro Bruto<sup>1</sup> ÷ Receita<sup>1</sup></td><td>Em %</td></tr>
+                <tr><td><strong>Mg Líq<sup>2</sup></strong></td><td>Lucro Líquido<sup>1</sup> ÷ Receita<sup>1</sup></td><td>Em %</td></tr>
+                <tr><td><strong>Rec USD<sup>2</sup></strong></td><td>Receita<sup>1</sup> × FX→USD<sup>1</sup></td><td>Conversão pela taxa do período</td></tr>
+                <tr><td><strong>EV USD<sup>2</sup></strong></td><td>EV<sup>2</sup> × FX→USD<sup>1</sup></td><td>Conversão pela taxa do período</td></tr>
+            </tbody>
+        </table>
+
+        <h3>14.3 Metodologia para Ano Corrente (FY2026)</h3>
+        <div class="note">
+            <strong>Abordagem híbrida:</strong> A partir de FY2026 (ano corrente), os múltiplos combinam <strong>dados de mercado atuais</strong> (preço e ações) para o Market Cap com <strong>dados financeiros históricos</strong> (TTM ou FY anterior) para os denominadores.
+        </div>
+        <table>
+            <thead><tr><th>Componente</th><th>Fonte</th><th>Natureza Temporal</th></tr></thead>
+            <tbody>
+                <tr><td>Preço da ação</td><td>Yahoo Finance — preço de fechamento mais recente</td><td><strong>Dado atual (mercado)</strong></td></tr>
+                <tr><td>Ações em circulação</td><td>Yahoo Finance — <code>get_info()</code></td><td><strong>Dado atual (mercado)</strong></td></tr>
+                <tr><td>Market Cap</td><td>Preço atual × Ações atuais</td><td><strong>Calculado com dados atuais</strong></td></tr>
+                <tr><td>Dívida, Caixa (p/ EV)</td><td>Último balanço disponível (FY2025 ou Q mais recente)</td><td><strong>Dado histórico</strong></td></tr>
+                <tr><td>Enterprise Value</td><td>Market Cap (atual) + Dívida (hist.) − Caixa (hist.)</td><td><strong>Misto: mercado + balanço</strong></td></tr>
+                <tr><td>Receita, EBITDA, FCF</td><td>TTM (soma 4Q) ou FY mais recente</td><td><strong>Dado histórico/TTM</strong></td></tr>
+                <tr><td>Múltiplos</td><td>EV (misto) ÷ Fundamentals (histórico)</td><td><strong>Híbrido</strong></td></tr>
+            </tbody>
+        </table>
+        <p><strong>Racional:</strong> Para o ano corrente, os demonstrativos financeiros anuais ainda não foram publicados. A melhor estimativa de valor de mercado usa preços e ações atuais, enquanto os denominadores usam dados financeiros recentes (TTM ou FY anterior). Abordagem equivalente a Bloomberg, Capital IQ e Damodaran.</p>
+    </div>
+
     <div style="text-align:center; padding: 20px 0; color: var(--text2); font-size: 12px;">
-        Documento atualizado em março/2026 (v2 — pós-auditoria qualidade) • Scripts: <code>fetch_historical_financials.py</code>, <code>calculate_ttm.py</code>
+        Documento atualizado em março/2026 (v3 — Base Analítica + metodologia FY2026) • Scripts: <code>fetch_historical_financials.py</code>, <code>calculate_ttm.py</code>
     </div>
 </div>
 </body>

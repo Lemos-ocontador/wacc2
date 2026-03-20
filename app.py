@@ -5153,6 +5153,1095 @@ def api_etfs_export():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ============================================================
+# ESTUDO ANLOC — Múltiplos setoriais com filtros configuráveis
+# ============================================================
+
+@app.route('/estudoanloc')
+def estudoanloc_page():
+    """Página de estudo de múltiplos setoriais Anloc."""
+    return render_template('estudoanloc.html')
+
+
+@app.route('/api/estudoanloc/filters', methods=['GET'])
+def api_estudoanloc_filters():
+    """Retorna opções de filtro disponíveis para o estudo."""
+    try:
+        conn = get_db()
+        sectors = [r[0] for r in conn.execute(
+            "SELECT DISTINCT cbd.yahoo_sector FROM company_basic_data cbd WHERE cbd.yahoo_sector IS NOT NULL ORDER BY cbd.yahoo_sector"
+        ).fetchall()]
+
+        years = [r[0] for r in conn.execute(
+            """SELECT fiscal_year FROM company_financials_historical
+               WHERE period_type='annual' AND fiscal_year >= 2021
+                 AND total_revenue IS NOT NULL AND normalized_ebitda IS NOT NULL
+               GROUP BY fiscal_year HAVING COUNT(*) >= 100
+               ORDER BY fiscal_year DESC"""
+        ).fetchall()]
+
+        # Adicionar ano corrente para "múltiplos atuais" (EV atual + últimos financeiros)
+        import datetime
+        current_year = datetime.date.today().year
+        if current_year not in years:
+            years = [current_year] + years
+
+        regions = [r[0] for r in conn.execute(
+            "SELECT DISTINCT dg.sub_group FROM damodaran_global dg WHERE dg.sub_group IS NOT NULL ORDER BY dg.sub_group"
+        ).fetchall()]
+
+        conn.close()
+        return jsonify({
+            'success': True,
+            'sectors': sectors,
+            'years': years,
+            'regions': regions
+        })
+    except Exception as e:
+        logger.error(f"Erro estudoanloc filters: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/industries', methods=['GET'])
+def api_estudoanloc_industries():
+    """Retorna indústrias disponíveis para um setor específico."""
+    try:
+        sector = request.args.get('sector', '').strip()
+        if not sector:
+            return jsonify({'success': True, 'industries': []})
+
+        conn = get_db()
+        industries = [r[0] for r in conn.execute(
+            "SELECT DISTINCT cbd.yahoo_industry FROM company_basic_data cbd WHERE cbd.yahoo_sector = ? AND cbd.yahoo_industry IS NOT NULL ORDER BY cbd.yahoo_industry",
+            (sector,)
+        ).fetchall()]
+        conn.close()
+
+        return jsonify({'success': True, 'industries': industries})
+    except Exception as e:
+        logger.error(f"Erro estudoanloc industries: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/calculate', methods=['POST'])
+def api_estudoanloc_calculate():
+    """Calcula múltiplos setoriais com filtros configuráveis e fallback TTM."""
+    try:
+        data = request.get_json()
+        sector = data.get('sector', '').strip()
+        fiscal_year = int(data.get('fiscal_year', 2025))
+        use_ttm_fallback = data.get('use_ttm_fallback', True)
+        min_ttm_quarters = int(data.get('min_ttm_quarters', 4))
+
+        # Filtros configuráveis (4 camadas)
+        filters = data.get('filters', {})
+        min_ev_usd = float(filters.get('min_ev_usd', 100_000_000))
+        max_ev_ebitda = float(filters.get('max_ev_ebitda', 60))
+        require_positive_ebitda = filters.get('require_positive_ebitda', True)
+        min_history_years = int(filters.get('min_history_years', 0))
+        selected_industries = data.get('industries', [])
+
+        if not sector:
+            return jsonify({'success': False, 'error': 'Setor é obrigatório'}), 400
+
+        import datetime
+        current_year = datetime.date.today().year
+        is_current_multiples = (fiscal_year >= current_year)
+
+        conn = get_db()
+
+        # === STEP 1: Carregar dados ===
+        industry_filter = ""
+        if selected_industries:
+            placeholders = ','.join('?' * len(selected_industries))
+            industry_filter = f"AND cbd.yahoo_industry IN ({placeholders})"
+
+        if is_current_multiples:
+            # --- MODO MÚLTIPLOS ATUAIS (FY corrente/futuro) ---
+            # Financeiros: TTM mais recente (Q2025/Q2026) || Annual do ano anterior
+            # EV: cbd.enterprise_value (EV de mercado atual)
+            # 1a) TTM: busca último quarterly com TTM completo (fiscal_year mais recente)
+            params_ttm = [min_ttm_quarters, sector]
+            if selected_industries:
+                params_ttm.extend(selected_industries)
+
+            ttm_sql = f"""
+                WITH latest_q AS (
+                    SELECT q.company_basic_data_id AS cid,
+                           MAX(q.period_date) AS max_date
+                    FROM company_financials_historical q
+                    JOIN company_basic_data cbd2 ON q.company_basic_data_id = cbd2.id
+                    WHERE q.period_type = 'quarterly'
+                      AND q.ttm_quarters_count >= ?
+                      AND q.total_revenue_ttm IS NOT NULL
+                      AND q.ebitda_ttm IS NOT NULL
+                      AND cbd2.yahoo_sector = ?
+                    GROUP BY q.company_basic_data_id
+                )
+                SELECT q.company_basic_data_id AS cid,
+                       cbd.ticker, cbd.yahoo_industry AS industry,
+                       cbd.yahoo_country AS country,
+                       dg.sub_group AS region,
+                       q.total_revenue_ttm AS revenue,
+                       q.ebitda_ttm AS ebitda,
+                       q.ebitda_ttm AS ebitda_raw,
+                       q.free_cash_flow_ttm AS fcf,
+                       cbd.enterprise_value AS ev,
+                       CASE WHEN q.fx_rate_to_usd IS NOT NULL AND q.fx_rate_to_usd > 0
+                            THEN cbd.enterprise_value * q.fx_rate_to_usd
+                            ELSE NULL END AS ev_usd,
+                       q.total_revenue_usd AS revenue_usd,
+                       q.ebitda_usd AS ebitda_usd,
+                       q.free_cash_flow_usd AS fcf_usd,
+                       'Current+TTM' AS data_source
+                FROM company_financials_historical q
+                JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
+                JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE q.period_type = 'quarterly'
+                  AND cbd.enterprise_value IS NOT NULL
+                  {industry_filter}
+            """
+            df_ttm = pd.read_sql_query(ttm_sql, conn, params=params_ttm)
+
+            # 1b) Annual fallback: ano anterior com EV atual
+            prev_year = fiscal_year - 1
+            ttm_cids = set(df_ttm['cid'].tolist()) if not df_ttm.empty else set()
+
+            params_annual = [prev_year, sector]
+            if selected_industries:
+                params_annual.extend(selected_industries)
+
+            annual_sql = f"""
+                SELECT cfh.company_basic_data_id AS cid,
+                       cbd.ticker, cbd.yahoo_industry AS industry,
+                       cbd.yahoo_country AS country,
+                       dg.sub_group AS region,
+                       cfh.total_revenue AS revenue,
+                       cfh.normalized_ebitda AS ebitda,
+                       cfh.ebitda AS ebitda_raw,
+                       cfh.free_cash_flow AS fcf,
+                       cbd.enterprise_value AS ev,
+                       CASE WHEN cfh.fx_rate_to_usd IS NOT NULL AND cfh.fx_rate_to_usd > 0
+                            THEN cbd.enterprise_value * cfh.fx_rate_to_usd
+                            ELSE NULL END AS ev_usd,
+                       cfh.total_revenue_usd AS revenue_usd,
+                       cfh.ebitda_usd AS ebitda_usd,
+                       cfh.free_cash_flow_usd AS fcf_usd,
+                       'Current+FY{prev_year}' AS data_source
+                FROM company_financials_historical cfh
+                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cfh.period_type = 'annual'
+                  AND cfh.fiscal_year = ?
+                  AND cbd.yahoo_sector = ?
+                  AND cbd.enterprise_value IS NOT NULL
+                  {industry_filter}
+            """
+            df_annual = pd.read_sql_query(annual_sql, conn, params=params_annual)
+
+            # Excluir do annual quem já tem TTM
+            if not df_annual.empty and ttm_cids:
+                df_annual = df_annual[~df_annual['cid'].isin(ttm_cids)]
+
+        else:
+            # --- MODO HISTÓRICO (ano com dados consolidados) ---
+            params_annual_sql = [fiscal_year, sector]
+            if selected_industries:
+                params_annual_sql.extend(selected_industries)
+
+            annual_sql = f"""
+                SELECT cfh.company_basic_data_id AS cid,
+                       cbd.ticker, cbd.yahoo_industry AS industry,
+                       cbd.yahoo_country AS country,
+                       dg.sub_group AS region,
+                       cfh.total_revenue AS revenue,
+                       cfh.normalized_ebitda AS ebitda,
+                       cfh.ebitda AS ebitda_raw,
+                       cfh.free_cash_flow AS fcf,
+                       cfh.enterprise_value_estimated AS ev,
+                       cfh.enterprise_value_usd AS ev_usd,
+                       cfh.total_revenue_usd AS revenue_usd,
+                       cfh.ebitda_usd AS ebitda_usd,
+                       cfh.free_cash_flow_usd AS fcf_usd,
+                       'Annual' AS data_source
+                FROM company_financials_historical cfh
+                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cfh.period_type = 'annual'
+                  AND cfh.fiscal_year = ?
+                  AND cbd.yahoo_sector = ?
+                  {industry_filter}
+            """
+            df_annual = pd.read_sql_query(annual_sql, conn, params=params_annual_sql)
+
+            # === STEP 2: Carregar dados TTM (fallback) ===
+            df_ttm = pd.DataFrame()
+            if use_ttm_fallback:
+                annual_cids = set(df_annual['cid'].tolist()) if not df_annual.empty else set()
+
+                ttm_sql = f"""
+                    WITH latest_q AS (
+                        SELECT q.company_basic_data_id AS cid,
+                               MAX(q.period_date) AS max_date
+                        FROM company_financials_historical q
+                        JOIN company_basic_data cbd2 ON q.company_basic_data_id = cbd2.id
+                        WHERE q.period_type = 'quarterly'
+                          AND q.fiscal_year = ?
+                          AND q.ttm_quarters_count >= ?
+                          AND q.total_revenue_ttm IS NOT NULL
+                          AND cbd2.yahoo_sector = ?
+                        GROUP BY q.company_basic_data_id
+                    )
+                    SELECT q.company_basic_data_id AS cid,
+                           cbd.ticker, cbd.yahoo_industry AS industry,
+                           cbd.yahoo_country AS country,
+                           dg.sub_group AS region,
+                           q.total_revenue_ttm AS revenue,
+                           q.ebitda_ttm AS ebitda,
+                           q.ebitda_ttm AS ebitda_raw,
+                           q.free_cash_flow_ttm AS fcf,
+                           q.enterprise_value_estimated AS ev,
+                           q.enterprise_value_usd AS ev_usd,
+                           q.total_revenue_usd AS revenue_usd,
+                           q.ebitda_usd AS ebitda_usd,
+                           q.free_cash_flow_usd AS fcf_usd,
+                           'TTM' AS data_source
+                    FROM company_financials_historical q
+                    JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
+                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE q.period_type = 'quarterly'
+                      AND q.fiscal_year = ?
+                      AND q.ttm_quarters_count >= ?
+                      {industry_filter}
+                """
+                params_ttm = [fiscal_year, min_ttm_quarters, sector, fiscal_year, min_ttm_quarters]
+                if selected_industries:
+                    params_ttm.extend(selected_industries)
+
+                df_ttm_raw = pd.read_sql_query(ttm_sql, conn, params=params_ttm)
+                # Excluir empresas que já têm dado anual
+                if not df_ttm_raw.empty and annual_cids:
+                    df_ttm = df_ttm_raw[~df_ttm_raw['cid'].isin(annual_cids)]
+                elif not df_ttm_raw.empty:
+                    df_ttm = df_ttm_raw
+
+        conn.close()
+
+        # === STEP 3: Combinar annual + TTM ===
+        frames = [df_annual]
+        if not df_ttm.empty:
+            frames.append(df_ttm)
+        df = pd.concat(frames, ignore_index=True)
+
+        if df.empty:
+            empty_stats = {'label': '', 'n': 0, 'n_annual': 0, 'n_ttm': 0,
+                           'ev_ebitda': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0},
+                           'ev_revenue': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0},
+                           'fcf_revenue': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0},
+                           'fcf_ebitda': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0}}
+            return jsonify({
+                'success': True,
+                'summary': {'global': {**empty_stats, 'label': f'{sector} — Global'},
+                            'latam': {**empty_stats, 'label': f'{sector} — LATAM'},
+                            'brasil': {**empty_stats, 'label': f'{sector} — Brasil'}},
+                'by_industry': [],
+                'by_geography': [],
+                'companies': [],
+                'metadata': {'total_before_filters': 0, 'total_after_filters': 0, 'filters_applied': [],
+                             'sector': sector, 'fiscal_year': fiscal_year, 'use_ttm_fallback': use_ttm_fallback,
+                             'min_ttm_quarters': min_ttm_quarters,
+                             'filters_config': {'min_ev_usd': min_ev_usd, 'max_ev_ebitda': max_ev_ebitda,
+                                                'require_positive_ebitda': require_positive_ebitda, 'min_history_years': min_history_years}}
+            })
+
+        total_before = len(df)
+        filters_applied = []
+
+        # === STEP 4: Aplicar filtros (4 camadas) ===
+        # Camada 1: Dados mínimos (receita e EBITDA não nulos)
+        mask = df['revenue'].notna() & df['ebitda'].notna()
+        n_removed = (~mask).sum()
+        if n_removed > 0:
+            filters_applied.append(f"Camada 1 — Dados mínimos: -{n_removed} (receita ou EBITDA nulo)")
+        df = df[mask]
+
+        # Camada 2: Tamanho mínimo (EV > threshold em USD)
+        if min_ev_usd > 0:
+            ev_col = 'ev_usd' if df['ev_usd'].notna().sum() > df['ev'].notna().sum() * 0.5 else 'ev'
+            mask_ev = df[ev_col].notna() & (df[ev_col] >= min_ev_usd)
+            n_removed = len(df) - mask_ev.sum()
+            if n_removed > 0:
+                filters_applied.append(f"Camada 2 — EV mínimo (USD {min_ev_usd/1e6:.0f}M): -{n_removed}")
+            df = df[mask_ev]
+
+        # Calcular múltiplos
+        df['ev_ebitda'] = np.where(
+            (df['ebitda'].notna()) & (df['ebitda'] > 0) & (df['ev'].notna()),
+            df['ev'] / df['ebitda'], np.nan
+        )
+        df['ev_revenue'] = np.where(
+            (df['revenue'].notna()) & (df['revenue'] > 0) & (df['ev'].notna()),
+            df['ev'] / df['revenue'], np.nan
+        )
+        df['fcf_revenue'] = np.where(
+            (df['revenue'].notna()) & (df['revenue'] > 0) & (df['fcf'].notna()),
+            df['fcf'] / df['revenue'], np.nan
+        )
+        df['fcf_ebitda'] = np.where(
+            (df['ebitda'].notna()) & (df['ebitda'] > 0) & (df['fcf'].notna()),
+            df['fcf'] / df['ebitda'], np.nan
+        )
+
+        # Camada 3: EBITDA positivo para EV/EBITDA
+        if require_positive_ebitda:
+            n_neg = (df['ebitda'] <= 0).sum()
+            if n_neg > 0:
+                filters_applied.append(f"Camada 3 — EBITDA negativo: {n_neg} empresas (excluídas do EV/EBITDA)")
+            # Não remove linhas, apenas marca ev_ebitda como NaN (já feito acima)
+
+        # Camada 4: Teto EV/EBITDA
+        if max_ev_ebitda > 0:
+            mask_cap = df['ev_ebitda'].notna() & (df['ev_ebitda'] > max_ev_ebitda)
+            n_capped = mask_cap.sum()
+            if n_capped > 0:
+                filters_applied.append(f"Camada 4 — Teto EV/EBITDA ({max_ev_ebitda:.0f}x): -{n_capped}")
+            df.loc[mask_cap, 'ev_ebitda'] = np.nan
+
+        total_after = len(df)
+
+        # === STEP 5: Calcular estatísticas ===
+        def calc_stats(subset, label):
+            """Calcula estatísticas para um subconjunto."""
+            n = len(subset)
+            if n == 0:
+                return {'label': label, 'n': 0, 'n_annual': 0, 'n_ttm': 0,
+                        'ev_ebitda': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0},
+                        'ev_revenue': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0},
+                        'fcf_revenue': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0, 'n_positive': 0, 'pct_positive': 0, 'median_positive': None},
+                        'fcf_ebitda': {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0, 'n_positive': 0, 'pct_positive': 0, 'median_positive': None}}
+
+            result = {'label': label, 'n': n}
+
+            for metric in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                valid = subset[metric].dropna()
+                nv = len(valid)
+                if nv == 0:
+                    result[metric] = {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0}
+                    continue
+
+                result[metric] = {
+                    'median': round(float(np.median(valid)), 4),
+                    'p25': round(float(np.percentile(valid, 25)), 4),
+                    'p75': round(float(np.percentile(valid, 75)), 4),
+                    'mean': round(float(np.mean(valid)), 4),
+                    'n': nv
+                }
+
+                # Para FCF metrics: stats adicionais
+                if metric.startswith('fcf'):
+                    positive = valid[valid > 0]
+                    result[metric]['n_positive'] = len(positive)
+                    result[metric]['pct_positive'] = round(len(positive) / nv * 100, 1) if nv > 0 else 0
+                    result[metric]['median_positive'] = round(float(np.median(positive)), 4) if len(positive) > 0 else None
+
+            # Fonte de dados
+            result['n_annual'] = int(subset['data_source'].isin(['Annual']).sum() + subset['data_source'].str.startswith('Current+FY').sum())
+            result['n_ttm'] = int(subset['data_source'].isin(['TTM', 'Current+TTM']).sum())
+            return result
+
+        # Global (setor inteiro)
+        summary_global = calc_stats(df, f'{sector} — Global')
+
+        # LATAM
+        df_latam = df[df['region'] == 'Latin America & Caribbean']
+        summary_latam = calc_stats(df_latam, f'{sector} — LATAM')
+
+        # Brasil
+        df_brasil = df[df['country'] == 'Brazil']
+        summary_brasil = calc_stats(df_brasil, f'{sector} — Brasil')
+
+        summary = {
+            'global': summary_global,
+            'latam': summary_latam,
+            'brasil': summary_brasil
+        }
+
+        # === STEP 6: Por indústria ===
+        by_industry = []
+        for ind in sorted(df['industry'].dropna().unique()):
+            sub = df[df['industry'] == ind]
+            if len(sub) >= 1:
+                stats = calc_stats(sub, ind)
+                # Sub-recortes geográficos por indústria
+                sub_latam = sub[sub['region'] == 'Latin America & Caribbean']
+                sub_brasil = sub[sub['country'] == 'Brazil']
+                stats['latam'] = calc_stats(sub_latam, f'{ind} — LATAM')
+                stats['brasil'] = calc_stats(sub_brasil, f'{ind} — Brasil')
+                by_industry.append(stats)
+
+        # === STEP 7: Por geografia ===
+        by_geography = []
+        for reg in sorted(df['region'].dropna().unique()):
+            sub = df[df['region'] == reg]
+            if len(sub) >= 1:
+                by_geography.append(calc_stats(sub, reg))
+
+        # === STEP 8: Lista de empresas (drill-down) ===
+        companies = []
+        for _, row in df.iterrows():
+            companies.append({
+                'cid': int(row['cid']),
+                'ticker': row['ticker'],
+                'industry': row['industry'],
+                'country': row['country'],
+                'region': row['region'],
+                'data_source': row['data_source'],
+                'revenue': round(float(row['revenue']), 0) if pd.notna(row['revenue']) else None,
+                'ebitda': round(float(row['ebitda']), 0) if pd.notna(row['ebitda']) else None,
+                'fcf': round(float(row['fcf']), 0) if pd.notna(row['fcf']) else None,
+                'ev': round(float(row['ev']), 0) if pd.notna(row['ev']) else None,
+                'ev_usd': round(float(row['ev_usd']), 0) if pd.notna(row['ev_usd']) else None,
+                'revenue_usd': round(float(row['revenue_usd']), 0) if pd.notna(row['revenue_usd']) else None,
+                'ebitda_usd': round(float(row['ebitda_usd']), 0) if pd.notna(row['ebitda_usd']) else None,
+                'fcf_usd': round(float(row['fcf_usd']), 0) if pd.notna(row['fcf_usd']) else None,
+                'ev_ebitda': round(float(row['ev_ebitda']), 2) if pd.notna(row['ev_ebitda']) else None,
+                'ev_revenue': round(float(row['ev_revenue']), 2) if pd.notna(row['ev_revenue']) else None,
+                'fcf_revenue': round(float(row['fcf_revenue']), 4) if pd.notna(row['fcf_revenue']) else None,
+                'fcf_ebitda': round(float(row['fcf_ebitda']), 4) if pd.notna(row['fcf_ebitda']) else None,
+            })
+
+        return jsonify({
+            'success': True,
+            'summary': summary,
+            'by_industry': by_industry,
+            'by_geography': by_geography,
+            'companies': companies,
+            'metadata': {
+                'sector': sector,
+                'fiscal_year': fiscal_year,
+                'use_ttm_fallback': use_ttm_fallback,
+                'min_ttm_quarters': min_ttm_quarters,
+                'total_before_filters': total_before,
+                'total_after_filters': total_after,
+                'filters_applied': filters_applied,
+                'filters_config': {
+                    'min_ev_usd': min_ev_usd,
+                    'max_ev_ebitda': max_ev_ebitda,
+                    'require_positive_ebitda': require_positive_ebitda,
+                    'min_history_years': min_history_years
+                }
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc calculate: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/evolution', methods=['POST'])
+def api_estudoanloc_evolution():
+    """Calcula evolução de múltiplos ao longo de vários anos."""
+    try:
+        data = request.get_json()
+        sector = data.get('sector', '').strip()
+        years = data.get('years', [])
+        use_ttm_fallback = data.get('use_ttm_fallback', True)
+        min_ttm_quarters = int(data.get('min_ttm_quarters', 4))
+        filters = data.get('filters', {})
+        min_ev_usd = float(filters.get('min_ev_usd', 100_000_000))
+        max_ev_ebitda = float(filters.get('max_ev_ebitda', 60))
+        require_positive_ebitda = filters.get('require_positive_ebitda', True)
+        selected_industries = data.get('industries', [])
+
+        if not sector or not years:
+            return jsonify({'success': False, 'error': 'Setor e anos são obrigatórios'}), 400
+
+        years = [int(y) for y in years]
+        conn = get_db()
+
+        import datetime
+        current_year = datetime.date.today().year
+
+        industry_filter = ""
+        if selected_industries:
+            placeholders = ','.join('?' * len(selected_industries))
+            industry_filter = f"AND cbd.yahoo_industry IN ({placeholders})"
+
+        def calc_year_stats(subset):
+            """Calcula estatísticas para um subconjunto."""
+            n = len(subset)
+            result = {'n': n, 'n_annual': 0, 'n_ttm': 0}
+            if n == 0:
+                for metric in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                    result[metric] = {'median': None, 'p25': None, 'p75': None, 'n': 0}
+                return result
+
+            result['n_annual'] = int(subset['data_source'].isin(['Annual']).sum() + subset['data_source'].str.startswith('Current+FY').sum())
+            result['n_ttm'] = int(subset['data_source'].isin(['TTM', 'Current+TTM']).sum())
+
+            for metric in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                valid = subset[metric].dropna()
+                nv = len(valid)
+                if nv == 0:
+                    result[metric] = {'median': None, 'p25': None, 'p75': None, 'n': 0}
+                else:
+                    result[metric] = {
+                        'median': round(float(np.median(valid)), 4),
+                        'p25': round(float(np.percentile(valid, 25)), 4),
+                        'p75': round(float(np.percentile(valid, 75)), 4),
+                        'n': nv
+                    }
+                    if metric.startswith('fcf'):
+                        positive = valid[valid > 0]
+                        result[metric]['pct_positive'] = round(len(positive) / nv * 100, 1) if nv > 0 else 0
+            return result
+
+        evolution = []
+        for yr in sorted(years):
+            is_current = (yr >= current_year)
+
+            if is_current:
+                # --- MODO MÚLTIPLOS ATUAIS ---
+                params_ttm_evo = [min_ttm_quarters, sector]
+                if selected_industries:
+                    params_ttm_evo.extend(selected_industries)
+
+                ttm_evo_sql = f"""
+                    WITH latest_q AS (
+                        SELECT q.company_basic_data_id AS cid, MAX(q.period_date) AS max_date
+                        FROM company_financials_historical q
+                        JOIN company_basic_data cbd2 ON q.company_basic_data_id = cbd2.id
+                        WHERE q.period_type = 'quarterly'
+                          AND q.ttm_quarters_count >= ? AND q.total_revenue_ttm IS NOT NULL
+                          AND q.ebitda_ttm IS NOT NULL AND cbd2.yahoo_sector = ?
+                        GROUP BY q.company_basic_data_id
+                    )
+                    SELECT q.company_basic_data_id AS cid,
+                           cbd.yahoo_country AS country, dg.sub_group AS region,
+                           q.total_revenue_ttm AS revenue, q.ebitda_ttm AS ebitda,
+                           q.free_cash_flow_ttm AS fcf, cbd.enterprise_value AS ev,
+                           CASE WHEN q.fx_rate_to_usd IS NOT NULL AND q.fx_rate_to_usd > 0
+                                THEN cbd.enterprise_value * q.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           'Current+TTM' AS data_source
+                    FROM company_financials_historical q
+                    JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
+                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE q.period_type = 'quarterly' AND cbd.enterprise_value IS NOT NULL
+                    {industry_filter}
+                """
+                df_t = pd.read_sql_query(ttm_evo_sql, conn, params=params_ttm_evo)
+
+                prev_year = yr - 1
+                ttm_cids = set(df_t['cid'].tolist()) if not df_t.empty else set()
+                params_a_evo = [prev_year, sector]
+                if selected_industries:
+                    params_a_evo.extend(selected_industries)
+                annual_evo_sql = f"""
+                    SELECT cfh.company_basic_data_id AS cid,
+                           cbd.yahoo_country AS country, dg.sub_group AS region,
+                           cfh.total_revenue AS revenue, cfh.normalized_ebitda AS ebitda,
+                           cfh.free_cash_flow AS fcf, cbd.enterprise_value AS ev,
+                           CASE WHEN cfh.fx_rate_to_usd IS NOT NULL AND cfh.fx_rate_to_usd > 0
+                                THEN cbd.enterprise_value * cfh.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           'Current+FY{prev_year}' AS data_source
+                    FROM company_financials_historical cfh
+                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE cfh.period_type = 'annual' AND cfh.fiscal_year = ? AND cbd.yahoo_sector = ?
+                      AND cbd.enterprise_value IS NOT NULL
+                    {industry_filter}
+                """
+                df_a = pd.read_sql_query(annual_evo_sql, conn, params=params_a_evo)
+                if not df_a.empty and ttm_cids:
+                    df_a = df_a[~df_a['cid'].isin(ttm_cids)]
+
+            else:
+                # --- MODO HISTÓRICO ---
+                params_a = [yr, sector]
+                if selected_industries:
+                    params_a.extend(selected_industries)
+                annual_sql = f"""
+                    SELECT cfh.company_basic_data_id AS cid,
+                           cbd.yahoo_country AS country, dg.sub_group AS region,
+                           cfh.total_revenue AS revenue, cfh.normalized_ebitda AS ebitda,
+                           cfh.free_cash_flow AS fcf, cfh.enterprise_value_estimated AS ev,
+                           cfh.enterprise_value_usd AS ev_usd, 'Annual' AS data_source
+                    FROM company_financials_historical cfh
+                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE cfh.period_type = 'annual' AND cfh.fiscal_year = ? AND cbd.yahoo_sector = ?
+                    {industry_filter}
+                """
+                df_a = pd.read_sql_query(annual_sql, conn, params=params_a)
+
+                df_t = pd.DataFrame()
+                if use_ttm_fallback:
+                    annual_cids = set(df_a['cid'].tolist()) if not df_a.empty else set()
+                    params_t = [yr, min_ttm_quarters, sector, yr, min_ttm_quarters]
+                    if selected_industries:
+                        params_t.extend(selected_industries)
+                    ttm_sql = f"""
+                        WITH latest_q AS (
+                            SELECT q.company_basic_data_id AS cid, MAX(q.period_date) AS max_date
+                            FROM company_financials_historical q
+                            JOIN company_basic_data cbd2 ON q.company_basic_data_id = cbd2.id
+                            WHERE q.period_type = 'quarterly' AND q.fiscal_year = ?
+                              AND q.ttm_quarters_count >= ? AND q.total_revenue_ttm IS NOT NULL
+                              AND cbd2.yahoo_sector = ?
+                            GROUP BY q.company_basic_data_id
+                        )
+                        SELECT q.company_basic_data_id AS cid,
+                               cbd.yahoo_country AS country, dg.sub_group AS region,
+                               q.total_revenue_ttm AS revenue, q.ebitda_ttm AS ebitda,
+                               q.free_cash_flow_ttm AS fcf, q.enterprise_value_estimated AS ev,
+                               q.enterprise_value_usd AS ev_usd, 'TTM' AS data_source
+                        FROM company_financials_historical q
+                        JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
+                        JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                        LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                        WHERE q.period_type = 'quarterly' AND q.fiscal_year = ? AND q.ttm_quarters_count >= ?
+                        {industry_filter}
+                    """
+                    df_t_raw = pd.read_sql_query(ttm_sql, conn, params=params_t)
+                    if not df_t_raw.empty and annual_cids:
+                        df_t = df_t_raw[~df_t_raw['cid'].isin(annual_cids)]
+                    elif not df_t_raw.empty:
+                        df_t = df_t_raw
+
+            frames = [df_a]
+            if not df_t.empty:
+                frames.append(df_t)
+            df = pd.concat(frames, ignore_index=True)
+
+            if df.empty:
+                evolution.append({'year': yr, 'global': calc_year_stats(pd.DataFrame()),
+                                  'latam': calc_year_stats(pd.DataFrame()),
+                                  'brasil': calc_year_stats(pd.DataFrame())})
+                continue
+
+            # Apply filters
+            df = df[df['revenue'].notna() & df['ebitda'].notna()]
+            if min_ev_usd > 0:
+                ev_col = 'ev_usd' if df['ev_usd'].notna().sum() > df['ev'].notna().sum() * 0.5 else 'ev'
+                df = df[df[ev_col].notna() & (df[ev_col] >= min_ev_usd)]
+
+            # Calc multiples
+            df['ev_ebitda'] = np.where((df['ebitda'] > 0) & df['ev'].notna(), df['ev'] / df['ebitda'], np.nan)
+            df['ev_revenue'] = np.where((df['revenue'] > 0) & df['ev'].notna(), df['ev'] / df['revenue'], np.nan)
+            df['fcf_revenue'] = np.where((df['revenue'] > 0) & df['fcf'].notna(), df['fcf'] / df['revenue'], np.nan)
+            df['fcf_ebitda'] = np.where((df['ebitda'] > 0) & df['fcf'].notna(), df['fcf'] / df['ebitda'], np.nan)
+
+            if max_ev_ebitda > 0:
+                df.loc[df['ev_ebitda'].notna() & (df['ev_ebitda'] > max_ev_ebitda), 'ev_ebitda'] = np.nan
+
+            df_latam = df[df['region'] == 'Latin America & Caribbean']
+            df_brasil = df[df['country'] == 'Brazil']
+
+            evolution.append({
+                'year': yr,
+                'global': calc_year_stats(df),
+                'latam': calc_year_stats(df_latam),
+                'brasil': calc_year_stats(df_brasil)
+            })
+
+        conn.close()
+
+        return jsonify({'success': True, 'evolution': evolution,
+                        'metadata': {'sector': sector, 'years': sorted(years)}})
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc evolution: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/company_detail', methods=['POST'])
+def api_estudoanloc_company_detail():
+    """Retorna histórico multi-ano de uma empresa para drill-down."""
+    try:
+        data = request.get_json()
+        cid = int(data.get('cid', 0))
+        if not cid:
+            return jsonify({'success': False, 'error': 'cid é obrigatório'}), 400
+
+        conn = get_db()
+
+        # Dados básicos
+        basic = conn.execute("""
+            SELECT cbd.ticker, cbd.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
+                   cbd.yahoo_country, cbd.currency, cbd.market_cap, cbd.enterprise_value,
+                   cbd.yahoo_website, dg.sub_group AS region
+            FROM company_basic_data cbd
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cbd.id = ?
+        """, [cid]).fetchone()
+
+        if not basic:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Empresa não encontrada'}), 404
+
+        cols = ['ticker', 'company_name', 'sector', 'industry', 'country', 'currency',
+                'market_cap', 'enterprise_value', 'website', 'region']
+        company_info = dict(zip(cols, basic))
+
+        # Histórico anual
+        annual_rows = conn.execute("""
+            SELECT cfh.fiscal_year,
+                   cfh.total_revenue, cfh.ebitda, cfh.normalized_ebitda, cfh.free_cash_flow,
+                   cfh.enterprise_value_estimated AS ev, cfh.enterprise_value_usd AS ev_usd,
+                   cfh.total_revenue_usd, cfh.ebitda_usd, cfh.free_cash_flow_usd,
+                   cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents AS total_cash
+            FROM company_financials_historical cfh
+            WHERE cfh.company_basic_data_id = ? AND cfh.period_type = 'annual'
+            ORDER BY cfh.fiscal_year
+        """, [cid]).fetchall()
+
+        annual_cols = ['fiscal_year', 'revenue', 'ebitda', 'normalized_ebitda', 'fcf',
+                       'ev', 'ev_usd', 'revenue_usd', 'ebitda_usd', 'fcf_usd',
+                       'net_income', 'total_debt', 'total_cash']
+        annual = []
+        for row in annual_rows:
+            d = dict(zip(annual_cols, row))
+            # Calcular múltiplos
+            ev = d['ev']
+            rev = d['revenue']
+            ebitda = d['normalized_ebitda'] or d['ebitda']
+            fcf = d['fcf']
+            d['ev_ebitda'] = round(ev / ebitda, 2) if ev and ebitda and ebitda > 0 else None
+            d['ev_revenue'] = round(ev / rev, 2) if ev and rev and rev > 0 else None
+            d['fcf_revenue'] = round(fcf / rev, 4) if fcf is not None and rev and rev > 0 else None
+            d['fcf_ebitda'] = round(fcf / ebitda, 4) if fcf is not None and ebitda and ebitda > 0 else None
+            annual.append(d)
+
+        # Último TTM
+        ttm_row = conn.execute("""
+            SELECT q.fiscal_year, q.fiscal_quarter, q.period_date,
+                   q.total_revenue_ttm AS revenue, q.ebitda_ttm AS ebitda,
+                   q.free_cash_flow_ttm AS fcf,
+                   q.enterprise_value_estimated AS ev, q.enterprise_value_usd AS ev_usd,
+                   q.total_revenue_usd, q.ebitda_usd, q.free_cash_flow_usd,
+                   q.ttm_quarters_count
+            FROM company_financials_historical q
+            WHERE q.company_basic_data_id = ? AND q.period_type = 'quarterly'
+              AND q.ttm_quarters_count >= 4 AND q.total_revenue_ttm IS NOT NULL
+            ORDER BY q.period_date DESC LIMIT 1
+        """, [cid]).fetchone()
+
+        ttm = None
+        if ttm_row:
+            ttm_cols = ['fiscal_year', 'fiscal_quarter', 'period_date',
+                        'revenue', 'ebitda', 'fcf', 'ev', 'ev_usd',
+                        'revenue_usd', 'ebitda_usd', 'fcf_usd', 'ttm_quarters_count']
+            ttm = dict(zip(ttm_cols, ttm_row))
+            ev = ttm['ev']
+            rev = ttm['revenue']
+            ebitda = ttm['ebitda']
+            fcf = ttm['fcf']
+            ttm['ev_ebitda'] = round(ev / ebitda, 2) if ev and ebitda and ebitda > 0 else None
+            ttm['ev_revenue'] = round(ev / rev, 2) if ev and rev and rev > 0 else None
+            ttm['fcf_revenue'] = round(fcf / rev, 4) if fcf is not None and rev and rev > 0 else None
+            ttm['fcf_ebitda'] = round(fcf / ebitda, 4) if fcf is not None and ebitda and ebitda > 0 else None
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'company': company_info,
+            'annual': annual,
+            'ttm': ttm
+        })
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc company_detail: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/companies_multiyear', methods=['POST'])
+def api_estudoanloc_companies_multiyear():
+    """Exporta empresas de um setor com múltiplos em todos os anos disponíveis."""
+    try:
+        data = request.get_json()
+        sector = data.get('sector', '').strip()
+        if not sector:
+            return jsonify({'success': False, 'error': 'Setor é obrigatório'}), 400
+
+        selected_industries = data.get('industries', [])
+        min_ev_usd = float(data.get('filters', {}).get('min_ev_usd', 0))
+
+        conn = get_db()
+
+        industry_filter = ""
+        params = [sector]
+        if selected_industries:
+            placeholders = ','.join('?' * len(selected_industries))
+            industry_filter = f"AND cbd.yahoo_industry IN ({placeholders})"
+            params.extend(selected_industries)
+
+        # Buscar todas as empresas do setor com dados anuais
+        sql = f"""
+            SELECT cbd.id AS cid, cbd.ticker, cbd.yahoo_industry AS industry,
+                   cbd.yahoo_country AS country, cbd.currency,
+                   dg.sub_group AS region,
+                   cfh.fiscal_year,
+                   cfh.total_revenue AS revenue, cfh.normalized_ebitda AS ebitda,
+                   cfh.free_cash_flow AS fcf,
+                   cfh.enterprise_value_estimated AS ev,
+                   cfh.enterprise_value_usd AS ev_usd,
+                   cfh.total_revenue_usd AS revenue_usd,
+                   cfh.ebitda_usd, cfh.free_cash_flow_usd AS fcf_usd
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cfh.period_type = 'annual'
+              AND cbd.yahoo_sector = ?
+              AND cfh.total_revenue IS NOT NULL
+              {industry_filter}
+            ORDER BY cbd.ticker, cfh.fiscal_year
+        """
+        df = pd.read_sql_query(sql, conn, params=params)
+
+        # Filtro EV mínimo (no último ano disponível por empresa)
+        if min_ev_usd > 0 and not df.empty:
+            last_ev = df.groupby('cid').last()[['ev_usd', 'ev']].reset_index()
+            ev_col = 'ev_usd' if last_ev['ev_usd'].notna().sum() > last_ev['ev'].notna().sum() * 0.5 else 'ev'
+            valid_cids = last_ev[last_ev[ev_col].notna() & (last_ev[ev_col] >= min_ev_usd)]['cid']
+            df = df[df['cid'].isin(valid_cids)]
+
+        conn.close()
+
+        if df.empty:
+            return jsonify({'success': True, 'companies': [], 'years': []})
+
+        # Calcular múltiplos
+        df['ev_ebitda'] = np.where((df['ebitda'] > 0) & df['ev'].notna(), df['ev'] / df['ebitda'], np.nan)
+        df['ev_revenue'] = np.where((df['revenue'] > 0) & df['ev'].notna(), df['ev'] / df['revenue'], np.nan)
+        df['fcf_revenue'] = np.where((df['revenue'] > 0) & df['fcf'].notna(), df['fcf'] / df['revenue'], np.nan)
+        df['fcf_ebitda'] = np.where((df['ebitda'] > 0) & df['fcf'].notna(), df['fcf'] / df['ebitda'], np.nan)
+
+        years = sorted(df['fiscal_year'].unique().tolist())
+
+        # Pivotar: cada empresa com dados de cada ano
+        companies = {}
+        for _, row in df.iterrows():
+            cid = int(row['cid'])
+            if cid not in companies:
+                companies[cid] = {
+                    'ticker': row['ticker'], 'industry': row['industry'],
+                    'country': row['country'], 'region': row['region'],
+                    'currency': row['currency'], 'years': {}
+                }
+            yr = int(row['fiscal_year'])
+            companies[cid]['years'][yr] = {
+                'revenue': round(float(row['revenue']), 0) if pd.notna(row['revenue']) else None,
+                'ebitda': round(float(row['ebitda']), 0) if pd.notna(row['ebitda']) else None,
+                'fcf': round(float(row['fcf']), 0) if pd.notna(row['fcf']) else None,
+                'ev': round(float(row['ev']), 0) if pd.notna(row['ev']) else None,
+                'ev_ebitda': round(float(row['ev_ebitda']), 2) if pd.notna(row['ev_ebitda']) else None,
+                'ev_revenue': round(float(row['ev_revenue']), 2) if pd.notna(row['ev_revenue']) else None,
+                'fcf_revenue': round(float(row['fcf_revenue']), 4) if pd.notna(row['fcf_revenue']) else None,
+                'fcf_ebitda': round(float(row['fcf_ebitda']), 4) if pd.notna(row['fcf_ebitda']) else None,
+            }
+
+        return jsonify({
+            'success': True,
+            'companies': list(companies.values()),
+            'years': years,
+            'metadata': {'sector': sector, 'total': len(companies)}
+        })
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc companies_multiyear: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/companies_full', methods=['POST'])
+def api_estudoanloc_companies_full():
+    """Retorna base analítica completa: todas empresas × todos períodos anuais + TTM."""
+    try:
+        data = request.get_json()
+        sector = data.get('sector', '').strip()
+        if not sector:
+            return jsonify({'success': False, 'error': 'Setor é obrigatório'}), 400
+
+        selected_industries = data.get('industries', [])
+        min_ev_usd = float(data.get('filters', {}).get('min_ev_usd', 0))
+
+        conn = get_db()
+
+        industry_filter = ""
+        params = [sector]
+        if selected_industries:
+            placeholders = ','.join('?' * len(selected_industries))
+            industry_filter = f"AND cbd.yahoo_industry IN ({placeholders})"
+            params.extend(selected_industries)
+
+        # ===== ANNUAL records =====
+        sql_annual = f"""
+            SELECT cbd.id AS cid, cbd.ticker, cbd.company_name,
+                   cbd.yahoo_industry AS industry,
+                   cbd.yahoo_country AS country, cbd.currency,
+                   dg.sub_group AS region,
+                   cfh.fiscal_year, 'Annual' AS period_type_label,
+                   cfh.shares_outstanding_current AS shares,
+                   cfh.close_price,
+                   cfh.total_revenue AS revenue,
+                   cfh.normalized_ebitda AS ebitda,
+                   cfh.free_cash_flow AS fcf,
+                   cfh.operating_cash_flow,
+                   cfh.capital_expenditure AS capex,
+                   cfh.net_income,
+                   cfh.total_debt,
+                   cfh.cash_and_equivalents AS cash,
+                   cfh.stockholders_equity AS equity,
+                   cfh.total_assets,
+                   cfh.market_cap_estimated AS market_cap,
+                   cfh.enterprise_value_estimated AS ev,
+                   cfh.ev_ebitda,
+                   cfh.ev_revenue,
+                   cfh.fcf_revenue_ratio AS fcf_revenue,
+                   cfh.fcf_ebitda_ratio AS fcf_ebitda,
+                   cfh.ebitda_margin,
+                   cfh.gross_margin,
+                   cfh.net_margin,
+                   cfh.total_revenue_usd AS revenue_usd,
+                   cfh.enterprise_value_usd AS ev_usd,
+                   cfh.fx_rate_to_usd
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cfh.period_type = 'annual'
+              AND cbd.yahoo_sector = ?
+              AND cfh.total_revenue IS NOT NULL
+              {industry_filter}
+            ORDER BY cbd.ticker, cfh.fiscal_year
+        """
+        rows_annual = conn.execute(sql_annual, params).fetchall()
+        col_names = [desc[0] for desc in conn.execute(sql_annual, params).description] if not rows_annual else None
+
+        # Get column names from cursor
+        cursor = conn.execute(sql_annual, params)
+        col_names = [desc[0] for desc in cursor.description]
+        rows_annual = cursor.fetchall()
+
+        # ===== TTM records (latest per company) =====
+        sql_ttm = f"""
+            SELECT cbd.id AS cid, cbd.ticker, cbd.company_name,
+                   cbd.yahoo_industry AS industry,
+                   cbd.yahoo_country AS country, cbd.currency,
+                   dg.sub_group AS region,
+                   cfh.fiscal_year, 'TTM' AS period_type_label,
+                   cfh.shares_outstanding_current AS shares,
+                   cfh.close_price,
+                   cfh.total_revenue_ttm AS revenue,
+                   cfh.ebitda_ttm AS ebitda,
+                   cfh.free_cash_flow_ttm AS fcf,
+                   NULL AS operating_cash_flow,
+                   NULL AS capex,
+                   cfh.net_income_ttm AS net_income,
+                   cfh.total_debt,
+                   cfh.cash_and_equivalents AS cash,
+                   cfh.stockholders_equity AS equity,
+                   cfh.total_assets,
+                   cfh.market_cap_estimated AS market_cap,
+                   cfh.enterprise_value_estimated AS ev,
+                   CASE WHEN cfh.ebitda_ttm > 0 AND cfh.enterprise_value_estimated IS NOT NULL
+                        THEN cfh.enterprise_value_estimated / cfh.ebitda_ttm END AS ev_ebitda,
+                   CASE WHEN cfh.total_revenue_ttm > 0 AND cfh.enterprise_value_estimated IS NOT NULL
+                        THEN cfh.enterprise_value_estimated / cfh.total_revenue_ttm END AS ev_revenue,
+                   CASE WHEN cfh.total_revenue_ttm > 0 AND cfh.free_cash_flow_ttm IS NOT NULL
+                        THEN cfh.free_cash_flow_ttm / cfh.total_revenue_ttm END AS fcf_revenue,
+                   CASE WHEN cfh.ebitda_ttm > 0 AND cfh.free_cash_flow_ttm IS NOT NULL
+                        THEN cfh.free_cash_flow_ttm / cfh.ebitda_ttm END AS fcf_ebitda,
+                   CASE WHEN cfh.total_revenue_ttm > 0 AND cfh.ebitda_ttm IS NOT NULL
+                        THEN cfh.ebitda_ttm / cfh.total_revenue_ttm END AS ebitda_margin,
+                   cfh.gross_margin,
+                   CASE WHEN cfh.total_revenue_ttm > 0 AND cfh.net_income_ttm IS NOT NULL
+                        THEN cfh.net_income_ttm / cfh.total_revenue_ttm END AS net_margin,
+                   cfh.total_revenue_usd AS revenue_usd,
+                   cfh.enterprise_value_usd AS ev_usd,
+                   cfh.fx_rate_to_usd
+            FROM company_financials_historical cfh
+            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cfh.period_type = 'quarterly'
+              AND cbd.yahoo_sector = ?
+              AND cfh.ttm_quarters_count >= 4
+              AND cfh.total_revenue_ttm IS NOT NULL
+              {industry_filter}
+              AND cfh.id IN (
+                  SELECT MAX(q2.id)
+                  FROM company_financials_historical q2
+                  WHERE q2.company_basic_data_id = cfh.company_basic_data_id
+                    AND q2.period_type = 'quarterly'
+                    AND q2.ttm_quarters_count >= 4
+                    AND q2.total_revenue_ttm IS NOT NULL
+              )
+            ORDER BY cbd.ticker
+        """
+        params_ttm = list(params)  # same params (sector + industries)
+        cursor_ttm = conn.execute(sql_ttm, params_ttm)
+        rows_ttm = cursor_ttm.fetchall()
+
+        conn.close()
+
+        # Combine all records
+        all_records = []
+        cid_set = set()
+
+        def row_to_dict(row, cols):
+            d = {}
+            for i, c in enumerate(cols):
+                v = row[i]
+                if isinstance(v, float):
+                    d[c] = round(v, 4) if c in ('ev_ebitda', 'ev_revenue', 'fcf_revenue',
+                        'fcf_ebitda', 'ebitda_margin', 'gross_margin', 'net_margin',
+                        'fx_rate_to_usd') else (round(v, 0) if v else v)
+                else:
+                    d[c] = v
+            return d
+
+        for row in rows_annual:
+            d = row_to_dict(row, col_names)
+            all_records.append(d)
+            cid_set.add(d['cid'])
+
+        for row in rows_ttm:
+            d = row_to_dict(row, col_names)
+            all_records.append(d)
+            cid_set.add(d['cid'])
+
+        # Apply EV filter: exclude companies whose max EV (any year) < min_ev_usd
+        if min_ev_usd > 0 and all_records:
+            max_ev_by_cid = {}
+            for r in all_records:
+                cid = r['cid']
+                ev = r.get('ev_usd') or r.get('ev') or 0
+                if ev and (cid not in max_ev_by_cid or ev > max_ev_by_cid[cid]):
+                    max_ev_by_cid[cid] = ev
+            valid_cids = {cid for cid, ev in max_ev_by_cid.items() if ev >= min_ev_usd}
+            all_records = [r for r in all_records if r['cid'] in valid_cids]
+
+        # Get unique years
+        years = sorted(set(r['fiscal_year'] for r in all_records if r.get('period_type_label') == 'Annual'))
+
+        return jsonify({
+            'success': True,
+            'records': all_records,
+            'years': years,
+            'metadata': {
+                'sector': sector,
+                'total_records': len(all_records),
+                'total_companies': len(set(r['cid'] for r in all_records))
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc companies_full: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     # Criar diretórios necessários
     Path("templates").mkdir(exist_ok=True)
