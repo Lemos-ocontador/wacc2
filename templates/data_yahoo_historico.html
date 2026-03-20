@@ -566,7 +566,7 @@
                 <div class="table-scroll" style="max-height:350px">
                     <table class="data-table" id="companies-table">
                         <thead>
-                            <tr><th style="width:30px"><input type="checkbox" id="check-all" onchange="toggleAllChecks(this.checked)"></th><th>Ticker</th><th>Empresa</th><th>Setor</th><th>País</th><th>Moeda</th><th>Períodos</th><th>Período</th><th></th></tr>
+                            <tr><th style="width:30px"><input type="checkbox" id="check-all" onchange="toggleAllChecks(this.checked)"></th><th>Ticker</th><th>Empresa</th><th>Setor</th><th>Indústria</th><th>País</th><th>Moeda</th><th>Períodos</th><th>Período</th><th></th></tr>
                         </thead>
                         <tbody id="companies-body"></tbody>
                     </table>
@@ -1495,12 +1495,12 @@ async function searchCompanies() {
 
     // Loading state na tabela
     const tbody = document.getElementById('companies-body');
-    tbody.innerHTML = '<tr><td colspan="9" class="table-loading"><span class="mini-spinner"></span>Carregando empresas...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="table-loading"><span class="mini-spinner"></span>Carregando empresas...</td></tr>';
 
     try {
         const r = await fetch('/api/historico/search?' + params);
         const d = await r.json();
-        if (!d.success) { tbody.innerHTML = '<tr><td colspan="9" class="table-loading">Erro ao carregar dados</td></tr>'; return; }
+        if (!d.success) { tbody.innerHTML = '<tr><td colspan="10" class="table-loading">Erro ao carregar dados</td></tr>'; return; }
         const tbody = document.getElementById('companies-body');
         const totalFound = d.total_count != null ? d.total_count : d.companies.length;
         const truncated = d.companies.length < totalFound;
@@ -1513,6 +1513,7 @@ async function searchCompanies() {
                 <td><strong>${c.yahoo_code}</strong></td>
                 <td>${c.company_name || '—'}</td>
                 <td>${c.yahoo_sector || '—'}</td>
+                <td>${(c.yahoo_industry || '—').substring(0,25)}</td>
                 <td>${c.yahoo_country || '—'}</td>
                 <td><span class="badge badge-blue">${c.original_currency || '—'}</span></td>
                 <td class="num">${c.periods}</td>
@@ -2446,7 +2447,7 @@ function renderConsolDetailTable() {
 
     const showTypeCol = _consolPeriodType === 'all';
 
-    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>País</th>';
+    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>Indústria</th><th>País</th>';
     if (showTypeCol) html += '<th>Tipo</th>';
     html += '<th>Período</th>';
     metrics.forEach(m => { html += `<th class="num">${METRIC_LABELS[m]||m}</th>`; });
@@ -2456,6 +2457,7 @@ function renderConsolDetailTable() {
         html += `<td><strong>${r.yahoo_code || '—'}</strong></td>`;
         html += `<td>${(r.company_name || '—').substring(0, 35)}</td>`;
         html += `<td>${(r.yahoo_sector || '—').substring(0, 20)}</td>`;
+        html += `<td>${(r.yahoo_industry || '—').substring(0, 25)}</td>`;
         html += `<td>${r.yahoo_country || '—'}</td>`;
         if (showTypeCol) {
             const typeBadge = r.period_type === 'quarterly'
@@ -2471,22 +2473,23 @@ function renderConsolDetailTable() {
         html += '</tr>';
     });
     if (filtered.length === 0) {
-        html += `<tr><td colspan="${5+metrics.length}" style="text-align:center;color:var(--text2)">Nenhum dado para as métricas selecionadas</td></tr>`;
+        html += `<tr><td colspan="${6+metrics.length}" style="text-align:center;color:var(--text2)">Nenhum dado para as métricas selecionadas</td></tr>`;
     }
     html += '</tbody>';
-    html += `<tfoot><tr><td colspan="${3+metrics.length}" style="font-size:11px;color:var(--text2)">${filtered.length} registros</td><td colspan="2"></td></tr></tfoot>`;
+    html += `<tfoot><tr><td colspan="${4+metrics.length}" style="font-size:11px;color:var(--text2)">${filtered.length} registros</td><td colspan="2"></td></tr></tfoot>`;
     document.getElementById('consol-stat-table').innerHTML = html;
     enableTableSort('consol-stat-table');
 }
 
 function renderConsolRanking(d) {
     const ranking = d.ranking || [];
-    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>Receita USD</th><th>EBITDA USD</th><th>Mg EBITDA</th><th>EV/EBITDA</th><th>EV/EBIT</th><th>EV/Receita</th><th>Dív/PL</th><th>Mg Líquida</th></tr></thead><tbody>';
+    let html = '<thead><tr><th>Código</th><th>Empresa</th><th>Setor</th><th>Indústria</th><th>Receita USD</th><th>EBITDA USD</th><th>Mg EBITDA</th><th>EV/EBITDA</th><th>EV/EBIT</th><th>EV/Receita</th><th>Dív/PL</th><th>Mg Líquida</th></tr></thead><tbody>';
     ranking.forEach(r => {
         html += `<tr>
             <td><strong style="cursor:pointer;color:var(--accent)" onclick="switchTab('empresa');loadCompany('${r.yahoo_code}')">${r.yahoo_code}</strong></td>
             <td>${r.company_name || '—'}</td>
             <td>${r.sector || '—'}</td>
+            <td>${(r.industry || '—').substring(0,25)}</td>
             <td class="num">${fmt(r.total_revenue_usd)}</td>
             <td class="num">${fmt(r.ebitda_usd)}</td>
             <td class="num">${pct(r.ebitda_margin)}</td>
@@ -2575,9 +2578,10 @@ function exportDetailCSV() {
 function exportRankingCSV() {
     if (!_consolData || !_consolData.ranking) return;
     const fmtN = v => v == null ? '' : String(v).replace('.', ',');
-    let csv = 'Código;Empresa;Setor;Qualidade;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida;Dívida_CP;Dívida_LP\n';
+    let csv = 'Código;Empresa;Setor;Indústria;Qualidade;Receita_USD;EBITDA_USD;Mg_EBITDA;EV_EBITDA;EV_EBIT;EV_Receita;Div_PL;Mg_Líquida;Dívida_CP;Dívida_LP\n';
     _consolData.ranking.forEach(r => {
         csv += ['"'+(r.yahoo_code||'')+'"', '"'+(r.company_name||'').replace(/"/g,"'")+'"', '"'+(r.sector||'')+'"',
+            '"'+(r.industry||'')+'"',
             '"'+(r.data_quality||'ok')+'"',
             fmtN(r.total_revenue_usd), fmtN(r.ebitda_usd), fmtN(r.ebitda_margin), fmtN(r.ev_ebitda), fmtN(r.ev_ebit), fmtN(r.ev_revenue), fmtN(r.debt_equity), fmtN(r.net_margin), fmtN(r.short_term_debt), fmtN(r.long_term_debt)].join(';') + '\n';
     });
@@ -2712,13 +2716,14 @@ function renderDrillHistCompanyTable(companies) {
     return `<div style="max-height:400px;overflow-y:auto;">
     <table class="drill-table" id="drill-hist-company-table">
         <thead><tr>
-            <th>Empresa</th><th>Código</th><th>Setor</th><th>País</th>
+            <th>Empresa</th><th>Código</th><th>Setor</th><th>Indústria</th><th>País</th>
             <th class="num">Períodos</th><th class="num">De</th><th class="num">Até</th><th>Moeda</th>
         </tr></thead>
         <tbody>${companies.map(c => `<tr class="clickable-row" onclick="closeDrillDown();switchTab('empresa');loadCompany('${(c.yahoo_code||'').replace(/'/g,"\\'")}')">
             <td title="${c.company_name||''}">${(c.company_name||'—').substring(0,35)}</td>
             <td><strong>${c.yahoo_code||'—'}</strong></td>
             <td>${(c.yahoo_sector||'—').substring(0,20)}</td>
+            <td>${(c.yahoo_industry||'—').substring(0,25)}</td>
             <td>${c.yahoo_country||'—'}</td>
             <td class="num">${c.periods||'—'}</td>
             <td class="num">${c.min_year||'—'}</td>

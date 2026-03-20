@@ -3949,6 +3949,7 @@ def api_historico_consolidated():
                 'yahoo_code': row.get('yahoo_code'),
                 'company_name': row.get('company_name'),
                 'sector': row.get('yahoo_sector'),
+                'industry': row.get('yahoo_industry'),
                 'total_revenue_usd': row.get('total_revenue_usd'),
                 'ebitda_usd': row.get('ebitda_usd'),
                 'net_income_usd': row.get('net_income_usd'),
