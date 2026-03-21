@@ -5163,6 +5163,173 @@ def estudoanloc_page():
     return render_template('estudoanloc.html')
 
 
+@app.route('/api/estudoanloc/cross_sector', methods=['POST'])
+def api_estudoanloc_cross_sector():
+    """Calcula múltiplos agregados por setor para comparação cross-sector."""
+    try:
+        data = request.get_json() or {}
+        fiscal_year = int(data.get('fiscal_year', 2025))
+        min_ev_usd = float(data.get('min_ev_usd', 100_000_000))
+        max_ev_ebitda = float(data.get('max_ev_ebitda', 60))
+        region_filter = data.get('region', '')  # empty = global
+
+        import datetime
+        current_year = datetime.date.today().year
+        is_current = (fiscal_year >= current_year)
+
+        conn = get_db()
+
+        region_clause = ""
+        params = []
+
+        if is_current:
+            # TTM + annual fallback com EV atual
+            prev_year = fiscal_year - 1
+            sql = """
+                WITH ttm_data AS (
+                    SELECT q.company_basic_data_id AS cid,
+                           cbd.yahoo_sector AS sector,
+                           cbd.yahoo_country AS country,
+                           dg.sub_group AS region,
+                           q.total_revenue_ttm AS revenue,
+                           q.ebitda_ttm AS ebitda,
+                           q.free_cash_flow_ttm AS fcf,
+                           cbd.enterprise_value AS ev,
+                           CASE WHEN q.fx_rate_to_usd > 0 THEN cbd.enterprise_value * q.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           'TTM' AS src
+                    FROM company_financials_historical q
+                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE q.period_type = 'quarterly'
+                      AND q.ttm_quarters_count >= 4
+                      AND q.total_revenue_ttm IS NOT NULL
+                      AND q.ebitda_ttm IS NOT NULL
+                      AND cbd.enterprise_value IS NOT NULL
+                      AND cbd.yahoo_sector IS NOT NULL
+                      AND q.id IN (
+                          SELECT MAX(q2.id) FROM company_financials_historical q2
+                          WHERE q2.company_basic_data_id = q.company_basic_data_id
+                            AND q2.period_type = 'quarterly' AND q2.ttm_quarters_count >= 4
+                      )
+                ),
+                annual_data AS (
+                    SELECT cfh.company_basic_data_id AS cid,
+                           cbd.yahoo_sector AS sector,
+                           cbd.yahoo_country AS country,
+                           dg.sub_group AS region,
+                           cfh.total_revenue AS revenue,
+                           cfh.normalized_ebitda AS ebitda,
+                           cfh.free_cash_flow AS fcf,
+                           cbd.enterprise_value AS ev,
+                           CASE WHEN cfh.fx_rate_to_usd > 0 THEN cbd.enterprise_value * cfh.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           'Annual' AS src
+                    FROM company_financials_historical cfh
+                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                    WHERE cfh.period_type = 'annual'
+                      AND cfh.fiscal_year = ?
+                      AND cbd.enterprise_value IS NOT NULL
+                      AND cbd.yahoo_sector IS NOT NULL
+                      AND cfh.total_revenue IS NOT NULL
+                      AND cfh.normalized_ebitda IS NOT NULL
+                      AND cfh.company_basic_data_id NOT IN (SELECT cid FROM ttm_data)
+                )
+                SELECT * FROM ttm_data
+                UNION ALL
+                SELECT * FROM annual_data
+            """
+            params = [prev_year]
+        else:
+            sql = """
+                SELECT cfh.company_basic_data_id AS cid,
+                       cbd.yahoo_sector AS sector,
+                       cbd.yahoo_country AS country,
+                       dg.sub_group AS region,
+                       cfh.total_revenue AS revenue,
+                       cfh.normalized_ebitda AS ebitda,
+                       cfh.free_cash_flow AS fcf,
+                       cfh.enterprise_value_estimated AS ev,
+                       cfh.enterprise_value_usd AS ev_usd,
+                       'Annual' AS src
+                FROM company_financials_historical cfh
+                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cfh.period_type = 'annual'
+                  AND cfh.fiscal_year = ?
+                  AND cbd.yahoo_sector IS NOT NULL
+                  AND cfh.total_revenue IS NOT NULL
+                  AND cfh.normalized_ebitda IS NOT NULL
+            """
+            params = [fiscal_year]
+
+        df = pd.read_sql_query(sql, conn, params=params)
+        conn.close()
+
+        if df.empty:
+            return jsonify({'success': True, 'sectors': [], 'metadata': {'fiscal_year': fiscal_year, 'total': 0}})
+
+        # Region filter
+        if region_filter:
+            if region_filter == 'Brazil':
+                df = df[df['country'] == 'Brazil']
+            elif region_filter == 'LATAM':
+                df = df[df['region'] == 'Latin America & Caribbean']
+            else:
+                df = df[df['region'] == region_filter]
+
+        # EV filter
+        if min_ev_usd > 0:
+            ev_col = 'ev_usd' if df['ev_usd'].notna().sum() > df['ev'].notna().sum() * 0.5 else 'ev'
+            df = df[df[ev_col].notna() & (df[ev_col] >= min_ev_usd)]
+
+        # Calculate multiples
+        df['ev_ebitda'] = np.where((df['ebitda'] > 0) & df['ev'].notna(), df['ev'] / df['ebitda'], np.nan)
+        df['ev_revenue'] = np.where((df['revenue'] > 0) & df['ev'].notna(), df['ev'] / df['revenue'], np.nan)
+        df['fcf_revenue'] = np.where((df['revenue'] > 0) & df['fcf'].notna(), df['fcf'] / df['revenue'], np.nan)
+        df['fcf_ebitda'] = np.where((df['ebitda'] > 0) & df['fcf'].notna(), df['fcf'] / df['ebitda'], np.nan)
+
+        # Cap EV/EBITDA
+        if max_ev_ebitda > 0:
+            df.loc[df['ev_ebitda'].notna() & (df['ev_ebitda'] > max_ev_ebitda), 'ev_ebitda'] = np.nan
+
+        # Aggregate by sector
+        sectors_result = []
+        for sector_name in sorted(df['sector'].dropna().unique()):
+            sub = df[df['sector'] == sector_name]
+            n = len(sub)
+            if n < 3:
+                continue
+            entry = {'sector': sector_name, 'n': n}
+            for metric in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                valid = sub[metric].dropna()
+                nv = len(valid)
+                if nv == 0:
+                    entry[metric] = {'median': None, 'p25': None, 'p75': None, 'mean': None, 'n': 0}
+                else:
+                    entry[metric] = {
+                        'median': round(float(np.median(valid)), 4),
+                        'p25': round(float(np.percentile(valid, 25)), 4),
+                        'p75': round(float(np.percentile(valid, 75)), 4),
+                        'mean': round(float(np.mean(valid)), 4),
+                        'n': nv
+                    }
+            sectors_result.append(entry)
+
+        return jsonify({
+            'success': True,
+            'sectors': sectors_result,
+            'metadata': {
+                'fiscal_year': fiscal_year,
+                'region': region_filter or 'Global',
+                'total_companies': len(df),
+                'total_sectors': len(sectors_result)
+            }
+        })
+    except Exception as e:
+        logger.error(f"Erro estudoanloc cross_sector: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/estudoanloc/filters', methods=['GET'])
 def api_estudoanloc_filters():
     """Retorna opções de filtro disponíveis para o estudo."""

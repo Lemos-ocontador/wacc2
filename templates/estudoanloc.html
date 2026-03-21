@@ -6,6 +6,7 @@
     <title>Estudo Anloc — Múltiplos Setoriais</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --bg: #0f1923; --bg2: #152232; --bg3: #1a2d42;
@@ -228,10 +229,24 @@
         .ba-col-ms-actions a { color: var(--accent); cursor: pointer; text-decoration: underline; }
         .ba-col-ms-sep { border-top: 1px solid var(--border); margin: 2px 0; }
 
+        /* Charts */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+        .chart-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+        .chart-box h3 { font-size: .85rem; color: var(--accent); margin-bottom: .8rem; font-weight: 600; display: flex; align-items: center; gap: .5rem; }
+        .chart-box canvas { max-height: 420px; }
+        .chart-full { grid-column: 1 / -1; }
+        .section-title { font-size: 1rem; font-weight: 700; color: var(--accent); margin: 1.5rem 0 .8rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .5rem; }
+        .section-title:first-child { margin-top: 0; }
+        .metric-selector { display: flex; gap: .3rem; margin-bottom: .8rem; }
+        .metric-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text2); padding: .35rem .8rem; border-radius: 6px; font-size: .78rem; cursor: pointer; transition: .2s; }
+        .metric-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+        .metric-btn:hover { border-color: var(--accent); }
+
         /* Responsive */
         @media (max-width: 768px) {
             .kpi-row { grid-template-columns: repeat(2, 1fr); }
             .filters-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
             .drill-modal { width: 98%; max-height: 95vh; }
         }
     </style>
@@ -243,9 +258,57 @@
     </div>
 
     <div class="main">
-        <!-- PAINEL DE CONFIGURAÇÃO -->
+        <!-- PANORAMA CROSS-SECTOR -->
+        <div class="panel" id="crossSectorPanel">
+            <div class="panel-title"><i class="fas fa-th-large"></i> Panorama — Múltiplos por Setor</div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;">
+                <div class="filter-group" style="min-width:150px;">
+                    <label>Ano Fiscal</label>
+                    <select id="csYearSelect"><option value="">Carregando...</option></select>
+                </div>
+                <div class="filter-group" style="min-width:150px;">
+                    <label>Região</label>
+                    <select id="csRegionSelect">
+                        <option value="" selected>Global</option>
+                        <option value="Brazil">Brasil</option>
+                        <option value="LATAM">LATAM</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="min-width:150px;">
+                    <label>EV Mínimo (USD)</label>
+                    <select id="csMinEvSelect">
+                        <option value="0">Sem filtro</option>
+                        <option value="50000000">USD 50M</option>
+                        <option value="100000000" selected>USD 100M</option>
+                        <option value="500000000">USD 500M</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="min-width:130px;">
+                    <label>Múltiplo</label>
+                    <select id="csMetricSelect">
+                        <option value="ev_ebitda" selected>EV/EBITDA</option>
+                        <option value="ev_revenue">EV/Vendas</option>
+                        <option value="fcf_revenue">FCF/Vendas</option>
+                        <option value="fcf_ebitda">FCF/EBITDA</option>
+                    </select>
+                </div>
+                <button class="btn-calc" onclick="loadCrossSector()" style="padding:.5rem 1.2rem; font-size:.82rem;">
+                    <i class="fas fa-sync-alt"></i> Carregar
+                </button>
+                <button class="btn-export" onclick="exportCrossSectorCSV()" id="csExportBtn" style="display:none;">
+                    <i class="fas fa-file-csv"></i> CSV
+                </button>
+            </div>
+            <div id="csChartArea">
+                <div class="empty-state" style="padding:2rem;"><i class="fas fa-th-large" style="font-size:2rem; margin-bottom:.5rem; display:block;"></i>Clique em "Carregar" para ver múltiplos de todos os setores</div>
+            </div>
+            <!-- Tabela cross-sector -->
+            <div id="csTableArea" style="display:none; margin-top:1rem;"></div>
+        </div>
+
+        <!-- PAINEL DE CONFIGURAÇÃO (setor específico) -->
         <div class="panel">
-            <div class="panel-title"><i class="fas fa-sliders-h"></i> Configuração do Estudo</div>
+            <div class="panel-title"><i class="fas fa-sliders-h"></i> Análise por Setor — Configuração</div>
 
             <div class="filters-grid">
                 <div class="filter-group">
@@ -348,17 +411,15 @@
             <!-- Tabs -->
             <div class="panel">
                 <div class="tab-bar">
-                    <button class="tab-btn active" onclick="switchTab(this, 'base')"><i class="fas fa-database"></i> Base Analítica</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'summary')">Resumo Geográfico</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'industry')">Por Indústria</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'region')">Por Região</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'evolution')">Evolução</button>
+                    <button class="tab-btn active" onclick="switchTab(this, 'resumo')"><i class="fas fa-table"></i> Resumo</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'base')"><i class="fas fa-database"></i> Base Analítica</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'charts')"><i class="fas fa-chart-bar"></i> Infográficos</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'evolution')"><i class="fas fa-chart-line"></i> Evolução</button>
                 </div>
 
-                <div id="tab-base" class="tab-content active"></div>
-                <div id="tab-summary" class="tab-content"></div>
-                <div id="tab-industry" class="tab-content"></div>
-                <div id="tab-region" class="tab-content"></div>
+                <div id="tab-resumo" class="tab-content active"></div>
+                <div id="tab-base" class="tab-content"></div>
+                <div id="tab-charts" class="tab-content"></div>
                 <div id="tab-evolution" class="tab-content"></div>
             </div>
         </div>
@@ -391,13 +452,15 @@
     <script>
     let currentData = null;
     let evolutionData = null;
-    let baseData = null; // Base Analítica full data
+    let baseData = null;
     let baSortCol = 'ticker';
     let baSortAsc = true;
     let baSearchTerm = '';
     let companySortCol = 'ev_ebitda';
     let companySortAsc = false;
     let availableYears = [];
+    let chartInstances = {};
+    let crossSectorData = null;
 
     // ========== FORMATTERS ==========
     function fmtX(v, d = 1) { return v != null ? v.toFixed(d) + 'x' : '—'; }
@@ -418,6 +481,176 @@
     }
     function safe(obj, key, sub) { return obj && obj[key] ? obj[key][sub] : null; }
 
+    // ========== CROSS-SECTOR ==========
+    async function loadCrossSector() {
+        const area = document.getElementById('csChartArea');
+        area.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:.8rem;">Carregando todos os setores...</p></div>';
+        document.getElementById('csTableArea').style.display = 'none';
+
+        const fiscal_year = parseInt(document.getElementById('csYearSelect').value) || 2025;
+        const region = document.getElementById('csRegionSelect').value;
+        const min_ev_usd = parseFloat(document.getElementById('csMinEvSelect').value);
+        const metric = document.getElementById('csMetricSelect').value;
+
+        try {
+            const resp = await fetch('/api/estudoanloc/cross_sector', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fiscal_year, min_ev_usd, max_ev_ebitda: 60, region })
+            });
+            const data = await resp.json();
+            if (!data.success) { area.innerHTML = `<div class="empty-state">Erro: ${data.error}</div>`; return; }
+            crossSectorData = data;
+            renderCrossSector(data, metric);
+            document.getElementById('csExportBtn').style.display = '';
+        } catch(e) {
+            area.innerHTML = `<div class="empty-state">Erro: ${e.message}</div>`;
+        }
+    }
+
+    // Re-render when metric changes
+    document.addEventListener('DOMContentLoaded', () => {
+        const sel = document.getElementById('csMetricSelect');
+        if (sel) sel.addEventListener('change', () => {
+            if (crossSectorData) renderCrossSector(crossSectorData, sel.value);
+        });
+    });
+
+    function renderCrossSector(data, metric) {
+        const sectors = (data.sectors || []).filter(s => s[metric] && s[metric].median != null);
+        if (!sectors.length) {
+            document.getElementById('csChartArea').innerHTML = '<div class="empty-state">Nenhum setor com dados suficientes</div>';
+            return;
+        }
+
+        // Sort by median descending
+        sectors.sort((a, b) => (b[metric].median || 0) - (a[metric].median || 0));
+        const metricLabel = getMetricLabel(metric);
+        const meta = data.metadata || {};
+
+        // Chart HTML
+        const chartH = Math.max(400, sectors.length * 28);
+        let html = `<div style="display:flex; gap:.8rem; align-items:center; margin-bottom:.8rem; flex-wrap:wrap;">
+            <span style="font-size:.82rem; color:var(--text2);">${meta.total_sectors} setores · ${meta.total_companies} empresas · ${meta.region || 'Global'} · FY ${meta.fiscal_year}</span>
+        </div>`;
+        html += `<div style="height:${chartH}px;"><canvas id="csCrossChart"></canvas></div>`;
+        document.getElementById('csChartArea').innerHTML = html;
+
+        // Render chart
+        destroyChart('csCrossChart');
+        const canvas = document.getElementById('csCrossChart');
+        const labels = sectors.map(s => s.sector.length > 32 ? s.sector.substring(0, 30) + '...' : s.sector);
+        const medians = sectors.map(s => s[metric].median);
+        const p25s = sectors.map(s => s[metric].p25);
+        const p75s = sectors.map(s => s[metric].p75);
+        const counts = sectors.map(s => s.n);
+
+        const defaults = chartThemeDefaults();
+        chartInstances['csCrossChart'] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'P25',
+                        data: p25s,
+                        backgroundColor: 'rgba(52,152,219,0.25)',
+                        borderColor: 'rgba(52,152,219,0.5)',
+                        borderWidth: 1, borderRadius: 2, borderSkipped: false
+                    },
+                    {
+                        label: 'Mediana',
+                        data: medians.map((m, i) => m - (p25s[i] || 0)),
+                        backgroundColor: 'rgba(0,212,170,0.55)',
+                        borderColor: '#00d4aa',
+                        borderWidth: 1, borderRadius: 2, borderSkipped: false
+                    },
+                    {
+                        label: 'P75',
+                        data: p75s.map((p, i) => p - (medians[i] || 0)),
+                        backgroundColor: 'rgba(243,156,18,0.25)',
+                        borderColor: 'rgba(243,156,18,0.5)',
+                        borderWidth: 1, borderRadius: 2, borderSkipped: false
+                    }
+                ]
+            },
+            options: {
+                ...defaults, indexAxis: 'y',
+                plugins: {
+                    ...defaults.plugins,
+                    legend: { position: 'top', labels: { color: '#8899aa', font: { size: 10 }, usePointStyle: true } },
+                    tooltip: {
+                        ...defaults.plugins.tooltip,
+                        callbacks: {
+                            title: (items) => sectors[items[0].dataIndex]?.sector || '',
+                            label: (ctx) => {
+                                const i = ctx.dataIndex;
+                                return [
+                                    `P25: ${p25s[i]?.toFixed(2)}`,
+                                    `Mediana: ${medians[i]?.toFixed(2)}`,
+                                    `P75: ${p75s[i]?.toFixed(2)}`,
+                                    `Empresas: ${counts[i]}`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ...defaults.scales.x, stacked: true, title: { display: true, text: metricLabel, color: '#8899aa' } },
+                    y: { ...defaults.scales.y, stacked: true, ticks: { ...defaults.scales.y.ticks, font: { size: 10 } } }
+                }
+            }
+        });
+
+        // Table
+        renderCrossSectorTable(sectors, metric, metricLabel);
+    }
+
+    function renderCrossSectorTable(sectors, metric, metricLabel) {
+        const tbl = document.getElementById('csTableArea');
+        let html = `<div style="overflow-x:auto;"><table class="summary-table">
+            <thead><tr>
+                <th style="text-align:left;">Setor</th><th>n</th>
+                <th>Mediana</th><th>P25</th><th>P75</th><th>Média</th>
+            </tr></thead><tbody>`;
+        for (const s of sectors) {
+            const m = s[metric] || {};
+            const fmtFn = (metric === 'ev_ebitda' || metric === 'ev_revenue') ? fmtX : fmtRatio;
+            html += `<tr class="clickable-row" onclick="document.getElementById('sectorSelect').value='${s.sector.replace(/'/g, "\\'")}';
+                document.getElementById('sectorSelect').dispatchEvent(new Event('change'));">
+                <td style="text-align:left; font-weight:500;">${s.sector}</td>
+                <td>${s.n}</td>
+                <td style="font-weight:700; color:var(--accent);">${fmtFn(m.median)}</td>
+                <td>${fmtFn(m.p25)}</td><td>${fmtFn(m.p75)}</td>
+                <td>${fmtFn(m.mean)}</td>
+            </tr>`;
+        }
+        html += '</tbody></table></div>';
+        html += `<div style="font-size:.72rem; color:var(--text3); margin-top:.4rem;"><i class="fas fa-mouse-pointer"></i> Clique em um setor para carregá-lo na análise detalhada abaixo</div>`;
+        tbl.innerHTML = html;
+        tbl.style.display = 'block';
+    }
+
+    function exportCrossSectorCSV() {
+        if (!crossSectorData || !crossSectorData.sectors) return;
+        const metric = document.getElementById('csMetricSelect').value;
+        const meta = crossSectorData.metadata || {};
+        const headers = ['Setor', 'n', 'EV/EBITDA_Med', 'EV/EBITDA_P25', 'EV/EBITDA_P75', 'EV/EBITDA_Mean',
+            'EV/Vendas_Med', 'EV/Vendas_P25', 'EV/Vendas_P75', 'EV/Vendas_Mean',
+            'FCF/Vendas_Med', 'FCF/Vendas_P25', 'FCF/Vendas_P75', 'FCF/Vendas_Mean',
+            'FCF/EBITDA_Med', 'FCF/EBITDA_P25', 'FCF/EBITDA_P75', 'FCF/EBITDA_Mean'];
+        let csv = headers.join(';') + '\n';
+        for (const s of crossSectorData.sectors) {
+            const row = [s.sector, s.n];
+            for (const m of ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']) {
+                const d = s[m] || {};
+                row.push(d.median ?? '', d.p25 ?? '', d.p75 ?? '', d.mean ?? '');
+            }
+            csv += row.map(v => v != null ? String(v).replace(/;/g, ',') : '').join(';') + '\n';
+        }
+        downloadCSV(csv, `cross_sector_${meta.region || 'global'}_FY${meta.fiscal_year}.csv`);
+    }
+
     // ========== INIT ==========
     async function init() {
         try {
@@ -437,6 +670,22 @@
                 const label = y >= currentYear ? `${y} (Atual)` : y;
                 return `<option value="${y}" ${i === 0 ? 'selected' : ''}>${label}</option>`;
             }).join('');
+
+            // Cross-sector year selector
+            const csYearSel = document.getElementById('csYearSelect');
+            csYearSel.innerHTML = availableYears.map((y, i) => {
+                const label = y >= currentYear ? `${y} (Atual)` : y;
+                return `<option value="${y}" ${i === 0 ? 'selected' : ''}>${label}</option>`;
+            }).join('');
+
+            // Populate region dropdown with regions from API
+            const csRegionSel = document.getElementById('csRegionSelect');
+            const existingOpts = ['<option value="" selected>Global</option>', '<option value="Brazil">Brasil</option>', '<option value="LATAM">LATAM</option>'];
+            if (data.regions) {
+                const others = data.regions.filter(r => r !== 'Latin America & Caribbean');
+                others.forEach(r => existingOpts.push(`<option value="${r}">${r}</option>`));
+            }
+            csRegionSel.innerHTML = existingOpts.join('');
 
             // Year chips for evolution
             const evoContainer = document.getElementById('yearsEvolution');
@@ -588,9 +837,8 @@
     // ========== RENDER ==========
     function renderResults(data) {
         renderKPIs(data);
-        renderSummaryTab(data);
-        renderIndustryTab(data);
-        renderRegionTab(data);
+        renderResumoTab(data);
+        renderChartsTab(data);
     }
 
     function renderKPIs(data) {
@@ -658,53 +906,382 @@
         </tr></thead>`;
     }
 
-    function renderSummaryTab(data) {
+    function renderResumoTab(data) {
         const s = data.summary;
-        let html = `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
+        let html = '';
+
+        // === Seção 1: Resumo Geográfico ===
+        html += `<div class="section-title"><i class="fas fa-globe"></i> Resumo Geográfico</div>`;
+        html += `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
         html += makeStatsRow(s.global, 'row-global');
         html += makeStatsRow(s.latam, 'row-latam');
         html += makeStatsRow(s.brasil, 'row-brasil');
         html += '</tbody></table></div>';
-        document.getElementById('tab-summary').innerHTML = html;
-    }
 
-    function renderIndustryTab(data) {
-        if (!data.by_industry || !data.by_industry.length) {
-            document.getElementById('tab-industry').innerHTML = '<div class="empty-state"><i class="fas fa-info-circle"></i>Sem dados por indústria</div>';
-            return;
+        // === Seção 2: Por Indústria ===
+        if (data.by_industry && data.by_industry.length) {
+            html += `<div class="section-title"><i class="fas fa-industry"></i> Por Indústria</div>`;
+            html += `<div style="margin-bottom:.6rem; font-size:.75rem; color:var(--text3);"><i class="fas fa-mouse-pointer"></i> Clique na indústria para filtrar na Base Analítica</div>`;
+            html += `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
+            html += makeStatsRow(data.summary.global, 'row-global');
+            html += '<tr class="separator-row"><td colspan="18"></td></tr>';
+            for (const ind of data.by_industry) {
+                html += makeStatsRow(ind, 'row-industry clickable-row" onclick="drillIndustry(\'' + (ind.label || '').replace(/'/g, "\\'") + '\')');
+                if (ind.latam && ind.latam.n > 0) html += makeStatsRow(ind.latam, 'row-latam');
+                if (ind.brasil && ind.brasil.n > 0) html += makeStatsRow(ind.brasil, 'row-brasil');
+            }
+            html += '</tbody></table></div>';
         }
-        let html = `<div style="margin-bottom:.6rem; font-size:.75rem; color:var(--text3);"><i class="fas fa-mouse-pointer"></i> Clique no nome da indústria para ver empresas na Base Analítica</div>`;
-        html += `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
-        html += makeStatsRow(data.summary.global, 'row-global');
-        html += '<tr class="separator-row"><td colspan="18"></td></tr>';
-        for (const ind of data.by_industry) {
-            html += makeStatsRow(ind, 'row-industry clickable-row" onclick="drillIndustry(\'' + (ind.label || '').replace(/'/g, "\\'") + '\')');
-            if (ind.latam && ind.latam.n > 0) html += makeStatsRow(ind.latam, 'row-latam');
-            if (ind.brasil && ind.brasil.n > 0) html += makeStatsRow(ind.brasil, 'row-brasil');
+
+        // === Seção 3: Por Região ===
+        if (data.by_geography && data.by_geography.length) {
+            html += `<div class="section-title"><i class="fas fa-map"></i> Por Região</div>`;
+            html += `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
+            html += makeStatsRow(data.summary.global, 'row-global');
+            html += '<tr class="separator-row"><td colspan="18"></td></tr>';
+            for (const reg of data.by_geography) html += makeStatsRow(reg);
+            html += '</tbody></table></div>';
         }
-        html += '</tbody></table></div>';
-        document.getElementById('tab-industry').innerHTML = html;
+
+        document.getElementById('tab-resumo').innerHTML = html;
     }
 
     function drillIndustry(indName) {
-        // Switch to Base Analítica tab and filter by industry
         baSearchTerm = indName;
-        const baseBtn = document.querySelector('.tab-btn');
-        if (baseBtn) switchTab(baseBtn, 'base');
+        const baseBtns = document.querySelectorAll('.tab-btn');
+        baseBtns.forEach(b => { if (b.textContent.includes('Base')) switchTab(b, 'base'); });
         renderBaseAnalitica();
     }
 
-    function renderRegionTab(data) {
-        if (!data.by_geography || !data.by_geography.length) {
-            document.getElementById('tab-region').innerHTML = '<div class="empty-state"><i class="fas fa-info-circle"></i>Sem dados por região</div>';
+    // ========== INFOGRÁFICOS (Charts) ==========
+    const CHART_COLORS = {
+        accent: '#00d4aa', accent2: '#00b894',
+        blue: '#3498db', purple: '#9b59b6',
+        warn: '#f39c12', danger: '#e74c3c',
+        teal: '#1abc9c', orange: '#e67e22',
+        pink: '#e84393', indigo: '#6c5ce7'
+    };
+    const CHART_PALETTE = ['#00d4aa', '#3498db', '#f39c12', '#9b59b6', '#e74c3c', '#1abc9c', '#e67e22', '#e84393', '#6c5ce7', '#00b894'];
+
+    function destroyChart(id) {
+        if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+    }
+
+    function chartThemeDefaults() {
+        return {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#8899aa', font: { size: 11 } } },
+                tooltip: { backgroundColor: '#152232', titleColor: '#e8edf2', bodyColor: '#e8edf2', borderColor: '#1e3448', borderWidth: 1 }
+            },
+            scales: {
+                x: { ticks: { color: '#8899aa', font: { size: 10 } }, grid: { color: 'rgba(30,52,72,0.5)' } },
+                y: { ticks: { color: '#8899aa', font: { size: 10 } }, grid: { color: 'rgba(30,52,72,0.5)' } }
+            }
+        };
+    }
+
+    function renderChartsTab(data) {
+        if (!data.by_industry || !data.by_industry.length) {
+            document.getElementById('tab-charts').innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><br>Calcule os múltiplos para ver infográficos</div>';
             return;
         }
-        let html = `<div style="overflow-x:auto;"><table class="summary-table">${tableHeader()}<tbody>`;
-        html += makeStatsRow(data.summary.global, 'row-global');
-        html += '<tr class="separator-row"><td colspan="18"></td></tr>';
-        for (const reg of data.by_geography) html += makeStatsRow(reg);
-        html += '</tbody></table></div>';
-        document.getElementById('tab-region').innerHTML = html;
+
+        let html = '';
+
+        // Metric selector
+        html += `<div class="metric-selector" id="chartMetricSelector">
+            <button class="metric-btn active" data-metric="ev_ebitda" onclick="switchChartMetric('ev_ebitda', this)">EV/EBITDA</button>
+            <button class="metric-btn" data-metric="ev_revenue" onclick="switchChartMetric('ev_revenue', this)">EV/Vendas</button>
+            <button class="metric-btn" data-metric="fcf_revenue" onclick="switchChartMetric('fcf_revenue', this)">FCF/Vendas</button>
+            <button class="metric-btn" data-metric="fcf_ebitda" onclick="switchChartMetric('fcf_ebitda', this)">FCF/EBITDA</button>
+        </div>`;
+
+        // Chart grid
+        html += '<div class="charts-grid">';
+
+        // Chart 1: Por Indústria (horizontal bar)
+        html += `<div class="chart-box">
+            <h3><i class="fas fa-industry"></i> Múltiplos por Indústria</h3>
+            <div style="height:400px;"><canvas id="chartIndustry"></canvas></div>
+        </div>`;
+
+        // Chart 2: Por Região (horizontal bar)
+        html += `<div class="chart-box">
+            <h3><i class="fas fa-globe-americas"></i> Múltiplos por Região</h3>
+            <div style="height:400px;"><canvas id="chartRegion"></canvas></div>
+        </div>`;
+
+        // Chart 3: Distribuição (box-like range chart)
+        html += `<div class="chart-box chart-full">
+            <h3><i class="fas fa-chart-area"></i> Distribuição por Indústria (P25 – Mediana – P75)</h3>
+            <div style="height:350px;"><canvas id="chartDistribution"></canvas></div>
+        </div>`;
+
+        // Chart 4: Top empresas
+        html += `<div class="chart-box chart-full">
+            <h3><i class="fas fa-trophy"></i> Top 20 Empresas por Múltiplo</h3>
+            <div style="height:380px;"><canvas id="chartTopCompanies"></canvas></div>
+        </div>`;
+
+        html += '</div>';
+
+        document.getElementById('tab-charts').innerHTML = html;
+
+        // Render initial charts
+        renderAllCharts(data, 'ev_ebitda');
+    }
+
+    let currentChartMetric = 'ev_ebitda';
+
+    function switchChartMetric(metric, btn) {
+        currentChartMetric = metric;
+        document.querySelectorAll('#chartMetricSelector .metric-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (currentData) renderAllCharts(currentData, metric);
+    }
+
+    function getMetricLabel(metric) {
+        const labels = { ev_ebitda: 'EV/EBITDA', ev_revenue: 'EV/Vendas', fcf_revenue: 'FCF/Vendas', fcf_ebitda: 'FCF/EBITDA' };
+        return labels[metric] || metric;
+    }
+
+    function renderAllCharts(data, metric) {
+        renderIndustryChart(data, metric);
+        renderRegionChart(data, metric);
+        renderDistributionChart(data, metric);
+        renderTopCompaniesChart(data, metric);
+    }
+
+    function renderIndustryChart(data, metric) {
+        destroyChart('chartIndustry');
+        const canvas = document.getElementById('chartIndustry');
+        if (!canvas) return;
+
+        const industries = (data.by_industry || [])
+            .filter(ind => ind[metric] && ind[metric].median != null)
+            .sort((a, b) => (b[metric].median || 0) - (a[metric].median || 0));
+
+        const labels = industries.map(ind => {
+            const lbl = ind.label || '';
+            return lbl.length > 30 ? lbl.substring(0, 28) + '...' : lbl;
+        });
+        const medians = industries.map(ind => ind[metric].median);
+        const colors = industries.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]);
+
+        const defaults = chartThemeDefaults();
+        chartInstances['chartIndustry'] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: getMetricLabel(metric) + ' (mediana)',
+                    data: medians,
+                    backgroundColor: colors.map(c => c + '88'),
+                    borderColor: colors,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...defaults, indexAxis: 'y',
+                plugins: { ...defaults.plugins, legend: { display: false } },
+                scales: {
+                    x: { ...defaults.scales.x, title: { display: true, text: getMetricLabel(metric), color: '#8899aa' } },
+                    y: { ...defaults.scales.y, ticks: { ...defaults.scales.y.ticks, font: { size: 9 } } }
+                }
+            }
+        });
+    }
+
+    function renderRegionChart(data, metric) {
+        destroyChart('chartRegion');
+        const canvas = document.getElementById('chartRegion');
+        if (!canvas) return;
+
+        const regions = (data.by_geography || [])
+            .filter(r => r[metric] && r[metric].median != null)
+            .sort((a, b) => (b[metric].median || 0) - (a[metric].median || 0));
+
+        const labels = regions.map(r => r.label || '');
+        const medians = regions.map(r => r[metric].median);
+        const counts = regions.map(r => r[metric].n || 0);
+        const colors = regions.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]);
+
+        const defaults = chartThemeDefaults();
+        chartInstances['chartRegion'] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: getMetricLabel(metric) + ' (mediana)',
+                    data: medians,
+                    backgroundColor: colors.map(c => c + '88'),
+                    borderColor: colors,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...defaults, indexAxis: 'y',
+                plugins: {
+                    ...defaults.plugins, legend: { display: false },
+                    tooltip: {
+                        ...defaults.plugins.tooltip,
+                        callbacks: {
+                            afterLabel: (ctx) => `n = ${counts[ctx.dataIndex]}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { ...defaults.scales.x, title: { display: true, text: getMetricLabel(metric), color: '#8899aa' } },
+                    y: { ...defaults.scales.y }
+                }
+            }
+        });
+    }
+
+    function renderDistributionChart(data, metric) {
+        destroyChart('chartDistribution');
+        const canvas = document.getElementById('chartDistribution');
+        if (!canvas) return;
+
+        const industries = (data.by_industry || [])
+            .filter(ind => ind[metric] && ind[metric].median != null && ind[metric].p25 != null)
+            .sort((a, b) => (a[metric].median || 0) - (b[metric].median || 0));
+
+        const labels = industries.map(ind => {
+            const lbl = ind.label || '';
+            return lbl.length > 25 ? lbl.substring(0, 23) + '...' : lbl;
+        });
+        const medians = industries.map(ind => ind[metric].median);
+        const p25s = industries.map(ind => ind[metric].p25);
+        const p75s = industries.map(ind => ind[metric].p75);
+
+        // Global reference line
+        const globalMed = data.summary.global[metric] ? data.summary.global[metric].median : null;
+
+        const defaults = chartThemeDefaults();
+        const datasets = [
+            {
+                label: 'P25',
+                data: p25s,
+                backgroundColor: 'rgba(52,152,219,0.3)',
+                borderColor: 'rgba(52,152,219,0.6)',
+                borderWidth: 1, borderRadius: 3,
+                order: 2
+            },
+            {
+                label: 'Mediana',
+                data: medians.map((m, i) => m - p25s[i]),
+                backgroundColor: 'rgba(0,212,170,0.5)',
+                borderColor: '#00d4aa',
+                borderWidth: 1, borderRadius: 3,
+                order: 1
+            },
+            {
+                label: 'P75',
+                data: p75s.map((p, i) => p - medians[i]),
+                backgroundColor: 'rgba(243,156,18,0.3)',
+                borderColor: 'rgba(243,156,18,0.6)',
+                borderWidth: 1, borderRadius: 3,
+                order: 0
+            }
+        ];
+
+        chartInstances['chartDistribution'] = new Chart(canvas, {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                ...defaults,
+                plugins: {
+                    ...defaults.plugins,
+                    legend: { labels: { color: '#8899aa', font: { size: 10 } } },
+                    tooltip: {
+                        ...defaults.plugins.tooltip,
+                        callbacks: {
+                            label: (ctx) => {
+                                const i = ctx.dataIndex;
+                                return [`P25: ${p25s[i]?.toFixed(2)}`, `Mediana: ${medians[i]?.toFixed(2)}`, `P75: ${p75s[i]?.toFixed(2)}`];
+                            }
+                        }
+                    },
+                    annotation: globalMed ? {
+                        annotations: {
+                            globalLine: {
+                                type: 'line', yMin: globalMed, yMax: globalMed,
+                                borderColor: '#e74c3c', borderWidth: 2, borderDash: [6, 4],
+                                label: { display: true, content: `Global: ${globalMed.toFixed(1)}`, position: 'end', backgroundColor: '#e74c3c', color: '#fff', font: { size: 10 } }
+                            }
+                        }
+                    } : {}
+                },
+                scales: {
+                    x: { ...defaults.scales.x, stacked: true, ticks: { ...defaults.scales.x.ticks, font: { size: 9 }, maxRotation: 45 } },
+                    y: { ...defaults.scales.y, stacked: true, title: { display: true, text: getMetricLabel(metric), color: '#8899aa' } }
+                }
+            }
+        });
+    }
+
+    function renderTopCompaniesChart(data, metric) {
+        destroyChart('chartTopCompanies');
+        const canvas = document.getElementById('chartTopCompanies');
+        if (!canvas) return;
+
+        const companies = (data.companies || [])
+            .filter(c => c[metric] != null && c[metric] > 0)
+            .sort((a, b) => b[metric] - a[metric])
+            .slice(0, 20);
+
+        if (!companies.length) return;
+
+        const labels = companies.map(c => c.ticker || '?');
+        const values = companies.map(c => c[metric]);
+        const bgColors = companies.map(c => {
+            if (c.country === 'Brazil') return 'rgba(46,204,113,0.7)';
+            if (c.region === 'Latin America & Caribbean') return 'rgba(52,152,219,0.7)';
+            return 'rgba(0,212,170,0.4)';
+        });
+        const borderColors = companies.map(c => {
+            if (c.country === 'Brazil') return '#2ecc71';
+            if (c.region === 'Latin America & Caribbean') return '#3498db';
+            return '#00d4aa';
+        });
+
+        const defaults = chartThemeDefaults();
+        chartInstances['chartTopCompanies'] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: getMetricLabel(metric),
+                    data: values,
+                    backgroundColor: bgColors,
+                    borderColor: borderColors,
+                    borderWidth: 1, borderRadius: 4
+                }]
+            },
+            options: {
+                ...defaults,
+                plugins: {
+                    ...defaults.plugins, legend: { display: false },
+                    tooltip: {
+                        ...defaults.plugins.tooltip,
+                        callbacks: {
+                            afterLabel: (ctx) => {
+                                const c = companies[ctx.dataIndex];
+                                return [`${c.industry || ''}`, `${c.country || ''} (${c.region || ''})`];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ...defaults.scales.x, ticks: { ...defaults.scales.x.ticks, font: { size: 9 }, maxRotation: 45 } },
+                    y: { ...defaults.scales.y, title: { display: true, text: getMetricLabel(metric), color: '#8899aa' } }
+                }
+            }
+        });
     }
 
     // ========== EVOLUTION TAB ==========
@@ -722,12 +1299,27 @@
             { key: 'fcf_ebitda', label: 'FCF/EBITDA', fmt: fmtRatio }
         ];
         const geos = [
-            { key: 'global', label: 'Global', css: 'row-global' },
-            { key: 'latam', label: 'LATAM', css: 'row-latam' },
-            { key: 'brasil', label: 'Brasil', css: 'row-brasil' }
+            { key: 'global', label: 'Global', css: 'row-global', color: '#00d4aa' },
+            { key: 'latam', label: 'LATAM', css: 'row-latam', color: '#3498db' },
+            { key: 'brasil', label: 'Brasil', css: 'row-brasil', color: '#2ecc71' }
         ];
 
-        let html = '<div style="overflow-x:auto;">';
+        let html = '';
+
+        // === GRÁFICOS DE EVOLUÇÃO ===
+        html += `<div class="section-title"><i class="fas fa-chart-line"></i> Evolução dos Múltiplos</div>`;
+        html += '<div class="charts-grid">';
+        for (const metric of metrics) {
+            html += `<div class="chart-box">
+                <h3><i class="fas fa-chart-line"></i> ${metric.label}</h3>
+                <div style="height:280px;"><canvas id="evoChart_${metric.key}"></canvas></div>
+            </div>`;
+        }
+        html += '</div>';
+
+        // === TABELAS DE EVOLUÇÃO ===
+        html += `<div class="section-title"><i class="fas fa-table"></i> Dados Tabulares</div>`;
+        html += '<div style="overflow-x:auto;">';
         for (const metric of metrics) {
             html += `<div style="margin-bottom: 1.5rem;">
                 <div style="font-size:.9rem; font-weight:600; color:var(--accent); margin-bottom:.5rem;">${metric.label}</div>
@@ -775,6 +1367,77 @@
         }
         html += `</tbody></table></div></div>`;
         document.getElementById('tab-evolution').innerHTML = html;
+
+        // Render evolution line charts
+        renderEvolutionCharts(evoData);
+    }
+
+    function renderEvolutionCharts(evoData) {
+        const evo = evoData.evolution || [];
+        if (!evo.length) return;
+
+        const years = evo.map(e => String(e.year));
+        const metrics = ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda'];
+        const geos = [
+            { key: 'global', label: 'Global', color: '#00d4aa', bg: 'rgba(0,212,170,0.1)' },
+            { key: 'latam', label: 'LATAM', color: '#3498db', bg: 'rgba(52,152,219,0.1)' },
+            { key: 'brasil', label: 'Brasil', color: '#2ecc71', bg: 'rgba(46,204,113,0.1)' }
+        ];
+
+        const defaults = chartThemeDefaults();
+
+        for (const metric of metrics) {
+            const canvasId = `evoChart_${metric}`;
+            destroyChart(canvasId);
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) continue;
+
+            const datasets = geos.map(geo => {
+                const data = evo.map(e => {
+                    const gd = e[geo.key] || {};
+                    const md = gd[metric] || {};
+                    return md.median;
+                });
+                return {
+                    label: geo.label,
+                    data,
+                    borderColor: geo.color,
+                    backgroundColor: geo.bg,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: geo.color,
+                    borderWidth: 2
+                };
+            });
+
+            chartInstances[canvasId] = new Chart(canvas, {
+                type: 'line',
+                data: { labels: years, datasets },
+                options: {
+                    ...defaults,
+                    plugins: {
+                        ...defaults.plugins,
+                        legend: { position: 'top', labels: { color: '#8899aa', usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } },
+                        tooltip: {
+                            ...defaults.plugins.tooltip, mode: 'index', intersect: false,
+                            callbacks: {
+                                label: (ctx) => {
+                                    const v = ctx.raw;
+                                    return v != null ? `${ctx.dataset.label}: ${v.toFixed(2)}` : `${ctx.dataset.label}: —`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ...defaults.scales.x },
+                        y: { ...defaults.scales.y, title: { display: true, text: getMetricLabel(metric), color: '#8899aa' } }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+        }
     }
 
     // ========== BASE ANALÍTICA ==========
