@@ -415,12 +415,14 @@
                     <button class="tab-btn" onclick="switchTab(this, 'base')"><i class="fas fa-database"></i> Base Analítica</button>
                     <button class="tab-btn" onclick="switchTab(this, 'charts')"><i class="fas fa-chart-bar"></i> Infográficos</button>
                     <button class="tab-btn" onclick="switchTab(this, 'evolution')"><i class="fas fa-chart-line"></i> Evolução</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'insights')"><i class="fas fa-lightbulb"></i> Insights</button>
                 </div>
 
                 <div id="tab-resumo" class="tab-content active"></div>
                 <div id="tab-base" class="tab-content"></div>
                 <div id="tab-charts" class="tab-content"></div>
                 <div id="tab-evolution" class="tab-content"></div>
+                <div id="tab-insights" class="tab-content"></div>
             </div>
         </div>
 
@@ -461,6 +463,7 @@
     let availableYears = [];
     let chartInstances = {};
     let crossSectorData = null;
+    let insightsData = null;
 
     // ========== FORMATTERS ==========
     function fmtX(v, d = 1) { return v != null ? v.toFixed(d) + 'x' : '—'; }
@@ -814,7 +817,35 @@
                     renderBaseAnalitica();
                 }
             } catch(e) {
-                document.getElementById('tab-base').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>Erro ao carregar base analítica</div>';
+                document.getElementById('tab-base').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>Erro ao carregar base analitica</div>';
+            }
+
+            // Insights (heurísticos)
+            insightsData = null;
+            document.getElementById('tab-insights').innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:.8rem;">Gerando insights...</p></div>';
+            try {
+                const insightsPayload = {
+                    summary: data.summary,
+                    by_industry: data.by_industry,
+                    by_geography: data.by_geography,
+                    companies: data.companies,
+                    evolution: evolutionData ? evolutionData.evolution : [],
+                    metadata: data.metadata
+                };
+                const insResp = await fetch('/api/estudoanloc/insights', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(insightsPayload)
+                });
+                const insResult = await insResp.json();
+                if (insResult.success) {
+                    insightsData = insResult;
+                    renderInsightsTab(insResult);
+                } else {
+                    document.getElementById('tab-insights').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>Erro ao gerar insights</div>';
+                }
+            } catch(e) {
+                document.getElementById('tab-insights').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>Erro ao gerar insights</div>';
             }
 
             document.getElementById('resultsArea').style.display = 'block';
@@ -1610,6 +1641,80 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
         btn.classList.add('active');
+    }
+
+    // ========== INSIGHTS TAB ==========
+    function renderInsightsTab(result) {
+        const container = document.getElementById('tab-insights');
+        const insights = result.insights || [];
+        const meta = result.metadata || {};
+
+        if (insights.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-lightbulb"></i><br>Nenhum insight gerado para os dados selecionados</div>';
+            return;
+        }
+
+        const severityColors = {
+            danger: '#ff4d6a',
+            warning: '#ffb347',
+            info: '#00d4aa'
+        };
+        const severityLabels = {
+            danger: 'Alerta',
+            warning: 'Atenção',
+            info: 'Info'
+        };
+        const categoryLabels = {
+            contexto: 'Contexto Setorial',
+            geo: 'Comparação Geográfica',
+            anomalia: 'Anomalia',
+            dispersao: 'Dispersão',
+            empresa: 'Empresa Destaque',
+            evolucao: 'Evolução / Tendência'
+        };
+
+        // Agrupar por categoria
+        const groups = {};
+        insights.forEach(ins => {
+            const cat = ins.category || 'outros';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(ins);
+        });
+
+        const catOrder = ['contexto', 'anomalia', 'empresa', 'geo', 'evolucao', 'dispersao'];
+        let html = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <div>
+                    <h3 style="margin:0;color:var(--accent);"><i class="fas fa-lightbulb"></i> Insights — ${meta.sector || 'Setor'}</h3>
+                    <small style="color:var(--text2);">${insights.length} insights gerados (modo: heurísticas locais) • ${meta.fiscal_year || ''}</small>
+                </div>
+            </div>
+            <div style="background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.25);border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.8rem;color:#ffc107;">
+                <i class="fas fa-info-circle"></i> Insights gerados por análise heurística automática. Não constitui recomendação de investimento.
+            </div>`;
+
+        for (const cat of catOrder) {
+            if (!groups[cat]) continue;
+            const catLabel = categoryLabels[cat] || cat;
+            html += `<div style="margin-bottom:1.2rem;">
+                <h4 style="color:var(--text2);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem;">${catLabel}</h4>`;
+            for (const ins of groups[cat]) {
+                const color = severityColors[ins.severity] || severityColors.info;
+                const badge = severityLabels[ins.severity] || 'Info';
+                html += `
+                <div style="background:var(--card);border-left:3px solid ${color};border-radius:6px;padding:.8rem 1rem;margin-bottom:.5rem;">
+                    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">
+                        <i class="fas ${ins.icon || 'fa-lightbulb'}" style="color:${color};font-size:.9rem;"></i>
+                        <strong style="color:var(--text);font-size:.85rem;">${ins.title}</strong>
+                        <span style="background:${color}22;color:${color};font-size:.65rem;padding:2px 8px;border-radius:10px;margin-left:auto;">${badge}</span>
+                    </div>
+                    <div style="color:var(--text2);font-size:.82rem;line-height:1.5;">${ins.text}</div>
+                </div>`;
+            }
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
     }
 
     // ========== EXPORTS ==========

@@ -6409,6 +6409,839 @@ def api_estudoanloc_companies_full():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/estudoanloc/insights', methods=['POST'])
+def api_estudoanloc_insights():
+    """Gera insights heurísticos (Fase 5.1) com base nos dados calculados."""
+    try:
+        data = request.get_json() or {}
+        summary = data.get('summary', {})
+        by_industry = data.get('by_industry', [])
+        by_geography = data.get('by_geography', [])
+        companies = data.get('companies', [])
+        evolution = data.get('evolution', [])
+        metadata = data.get('metadata', {})
+        sector = metadata.get('sector', 'Setor')
+        fiscal_year = metadata.get('fiscal_year', '')
+
+        insights = []
+        metrics = ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']
+        metric_labels = {
+            'ev_ebitda': 'EV/EBITDA', 'ev_revenue': 'EV/Vendas',
+            'fcf_revenue': 'FCF/Vendas', 'fcf_ebitda': 'FCF/EBITDA'
+        }
+
+        # Helper
+        def safe_get(obj, metric, stat):
+            try:
+                return obj.get(metric, {}).get(stat)
+            except Exception:
+                return None
+
+        # --- 1. CONTEXTO SETORIAL ---
+        g = summary.get('global', {})
+        n = g.get('n', 0)
+        ev_med = safe_get(g, 'ev_ebitda', 'median')
+        ev_p25 = safe_get(g, 'ev_ebitda', 'p25')
+        ev_p75 = safe_get(g, 'ev_ebitda', 'p75')
+        if ev_med is not None and n > 0:
+            spread = (ev_p75 - ev_p25) if ev_p25 and ev_p75 else None
+            spread_txt = f' (dispersão P25-P75: {spread:.1f}x)' if spread else ''
+            insights.append({
+                'category': 'contexto',
+                'icon': 'fa-globe',
+                'title': f'Panorama {sector}',
+                'text': f'O setor {sector} apresenta EV/EBITDA mediana de {ev_med:.1f}x com {n} empresas analisadas{spread_txt} para {fiscal_year}.',
+                'severity': 'info'
+            })
+
+        # --- 2. COMPARAÇÃO BRASIL vs GLOBAL ---
+        br = summary.get('brasil', {})
+        latam = summary.get('latam', {})
+        for m in metrics:
+            g_val = safe_get(g, m, 'median')
+            br_val = safe_get(br, m, 'median')
+            br_n = br.get('n', 0)
+            if g_val and br_val and g_val != 0 and br_n >= 3:
+                discount = ((br_val - g_val) / abs(g_val)) * 100
+                label = metric_labels[m]
+                if abs(discount) > 15:
+                    direction = 'desconto' if discount < 0 else 'prêmio'
+                    insights.append({
+                        'category': 'geo',
+                        'icon': 'fa-flag',
+                        'title': f'Brasil vs Global — {label}',
+                        'text': f'Brasil opera com {direction} de {abs(discount):.0f}% em {label} ({br_val:.1f}x vs {g_val:.1f}x global). N={br_n} empresas brasileiras.',
+                        'severity': 'warning' if abs(discount) > 30 else 'info'
+                    })
+
+        # LATAM vs Global
+        for m in metrics:
+            g_val = safe_get(g, m, 'median')
+            la_val = safe_get(latam, m, 'median')
+            la_n = latam.get('n', 0)
+            if g_val and la_val and g_val != 0 and la_n >= 5:
+                discount = ((la_val - g_val) / abs(g_val)) * 100
+                label = metric_labels[m]
+                if abs(discount) > 15:
+                    direction = 'desconto' if discount < 0 else 'prêmio'
+                    insights.append({
+                        'category': 'geo',
+                        'icon': 'fa-globe-americas',
+                        'title': f'LATAM vs Global — {label}',
+                        'text': f'LATAM opera com {direction} de {abs(discount):.0f}% em {label} ({la_val:.1f}x vs {g_val:.1f}x global). N={la_n} empresas.',
+                        'severity': 'info'
+                    })
+
+        # --- 3. INDÚSTRIAS OUTLIERS ---
+        for m in metrics:
+            g_val = safe_get(g, m, 'median')
+            g_p25 = safe_get(g, m, 'p25')
+            g_p75 = safe_get(g, m, 'p75')
+            if g_val is None or g_p25 is None or g_p75 is None:
+                continue
+            iqr = g_p75 - g_p25
+            if iqr <= 0:
+                continue
+            label = metric_labels[m]
+            for ind in by_industry:
+                ind_val = safe_get(ind, m, 'median')
+                ind_n = ind.get('n', 0)
+                if ind_val is None or ind_n < 3:
+                    continue
+                z_score = (ind_val - g_val) / iqr
+                if abs(z_score) > 2:
+                    direction = 'acima' if z_score > 0 else 'abaixo'
+                    insights.append({
+                        'category': 'anomalia',
+                        'icon': 'fa-exclamation-triangle',
+                        'title': f'{ind.get("label", "?")} — {label} atípico',
+                        'text': f'{ind.get("label", "?")} apresenta {label} mediana de {ind_val:.1f}x, significativamente {direction} do setor ({g_val:.1f}x). N={ind_n}.',
+                        'severity': 'danger' if abs(z_score) > 3 else 'warning'
+                    })
+
+        # --- 4. INDÚSTRIAS COM MAIOR DISPERSÃO ---
+        dispersions = []
+        for ind in by_industry:
+            p25 = safe_get(ind, 'ev_ebitda', 'p25')
+            p75 = safe_get(ind, 'ev_ebitda', 'p75')
+            if p25 is not None and p75 is not None and ind.get('n', 0) >= 5:
+                dispersions.append((ind.get('label', '?'), p75 - p25, ind.get('n', 0)))
+        dispersions.sort(key=lambda x: -x[1])
+        for name, disp, n in dispersions[:3]:
+            if disp > 5:
+                insights.append({
+                    'category': 'dispersao',
+                    'icon': 'fa-arrows-alt-h',
+                    'title': f'Alta dispersão em {name}',
+                    'text': f'{name} tem amplitude P25-P75 de {disp:.1f}x em EV/EBITDA (N={n}), sugerindo heterogeneidade significativa entre empresas.',
+                    'severity': 'info'
+                })
+
+        # --- 5. EMPRESAS OUTLIERS (Top 5 acima e abaixo) ---
+        if companies:
+            ev_vals = [c.get('ev_ebitda') for c in companies if c.get('ev_ebitda') is not None and c.get('ev_ebitda') > 0]
+            if len(ev_vals) >= 10:
+                import statistics
+                med = statistics.median(ev_vals)
+                stdev = statistics.stdev(ev_vals) if len(ev_vals) > 1 else 0
+                if stdev > 0:
+                    outliers_high = [c for c in companies if c.get('ev_ebitda') is not None and (c['ev_ebitda'] - med) / stdev > 2]
+                    outliers_high.sort(key=lambda c: -c.get('ev_ebitda', 0))
+                    for c in outliers_high[:5]:
+                        insights.append({
+                            'category': 'empresa',
+                            'icon': 'fa-building',
+                            'title': f'{c.get("ticker","?")} — EV/EBITDA {c["ev_ebitda"]:.1f}x',
+                            'text': f'{c.get("company_name",c.get("ticker","?"))} ({c.get("country","?")}) opera com EV/EBITDA de {c["ev_ebitda"]:.1f}x vs mediana do setor {med:.1f}x ({((c["ev_ebitda"]-med)/med*100):.0f}% acima).',
+                            'severity': 'warning'
+                        })
+
+        # --- 6. EVOLUÇÃO / TENDÊNCIAS ---
+        if len(evolution) >= 3:
+            for m in metrics:
+                label = metric_labels[m]
+                vals = []
+                for evo in sorted(evolution, key=lambda e: e.get('year', 0)):
+                    v = safe_get(evo.get('global', {}), m, 'median')
+                    if v is not None:
+                        vals.append((evo['year'], v))
+                if len(vals) >= 3:
+                    first_yr, first_val = vals[0]
+                    last_yr, last_val = vals[-1]
+                    if first_val and first_val != 0:
+                        change_pct = ((last_val - first_val) / abs(first_val)) * 100
+                        if abs(change_pct) > 15:
+                            trend = 'crescente' if change_pct > 0 else 'decrescente'
+                            insights.append({
+                                'category': 'evolucao',
+                                'icon': 'fa-chart-line',
+                                'title': f'Tendência {trend} em {label}',
+                                'text': f'{label} global variou de {first_val:.1f}x ({first_yr}) para {last_val:.1f}x ({last_yr}), uma mudança de {change_pct:+.0f}%.',
+                                'severity': 'warning' if abs(change_pct) > 30 else 'info'
+                            })
+                    # Detectar reversão recente
+                    if len(vals) >= 4:
+                        prev_val = vals[-2][1]
+                        ante_val = vals[-3][1]
+                        if prev_val and ante_val and prev_val != 0:
+                            prev_trend = prev_val - ante_val
+                            curr_trend = last_val - prev_val
+                            if prev_trend * curr_trend < 0 and abs(curr_trend) > 0.3:
+                                direction = 'reverteu para alta' if curr_trend > 0 else 'reverteu para queda'
+                                insights.append({
+                                    'category': 'evolucao',
+                                    'icon': 'fa-sync-alt',
+                                    'title': f'Reversão em {label}',
+                                    'text': f'{label} global {direction} em {last_yr}: {prev_val:.1f}x → {last_val:.1f}x (mudança de {curr_trend:+.1f}x vs {prev_trend:+.1f}x anterior).',
+                                    'severity': 'warning'
+                                })
+
+        # --- 7. REGIÕES COM DESTAQUE ---
+        for geo in by_geography:
+            geo_val = safe_get(geo, 'ev_ebitda', 'median')
+            geo_n = geo.get('n', 0)
+            if geo_val is not None and ev_med is not None and ev_med != 0 and geo_n >= 5:
+                diff_pct = ((geo_val - ev_med) / abs(ev_med)) * 100
+                if abs(diff_pct) > 25:
+                    direction = 'prêmio' if diff_pct > 0 else 'desconto'
+                    insights.append({
+                        'category': 'geo',
+                        'icon': 'fa-map-marker-alt',
+                        'title': f'{geo.get("label","?")} — EV/EBITDA',
+                        'text': f'{geo.get("label","?")} opera com {direction} de {abs(diff_pct):.0f}% em EV/EBITDA ({geo_val:.1f}x vs {ev_med:.1f}x global). N={geo_n}.',
+                        'severity': 'info'
+                    })
+
+        # Ordenar por severidade
+        severity_order = {'danger': 0, 'warning': 1, 'info': 2}
+        insights.sort(key=lambda x: severity_order.get(x.get('severity', 'info'), 9))
+
+        return jsonify({
+            'success': True,
+            'insights': insights,
+            'total': len(insights),
+            'metadata': {'sector': sector, 'fiscal_year': fiscal_year, 'mode': 'heuristic'}
+        })
+    except Exception as e:
+        logger.error(f"Erro estudoanloc insights: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# ESTUDO ANLOC — Página Insights dedicada com LLM
+# ============================================================
+
+@app.route('/estudoanloc/insights')
+def estudoanloc_insights_page():
+    """Página dedicada de Insights com análise LLM."""
+    return render_template('estudoanloc_insights.html')
+
+
+@app.route('/api/estudoanloc/insights_llm', methods=['POST'])
+def api_estudoanloc_insights_llm():
+    """Gera insights usando LLM (Gemini) + heurísticas sobre dados do setor."""
+    try:
+        data = request.get_json() or {}
+        sector = data.get('sector', '')
+        fiscal_year = data.get('fiscal_year', 2025)
+        industries = data.get('industries', [])
+        region_filter = data.get('region', '')
+        country_filter = data.get('country', '')
+        filters = data.get('filters', {})
+        min_ev_usd = filters.get('min_ev_usd', 100_000_000)
+        max_ev_ebitda = filters.get('max_ev_ebitda', 60)
+
+        if not sector:
+            return jsonify({'success': False, 'error': 'Setor é obrigatório'}), 400
+
+        conn = get_db()
+        current_year = datetime.now().year
+        is_current = (fiscal_year >= current_year)
+
+        # --- Buscar dados ---
+        if is_current:
+            query = """
+                SELECT cbd.id as company_id, cbd.ticker, cbd.company_name, cbd.yahoo_sector,
+                       cbd.yahoo_industry, cbd.yahoo_country as country,
+                       COALESCE(dg.sub_group, 'Other') as region,
+                       cbd.enterprise_value as ev,
+                       cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                       cfh.free_cash_flow as fcf,
+                       cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents as cash,
+                       cfh.fiscal_year, cfh.period_type
+                FROM company_basic_data cbd
+                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cbd.yahoo_sector = ?
+                  AND cbd.enterprise_value IS NOT NULL
+                  AND cbd.enterprise_value > 0
+                  AND cfh.total_revenue IS NOT NULL
+                  AND cfh.total_revenue > 0
+                  AND (cfh.period_type = 'annual' OR (cfh.period_type = 'annual' AND cfh.fiscal_year = ?))
+            """
+            params = [sector, fiscal_year - 1]
+        else:
+            query = """
+                SELECT cbd.id as company_id, cbd.ticker, cbd.company_name, cbd.yahoo_sector,
+                       cbd.yahoo_industry, cbd.yahoo_country as country,
+                       COALESCE(dg.sub_group, 'Other') as region,
+                       cfh.enterprise_value_estimated as ev,
+                       cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                       cfh.free_cash_flow as fcf,
+                       cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents as cash,
+                       cfh.fiscal_year, cfh.period_type
+                FROM company_basic_data cbd
+                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cbd.yahoo_sector = ?
+                  AND cfh.fiscal_year = ?
+                  AND cfh.period_type = 'annual'
+                  AND cfh.enterprise_value_estimated IS NOT NULL
+                  AND cfh.enterprise_value_estimated > 0
+                  AND cfh.total_revenue IS NOT NULL
+                  AND cfh.total_revenue > 0
+            """
+            params = [sector, fiscal_year]
+
+        df = pd.read_sql_query(query, conn, params=params)
+
+        if df.empty:
+            return jsonify({'success': False, 'error': f'Sem dados para {sector} em {fiscal_year}'}), 404
+
+        # Priorizar TTM sobre Annual por empresa
+        if is_current:
+            type_priority = {'quarterly': 0, 'annual': 1}
+            df['_prio'] = df['period_type'].map(type_priority).fillna(2)
+            df = df.sort_values('_prio').drop_duplicates(subset=['company_id'], keep='first').drop(columns=['_prio'])
+
+        # Filtros
+        if min_ev_usd:
+            df = df[df['ev'] >= min_ev_usd]
+        if industries:
+            df = df[df['yahoo_industry'].isin(industries)]
+        if region_filter:
+            if region_filter == 'Brazil':
+                df = df[df['country'] == 'Brazil']
+            elif region_filter == 'LATAM':
+                latam = ['Brazil','Mexico','Argentina','Chile','Colombia','Peru','Uruguay','Paraguay',
+                         'Bolivia','Ecuador','Venezuela','Costa Rica','Panama','Guatemala','Honduras',
+                         'El Salvador','Nicaragua','Dominican Republic','Puerto Rico','Cuba']
+                df = df[df['country'].isin(latam)]
+            else:
+                df = df[df['region'] == region_filter]
+        if country_filter:
+            df = df[df['country'] == country_filter]
+
+        # Calcular múltiplos
+        df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
+        df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+        df['fcf_revenue'] = np.where(df['revenue'] > 0, df['fcf'] / df['revenue'], np.nan)
+        df['fcf_ebitda'] = np.where(df['ebitda'] > 0, df['fcf'] / df['ebitda'], np.nan)
+        df['ebitda_margin'] = np.where(df['revenue'] > 0, df['ebitda'] / df['revenue'] * 100, np.nan)
+
+        if max_ev_ebitda:
+            df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+
+        total_companies = len(df)
+        if total_companies == 0:
+            return jsonify({'success': False, 'error': 'Nenhuma empresa após filtros'}), 404
+
+        # --- Estatísticas agregadas ---
+        def calc_stats(subset, label=''):
+            result = {'label': label, 'n': len(subset)}
+            for m in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                vals = subset[m].dropna()
+                if len(vals) >= 1:
+                    result[m] = {
+                        'median': float(np.median(vals)), 'mean': float(np.mean(vals)),
+                        'p25': float(np.percentile(vals, 25)), 'p75': float(np.percentile(vals, 75)),
+                        'min': float(vals.min()), 'max': float(vals.max()), 'n': len(vals)
+                    }
+                else:
+                    result[m] = None
+            return result
+
+        stats_global = calc_stats(df, 'Global')
+
+        # Por indústria
+        by_industry = []
+        for ind, grp in df.groupby('yahoo_industry'):
+            if len(grp) >= 2:
+                by_industry.append(calc_stats(grp, ind))
+        by_industry.sort(key=lambda x: x['n'], reverse=True)
+
+        # Por região
+        by_region = []
+        for reg, grp in df.groupby('region'):
+            if len(grp) >= 2:
+                by_region.append(calc_stats(grp, reg))
+        by_region.sort(key=lambda x: x['n'], reverse=True)
+
+        # Por país (top 15)
+        by_country = []
+        for ctry, grp in df.groupby('country'):
+            if len(grp) >= 2:
+                by_country.append(calc_stats(grp, ctry))
+        by_country.sort(key=lambda x: x['n'], reverse=True)
+        by_country = by_country[:15]
+
+        # Top/Bottom empresas
+        df_ev = df.dropna(subset=['ev_ebitda']).sort_values('ev_ebitda', ascending=False)
+        top_companies = df_ev.head(10)[['ticker', 'company_name', 'yahoo_industry', 'country',
+                                         'ev_ebitda', 'ev_revenue', 'ebitda_margin', 'ev']].to_dict('records')
+        bottom_companies = df_ev.tail(10)[['ticker', 'company_name', 'yahoo_industry', 'country',
+                                            'ev_ebitda', 'ev_revenue', 'ebitda_margin', 'ev']].to_dict('records')
+
+        # Dados para gráficos
+        chart_data = {
+            'industry_chart': [{'label': x['label'], 'median': x.get('ev_ebitda', {}).get('median') if x.get('ev_ebitda') else None,
+                                'p25': x.get('ev_ebitda', {}).get('p25') if x.get('ev_ebitda') else None,
+                                'p75': x.get('ev_ebitda', {}).get('p75') if x.get('ev_ebitda') else None,
+                                'n': x['n']} for x in by_industry[:15]],
+            'region_chart': [{'label': x['label'], 'median': x.get('ev_ebitda', {}).get('median') if x.get('ev_ebitda') else None,
+                              'n': x['n']} for x in by_region],
+            'country_chart': [{'label': x['label'], 'median': x.get('ev_ebitda', {}).get('median') if x.get('ev_ebitda') else None,
+                               'n': x['n']} for x in by_country],
+            'distribution': df['ev_ebitda'].dropna().tolist()
+        }
+
+        # --- Gerar Insights Heurísticos ---
+        heuristic_insights = _generate_heuristic_insights(
+            stats_global, by_industry, by_region, by_country,
+            top_companies, bottom_companies, sector, fiscal_year
+        )
+
+        # --- Tentar LLM (multi-provider) ---
+        llm_analysis = None
+        llm_provider = data.get('llm_provider', 'gemini')
+        user_api_key = data.get('api_key', '')
+        env_keys = {
+            'gemini': os.environ.get('GEMINI_API_KEY', ''),
+            'openai': os.environ.get('OPENAI_API_KEY', ''),
+            'anthropic': os.environ.get('ANTHROPIC_API_KEY', '')
+        }
+        active_key = user_api_key or env_keys.get(llm_provider, '')
+        if active_key:
+            try:
+                llm_analysis = _generate_llm_analysis(
+                    active_key, sector, fiscal_year, stats_global,
+                    by_industry, by_region, by_country,
+                    top_companies, region_filter, country_filter,
+                    provider=llm_provider
+                )
+            except Exception as e:
+                logger.warning(f"LLM analysis failed ({llm_provider}): {e}")
+                llm_provider = None
+        else:
+            llm_provider = None
+
+        return jsonify({
+            'success': True,
+            'stats': stats_global,
+            'by_industry': by_industry,
+            'by_region': by_region,
+            'by_country': by_country,
+            'top_companies': top_companies,
+            'bottom_companies': bottom_companies,
+            'chart_data': chart_data,
+            'heuristic_insights': heuristic_insights,
+            'llm_analysis': llm_analysis,
+            'llm_provider': llm_provider,
+            'metadata': {
+                'sector': sector,
+                'fiscal_year': fiscal_year,
+                'total_companies': total_companies,
+                'region': region_filter or 'Global',
+                'country': country_filter or 'Todos',
+                'industries_filter': industries
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Erro estudoanloc insights_llm: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/evolution_data', methods=['POST'])
+def api_estudoanloc_evolution_data():
+    """Retorna estatísticas de múltiplos por ano para análise de evolução temporal."""
+    try:
+        data = request.get_json() or {}
+        sector = data.get('sector', '')
+        industry = data.get('industry', '')
+        region_filter = data.get('region', '')
+        country_filter = data.get('country', '')
+        min_ev = data.get('min_ev_usd', 100_000_000)
+        max_ev_ebitda = data.get('max_ev_ebitda', 60)
+        year_start = data.get('year_start', 2021)
+        year_end = data.get('year_end', 2025)
+
+        if not sector:
+            return jsonify({'success': False, 'error': 'Setor é obrigatório'}), 400
+
+        conn = get_db()
+        results_by_year = []
+
+        for yr in range(year_start, year_end + 1):
+            query = """
+                SELECT cbd.id as company_id, cbd.ticker, cbd.yahoo_industry,
+                       cbd.yahoo_country as country,
+                       COALESCE(dg.sub_group, 'Other') as region,
+                       cfh.enterprise_value_estimated as ev,
+                       cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                       cfh.free_cash_flow as fcf
+                FROM company_basic_data cbd
+                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+                WHERE cbd.yahoo_sector = ?
+                  AND cfh.fiscal_year = ?
+                  AND cfh.period_type = 'annual'
+                  AND cfh.enterprise_value_estimated IS NOT NULL
+                  AND cfh.enterprise_value_estimated > 0
+                  AND cfh.total_revenue IS NOT NULL
+                  AND cfh.total_revenue > 0
+            """
+            params = [sector, yr]
+            df = pd.read_sql_query(query, conn, params=params)
+
+            if df.empty:
+                results_by_year.append({'year': yr, 'n': 0})
+                continue
+
+            # Aplicar filtros
+            if min_ev:
+                df = df[df['ev'] >= min_ev]
+            if industry:
+                df = df[df['yahoo_industry'] == industry]
+            if region_filter:
+                if region_filter == 'Brazil':
+                    df = df[df['country'] == 'Brazil']
+                elif region_filter == 'LATAM':
+                    latam = ['Brazil','Mexico','Argentina','Chile','Colombia','Peru','Uruguay','Paraguay',
+                             'Bolivia','Ecuador','Venezuela','Costa Rica','Panama','Guatemala','Honduras',
+                             'El Salvador','Nicaragua','Dominican Republic','Puerto Rico','Cuba']
+                    df = df[df['country'].isin(latam)]
+                else:
+                    df = df[df['region'] == region_filter]
+            if country_filter:
+                df = df[df['country'] == country_filter]
+
+            if df.empty:
+                results_by_year.append({'year': yr, 'n': 0})
+                continue
+
+            # Calcular múltiplos
+            df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
+            df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+            df['fcf_revenue'] = np.where(df['revenue'] > 0, df['fcf'] / df['revenue'], np.nan)
+            df['fcf_ebitda'] = np.where(df['ebitda'] > 0, df['fcf'] / df['ebitda'], np.nan)
+
+            if max_ev_ebitda:
+                df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+
+            yr_data = {'year': yr, 'n': len(df)}
+            for m in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+                vals = df[m].dropna()
+                if len(vals) >= 2:
+                    yr_data[m] = {
+                        'median': round(float(np.median(vals)), 2),
+                        'mean': round(float(np.mean(vals)), 2),
+                        'p25': round(float(np.percentile(vals, 25)), 2),
+                        'p75': round(float(np.percentile(vals, 75)), 2),
+                        'n': int(len(vals))
+                    }
+                else:
+                    yr_data[m] = None
+            results_by_year.append(yr_data)
+
+        # Calcular variações ano-a-ano
+        trends = {}
+        for m in ['ev_ebitda', 'ev_revenue', 'fcf_revenue', 'fcf_ebitda']:
+            vals = [(r['year'], r[m]['median']) for r in results_by_year if r.get(m) and r[m].get('median')]
+            if len(vals) >= 2:
+                first_val = vals[0][1]
+                last_val = vals[-1][1]
+                change_pct = ((last_val - first_val) / abs(first_val)) * 100 if first_val else 0
+                trends[m] = {
+                    'start_year': vals[0][0], 'end_year': vals[-1][0],
+                    'start_val': first_val, 'end_val': last_val,
+                    'change_pct': round(change_pct, 1),
+                    'direction': 'up' if change_pct > 5 else ('down' if change_pct < -5 else 'stable')
+                }
+
+        return jsonify({
+            'success': True,
+            'evolution': results_by_year,
+            'trends': trends,
+            'metadata': {'sector': sector, 'industry': industry or 'Todas',
+                         'year_start': year_start, 'year_end': year_end}
+        })
+    except Exception as e:
+        logger.error(f"Erro evolution_data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/chat', methods=['POST'])
+def api_estudoanloc_chat():
+    """Endpoint de chat conversacional com LLM para análise de dados."""
+    try:
+        data = request.get_json() or {}
+        messages = data.get('messages', [])
+        provider = data.get('provider', 'gemini')
+        api_key = data.get('api_key', '')
+        data_context = data.get('data_context', '')
+        custom_instructions = data.get('custom_instructions', '')
+
+        if not messages:
+            return jsonify({'success': False, 'error': 'Nenhuma mensagem enviada'}), 400
+
+        # Usar env var como fallback
+        if not api_key:
+            env_keys = {
+                'gemini': os.environ.get('GEMINI_API_KEY', ''),
+                'openai': os.environ.get('OPENAI_API_KEY', ''),
+                'anthropic': os.environ.get('ANTHROPIC_API_KEY', '')
+            }
+            api_key = env_keys.get(provider, '')
+
+        if not api_key:
+            return jsonify({'success': False, 'error': f'API Key não configurada para {provider}. Configure nas definições ou via variável de ambiente.'}), 400
+
+        system_prompt = """Você é um analista financeiro sênior especializado em valuation por múltiplos de mercado.
+Responda sempre em português brasileiro, de forma objetiva e analítica.
+Baseie-se EXCLUSIVAMENTE nos dados fornecidos no contexto. Não invente números.
+Quando relevante, cite os dados específicos (medianas, percentis, empresas) para fundamentar suas análises.
+Formate suas respostas com parágrafos curtos para legibilidade."""
+
+        if custom_instructions:
+            system_prompt += f"\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n{custom_instructions}"
+
+        if data_context:
+            system_prompt += f"\n\nCONTEXTO DE DADOS (use como base para suas respostas):\n{data_context}"
+
+        response_text = _call_llm_chat(provider, api_key, messages, system_prompt)
+        return jsonify({'success': True, 'message': response_text})
+
+    except Exception as e:
+        logger.error(f"Erro chat LLM: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _call_llm_chat(provider, api_key, messages, system_prompt):
+    """Chama a LLM escolhida (Gemini, OpenAI ou Anthropic) no modo chat."""
+    if provider == 'gemini':
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.0-flash',
+                                       system_instruction=system_prompt)
+        # Converter messages para formato Gemini
+        gemini_history = []
+        for msg in messages[:-1]:
+            role = 'user' if msg['role'] == 'user' else 'model'
+            gemini_history.append({'role': role, 'parts': [msg['content']]})
+        chat = model.start_chat(history=gemini_history)
+        response = chat.send_message(messages[-1]['content'])
+        return response.text
+
+    elif provider == 'openai':
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        oai_messages = [{'role': 'system', 'content': system_prompt}]
+        for msg in messages:
+            oai_messages.append({'role': msg['role'], 'content': msg['content']})
+        response = client.chat.completions.create(
+            model='gpt-4o-mini', messages=oai_messages, temperature=0.3)
+        return response.choices[0].message.content
+
+    elif provider == 'anthropic':
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        anth_messages = [{'role': msg['role'], 'content': msg['content']} for msg in messages]
+        response = client.messages.create(
+            model='claude-sonnet-4-20250514', max_tokens=4096,
+            system=system_prompt, messages=anth_messages)
+        return response.content[0].text
+
+    else:
+        raise ValueError(f"Provedor LLM não suportado: {provider}")
+
+
+def _generate_heuristic_insights(stats, by_industry, by_region, by_country,
+                                  top_companies, bottom_companies, sector, fiscal_year):
+    """Gera insights baseados em heurísticas (sem API externa)."""
+    insights = []
+    metric_labels = {'ev_ebitda': 'EV/EBITDA', 'ev_revenue': 'EV/Vendas',
+                     'fcf_revenue': 'FCF/Vendas', 'fcf_ebitda': 'FCF/EBITDA'}
+
+    def sg(obj, m, s):
+        try: return obj.get(m, {}).get(s)
+        except: return None
+
+    ev_med = sg(stats, 'ev_ebitda', 'median')
+    n = stats.get('n', 0)
+
+    # Panorama
+    if ev_med and n > 0:
+        p25 = sg(stats, 'ev_ebitda', 'p25')
+        p75 = sg(stats, 'ev_ebitda', 'p75')
+        spread = f' (dispersão P25-P75: {p75-p25:.1f}x)' if p25 and p75 else ''
+        evr = sg(stats, 'ev_revenue', 'median')
+        evr_txt = f' EV/Vendas mediana {evr:.1f}x.' if evr else ''
+        insights.append({'category': 'contexto', 'icon': 'fa-globe', 'severity': 'info',
+            'title': f'Panorama {sector}',
+            'text': f'{sector} apresenta EV/EBITDA mediana de {ev_med:.1f}x com {n} empresas{spread}.{evr_txt}'})
+
+    # Indústrias outliers
+    if ev_med and by_industry:
+        p25 = sg(stats, 'ev_ebitda', 'p25')
+        p75 = sg(stats, 'ev_ebitda', 'p75')
+        iqr = (p75 - p25) if p25 and p75 and p75 > p25 else None
+        if iqr:
+            for ind in by_industry:
+                iv = sg(ind, 'ev_ebitda', 'median')
+                if iv and ind.get('n', 0) >= 3:
+                    z = (iv - ev_med) / iqr
+                    if abs(z) > 2:
+                        d = 'acima' if z > 0 else 'abaixo'
+                        sev = 'danger' if abs(z) > 3 else 'warning'
+                        insights.append({'category': 'anomalia', 'icon': 'fa-exclamation-triangle',
+                            'severity': sev, 'title': f'{ind["label"]} — múltiplo atípico',
+                            'text': f'{ind["label"]} tem EV/EBITDA de {iv:.1f}x, significativamente {d} da mediana {ev_med:.1f}x do setor. (N={ind["n"]})'})
+
+    # Regiões com destaque
+    for reg in by_region:
+        rv = sg(reg, 'ev_ebitda', 'median')
+        if rv and ev_med and ev_med != 0 and reg.get('n', 0) >= 3:
+            diff = ((rv - ev_med) / abs(ev_med)) * 100
+            if abs(diff) > 20:
+                d = 'prêmio' if diff > 0 else 'desconto'
+                insights.append({'category': 'geo', 'icon': 'fa-map-marker-alt', 'severity': 'info',
+                    'title': f'{reg["label"]} — {d} de {abs(diff):.0f}%',
+                    'text': f'{reg["label"]} opera EV/EBITDA de {rv:.1f}x ({d} de {abs(diff):.0f}% vs {ev_med:.1f}x global). N={reg["n"]}.'})
+
+    # Países com destaque
+    for ctry in by_country[:10]:
+        cv = sg(ctry, 'ev_ebitda', 'median')
+        if cv and ev_med and ev_med != 0 and ctry.get('n', 0) >= 3:
+            diff = ((cv - ev_med) / abs(ev_med)) * 100
+            if abs(diff) > 25:
+                d = 'prêmio' if diff > 0 else 'desconto'
+                insights.append({'category': 'geo', 'icon': 'fa-flag', 'severity': 'warning' if abs(diff) > 40 else 'info',
+                    'title': f'{ctry["label"]} — {d} de {abs(diff):.0f}%',
+                    'text': f'{ctry["label"]} opera EV/EBITDA de {cv:.1f}x ({d} vs global {ev_med:.1f}x). N={ctry["n"]}.'})
+
+    # Top empresas
+    for c in top_companies[:5]:
+        if c.get('ev_ebitda') and ev_med and ev_med != 0:
+            pct = ((c['ev_ebitda'] - ev_med) / abs(ev_med)) * 100
+            if pct > 50:
+                insights.append({'category': 'empresa', 'icon': 'fa-building', 'severity': 'warning',
+                    'title': f'{c["ticker"]} — EV/EBITDA {c["ev_ebitda"]:.1f}x',
+                    'text': f'{c.get("company_name", c["ticker"])} ({c.get("country","?")}) opera {pct:.0f}% acima da mediana setorial. Indústria: {c.get("yahoo_industry","?")}.'})
+
+    # Dispersão por indústria
+    dispersions = [(ind['label'], sg(ind, 'ev_ebitda', 'p75') - sg(ind, 'ev_ebitda', 'p25'), ind['n'])
+                   for ind in by_industry
+                   if sg(ind, 'ev_ebitda', 'p25') is not None and sg(ind, 'ev_ebitda', 'p75') is not None and ind.get('n', 0) >= 5]
+    dispersions.sort(key=lambda x: -x[1])
+    for name, disp, nn in dispersions[:3]:
+        if disp > 5:
+            insights.append({'category': 'dispersao', 'icon': 'fa-arrows-alt-h', 'severity': 'info',
+                'title': f'Alta dispersão em {name}',
+                'text': f'{name} tem amplitude P25-P75 de {disp:.1f}x (N={nn}), indicando heterogeneidade nas empresas.'})
+
+    severity_order = {'danger': 0, 'warning': 1, 'info': 2}
+    insights.sort(key=lambda x: severity_order.get(x.get('severity', 'info'), 9))
+    return insights
+
+
+def _generate_llm_analysis(api_key, sector, fiscal_year, stats, by_industry,
+                            by_region, by_country, top_companies, region, country,
+                            provider='gemini'):
+    """Gera análise estruturada usando LLM (Gemini, OpenAI ou Anthropic)."""
+
+    # Preparar contexto compacto
+    def fmt_stat(obj, metric):
+        s = obj.get(metric)
+        if not s: return 'N/D'
+        return f"med={s.get('median','?'):.1f}x p25={s.get('p25','?'):.1f}x p75={s.get('p75','?'):.1f}x (n={s.get('n','?')})"
+
+    context_lines = [
+        f"Setor: {sector} | Ano: {fiscal_year} | Empresas: {stats.get('n',0)}",
+        f"{'Região: ' + region if region else 'Global'}{' | País: ' + country if country else ''}",
+        f"\nMÚLTIPLOS GLOBAIS:",
+        f"  EV/EBITDA: {fmt_stat(stats, 'ev_ebitda')}",
+        f"  EV/Vendas: {fmt_stat(stats, 'ev_revenue')}",
+        f"  FCF/Vendas: {fmt_stat(stats, 'fcf_revenue')}",
+        f"  FCF/EBITDA: {fmt_stat(stats, 'fcf_ebitda')}",
+        f"\nPOR INDÚSTRIA (top 10):"
+    ]
+    for ind in by_industry[:10]:
+        ev = ind.get('ev_ebitda')
+        if ev:
+            context_lines.append(f"  {ind['label']}: EV/EBITDA med={ev.get('median',0):.1f}x (n={ind['n']})")
+
+    context_lines.append(f"\nPOR REGIÃO:")
+    for reg in by_region[:8]:
+        ev = reg.get('ev_ebitda')
+        if ev:
+            context_lines.append(f"  {reg['label']}: EV/EBITDA med={ev.get('median',0):.1f}x (n={reg['n']})")
+
+    if by_country:
+        context_lines.append(f"\nPOR PAÍS (top 10):")
+        for ctry in by_country[:10]:
+            ev = ctry.get('ev_ebitda')
+            if ev:
+                context_lines.append(f"  {ctry['label']}: EV/EBITDA med={ev.get('median',0):.1f}x (n={ctry['n']})")
+
+    context_lines.append(f"\nTOP EMPRESAS (maior EV/EBITDA):")
+    for c in top_companies[:8]:
+        context_lines.append(f"  {c.get('ticker','?')} ({c.get('country','?')}): EV/EBITDA={c.get('ev_ebitda',0):.1f}x")
+
+    context = "\n".join(context_lines)
+
+    user_prompt = f"""Analise os dados abaixo do setor {sector} e gere um relatório conciso em português brasileiro.
+
+DADOS:
+{context}
+
+Gere um JSON com a seguinte estrutura (responda SOMENTE o JSON, sem markdown):
+{{
+  "resumo_executivo": "2-3 parágrafos com panorama geral do setor, medianas, dispersão e contexto de mercado",
+  "destaques": [
+    {{"titulo": "string", "texto": "string", "tipo": "positivo|negativo|neutro"}}
+  ],
+  "analise_industrias": "1-2 parágrafos comparando indústrias, outliers e padrões",
+  "analise_geografica": "1-2 parágrafos sobre diferenças regionais/por país",
+  "empresas_destaque": "1 parágrafo sobre as empresas outliers e possíveis explicações",
+  "riscos_oportunidades": [
+    {{"tipo": "risco|oportunidade", "texto": "string"}}
+  ],
+  "conclusao": "1 parágrafo com conclusão e perspectivas"
+}}
+
+IMPORTANTE: Baseie-se EXCLUSIVAMENTE nos dados fornecidos. Não invente números. Seja objetivo e analítico."""
+
+    system_prompt = "Você é um analista financeiro sênior especializado em valuation por múltiplos. Responda SOMENTE com JSON válido, sem markdown."
+
+    messages = [{'role': 'user', 'content': user_prompt}]
+    text = _call_llm_chat(provider, api_key, messages, system_prompt)
+
+    # Parse JSON da resposta
+    text = text.strip()
+    if text.startswith('```'):
+        text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        if text.startswith('json'):
+            text = text[4:]
+        text = text.strip()
+
+    import json as json_mod
+    analysis = json_mod.loads(text)
+    return analysis
+
+
 if __name__ == '__main__':
     # Criar diretórios necessários
     Path("templates").mkdir(exist_ok=True)

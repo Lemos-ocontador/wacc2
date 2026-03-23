@@ -128,6 +128,63 @@ INSIGHTS_WEB_SEARCH_API_KEY = "..."
 
 ---
 
+---
+
+## Riscos de Copyright e Privacidade no Uso de LLM
+
+### 1. Posso ser questionado pelos donos da IA?
+
+**Risco baixo.** Os provedores (OpenAI, Anthropic, Google) **não** proíbem uso comercial das APIs pagas. Os Termos de Uso permitem:
+
+- Usar o output (insights gerados) no seu produto
+- Exibir o resultado para clientes
+- Cobrar pelo serviço que inclui outputs de LLM
+
+**Restrição**: não afirmar que os insights foram "criados pela OpenAI/Anthropic/Google" como se eles endossassem. O output via API paga é considerado **seu**.
+
+### 2. A empresa de IA pode usar meus dados para treinar modelos?
+
+| Provedor | API Paga | Risco |
+|----------|----------|-------|
+| **OpenAI** (API) | **NÃO treina** com dados enviados via API (desde março 2023) | Baixo |
+| **Anthropic** (API) | **NÃO treina** com dados da API por padrão | Baixo |
+| **Google Gemini** (API paga) | **NÃO treina** com dados da API paga | Baixo |
+| Google Gemini (versão gratuita/web) | **PODE usar** para melhorar serviços | **Alto** |
+| ChatGPT (web/app gratuito) | **PODE usar** salvo opt-out | **Alto** |
+
+**Conclusão**: usando a **API paga**, os provedores **não usam seus dados para treino**. Usando versão web/gratuita, há risco.
+
+### 3. Podem criar um produto similar com meus insights?
+
+**Risco praticamente nulo** via API paga:
+
+- Os dados enviados (tabelas de múltiplos, filtros) são **dados públicos** (Damodaran/SEC) — não há segredo comercial nos dados em si
+- O **valor do produto** está na curadoria, layout, UX, filtros, combinação com análise geográfica — isso é **IP nosso**, não vai na API
+- O prompt e a lógica de análise ficam no **backend** — a LLM só recebe contexto pré-processado e devolve texto
+- Com milhões de requisições/dia, provedores não analisam o que uma API call específica faz
+
+### 4. Riscos reais a considerar
+
+| Risco | Gravidade | Mitigação |
+|-------|-----------|-----------|
+| **LLM gerando informação falsa** (hallucination) sobre múltiplos/empresas | **Alta** | Disclaimer: "Gerado por IA, não constitui recomendação de investimento" |
+| **Responsabilidade por análise financeira** (CVM/SEC) | **Alta** | Nunca afirmar que é "recomendação". Usar "análise informativa" |
+| **Custo descontrolado** de API se muitos usuários gerarem insights | Média | Rate limiting + cache de insights (já planejado) |
+| **Dependência de provedor** (API fora do ar = feature quebrada) | Média | Fase 5.1 (heurísticas locais) como fallback |
+| **Dados sensíveis de clientes** sendo enviados ao LLM | Baixa | Enviar apenas dados agregados/públicos, não dados de clientes |
+
+### 5. Recomendações práticas
+
+1. **Usar SEMPRE a API paga** — nunca a versão web/gratuita para gerar insights
+2. **Adicionar disclaimer** no frontend: _"Insights gerados por inteligência artificial. Não constitui recomendação de investimento."_
+3. **Não enviar dados proprietários** no prompt — apenas múltiplos agregados (medianas, P25/P75), derivados de dados públicos
+4. **Implementar a Fase 5.1 primeiro** (heurísticas locais sem API) — cobre ~80% dos insights úteis sem custo e sem risco
+5. **Guardar os Terms of Service** atuais como referência (podem mudar no futuro)
+
+> **Resumo**: usando API paga, o output é nosso, os dados não são usados para treino, e o risco de copyright é mínimo. O risco real é **regulatório (CVM)** por gerar análise que pareça recomendação financeira — resolver com disclaimers claros.
+
+---
+
 ## Melhorias Futuras Adicionais
 
 - [ ] **Export PDF**: Gerar relatório em PDF com gráficos e insights
