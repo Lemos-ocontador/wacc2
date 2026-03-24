@@ -311,6 +311,150 @@ def wacc_parameters_page():
     return render_template('wacc_parameters.html')
 
 
+@app.route('/data-quality')
+def data_quality_page():
+    """Dashboard visual de qualidade dos dados — resultados do teste de validação."""
+    return render_template('data_quality_dashboard.html')
+
+
+@app.route('/api/data_quality_results', methods=['GET'])
+def api_data_quality_results():
+    """API que retorna os resultados do último teste de qualidade de dados."""
+    import csv
+    from pathlib import Path
+    
+    cache_dir = Path('cache')
+    
+    # Encontrar os arquivos mais recentes de cada tipo
+    def find_latest(prefix, exclude=None):
+        files = sorted(cache_dir.glob(f'{prefix}_*.csv'), reverse=True)
+        if exclude:
+            files = [f for f in files if not any(ex in f.name for ex in exclude)]
+        return files[0] if files else None
+    
+    detail_file = find_latest('test_quality', exclude=['outliers', 'consistency'])
+    outlier_file = find_latest('test_quality_outliers')
+    consistency_file = find_latest('test_quality_consistency')
+    
+    if not detail_file:
+        return jsonify({'error': 'Nenhum resultado de teste encontrado. Execute scripts/test_data_quality.py primeiro.'}), 404
+    
+    # Ler CSV de detalhes
+    details = []
+    with open(detail_file, 'r', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            details.append(row)
+    
+    # Ler CSV de outliers
+    outliers = []
+    if outlier_file and outlier_file.exists():
+        with open(outlier_file, 'r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                outliers.append(row)
+    
+    # Ler CSV de consistência
+    consistency = []
+    if consistency_file and consistency_file.exists():
+        with open(consistency_file, 'r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                consistency.append(row)
+    
+    # --- Calcular métricas agregadas ---
+    from collections import Counter, defaultdict
+    
+    status_counts = Counter(r['status'] for r in details)
+    total = len(details)
+    
+    # Apenas comparações válidas (excluir BOTH_NULL)
+    valid = [r for r in details if r['status'] not in ('BOTH_NULL',)]
+    valid_with_diff = [r for r in valid if r['pct_diff'] and r['status'] != 'NO_DB_DATA']
+    
+    # Precisão por campo
+    field_stats = defaultdict(list)
+    for r in valid_with_diff:
+        try:
+            field_stats[r['field']].append(abs(float(r['pct_diff'])))
+        except (ValueError, TypeError):
+            pass
+    
+    field_precision = {}
+    for field, diffs in field_stats.items():
+        if diffs:
+            import statistics
+            field_precision[field] = {
+                'median': round(statistics.median(diffs), 4),
+                'mean': round(statistics.mean(diffs), 4),
+                'n': len(diffs),
+                'match_pct': round(sum(1 for d in diffs if d < 1) / len(diffs) * 100, 1)
+            }
+    
+    # Precisão por país
+    country_stats = defaultdict(list)
+    for r in valid_with_diff:
+        country = r.get('country') or 'Unknown'
+        try:
+            country_stats[country].append(abs(float(r['pct_diff'])))
+        except (ValueError, TypeError):
+            pass
+    
+    country_precision = {}
+    for country, diffs in country_stats.items():
+        if diffs and country:
+            country_precision[country] = {
+                'median': round(statistics.median(diffs), 4),
+                'n': len(diffs),
+                'match_pct': round(sum(1 for d in diffs if d < 1) / len(diffs) * 100, 1)
+            }
+    
+    # Precisão por setor
+    sector_stats = defaultdict(list)
+    for r in valid_with_diff:
+        sector = r.get('sector') or 'Unknown'
+        try:
+            sector_stats[sector].append(abs(float(r['pct_diff'])))
+        except (ValueError, TypeError):
+            pass
+    
+    sector_precision = {}
+    for sector, diffs in sector_stats.items():
+        if diffs and sector:
+            sector_precision[sector] = {
+                'median': round(statistics.median(diffs), 4),
+                'n': len(diffs),
+                'match_pct': round(sum(1 for d in diffs if d < 1) / len(diffs) * 100, 1)
+            }
+    
+    # Tickers com dados ausentes
+    no_data_tickers = sorted(set(r['yahoo_code'] for r in details if r['status'] == 'NO_DB_DATA'))
+    
+    # Consistência agrupada
+    consistency_summary = Counter(r['type'] for r in consistency)
+    
+    # Timestamp do teste
+    test_timestamp = detail_file.stem.replace('test_quality_', '')
+    
+    return jsonify({
+        'test_timestamp': test_timestamp,
+        'total_comparisons': total,
+        'status_distribution': dict(status_counts),
+        'field_precision': field_precision,
+        'country_precision': country_precision,
+        'sector_precision': sector_precision,
+        'outliers': outliers,
+        'consistency_issues': consistency,
+        'consistency_summary': dict(consistency_summary),
+        'no_data_tickers': no_data_tickers,
+        'files': {
+            'detail': str(detail_file),
+            'outlier': str(outlier_file) if outlier_file else None,
+            'consistency': str(consistency_file) if consistency_file else None
+        }
+    })
+
+
 # ===== ROTAS PARA GESTÃO DE FONTES DE DADOS =====
 
 @app.route('/api/data_sources_status', methods=['GET'])

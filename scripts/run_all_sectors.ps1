@@ -29,7 +29,7 @@ foreach ($sector in $sectors) {
     Write-Host "Inicio: $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Cyan
     Write-Host "============================================================" -ForegroundColor Cyan
     
-    python scripts/fetch_historical_financials.py --sector $sector --force --workers 2 --max-rps 1.5
+    python scripts/fetch_historical_financials.py --sector $sector --force --workers 5 --max-rps 4.0
     
     $exitCode = $LASTEXITCODE
     $sectorDuration = (Get-Date) - $sectorStart

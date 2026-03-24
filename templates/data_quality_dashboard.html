@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}Qualidade dos Dados — Data Quality Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quality-hero {
+        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+        color: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    .quality-hero::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(52,152,219,0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .quality-hero h1 { font-size: 2rem; font-weight: 700; }
+    .quality-hero .subtitle { opacity: 0.8; font-size: 1.1rem; }
+    
+    .kpi-card {
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        min-height: 140px;
+    }
+    .kpi-card .kpi-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .kpi-card .kpi-label { font-size: 0.85rem; opacity: 0.9; margin-top: 8px; }
+    .kpi-card .kpi-icon { position: absolute; top: 12px; right: 16px; font-size: 2rem; opacity: 0.2; }
+    .kpi-green { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    .kpi-blue { background: linear-gradient(135deg, #2980b9, #3498db); }
+    .kpi-orange { background: linear-gradient(135deg, #e67e22, #f39c12); }
+    .kpi-red { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+    .kpi-purple { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 30px 0 16px;
+        padding-bottom: 8px;
+        border-bottom: 3px solid #3498db;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .donut-container { max-width: 280px; margin: 0 auto; }
+    
+    .field-bar {
+        height: 28px;
+        border-radius: 14px;
+        background: #ecf0f1;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 8px;
+    }
+    .field-bar-fill {
+        height: 100%;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        padding-left: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        transition: width 1s ease;
+    }
+    .field-bar-label {
+        font-size: 0.8rem;
+        color: #555;
+        margin-bottom: 2px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .outlier-row { border-left: 4px solid #e74c3c; }
+    .outlier-row.warning { border-left-color: #f39c12; }
+    .outlier-row.info { border-left-color: #3498db; }
+    
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-match { background: #d5f5e3; color: #27ae60; }
+    .badge-close { background: #d4efdf; color: #1e8449; }
+    .badge-deviation { background: #fdebd0; color: #e67e22; }
+    .badge-large { background: #fadbd8; color: #c0392b; }
+    .badge-nodata { background: #eaecee; color: #7f8c8d; }
+    .badge-null { background: #f2f3f4; color: #aab7b8; }
+    
+    .country-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: #eaf2f8;
+        color: #2c3e50;
+        font-size: 0.82rem;
+        font-weight: 500;
+        margin: 4px;
+        border: 1px solid #d4e6f1;
+    }
+    .country-chip .pct { font-weight: 700; color: #27ae60; }
+    
+    .consistency-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .loading-overlay .spinner-border { width: 3rem; height: 3rem; }
+    
+    .ticker-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: #fff3cd;
+        color: #856404;
+        margin: 2px;
+    }
+    
+    .chart-card {
+        border-radius: 16px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        padding: 24px;
+    }
+    .chart-card:hover {
+        transform: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    
+    @media (max-width: 768px) {
+        .quality-hero { padding: 24px; }
+        .quality-hero h1 { font-size: 1.5rem; }
+        .kpi-card .kpi-value { font-size: 1.8rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status"></div>
+    <div class="text-muted">Carregando resultados do teste de qualidade...</div>
+</div>
+
+<!-- Hero Section -->
+<div class="quality-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+            <h1><i class="fas fa-shield-alt me-2"></i>Data Quality Dashboard</h1>
+            <div class="subtitle">Validação dos dados financeiros — DB vs Yahoo Finance ao vivo</div>
+            <div class="mt-2" id="testTimestamp" style="font-size: 0.85rem; opacity: 0.6;"></div>
+        </div>
+        <div class="text-end">
+            <span id="overallGrade" class="badge fs-4 p-3" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);">--</span>
+            <div class="mt-1" style="font-size: 0.8rem; opacity: 0.7;">Nota Geral</div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4" id="kpiRow">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card kpi-blue">
+            <i class="fas fa-database kpi-icon"></i>
+            <div class="kpi-value" id="kpiTotal">--</div>
+            <div class="kpi-label">Comparações Totais</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card kpi-green">
+            <i class="fas fa-check-circle kpi-icon"></i>
+            <div class="kpi-value" id="kpiMatchPct">--</div>
+            <div class="kpi-label">Match Exato (<1%)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card kpi-orange">
+            <i class="fas fa-exclamation-triangle kpi-icon"></i>
+            <div class="kpi-value" id="kpiOutliers">--</div>
+            <div class="kpi-label">Outliers (z > 3σ)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card kpi-red">
+            <i class="fas fa-ban kpi-icon"></i>
+            <div class="kpi-value" id="kpiNoData">--</div>
+            <div class="kpi-label">Sem Dados no DB</div>
+        </div>
+    </div>
+</div>
+
+<!-- Row: Donut Chart + Status Table -->
+<div class="row g-4">
+    <!-- Donut Chart -->
+    <div class="col-lg-5">
+        <div class="chart-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Distribuição de Status</h6>
+            <div class="donut-container">
+                <canvas id="statusDonut"></canvas>
+            </div>
+            <div id="statusLegend" class="mt-3 text-center" style="font-size: 0.82rem;"></div>
+        </div>
+    </div>
+    
+    <!-- Field Precision Bars -->
+    <div class="col-lg-7">
+        <div class="chart-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-bullseye me-2 text-success"></i>Precisão por Campo (% Match)</h6>
+            <div id="fieldBars"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Precision by Country -->
+<h5 class="section-title"><i class="fas fa-globe-americas text-primary"></i>Precisão por País</h5>
+<div class="chart-card">
+    <div id="countryChips" class="d-flex flex-wrap"></div>
+</div>
+
+<!-- Precision by Sector -->
+<h5 class="section-title"><i class="fas fa-industry text-primary"></i>Precisão por Setor</h5>
+<div class="chart-card">
+    <canvas id="sectorChart" height="280"></canvas>
+</div>
+
+<!-- Outliers Table -->
+<h5 class="section-title"><i class="fas fa-exclamation-circle text-danger"></i>Outliers Estatísticos (z > 3σ)</h5>
+<div class="chart-card">
+    <div class="table-responsive">
+        <table class="table table-sm mb-0" id="outliersTable">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Campo</th>
+                    <th>Ano</th>
+                    <th class="text-end">Valor DB</th>
+                    <th class="text-end">Valor YF</th>
+                    <th class="text-end">Diff %</th>
+                    <th class="text-end">z-score</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="outliersBody"></tbody>
+        </table>
+    </div>
+    <div id="noOutliers" class="text-center text-muted py-4 d-none">
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i><br>
+        Nenhum outlier estatístico encontrado.
+    </div>
+</div>
+
+<!-- Consistency Issues -->
+<h5 class="section-title"><i class="fas fa-clipboard-check text-warning"></i>Problemas de Consistência Interna</h5>
+<div class="row g-3" id="consistencyCards"></div>
+
+<!-- Missing Tickers -->
+<h5 class="section-title"><i class="fas fa-search text-secondary"></i>Tickers Sem Dados no DB</h5>
+<div class="chart-card">
+    <div id="missingTickers">
+        <p class="text-muted mb-0">Nenhum ticker sem dados.</p>
+    </div>
+</div>
+
+<!-- Consistency Detail Table (collapsible) -->
+<h5 class="section-title"><i class="fas fa-list-ul text-info"></i>Detalhes de Consistência</h5>
+<div class="chart-card">
+    <button class="btn btn-sm btn-outline-secondary mb-3" data-bs-toggle="collapse" data-bs-target="#consistencyDetailCollapse">
+        <i class="fas fa-eye me-1"></i>Mostrar / Ocultar Detalhes
+    </button>
+    <div class="collapse" id="consistencyDetailCollapse">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-sm table-striped mb-0">
+                <thead style="position: sticky; top: 0;">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Ticker</th>
+                        <th>Ano</th>
+                        <th>Detalhe</th>
+                    </tr>
+                </thead>
+                <tbody id="consistencyDetailBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/data_quality_results')
+        .then(r => {
+            if (!r.ok) throw new Error('Nenhum resultado de teste encontrado');
+            return r.json();
+        })
+        .then(render)
+        .catch(err => {
+            document.getElementById('loadingOverlay').innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Nenhum resultado de teste encontrado</h5>
+                    <p class="text-muted">Execute o script de teste primeiro:</p>
+                    <code>python scripts/test_data_quality.py --quick --output test_quality</code>
+                </div>`;
+        });
+});
+
+function render(data) {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    
+    const ts = data.test_timestamp;
+    if (ts && ts.length >= 14) {
+        const dt = `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)} ${ts.slice(9,11)}:${ts.slice(11,13)}:${ts.slice(13,15)}`;
+        document.getElementById('testTimestamp').textContent = `Executado em: ${dt}`;
+    }
+    
+    const sd = data.status_distribution;
+    const total = data.total_comparisons;
+    const matchN = (sd.MATCH || 0);
+    const closeN = (sd.CLOSE || 0);
+    const bothNull = (sd.BOTH_NULL || 0);
+    const validN = total - bothNull;
+    const matchPct = validN > 0 ? ((matchN + closeN) / validN * 100) : 0;
+    
+    // KPIs
+    document.getElementById('kpiTotal').textContent = validN.toLocaleString('pt-BR');
+    document.getElementById('kpiMatchPct').textContent = matchPct.toFixed(1) + '%';
+    document.getElementById('kpiOutliers').textContent = data.outliers.length;
+    document.getElementById('kpiNoData').textContent = data.no_data_tickers.length;
+    
+    // Grade
+    const grade = matchPct >= 99 ? 'A+' : matchPct >= 95 ? 'A' : matchPct >= 90 ? 'B' : matchPct >= 80 ? 'C' : 'D';
+    const gradeEl = document.getElementById('overallGrade');
+    gradeEl.textContent = grade;
+    gradeEl.style.background = matchPct >= 95 ? 'rgba(39,174,96,0.3)' : matchPct >= 80 ? 'rgba(243,156,18,0.3)' : 'rgba(231,76,60,0.3)';
+    
+    // Donut
+    renderDonut(sd);
+    
+    // Field bars
+    renderFieldBars(data.field_precision);
+    
+    // Countries
+    renderCountries(data.country_precision);
+    
+    // Sector chart
+    renderSectorChart(data.sector_precision);
+    
+    // Outliers table
+    renderOutliers(data.outliers);
+    
+    // Consistency
+    renderConsistency(data.consistency_summary, data.consistency_issues);
+    
+    // Missing tickers
+    renderMissing(data.no_data_tickers);
+}
+
+function renderDonut(sd) {
+    const labels = [];
+    const values = [];
+    const colors = [];
+    
+    const colorMap = {
+        'MATCH': '#27ae60',
+        'CLOSE': '#2ecc71',
+        'DEVIATION': '#f39c12',
+        'LARGE_DEVIATION': '#e74c3c',
+        'SIGN_MISMATCH': '#c0392b',
+        'BOTH_NULL': '#bdc3c7',
+        'NO_DB_DATA': '#95a5a6',
+        'MISSING_DB': '#7f8c8d',
+        'MISSING_YF': '#aab7b8'
+    };
+    
+    const labelMap = {
+        'MATCH': 'Match (<1%)',
+        'CLOSE': 'Próximo (1-5%)',
+        'DEVIATION': 'Desvio (5-20%)',
+        'LARGE_DEVIATION': 'Desvio Grande (>20%)',
+        'SIGN_MISMATCH': 'Sinal Invertido',
+        'BOTH_NULL': 'Ambos Nulos',
+        'NO_DB_DATA': 'Sem Dados DB',
+        'MISSING_DB': 'Faltando DB',
+        'MISSING_YF': 'Faltando YF'
+    };
+    
+    for (const [k, v] of Object.entries(sd)) {
+        if (v > 0) {
+            labels.push(labelMap[k] || k);
+            values.push(v);
+            colors.push(colorMap[k] || '#bdc3c7');
+        }
+    }
+    
+    new Chart(document.getElementById('statusDonut'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+        options: {
+            cutout: '65%',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const tot = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                            return ` ${ctx.label}: ${ctx.raw.toLocaleString('pt-BR')} (${(ctx.raw/tot*100).toFixed(1)}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Custom legend
+    const legendHtml = labels.map((l, i) => 
+        `<span class="me-3"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${colors[i]};margin-right:4px;"></span>${l}: <b>${values[i].toLocaleString('pt-BR')}</b></span>`
+    ).join('');
+    document.getElementById('statusLegend').innerHTML = legendHtml;
+}
+
+function renderFieldBars(fp) {
+    const container = document.getElementById('fieldBars');
+    
+    // Ordenar por match_pct descendente
+    const entries = Object.entries(fp).sort((a, b) => b[1].match_pct - a[1].match_pct);
+    
+    const fieldLabels = {
+        total_revenue: 'Receita Total', ebitda: 'EBITDA', ebit: 'EBIT',
+        net_income: 'Lucro Líquido', operating_income: 'Lucro Operacional',
+        gross_profit: 'Lucro Bruto', interest_expense: 'Despesa Financeira',
+        free_cash_flow: 'FCF', operating_cash_flow: 'Fluxo Op. Caixa',
+        capital_expenditure: 'CAPEX', total_debt: 'Dívida Total',
+        total_assets: 'Ativos Totais', stockholders_equity: 'Patrimônio Líquido',
+        cash_and_equivalents: 'Caixa', current_assets: 'Ativo Circulante',
+        current_liabilities: 'Passivo Circulante'
+    };
+    
+    let html = '';
+    for (const [field, stats] of entries) {
+        const pct = stats.match_pct;
+        const color = pct >= 99 ? '#27ae60' : pct >= 95 ? '#2ecc71' : pct >= 90 ? '#f39c12' : '#e74c3c';
+        const label = fieldLabels[field] || field;
+        html += `
+            <div class="field-bar-label">
+                <span>${label}</span>
+                <span><b>${pct}%</b> match (n=${stats.n})</span>
+            </div>
+            <div class="field-bar">
+                <div class="field-bar-fill" style="width:${pct}%;background:${color};">${pct >= 20 ? pct + '%' : ''}</div>
+            </div>`;
+    }
+    container.innerHTML = html;
+    
+    // Animar barras
+    requestAnimationFrame(() => {
+        container.querySelectorAll('.field-bar-fill').forEach(el => {
+            const w = el.style.width;
+            el.style.width = '0%';
+            requestAnimationFrame(() => { el.style.width = w; });
+        });
+    });
+}
+
+function renderCountries(cp) {
+    const container = document.getElementById('countryChips');
+    const entries = Object.entries(cp).sort((a, b) => b[1].n - a[1].n);
+    
+    const flagMap = {
+        'United States': '🇺🇸', 'Brazil': '🇧🇷', 'Mexico': '🇲🇽', 'Chile': '🇨🇱',
+        'Argentina': '🇦🇷', 'Colombia': '🇨🇴', 'United Kingdom': '🇬🇧', 'Germany': '🇩🇪',
+        'Switzerland': '🇨🇭', 'France': '🇫🇷', 'Sweden': '🇸🇪', 'India': '🇮🇳',
+        'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'Taiwan': '🇹🇼', 'China': '🇨🇳',
+        'Australia': '🇦🇺', 'South Africa': '🇿🇦', 'Turkey': '🇹🇷', 'Italy': '🇮🇹',
+        'Canada': '🇨🇦', 'Finland': '🇫🇮', 'Malaysia': '🇲🇾', 'New Zealand': '🇳🇿',
+        'Estonia': '🇪🇪', 'Bermuda': '🇧🇲', 'Cayman Islands': '🇰🇾'
+    };
+    
+    let html = '';
+    for (const [country, stats] of entries) {
+        const flag = flagMap[country] || '🌍';
+        html += `<span class="country-chip">${flag} ${country} <span class="pct">${stats.match_pct}%</span> <small class="text-muted">(n=${stats.n})</small></span>`;
+    }
+    container.innerHTML = html;
+}
+
+function renderSectorChart(sp) {
+    const entries = Object.entries(sp).filter(([k]) => k && k !== 'Unknown').sort((a, b) => b[1].n - a[1].n);
+    const labels = entries.map(([k]) => k);
+    const matchPcts = entries.map(([, v]) => v.match_pct);
+    const counts = entries.map(([, v]) => v.n);
+    
+    new Chart(document.getElementById('sectorChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '% Match',
+                    data: matchPcts,
+                    backgroundColor: matchPcts.map(v => v >= 99 ? 'rgba(39,174,96,0.7)' : v >= 95 ? 'rgba(46,204,113,0.7)' : 'rgba(243,156,18,0.7)'),
+                    borderRadius: 8,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'N° Comparações',
+                    data: counts,
+                    type: 'line',
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52,152,219,0.1)',
+                    pointRadius: 5,
+                    pointBackgroundColor: '#3498db',
+                    fill: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: { beginAtZero: false, min: 80, max: 102, title: { display: true, text: '% Match' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'N° Comparações' }, grid: { display: false } },
+                x: { ticks: { maxRotation: 45, font: { size: 11 } } }
+            },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        afterBody: (items) => {
+                            const idx = items[0].dataIndex;
+                            return `Mediana diff: ${entries[idx][1].median}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderOutliers(outliers) {
+    const tbody = document.getElementById('outliersBody');
+    
+    if (!outliers.length) {
+        document.getElementById('noOutliers').classList.remove('d-none');
+        return;
+    }
+    
+    // Ordenar por |z_score| descendente
+    outliers.sort((a, b) => Math.abs(parseFloat(b.z_score || 0)) - Math.abs(parseFloat(a.z_score || 0)));
+    
+    const statusBadge = (s) => {
+        const map = { MATCH: 'badge-match', CLOSE: 'badge-close', DEVIATION: 'badge-deviation', LARGE_DEVIATION: 'badge-large' };
+        return `<span class="status-badge ${map[s] || 'badge-nodata'}">${s}</span>`;
+    };
+    
+    const fmtNum = (v) => {
+        if (!v) return '-';
+        const n = parseFloat(v);
+        if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+        if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+        return n.toLocaleString('pt-BR');
+    };
+    
+    let html = '';
+    for (const o of outliers) {
+        const z = parseFloat(o.z_score || 0);
+        const diff = parseFloat(o.pct_diff || 0);
+        const rowClass = Math.abs(diff) > 20 ? 'outlier-row' : Math.abs(diff) > 5 ? 'outlier-row warning' : 'outlier-row info';
+        
+        html += `<tr class="${rowClass}">
+            <td><strong>${o.yahoo_code}</strong></td>
+            <td>${o.field}</td>
+            <td>${o.fiscal_year ? Math.round(parseFloat(o.fiscal_year)) : '-'}</td>
+            <td class="text-end font-monospace">${fmtNum(o.db_value)}</td>
+            <td class="text-end font-monospace">${fmtNum(o.yf_value)}</td>
+            <td class="text-end"><span class="${Math.abs(diff) > 20 ? 'text-danger' : Math.abs(diff) > 5 ? 'text-warning' : 'text-info'} fw-bold">${diff > 0 ? '+' : ''}${diff.toFixed(1)}%</span></td>
+            <td class="text-end font-monospace">${z.toFixed(1)}σ</td>
+            <td>${statusBadge(o.status)}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+function renderConsistency(summary, issues) {
+    const container = document.getElementById('consistencyCards');
+    
+    const iconMap = {
+        EXTREME_EV_EBITDA: { icon: 'fas fa-chart-bar', color: '#e74c3c', bg: '#fadbd8', label: 'EV/EBITDA Extremo' },
+        EXTREME_MARGIN: { icon: 'fas fa-percentage', color: '#e67e22', bg: '#fdebd0', label: 'Margem Extrema' },
+        NEGATIVE_MCAP: { icon: 'fas fa-arrow-down', color: '#c0392b', bg: '#f5b7b1', label: 'Market Cap Negativo' },
+        NEGATIVE_REVENUE: { icon: 'fas fa-minus-circle', color: '#d35400', bg: '#f0b27a', label: 'Receita Negativa' },
+        FX_RATE_SUSPECT: { icon: 'fas fa-exchange-alt', color: '#8e44ad', bg: '#d7bde2', label: 'FX Suspeita' }
+    };
+    
+    let html = '';
+    for (const [type, count] of Object.entries(summary)) {
+        const cfg = iconMap[type] || { icon: 'fas fa-question', color: '#7f8c8d', bg: '#eaecee', label: type };
+        html += `
+            <div class="col-md-4 col-sm-6">
+                <div class="chart-card d-flex align-items-center gap-3">
+                    <div class="consistency-icon" style="background:${cfg.bg};color:${cfg.color};">
+                        <i class="${cfg.icon}"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size:1.2rem;">${count}</div>
+                        <div class="text-muted" style="font-size:0.82rem;">${cfg.label}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+    container.innerHTML = html;
+    
+    // Detail table
+    const tbody = document.getElementById('consistencyDetailBody');
+    let detailHtml = '';
+    for (const issue of issues) {
+        const cfg = iconMap[issue.type] || { color: '#7f8c8d' };
+        detailHtml += `<tr>
+            <td><span style="color:${cfg.color};font-weight:600;">${issue.type}</span></td>
+            <td><strong>${issue.yahoo_code}</strong></td>
+            <td>${issue.fiscal_year}</td>
+            <td style="font-size:0.8rem;">${issue.detail}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = detailHtml;
+}
+
+function renderMissing(tickers) {
+    const container = document.getElementById('missingTickers');
+    if (!tickers.length) return;
+    
+    let html = '<p class="text-muted mb-2">Estes tickers não possuem dados financeiros históricos no banco de dados:</p><div>';
+    for (const t of tickers) {
+        html += `<span class="ticker-badge">${t}</span>`;
+    }
+    html += '</div>';
+    html += `<div class="mt-2 text-muted" style="font-size:0.8rem;"><i class="fas fa-info-circle me-1"></i>Comum para bancos (Financial Services) e ADRs/dual-listed.</div>`;
+    container.innerHTML = html;
+}
+</script>
+
+{% endblock %}

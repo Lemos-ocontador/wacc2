@@ -18,7 +18,7 @@ Write-Host "============================================" -ForegroundColor Cyan
 
 foreach ($sector in $annual_pending) {
     Write-Host "`n>>> [$sector] Fetch annual --force..." -ForegroundColor Yellow
-    python scripts/fetch_historical_financials.py --sector $sector --force --workers 3 --max-rps 2.0
+    python scripts/fetch_historical_financials.py --sector $sector --force --workers 5 --max-rps 4.0
     if ($LASTEXITCODE -ne 0) {
         Write-Host ">>> [$sector] ERRO no fetch annual (exit code $LASTEXITCODE)" -ForegroundColor Red
     }
@@ -46,7 +46,7 @@ Write-Host "============================================" -ForegroundColor Magen
 
 foreach ($sector in $quarterly_force) {
     Write-Host "`n>>> [$sector] Fetch quarterly --force..." -ForegroundColor Yellow
-    python scripts/fetch_historical_financials.py --sector $sector --quarterly --force --workers 3 --max-rps 2.0
+    python scripts/fetch_historical_financials.py --sector $sector --quarterly --force --workers 5 --max-rps 4.0
     if ($LASTEXITCODE -ne 0) {
         Write-Host ">>> [$sector] ERRO no fetch quarterly (exit code $LASTEXITCODE)" -ForegroundColor Red
     }

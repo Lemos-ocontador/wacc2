@@ -68,8 +68,8 @@ class RateLimiter:
     def acquire(self):
         with self._lock:
             now = time.monotonic()
-            # Jitter aleatório: 0.5x a 2x do intervalo mínimo
-            jitter = self._min_interval * random.uniform(0.5, 2.0)
+            # Jitter aleatório: 0.8x a 1.2x do intervalo mínimo (menos variância = throughput mais previsível)
+            jitter = self._min_interval * random.uniform(0.8, 1.2)
             wait = jitter - (now - self._last)
             if wait > 0:
                 time.sleep(wait)
@@ -402,7 +402,8 @@ def _get_historical_prices(ticker_obj, periods: list[str]) -> dict[str, float | 
     """Busca preço de fechamento nas datas dos períodos para calcular market cap."""
     result = {}
     try:
-        hist = ticker_obj.history(period="10y", interval="1d")
+        # Intervalo mensal é ~30x menos dados que diário e suficiente para datas trimestrais/anuais
+        hist = ticker_obj.history(period="10y", interval="1mo")
         if hist.empty:
             return result
         # Resolver timezone: hist.index é tz-aware, periods são naive
@@ -725,29 +726,49 @@ FIELDS = [
 ]
 
 
-def save_financials(db_path: Path, company: dict, data: dict, period_type: str):
-    """Salva dados históricos no banco. Thread-safe."""
+_write_buffer: list[list] = []
+_WRITE_BUFFER_SIZE = 50  # flush a cada N períodos acumulados
+
+_FIELD_NAMES_SQL = "company_basic_data_id, yahoo_code, company_name, period_type, " + ", ".join(FIELDS)
+_PLACEHOLDERS_SQL = ", ".join(["?"] * (4 + len(FIELDS)))
+
+
+def _flush_buffer(db_path: Path):
+    """Grava o buffer acumulado no banco em uma única transação."""
     with _db_lock:
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        for rec in data["periods"]:
-            values = [
-                company["id"],
-                company["yahoo_code"],
-                company.get("company_name"),
-                period_type,
-            ] + [rec.get(f) for f in FIELDS]
+        if not _write_buffer:
+            return
+        batch = list(_write_buffer)
+        _write_buffer.clear()
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    cursor = conn.cursor()
+    cursor.executemany(f"""
+        INSERT OR REPLACE INTO company_financials_historical
+        ({_FIELD_NAMES_SQL})
+        VALUES ({_PLACEHOLDERS_SQL})
+    """, batch)
+    conn.commit()
+    conn.close()
 
-            placeholders = ", ".join(["?"] * (4 + len(FIELDS)))
-            field_names = "company_basic_data_id, yahoo_code, company_name, period_type, " + ", ".join(FIELDS)
 
-            cursor.execute(f"""
-                INSERT OR REPLACE INTO company_financials_historical
-                ({field_names})
-                VALUES ({placeholders})
-            """, values)
-        conn.commit()
-        conn.close()
+def save_financials(db_path: Path, company: dict, data: dict, period_type: str):
+    """Acumula dados no buffer e grava em batch quando cheio. Thread-safe."""
+    rows = []
+    for rec in data["periods"]:
+        rows.append([
+            company["id"],
+            company["yahoo_code"],
+            company.get("company_name"),
+            period_type,
+        ] + [rec.get(f) for f in FIELDS])
+
+    with _db_lock:
+        _write_buffer.extend(rows)
+        should_flush = len(_write_buffer) >= _WRITE_BUFFER_SIZE
+    if should_flush:
+        _flush_buffer(db_path)
 
 
 # --------------------------------------------------------------------------
@@ -807,8 +828,8 @@ def main():
     parser.add_argument("--company", type=str, help="Yahoo code ou ticker específico")
     parser.add_argument("--quarterly", action="store_true", help="Buscar dados trimestrais (default: anual)")
     parser.add_argument("--limit", type=int, default=None, help="Limite de empresas")
-    parser.add_argument("--workers", type=int, default=3, help="Threads paralelas (default: 3)")
-    parser.add_argument("--max-rps", type=float, default=2.0, help="Requests/segundo (default: 2)")
+    parser.add_argument("--workers", type=int, default=5, help="Threads paralelas (default: 5)")
+    parser.add_argument("--max-rps", type=float, default=4.0, help="Requests/segundo (default: 4)")
     parser.add_argument("--force", action="store_true", help="Re-busca mesmo se já existir")
     parser.add_argument("--db", type=str, default=None, help="Caminho do banco (opcional)")
     args = parser.parse_args()
@@ -856,31 +877,43 @@ def main():
                 for comp in batch
             }
 
-            for future in as_completed(futures):
-                comp = futures[future]
-                try:
-                    cid, status, ycode = future.result()
-                except Exception as e:
-                    log.error(f"Exceção não tratada para {comp['yahoo_code']}: {e}")
-                    stats["error"] += 1
-                    continue
+            try:
+                for future in as_completed(futures, timeout=120):
+                    comp = futures[future]
+                    try:
+                        cid, status, ycode = future.result(timeout=60)
+                    except TimeoutError:
+                        log.warning(f"Timeout para {comp['yahoo_code']} — pulando")
+                        stats["error"] += 1
+                        continue
+                    except Exception as e:
+                        log.error(f"Exceção não tratada para {comp['yahoo_code']}: {e}")
+                        stats["error"] += 1
+                        continue
 
-                if status == "rate_limited":
-                    stats["rate_limited"] += 1
-                    hit_rate_limit = True
-                    retry_companies.append(comp)
-                    continue
+                    if status == "rate_limited":
+                        stats["rate_limited"] += 1
+                        hit_rate_limit = True
+                        retry_companies.append(comp)
+                        continue
 
-                if status.startswith("ok:"):
-                    n_periods = int(status.split(":")[1])
-                    stats["ok"] += 1
-                    stats["periods_total"] += n_periods
-                elif status == "no_data":
-                    stats["no_data"] += 1
-                elif status == "empty":
-                    stats["empty"] += 1
-                else:
-                    stats["error"] += 1
+                    if status.startswith("ok:"):
+                        n_periods = int(status.split(":")[1])
+                        stats["ok"] += 1
+                        stats["periods_total"] += n_periods
+                    elif status == "no_data":
+                        stats["no_data"] += 1
+                    elif status == "empty":
+                        stats["empty"] += 1
+                    else:
+                        stats["error"] += 1
+            except TimeoutError:
+                n_stuck = sum(1 for f in futures if not f.done())
+                stuck_codes = [futures[f]['yahoo_code'] for f in futures if not f.done()]
+                log.warning(f"Batch timeout! {n_stuck} empresas travadas: {stuck_codes[:5]}...")
+                stats["error"] += n_stuck
+                for f in futures:
+                    f.cancel()
 
         if hit_rate_limit:
             rate_pauses += 1
@@ -905,6 +938,9 @@ def main():
 
         idx += len(batch)
 
+        # Flush buffer de escritas pendentes ao final de cada batch
+        _flush_buffer(DB_PATH)
+
         # Progress
         elapsed = time.time() - start_time
         processed = stats["ok"] + stats["no_data"] + stats["empty"] + stats["error"]
@@ -917,6 +953,9 @@ def main():
             f"Periodos:{stats['periods_total']} | {rps:.1f} emp/s | "
             f"ETA {remaining_time/60:.0f}min"
         )
+
+    # Flush final do buffer de escritas pendentes
+    _flush_buffer(DB_PATH)
 
     # Resumo final
     elapsed = time.time() - start_time
