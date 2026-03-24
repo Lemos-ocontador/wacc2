@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudo Anloc - M&#250;ltiplos de Mercado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --anloc-dark: #0a1628;
+            --anloc-navy: #12213b;
+            --anloc-blue: #1a3a5c;
+            --anloc-accent: #2d7dd2;
+            --anloc-gold: #d4a843;
+            --anloc-gold-light: #e8c970;
+            --anloc-text: #e8edf3;
+            --anloc-text-muted: #8b9bb4;
+            --anloc-card-bg: #162033;
+            --anloc-border: #1e3350;
+            --anloc-success: #34d399;
+            --anloc-danger: #ef4444;
+            --anloc-warning: #f59e0b;
+            --section-spacing: 4rem;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--anloc-dark);
+            color: var(--anloc-text);
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* ===== PRINT / PDF ===== */
+        @media print {
+            body { background: #fff; color: #1a1a1a; font-size: 10pt; }
+            .no-print { display: none !important; }
+            .report-section { break-inside: avoid; page-break-inside: avoid; }
+            .cover-section { page-break-after: always; }
+            :root { --anloc-card-bg: #f8f9fa; --anloc-border: #dee2e6; --anloc-text: #1a1a1a; --anloc-text-muted: #6c757d; }
+            .kpi-card, .stat-card { border: 1px solid #dee2e6 !important; background: #f8f9fa !important; }
+            canvas { max-width: 100% !important; }
+        }
+
+        /* ===== COVER ===== */
+        .cover-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--anloc-dark) 0%, var(--anloc-navy) 40%, var(--anloc-blue) 100%);
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .cover-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(45, 125, 210, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 80%, rgba(212, 168, 67, 0.05) 0%, transparent 50%);
+        }
+        .cover-logo { font-size: 2.5rem; font-weight: 800; letter-spacing: 3px; color: var(--anloc-gold); position: relative; z-index: 1; }
+        .cover-title { font-size: 2.8rem; font-weight: 700; margin: 1.5rem 0 0.5rem; position: relative; z-index: 1; }
+        .cover-subtitle { font-size: 1.3rem; color: var(--anloc-text-muted); font-weight: 300; position: relative; z-index: 1; }
+        .cover-meta { margin-top: 3rem; display: flex; gap: 2rem; position: relative; z-index: 1; }
+        .cover-meta-item { text-align: center; }
+        .cover-meta-item .value { font-size: 2rem; font-weight: 700; color: var(--anloc-gold); }
+        .cover-meta-item .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--anloc-text-muted); }
+        .cover-quarter { margin-top: 2rem; font-size: 1.1rem; padding: 0.5rem 2rem; border: 1px solid var(--anloc-gold); border-radius: 30px; color: var(--anloc-gold); position: relative; z-index: 1; }
+
+        /* ===== SECTIONS ===== */
+        .report-container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+        .report-section { padding: var(--section-spacing) 0; border-bottom: 1px solid var(--anloc-border); }
+        .report-section:last-child { border-bottom: none; }
+        .section-number { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: var(--anloc-gold); font-weight: 600; margin-bottom: 0.5rem; }
+        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .section-subtitle { font-size: 1.1rem; color: var(--anloc-text-muted); margin-bottom: 2rem; line-height: 1.6; }
+        .subsection-title { font-size: 1.4rem; font-weight: 600; margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--anloc-gold); display: inline-block; }
+
+        /* ===== CARDS ===== */
+        .kpi-card {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--anloc-gold); }
+        .kpi-card .kpi-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--anloc-text-muted); margin-top: 0.3rem; }
+        .kpi-card .kpi-detail { font-size: 0.85rem; color: var(--anloc-text-muted); margin-top: 0.5rem; }
+
+        .stat-card {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        /* ===== TABLES ===== */
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .report-table thead th {
+            background: var(--anloc-navy);
+            color: var(--anloc-gold);
+            padding: 0.8rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--anloc-gold);
+        }
+        .report-table tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--anloc-border); }
+        .report-table tbody tr:hover { background: rgba(45, 125, 210, 0.05); }
+        .report-table .text-right { text-align: right; }
+        .report-table .sector-name { font-weight: 600; }
+
+        /* ===== SPREAD BADGES ===== */
+        .spread-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .spread-badge.premium { background: rgba(52, 211, 153, 0.15); color: var(--anloc-success); }
+        .spread-badge.discount { background: rgba(239, 68, 68, 0.15); color: var(--anloc-danger); }
+
+        /* ===== CHARTS ===== */
+        .chart-container { position: relative; margin: 1.5rem 0; background: var(--anloc-card-bg); border: 1px solid var(--anloc-border); border-radius: 12px; padding: 1.5rem; }
+        .chart-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+        .chart-canvas-wrap { position: relative; width: 100%; }
+
+        /* ===== NARRATIVE ===== */
+        .narrative-block {
+            background: var(--anloc-card-bg);
+            border-left: 4px solid var(--anloc-gold);
+            border-radius: 0 12px 12px 0;
+            padding: 1.5rem 2rem;
+            margin: 1.5rem 0;
+            line-height: 1.8;
+        }
+        .narrative-block p { margin-bottom: 1rem; }
+        .narrative-block p:last-child { margin-bottom: 0; }
+        .narrative-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--anloc-accent);
+            margin-bottom: 0.8rem;
+        }
+
+        /* ===== HIGHLIGHT CARDS ===== */
+        .highlight-card {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .highlight-card .hl-sector { font-weight: 700; color: var(--anloc-gold); font-size: 0.95rem; }
+        .highlight-card .hl-insight { color: var(--anloc-text); font-size: 0.9rem; margin-top: 0.3rem; line-height: 1.6; }
+
+        /* ===== SECTOR DEEP DIVE ===== */
+        .sector-dive { background: var(--anloc-card-bg); border: 1px solid var(--anloc-border); border-radius: 16px; padding: 2rem; margin: 2rem 0; }
+        .sector-dive-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .sector-dive-name { font-size: 1.5rem; font-weight: 700; }
+        .sector-dive-badge { font-size: 0.8rem; padding: 0.3rem 0.8rem; border-radius: 20px; background: rgba(45, 125, 210, 0.15); color: var(--anloc-accent); }
+        .geo-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+        .geo-card { text-align: center; padding: 1rem; border-radius: 10px; background: rgba(26, 58, 92, 0.3); }
+        .geo-card .geo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--anloc-text-muted); }
+        .geo-card .geo-value { font-size: 1.5rem; font-weight: 700; margin: 0.3rem 0; }
+        .geo-card .geo-n { font-size: 0.75rem; color: var(--anloc-text-muted); }
+
+        /* ===== TOOLBAR ===== */
+        .report-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--anloc-border);
+            padding: 0.6rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toolbar-brand { font-weight: 700; color: var(--anloc-gold); font-size: 1rem; letter-spacing: 1px; }
+        .toolbar-actions { display: flex; gap: 0.8rem; align-items: center; }
+        .btn-anloc {
+            background: var(--anloc-gold);
+            color: var(--anloc-dark);
+            border: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-anloc:hover { background: var(--anloc-gold-light); }
+        .btn-anloc-outline {
+            background: transparent;
+            color: var(--anloc-text);
+            border: 1px solid var(--anloc-border);
+            padding: 0.4rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-anloc-outline:hover { border-color: var(--anloc-gold); color: var(--anloc-gold); }
+
+        /* ===== CONFIG PANEL ===== */
+        .config-panel {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 6rem auto 2rem;
+            max-width: 700px;
+        }
+        .config-panel h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; }
+        .config-panel label { font-size: 0.85rem; font-weight: 500; color: var(--anloc-text-muted); margin-bottom: 0.3rem; display: block; }
+        .config-panel input, .config-panel select {
+            width: 100%;
+            background: var(--anloc-dark);
+            border: 1px solid var(--anloc-border);
+            color: var(--anloc-text);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .config-panel input:focus, .config-panel select:focus { outline: none; border-color: var(--anloc-gold); }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.92);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-spinner { width: 50px; height: 50px; border: 3px solid var(--anloc-border); border-top-color: var(--anloc-gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 1.5rem; font-size: 1rem; color: var(--anloc-text-muted); }
+        .loading-detail { font-size: 0.85rem; color: var(--anloc-text-muted); margin-top: 0.5rem; }
+
+        /* ===== DATA FRESHNESS ===== */
+        .freshness-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .freshness-badge.fresh { background: rgba(52, 211, 153, 0.15); color: var(--anloc-success); }
+        .freshness-badge.recent { background: rgba(245, 158, 11, 0.15); color: var(--anloc-warning); }
+        .freshness-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .freshness-dot.fresh { background: var(--anloc-success); }
+        .freshness-dot.recent { background: var(--anloc-warning); }
+
+        /* ===== DISCLAIMER ===== */
+        .disclaimer-section {
+            background: var(--anloc-navy);
+            border-radius: 12px;
+            padding: 2rem;
+            font-size: 0.85rem;
+            color: var(--anloc-text-muted);
+            line-height: 1.8;
+        }
+        .disclaimer-section h4 { color: var(--anloc-gold); font-size: 1rem; margin-bottom: 1rem; }
+
+        /* ===== EDUCATIONAL ===== */
+        .edu-block {
+            background: rgba(45, 125, 210, 0.06);
+            border: 1px solid rgba(45, 125, 210, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .edu-block h5 { color: var(--anloc-accent); font-size: 0.95rem; margin-bottom: 0.8rem; }
+        .edu-block p { font-size: 0.9rem; color: var(--anloc-text-muted); margin-bottom: 0.5rem; }
+
+        /* ===== AI STATUS BAR ===== */
+        .ai-status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1100;
+            padding: 0.45rem 2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+            transition: all 0.3s;
+        }
+        .ai-status-bar.connected {
+            background: linear-gradient(90deg, rgba(52,211,153,0.12) 0%, rgba(52,211,153,0.06) 100%);
+            border-bottom: 1px solid rgba(52,211,153,0.25);
+            color: var(--anloc-success);
+        }
+        .ai-status-bar.disconnected {
+            background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.06) 100%);
+            border-bottom: 1px solid rgba(239,68,68,0.25);
+            color: var(--anloc-danger);
+        }
+        .ai-status-bar .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 0.4rem;
+            vertical-align: middle;
+        }
+        .ai-status-bar.connected .status-dot { background: var(--anloc-success); box-shadow: 0 0 6px var(--anloc-success); }
+        .ai-status-bar.disconnected .status-dot { background: var(--anloc-danger); }
+        .ai-status-bar ~ .report-toolbar { top: 32px; }
+        .ai-status-bar ~ .report-toolbar ~ #reportContent .cover-section { padding-top: 5rem; }
+
+        /* ===== AI CHART COMMENTARY ===== */
+        .ai-chart-comment {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-left: 3px solid var(--anloc-accent);
+            border-radius: 0 10px 10px 0;
+            padding: 1.2rem 1.5rem;
+            margin-top: 1.2rem;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .ai-chart-comment .ai-comment-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--anloc-accent);
+            font-weight: 600;
+        }
+        .ai-chart-comment .ai-comment-body { color: var(--anloc-text); }
+        .ai-chart-comment .ai-comment-body p { margin-bottom: 0.5rem; }
+        .ai-chart-comment .ai-comment-body p:last-child { margin-bottom: 0; }
+        .ai-chart-comment.no-ai {
+            border-left-color: var(--anloc-border);
+            color: var(--anloc-text-muted);
+            font-style: italic;
+        }
+
+        /* ===== GRAPH + AI CARD 2-COL LAYOUT ===== */
+        .graph-row { display: flex; gap: 1.5rem; align-items: flex-start; margin: 1.5rem 0; }
+        .graph-chart-col { flex: 3; min-width: 0; }
+        .graph-card-col { flex: 2; min-width: 280px; }
+        .graph-card-col .ai-card {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-left: 4px solid var(--anloc-accent);
+            border-radius: 0 12px 12px 0;
+            padding: 1.3rem 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .ai-card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .ai-card-header i { color: var(--anloc-accent); font-size: 0.9rem; }
+        .ai-card-title { font-size: 1rem; font-weight: 700; color: var(--anloc-text); flex: 1; }
+        .ai-card-body { font-size: 0.85rem; line-height: 1.75; color: var(--anloc-text); flex: 1; }
+        .ai-card-body p { margin-bottom: 0.6rem; }
+        .ai-card-body p:last-child { margin-bottom: 0; }
+        .ai-card-destaque {
+            background: rgba(212, 168, 67, 0.08);
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.82rem;
+            color: var(--anloc-gold-light);
+            font-weight: 500;
+        }
+        .ai-card-destaque i { color: var(--anloc-gold); margin-right: 0.3rem; }
+        .ai-card-fontes {
+            margin-top: auto;
+            padding-top: 0.7rem;
+            border-top: 1px solid var(--anloc-border);
+            font-size: 0.7rem;
+            color: var(--anloc-text-muted);
+        }
+        .ai-card-fontes i { margin-right: 0.3rem; }
+
+        /* ===== NARRATIVE FOOTNOTES ===== */
+        .narrative-footnotes {
+            margin-top: 1rem;
+            padding-top: 0.7rem;
+            border-top: 1px solid var(--anloc-border);
+            font-size: 0.75rem;
+            color: var(--anloc-text-muted);
+            line-height: 1.5;
+        }
+        .narrative-footnotes i { margin-right: 0.3rem; color: var(--anloc-accent); }
+
+        /* ===== CHAT DRAWER (Report) ===== */
+        .report-chat-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1050;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--anloc-gold);
+            color: var(--anloc-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 20px rgba(212,168,67,0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .report-chat-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(212,168,67,0.5); }
+        .report-chat-toggle.active { background: var(--anloc-danger); color: #fff; box-shadow: 0 4px 20px rgba(239,68,68,0.3); }
+
+        .report-chat-drawer {
+            position: fixed;
+            right: -400px;
+            top: 52px;
+            width: 400px;
+            height: calc(100vh - 52px);
+            background: var(--anloc-card-bg);
+            border-left: 1px solid var(--anloc-border);
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+            z-index: 1040;
+        }
+        .report-chat-drawer.open { right: 0; }
+        .rchat-header {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--anloc-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--anloc-navy);
+        }
+        .rchat-header h3 { font-size: 0.9rem; color: var(--anloc-accent); flex: 1; margin: 0; }
+        .rchat-header .provider-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            background: rgba(45,125,210,0.15);
+            color: var(--anloc-accent);
+            border-radius: 10px;
+        }
+        .rchat-close {
+            background: transparent; border: none; color: var(--anloc-text-muted);
+            width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .rchat-close:hover { background: rgba(239,68,68,0.15); color: var(--anloc-danger); }
+        .rchat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .rchat-bubble {
+            max-width: 90%;
+            padding: 0.6rem 0.9rem;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            animation: rchatFadeIn 0.2s;
+        }
+        @keyframes rchatFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+        .rchat-bubble.user { background: var(--anloc-accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .rchat-bubble.assistant { background: var(--anloc-navy); color: var(--anloc-text); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .rchat-bubble.assistant p { margin-bottom: 0.4rem; }
+        .rchat-bubble.system { background: rgba(45,125,210,0.1); color: var(--anloc-accent); align-self: center; font-size: 0.75rem; text-align: center; }
+        .rchat-suggestions {
+            padding: 0.5rem 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            border-top: 1px solid var(--anloc-border);
+        }
+        .rchat-chip {
+            background: var(--anloc-navy);
+            border: 1px solid var(--anloc-border);
+            color: var(--anloc-text-muted);
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .rchat-chip:hover { border-color: var(--anloc-gold); color: var(--anloc-gold); }
+        .rchat-input-area {
+            padding: 0.6rem;
+            border-top: 1px solid var(--anloc-border);
+            display: flex;
+            gap: 0.4rem;
+        }
+        .rchat-input {
+            flex: 1;
+            background: var(--anloc-dark);
+            border: 1px solid var(--anloc-border);
+            color: var(--anloc-text);
+            padding: 0.5rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+        }
+        .rchat-input:focus { border-color: var(--anloc-gold); outline: none; }
+        .rchat-send {
+            background: var(--anloc-gold);
+            color: var(--anloc-dark);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+        .rchat-send:hover { opacity: 0.85; }
+        .rchat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ===== TYPING INDICATOR ===== */
+        .rchat-typing { display: flex; gap: 4px; padding: 0.5rem; align-items: center; }
+        .rchat-typing span { width: 6px; height: 6px; background: var(--anloc-accent); border-radius: 50%; animation: rchatDot 1.4s infinite; }
+        .rchat-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .rchat-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes rchatDot { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+        /* ===== CACHE STATUS BAR ===== */
+        .cache-bar {
+            background: rgba(45, 125, 210, 0.08);
+            border: 1px solid rgba(45, 125, 210, 0.2);
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.85rem;
+        }
+        .cache-bar i { color: var(--anloc-accent); }
+        .cache-bar .cache-info { flex: 1; color: var(--anloc-text-muted); }
+        .cache-bar .cache-info strong { color: var(--anloc-text); }
+        .btn-cache {
+            background: rgba(45, 125, 210, 0.15);
+            color: var(--anloc-accent);
+            border: 1px solid rgba(45, 125, 210, 0.3);
+            padding: 0.35rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .btn-cache:hover { background: rgba(45, 125, 210, 0.25); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .cover-title { font-size: 1.8rem; }
+            .cover-meta { flex-direction: column; gap: 1rem; }
+            .geo-comparison { grid-template-columns: 1fr; }
+            .report-container { padding: 0 1rem; }
+            .graph-row { flex-direction: column; }
+            .graph-card-col { min-width: unset; }
+            .report-chat-drawer { width: 100%; right: -100%; }
+        }
+
+        @media print {
+            .report-chat-toggle, .report-chat-drawer { display: none !important; }
+            .graph-row { display: block; }
+            .graph-card-col { margin-top: 1rem; }
+            .ai-card { border-left: 3px solid #333 !important; }
+        }
+
+        /* ===== FONTES CLICÁVEIS ===== */
+        .fonte-link { color: var(--anloc-accent); text-decoration: none; transition: 0.2s; }
+        .fonte-link:hover { color: var(--anloc-gold); text-decoration: underline; }
+        .references-section { margin-top: 2rem; }
+        .references-list { list-style: none; padding: 0; }
+        .references-list li { padding: 0.4rem 0; border-bottom: 1px solid rgba(30,51,80,0.3); font-size: 0.85rem; }
+        .references-list li:last-child { border-bottom: none; }
+        .references-list .ref-type { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; margin-left: 0.5rem; }
+        .ref-type.institucional { background: rgba(45,125,210,0.15); color: var(--anloc-accent); }
+        .ref-type.relatorio, .ref-type.relatório { background: rgba(212,168,67,0.15); color: var(--anloc-gold); }
+        .ref-type.dados { background: rgba(52,211,153,0.15); color: var(--anloc-success); }
+        .ref-type.midia, .ref-type.mídia { background: rgba(139,155,180,0.15); color: var(--anloc-text-muted); }
+
+        /* ===== CITAÇÕES DE ESPECIALISTAS ===== */
+        .expert-quote { background: rgba(212,168,67,0.06); border-left: 3px solid var(--anloc-gold); border-radius: 0 8px 8px 0; padding: 0.8rem 1.2rem; margin: 0.8rem 0; font-size: 0.85rem; }
+        .expert-quote .quote-text { font-style: italic; color: var(--anloc-text); line-height: 1.6; }
+        .expert-quote .quote-text::before { content: '\201C'; font-size: 1.3rem; color: var(--anloc-gold); margin-right: 0.2rem; }
+        .expert-quote .quote-text::after { content: '\201D'; font-size: 1.3rem; color: var(--anloc-gold); margin-left: 0.2rem; }
+        .expert-quote .quote-author { margin-top: 0.4rem; font-size: 0.78rem; color: var(--anloc-gold); font-weight: 600; }
+        .expert-quote .quote-context { font-size: 0.7rem; color: var(--anloc-text-muted); }
+
+        /* ===== DESTAQUES SETORIAIS ENRIQUECIDOS ===== */
+        .highlight-card .hl-metrics { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 0.6rem 0; }
+        .highlight-card .hl-metric { background: rgba(26,58,92,0.4); border-radius: 8px; padding: 0.4rem 0.7rem; text-align: center; min-width: 80px; }
+        .highlight-card .hl-metric-value { font-size: 1rem; font-weight: 700; color: var(--anloc-gold); }
+        .highlight-card .hl-metric-label { font-size: 0.65rem; color: var(--anloc-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .highlight-card .hl-trend { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .highlight-card .hl-trend.up { background: rgba(52,211,153,0.12); color: var(--anloc-success); }
+        .highlight-card .hl-trend.down { background: rgba(239,68,68,0.12); color: var(--anloc-danger); }
+        .highlight-card .hl-trend.stable { background: rgba(139,155,180,0.12); color: var(--anloc-text-muted); }
+
+        /* ===== BOTÃO APROFUNDAR AI ===== */
+        .btn-deep-ai {
+            background: linear-gradient(135deg, rgba(45,125,210,0.15) 0%, rgba(212,168,67,0.1) 100%);
+            border: 1px solid rgba(45,125,210,0.3);
+            color: var(--anloc-accent);
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-deep-ai:hover { background: rgba(45,125,210,0.25); border-color: var(--anloc-accent); color: #fff; }
+        .btn-deep-ai:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-deep-ai .fa-spin { animation: spin 1s linear infinite; }
+        .deep-analysis-panel { margin-top: 1.5rem; padding: 1.5rem; background: rgba(26,58,92,0.3); border: 1px solid var(--anloc-border); border-radius: 12px; display: none; }
+        .deep-analysis-panel.visible { display: block; animation: rchatFadeIn 0.3s; }
+        .deep-analysis-panel h4 { color: var(--anloc-gold); font-size: 1rem; margin-bottom: 1rem; }
+        .deep-analysis-panel .analysis-section { margin-bottom: 1rem; }
+        .deep-analysis-panel .analysis-section-title { font-size: 0.82rem; font-weight: 700; color: var(--anloc-accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+        .deep-analysis-panel .analysis-section p { font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.5rem; }
+
+        /* ===== DRILL-DOWN & EXPORT ===== */
+        .ticker-link { color: var(--anloc-accent); text-decoration: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .ticker-link:hover { color: var(--anloc-gold); text-decoration: underline; }
+        .btn-export {
+            background: rgba(52,211,153,0.1);
+            border: 1px solid rgba(52,211,153,0.25);
+            color: var(--anloc-success);
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-export:hover { background: rgba(52,211,153,0.2); }
+        .table-toolbar { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .sector-name-link { color: var(--anloc-text); text-decoration: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .sector-name-link:hover { color: var(--anloc-gold); }
+
+        /* ===== CACHE LIST PANEL ===== */
+        .cache-list-panel {
+            background: var(--anloc-card-bg);
+            border: 1px solid var(--anloc-border);
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            overflow: hidden;
+        }
+        .cache-list-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.2rem;
+            background: var(--anloc-navy);
+            border-bottom: 1px solid var(--anloc-border);
+            cursor: pointer;
+            user-select: none;
+        }
+        .cache-list-header i.fa-database { color: var(--anloc-accent); }
+        .cache-list-header h4 { font-size: 0.9rem; font-weight: 600; margin: 0; flex: 1; color: var(--anloc-text); }
+        .cache-list-header .cache-count {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            background: rgba(45,125,210,0.15);
+            color: var(--anloc-accent);
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .cache-list-header .toggle-icon { color: var(--anloc-text-muted); transition: transform 0.2s; font-size: 0.8rem; }
+        .cache-list-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .cache-list-body { max-height: 400px; overflow-y: auto; }
+        .cache-list-body.collapsed { display: none; }
+        .cache-filter-tabs.collapsed { display: none; }
+        .cache-list-empty { padding: 1.5rem; text-align: center; color: var(--anloc-text-muted); font-size: 0.85rem; }
+        .cache-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.7rem 1.2rem;
+            border-bottom: 1px solid rgba(30,51,80,0.3);
+            transition: background 0.15s;
+        }
+        .cache-item:last-child { border-bottom: none; }
+        .cache-item:hover { background: rgba(45,125,210,0.05); }
+        .cache-item-icon { color: var(--anloc-gold); font-size: 0.9rem; flex-shrink: 0; }
+        .cache-item-info { flex: 1; min-width: 0; }
+        .cache-item-label { font-size: 0.85rem; font-weight: 600; color: var(--anloc-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cache-item-meta { font-size: 0.72rem; color: var(--anloc-text-muted); margin-top: 0.1rem; }
+        .cache-item-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+        .cache-item-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--anloc-text-muted);
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cache-item-btn:hover { background: rgba(45,125,210,0.1); border-color: var(--anloc-border); color: var(--anloc-accent); }
+        .cache-item-btn.load-btn:hover { color: var(--anloc-success); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.1); }
+        .cache-item-btn.delete-btn:hover { color: var(--anloc-danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+        .cache-item-btn.edit-btn:hover { color: var(--anloc-gold); border-color: rgba(212,168,67,0.3); background: rgba(212,168,67,0.1); }
+        .cache-item.active { background: rgba(212,168,67,0.08); border-left: 3px solid var(--anloc-gold); }
+        .cache-rename-input {
+            background: var(--anloc-dark);
+            border: 1px solid var(--anloc-gold);
+            color: var(--anloc-text);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+        }
+        .cache-rename-input:focus { outline: none; border-color: var(--anloc-accent); }
+        .cache-filter-tabs {
+            display: flex;
+            gap: 0.3rem;
+            padding: 0.5rem 1.2rem;
+            border-bottom: 1px solid rgba(30,51,80,0.3);
+        }
+        .cache-filter-tab {
+            background: transparent;
+            border: 1px solid var(--anloc-border);
+            color: var(--anloc-text-muted);
+            padding: 0.2rem 0.7rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .cache-filter-tab:hover { border-color: var(--anloc-accent); color: var(--anloc-accent); }
+        .cache-filter-tab.active { background: rgba(45,125,210,0.15); border-color: var(--anloc-accent); color: var(--anloc-accent); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- AI STATUS BAR -->
+<div class="ai-status-bar no-print" id="aiStatusBar"></div>
+
+<!-- TOOLBAR (no-print) -->
+<div class="report-toolbar no-print" id="toolbar" style="display:none;">
+    <div class="toolbar-brand">ANLOC</div>
+    <div class="toolbar-actions">
+        <span class="freshness-badge fresh" id="freshnessBadge">
+            <span class="freshness-dot fresh"></span> Dados atualizados
+        </span>
+        <span id="cacheIndicator" style="font-size:0.75rem;color:var(--anloc-text-muted);display:none;"></span>
+        <button class="btn-anloc-outline" onclick="regenerateReport()" id="btnRegenerar" style="display:none;">
+            <i class="fas fa-sync-alt"></i> Regenerar
+        </button>
+        <button class="btn-anloc-outline" onclick="window.print()">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+        <button class="btn-anloc-outline" onclick="location.reload()">
+            <i class="fas fa-redo"></i> Novo Relat&#243;rio
+        </button>
+    </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Gerando relat&#243;rio...</div>
+    <div class="loading-detail" id="loadingDetail">Consultando dados de todos os setores</div>
+</div>
+
+<!-- CONFIG PANEL -->
+<div class="report-container no-print" id="configPanel">
+    <div class="config-panel">
+        <h3><i class="fas fa-chart-line" style="color:var(--anloc-gold);margin-right:0.5rem;"></i> Estudo Anloc - Gerar Relat&#243;rio</h3>
+        <p style="color:var(--anloc-text-muted);font-size:0.9rem;margin-bottom:1.5rem;">
+            Relat&#243;rio peri&#243;dico de m&#250;ltiplos de mercado com an&#225;lise geogr&#225;fica (Global &#8594; LATAM &#8594; Brasil)
+            e narrativas geradas por intelig&#234;ncia artificial.
+        </p>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label>Ano Fiscal</label>
+                <select id="cfgYear">
+                    <option value="2026" selected>2026 (Atual)</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label>An&#225;lise LLM (Claude)</label>
+                <select id="cfgLlm">
+                    <option value="true" selected>Sim - Gerar narrativas com IA</option>
+                    <option value="false">N&#227;o - Apenas dados</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="aiConfigStatus" style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.5rem;font-size:0.85rem;background:rgba(30,51,80,0.5);color:var(--anloc-text-muted);">
+            <i class="fas fa-circle-notch fa-spin" style="margin-right:0.4rem;"></i> Verificando conex&#227;o com IA...
+        </div>
+
+        <button class="btn-anloc" style="width:100%;padding:0.8rem;font-size:1rem;margin-top:1rem;" onclick="generateReport()">
+            <i class="fas fa-rocket"></i> Gerar Relat&#243;rio Completo
+        </button>
+
+        <!-- LISTA DE ESTUDOS ANTERIORES -->
+        <div class="cache-list-panel" id="cacheListPanel" style="display:none;">
+            <div class="cache-list-header" id="cacheListHeader" onclick="toggleCacheList()">
+                <i class="fas fa-database"></i>
+                <h4>Estudos Anteriores</h4>
+                <span class="cache-count" id="cacheCount">0</span>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="cache-filter-tabs" id="cacheFilterTabs"></div>
+            <div class="cache-list-body" id="cacheListBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- REPORT CONTENT (hidden until generated) -->
+<div id="reportContent" style="display:none;">
+
+    <!-- COVER -->
+    <section class="cover-section" id="coverSection">
+        <div class="cover-logo">ANLOC</div>
+        <h1 class="cover-title">Estudo de M&#250;ltiplos<br>de Mercado</h1>
+        <p class="cover-subtitle">An&#225;lise Peri&#243;dica de Valuation por M&#250;ltiplos &#8212; EV/EBITDA e EV/Revenue</p>
+        <div class="cover-meta" id="coverMeta"></div>
+        <div class="cover-quarter" id="coverQuarter"></div>
+        <div id="coverFreshness" style="margin-top:1.2rem;font-size:0.8rem;color:rgba(232,237,243,0.5);max-width:600px;margin-left:auto;margin-right:auto;"></div>
+    </section>
+
+    <div class="report-container">
+
+        <!-- 01 - RESUMO EXECUTIVO -->
+        <section class="report-section" id="secResumo">
+            <div class="section-number">01 &#8212; Vis&#227;o Geral</div>
+            <h2 class="section-title">Resumo Executivo</h2>
+            <div class="row mb-4" id="kpiRow"></div>
+            <div class="narrative-block" id="narrativeResumo">
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise gerada por IA</div>
+                <div id="narrativeResumoText"><em>Gerando an&#225;lise...</em></div>
+            </div>
+        </section>
+
+        <!-- 02 - CONTEXTO EDUCACIONAL -->
+        <section class="report-section" id="secEducacional">
+            <div class="section-number">02 &#8212; Conceitos</div>
+            <h2 class="section-title">Sobre M&#250;ltiplos de Mercado</h2>
+            <div class="section-subtitle">Refer&#234;ncia r&#225;pida para interpreta&#231;&#227;o dos dados deste relat&#243;rio</div>
+
+            <div class="edu-block">
+                <h5><i class="fas fa-calculator"></i> O que s&#227;o m&#250;ltiplos de mercado?</h5>
+                <p>M&#250;ltiplos de mercado s&#227;o m&#233;tricas que relacionam o valor de uma empresa (Enterprise Value) com indicadores financeiros como EBITDA ou Receita. Eles permitem comparar empresas de diferentes tamanhos e regi&#245;es em uma base padronizada.</p>
+                <p><strong>EV/EBITDA</strong> &#8212; Indica quantas vezes o valor da empresa representa seu lucro operacional. Quanto menor, mais &#8220;barata&#8221; a empresa. Setores de alto crescimento tendem a ter m&#250;ltiplos mais elevados.</p>
+                <p><strong>EV/Revenue</strong> &#8212; Indica quantas vezes o valor da empresa representa sua receita. &#218;til para avaliar empresas com EBITDA negativo ou em fase de crescimento.</p>
+            </div>
+
+            <div class="edu-block">
+                <h5><i class="fas fa-globe-americas"></i> Por que comparar Global, LATAM e Brasil?</h5>
+                <p>Empresas em mercados emergentes como o Brasil tipicamente operam com <strong>desconto</strong> em rela&#231;&#227;o ao mercado global, refletindo riscos cambiais, pol&#237;ticos e de liquidez. Quantificar esse spread &#233; essencial para avaliar neg&#243;cios privados no Brasil usando benchmarks internacionais.</p>
+            </div>
+
+            <div class="edu-block">
+                <h5><i class="fas fa-building"></i> Aplicando m&#250;ltiplos para empresas privadas</h5>
+                <p>M&#250;ltiplos de empresas listadas servem como refer&#234;ncia (&#8220;distant benchmarks&#8221;) para avaliar empresas privadas. Ajustes devem ser aplicados para refletir desconto por iliquidez, tamanho e risco espec&#237;fico. O m&#250;ltiplo setorial mediano &#233; um ponto de partida, n&#227;o um valor definitivo.</p>
+            </div>
+        </section>
+
+        <!-- 03 - RANKING DE SETORES -->
+        <section class="report-section" id="secRanking">
+            <div class="section-number">03 &#8212; Panorama</div>
+            <h2 class="section-title">Ranking de Setores</h2>
+            <div class="section-subtitle">Vis&#227;o comparativa de todos os setores &#8212; medianas globais de EV/EBITDA e EV/Revenue</div>
+
+            <div class="graph-row">
+                <div class="graph-chart-col">
+                    <div class="chart-container" style="margin:0;">
+                        <div class="chart-title">EV/EBITDA Mediana por Setor (Global vs Brasil)</div>
+                        <div class="chart-canvas-wrap"><canvas id="chartRanking" height="400"></canvas></div>
+                    </div>
+                </div>
+                <div class="graph-card-col">
+                    <div class="ai-card" id="aiCardRanking">
+                        <div class="ai-card-header"><i class="fas fa-robot"></i><span class="ai-card-title">An&#225;lise do Ranking</span></div>
+                        <div class="ai-card-body" id="aiCardRankingBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
+                        <div class="ai-card-destaque" id="aiCardRankingDestaque" style="display:none;"></div>
+                        <div class="ai-card-fontes" id="aiCardRankingFontes" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;margin-top:2rem;">
+                <div class="table-toolbar">
+                    <button class="btn-export" onclick="exportTableToCSV('tableRanking', 'ranking_setores')"><i class="fas fa-download"></i> CSV</button>
+                </div>
+                <table class="report-table" id="tableRanking">
+                    <thead>
+                        <tr>
+                            <th>Setor</th>
+                            <th class="text-right">EV/EBITDA Global</th>
+                            <th class="text-right">EV/Revenue Global</th>
+                            <th class="text-right">EV/EBITDA Brasil</th>
+                            <th class="text-right">Spread BR</th>
+                            <th class="text-right">Empresas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableRankingBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 04 - AN&#193;LISE GEOGR&#193;FICA -->
+        <section class="report-section" id="secGeo">
+            <div class="section-number">04 &#8212; Geografia</div>
+            <h2 class="section-title">An&#225;lise Geogr&#225;fica</h2>
+            <div class="section-subtitle">Compara&#231;&#227;o de m&#250;ltiplos: Global &#8594; LATAM &#8594; Brasil, com c&#225;lculo de spread/desconto</div>
+
+            <div class="graph-row">
+                <div class="graph-chart-col">
+                    <div class="chart-container" style="margin:0;">
+                        <div class="chart-title">EV/EBITDA Mediana &#8212; Global vs LATAM vs Brasil (por setor)</div>
+                        <div class="chart-canvas-wrap"><canvas id="chartGeo" height="400"></canvas></div>
+                    </div>
+                </div>
+                <div class="graph-card-col">
+                    <div class="ai-card" id="aiCardGeo">
+                        <div class="ai-card-header"><i class="fas fa-globe-americas"></i><span class="ai-card-title">An&#225;lise Geogr&#225;fica</span></div>
+                        <div class="ai-card-body" id="aiCardGeoBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
+                        <div class="ai-card-destaque" id="aiCardGeoDestaque" style="display:none;"></div>
+                        <div class="ai-card-fontes" id="aiCardGeoFontes" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="narrative-block" id="narrativeBrasil">
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise Brasil &#8212; gerada por IA</div>
+                <div id="narrativeBrasilText"><em>Aguardando dados...</em></div>
+            </div>
+        </section>
+
+        <!-- 05 - AN&#193;LISE MACRO -->
+        <section class="report-section" id="secMacro">
+            <div class="section-number">05 &#8212; Macro</div>
+            <h2 class="section-title">Contexto Macroecon&#244;mico</h2>
+            <div class="section-subtitle">Fatores que influenciam os m&#250;ltiplos atuais</div>
+            <div class="narrative-block" id="narrativeMacro">
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise macro &#8212; gerada por IA (Claude)</div>
+                <div id="narrativeMacroText"><em>Aguardando dados...</em></div>
+            </div>
+        </section>
+
+        <!-- 06 - EVOLU&#199;&#195;O TEMPORAL -->
+        <section class="report-section" id="secEvolution">
+            <div class="section-number">06 &#8212; Evolu&#231;&#227;o</div>
+            <h2 class="section-title">Evolu&#231;&#227;o 2021&#8211;2025</h2>
+            <div class="section-subtitle">Tend&#234;ncias de m&#250;ltiplos nos &#250;ltimos anos</div>
+            <div class="graph-row">
+                <div class="graph-chart-col">
+                    <div class="chart-container" style="margin:0;">
+                        <div class="chart-title">EV/EBITDA Mediana &#8212; Evolu&#231;&#227;o por Setor (Global)</div>
+                        <div class="chart-canvas-wrap"><canvas id="chartEvolution" height="450"></canvas></div>
+                    </div>
+                </div>
+                <div class="graph-card-col">
+                    <div class="ai-card" id="aiCardEvolution">
+                        <div class="ai-card-header"><i class="fas fa-chart-line"></i><span class="ai-card-title">An&#225;lise de Evolu&#231;&#227;o</span></div>
+                        <div class="ai-card-body" id="aiCardEvolutionBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
+                        <div class="ai-card-destaque" id="aiCardEvolutionDestaque" style="display:none;"></div>
+                        <div class="ai-card-fontes" id="aiCardEvolutionFontes" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 07 - DESTAQUES SETORIAIS -->
+        <section class="report-section" id="secDestaques">
+            <div class="section-number">07 &#8212; Destaques</div>
+            <h2 class="section-title">Destaques Setoriais</h2>
+            <div class="section-subtitle">Insights espec&#237;ficos por setor gerados pela intelig&#234;ncia artificial</div>
+            <div id="destaquesContainer"></div>
+        </section>
+
+        <!-- 08 - DEEP DIVE POR SETOR -->
+        <section class="report-section" id="secDeepDive">
+            <div class="section-number">08 &#8212; Deep Dive</div>
+            <h2 class="section-title">An&#225;lise por Setor</h2>
+            <div class="section-subtitle">Detalhamento com ind&#250;strias, compara&#231;&#227;o geogr&#225;fica e empresas brasileiras</div>
+            <div id="deepDiveContainer"></div>
+        </section>
+
+        <!-- 09 - PERSPECTIVAS -->
+        <section class="report-section" id="secPerspectivas">
+            <div class="section-number">09 &#8212; Perspectivas</div>
+            <h2 class="section-title">Perspectivas e Tend&#234;ncias</h2>
+            <div class="narrative-block" id="narrativePerspectivas">
+                <div class="narrative-label"><i class="fas fa-robot"></i> Perspectivas &#8212; geradas por IA</div>
+                <div id="narrativePerspectivasText"><em>Aguardando dados...</em></div>
+            </div>
+        </section>
+
+        <!-- 10 - REFERÊNCIAS -->
+        <section class="report-section" id="secReferencias" style="display:none;">
+            <div class="section-number">10 &#8212; Refer&#234;ncias</div>
+            <h2 class="section-title">Fontes e Refer&#234;ncias</h2>
+            <div class="section-subtitle">Fontes externas utilizadas nas an&#225;lises e narrativas deste relat&#243;rio</div>
+            <div id="referenciasContainer"></div>
+        </section>
+
+        <!-- 11 - INSTITUCIONAL + DISCLAIMER -->
+        <section class="report-section" id="secInstitucional">
+            <div class="section-number">11 &#8212; Sobre o Anloc</div>
+            <h2 class="section-title">Sobre o Anloc</h2>
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <p>O Anloc &#233; especialista em valuation e benchmark. Capacitamos Conselheiros, Executivos, Empres&#225;rios, Fundadores e Investidores com os dados e an&#225;lises que precisam para tomar decis&#245;es com convic&#231;&#227;o.</p>
+                    <p>Com mais de 30 anos de expertise do time, cobertura de mais de 90 setores e uma base de mais de 40 mil empresas, transformamos dados em vit&#243;rias.</p>
+                    <p><strong>Servi&#231;os:</strong> Valuations de neg&#243;cios, startups, marcas e propriedade intelectual, fins cont&#225;beis; Flash Valuation; Benchmarks estrat&#233;gicos.</p>
+                    <p style="margin-top:1rem;"><a href="https://www.anloc.com.br" target="_blank" style="color:var(--anloc-gold);">www.anloc.com.br</a> &#8212; <a href="https://www.anloc.com.br/contato.php" target="_blank" style="color:var(--anloc-gold);">Fale Conosco</a></p>
+                </div>
+                <div class="col-md-4 text-center" style="display:flex;align-items:center;justify-content:center;">
+                    <div>
+                        <div style="font-size:2.5rem;font-weight:800;color:var(--anloc-gold);letter-spacing:3px;">ANLOC</div>
+                        <div style="font-size:0.8rem;color:var(--anloc-text-muted);margin-top:0.5rem;">Descubra seu valor, supere<br>seus concorrentes, lidere o futuro</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="disclaimer-section">
+                <h4><i class="fas fa-exclamation-circle"></i> Disclaimer</h4>
+                <p>Este relat&#243;rio &#233; produzido com finalidade informativa e educacional. Os m&#250;ltiplos de mercado aqui apresentados s&#227;o baseados em dados de empresas listadas em bolsas de valores globais e servem como refer&#234;ncias distantes (&#8220;distant benchmarks&#8221;) para avalia&#231;&#227;o de empresas.</p>
+                <p>Os dados s&#227;o obtidos de fontes p&#250;blicas (Yahoo Finance, Damodaran Online) e podem estar sujeitos a defasagem. As an&#225;lises narrativas s&#227;o geradas por intelig&#234;ncia artificial (Claude, Anthropic) e representam interpreta&#231;&#245;es automatizadas &#8212; n&#227;o constituem recomenda&#231;&#227;o de investimento.</p>
+                <p>Para valuations customizados e an&#225;lises aprofundadas, entre em contato com a equipe do Anloc.</p>
+                <p style="margin-top:1rem;"><strong>Fontes de dados:</strong> <span id="sourcesInfo">Yahoo Finance, Damodaran Online, BCB</span></p>
+            </div>
+        </section>
+
+    </div><!-- /report-container -->
+</div><!-- /reportContent -->
+
+<!-- CHAT DRAWER (Report) -->
+<button class="report-chat-toggle no-print" id="btnChatToggle" style="display:none;" onclick="toggleReportChat()">
+    <i class="fas fa-comments"></i>
+</button>
+<div class="report-chat-drawer no-print" id="reportChatDrawer">
+    <div class="rchat-header">
+        <i class="fas fa-brain" style="color:var(--anloc-accent);"></i>
+        <h3>Chat do Relat&#243;rio</h3>
+        <span class="provider-badge">Claude</span>
+        <button class="rchat-close" onclick="toggleReportChat()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="rchat-messages" id="rchatMessages">
+        <div class="rchat-bubble system">Gere o relat&#243;rio para habilitar o chat com contexto completo dos dados e narrativas.</div>
+    </div>
+    <div class="rchat-suggestions" id="rchatSuggestions">
+        <div class="rchat-chip" onclick="sendReportSuggestion(this)">Resuma os principais insights</div>
+        <div class="rchat-chip" onclick="sendReportSuggestion(this)">O que justifica o spread Brasil?</div>
+        <div class="rchat-chip" onclick="sendReportSuggestion(this)">Quais setores est&#227;o mais baratos?</div>
+        <div class="rchat-chip" onclick="sendReportSuggestion(this)">Perspectivas para o pr&#243;ximo trimestre</div>
+    </div>
+    <div class="rchat-input-area">
+        <textarea class="rchat-input" id="rchatInput" rows="1" placeholder="Pergunte sobre o relat&#243;rio..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReportChat();}"></textarea>
+        <button class="rchat-send" onclick="sendReportChat()" id="rchatSendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<!-- No old cacheLoadBar needed - now integrated in cacheListPanel -->
+
+<script>
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+// Default: disable datalabels globally, enable per-chart
+Chart.defaults.set('plugins.datalabels', { display: false });
+
+// ==============================
+// AI STATUS BAR
+// ==============================
+let aiConnected = false;
+
+function updateAiStatusBar(connected, provider) {
+    var bar = document.getElementById('aiStatusBar');
+    bar.style.display = 'block';
+    if (connected) {
+        bar.className = 'ai-status-bar no-print connected';
+        bar.innerHTML = '<span class="status-dot"></span> IA Conectada \u2014 Narrativas geradas por ' + (provider || 'Claude') + ' (Anthropic)';
+        aiConnected = true;
+    } else {
+        bar.className = 'ai-status-bar no-print disconnected';
+        bar.innerHTML = '<span class="status-dot"></span> IA Desconectada \u2014 Relat\u00f3rio gerado apenas com dados, sem narrativas. Forne\u00e7a uma API Key para ativar.';
+        aiConnected = false;
+    }
+}
+
+// ==============================
+// REPORT GENERATION
+// ==============================
+const SECTOR_COLORS = {
+    'Technology':              '#2d7dd2',
+    'Healthcare':              '#34d399',
+    'Consumer Cyclical':       '#f59e0b',
+    'Communication Services':  '#a78bfa',
+    'Industrials':             '#6b7280',
+    'Consumer Defensive':      '#10b981',
+    'Energy':                  '#ef4444',
+    'Financial Services':      '#3b82f6',
+    'Real Estate':             '#8b5cf6',
+    'Basic Materials':         '#d97706',
+    'Utilities':               '#06b6d4'
+};
+const FALLBACK_COLORS = ['#2d7dd2','#34d399','#f59e0b','#a78bfa','#ef4444','#6b7280','#10b981','#8b5cf6','#d97706','#06b6d4','#3b82f6'];
+
+let reportData = null;
+let chartInstances = {};
+let currentCacheId = null;
+let reportChatHistory = [];
+
+function getSectorColor(sector, idx) {
+    return SECTOR_COLORS[sector] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+}
+
+// ===== CACHE: List of saved studies =====
+let allCachedReports = [];
+let cacheFilterYear = null; // null = all
+
+async function checkCacheOnLoad() {
+    try {
+        var resp = await fetch('/api/estudoanloc/report_cache/list');
+        if (!resp.ok) return;
+        var data = await resp.json();
+        allCachedReports = data.reports || [];
+        renderCacheList();
+    } catch(e) { /* ignore */ }
+}
+
+function renderCacheList() {
+    var panel = document.getElementById('cacheListPanel');
+    var body = document.getElementById('cacheListBody');
+    var countEl = document.getElementById('cacheCount');
+    var filterTabs = document.getElementById('cacheFilterTabs');
+
+    if (allCachedReports.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+
+    // Build year filter tabs
+    var years = {};
+    allCachedReports.forEach(function(r) { years[r.fiscal_year] = (years[r.fiscal_year] || 0) + 1; });
+    var yearKeys = Object.keys(years).sort(function(a,b) { return b - a; });
+
+    var tabsHtml = '<button class="cache-filter-tab' + (cacheFilterYear === null ? ' active' : '') + '" onclick="filterCacheByYear(null)">Todos (' + allCachedReports.length + ')</button>';
+    yearKeys.forEach(function(y) {
+        tabsHtml += '<button class="cache-filter-tab' + (cacheFilterYear == y ? ' active' : '') + '" onclick="filterCacheByYear(' + y + ')">' + y + ' (' + years[y] + ')</button>';
+    });
+    filterTabs.innerHTML = tabsHtml;
+
+    // Filter
+    var filtered = cacheFilterYear ? allCachedReports.filter(function(r) { return r.fiscal_year == cacheFilterYear; }) : allCachedReports;
+    countEl.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+        body.innerHTML = '<div class="cache-list-empty"><i class="fas fa-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>Nenhum estudo para este filtro</div>';
+        return;
+    }
+
+    body.innerHTML = filtered.map(function(r) {
+        var displayLabel = r.label || r.quarter || ('Estudo ' + r.fiscal_year);
+        var dateStr = formatDateBR(r.generated_at);
+        var isActive = currentCacheId === r.id;
+        return '<div class="cache-item' + (isActive ? ' active' : '') + '" id="cacheItem_' + r.id + '">' +
+            '<div class="cache-item-icon"><i class="fas fa-file-alt"></i></div>' +
+            '<div class="cache-item-info">' +
+                '<div class="cache-item-label" id="cacheLabel_' + r.id + '">' + displayLabel + '</div>' +
+                '<div class="cache-item-meta"><i class="fas fa-calendar-alt" style="margin-right:0.2rem;"></i>' + dateStr + ' &middot; ' + r.fiscal_year + ' &middot; ' + (r.quarter || '') + '</div>' +
+            '</div>' +
+            '<div class="cache-item-actions">' +
+                '<button class="cache-item-btn load-btn" title="Carregar este estudo" onclick="loadFromCache(' + r.id + ')"><i class="fas fa-folder-open"></i></button>' +
+                '<button class="cache-item-btn edit-btn" title="Renomear" onclick="startRenameCache(' + r.id + ', \'' + encodeURIComponent(displayLabel) + '\')"><i class="fas fa-pen"></i></button>' +
+                '<button class="cache-item-btn delete-btn" title="Excluir" onclick="deleteCache(' + r.id + ', \'' + encodeURIComponent(displayLabel) + '\')"><i class="fas fa-trash-alt"></i></button>' +
+            '</div></div>';
+    }).join('');
+}
+
+function toggleCacheList() {
+    var header = document.getElementById('cacheListHeader');
+    var body = document.getElementById('cacheListBody');
+    var filters = document.getElementById('cacheFilterTabs');
+    header.classList.toggle('collapsed');
+    body.classList.toggle('collapsed');
+    filters.classList.toggle('collapsed');
+}
+
+function filterCacheByYear(year) {
+    cacheFilterYear = year;
+    renderCacheList();
+}
+
+function startRenameCache(cacheId, encodedLabel) {
+    var labelEl = document.getElementById('cacheLabel_' + cacheId);
+    if (!labelEl) return;
+    var currentLabel = decodeURIComponent(encodedLabel);
+    labelEl.innerHTML = '<div style="display:flex;gap:0.3rem;align-items:center;">' +
+        '<input class="cache-rename-input" id="renameInput_' + cacheId + '" value="' + currentLabel.replace(/"/g, '&quot;') + '" onkeydown="if(event.key===\'Enter\')saveRenameCache(' + cacheId + '); if(event.key===\'Escape\')cancelRenameCache(' + cacheId + ', \'' + encodedLabel + '\');" />' +
+        '<button class="cache-item-btn load-btn" onclick="saveRenameCache(' + cacheId + ')" style="flex-shrink:0;" title="Salvar"><i class="fas fa-check"></i></button>' +
+        '<button class="cache-item-btn delete-btn" onclick="cancelRenameCache(' + cacheId + ', \'' + encodedLabel + '\')" style="flex-shrink:0;" title="Cancelar"><i class="fas fa-times"></i></button></div>';
+    var input = document.getElementById('renameInput_' + cacheId);
+    if (input) { input.focus(); input.select(); }
+}
+
+function cancelRenameCache(cacheId, encodedLabel) {
+    var labelEl = document.getElementById('cacheLabel_' + cacheId);
+    if (labelEl) labelEl.textContent = decodeURIComponent(encodedLabel);
+}
+
+async function saveRenameCache(cacheId) {
+    var input = document.getElementById('renameInput_' + cacheId);
+    if (!input) return;
+    var newLabel = input.value.trim();
+    if (!newLabel) return;
+
+    try {
+        var resp = await fetch('/api/estudoanloc/report_cache/rename', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({cache_id: cacheId, label: newLabel})
+        });
+        if (resp.ok) {
+            // Update local data
+            allCachedReports = allCachedReports.map(function(r) {
+                if (r.id === cacheId) r.label = newLabel;
+                return r;
+            });
+            renderCacheList();
+        }
+    } catch(e) { /* ignore */ }
+}
+
+async function deleteCache(cacheId, encodedLabel) {
+    var label = decodeURIComponent(encodedLabel);
+    if (!confirm('Excluir o estudo "' + label + '"?\nEsta a\u00e7\u00e3o n\u00e3o pode ser desfeita.')) return;
+
+    try {
+        var resp = await fetch('/api/estudoanloc/report_cache/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({cache_id: cacheId})
+        });
+        if (resp.ok) {
+            allCachedReports = allCachedReports.filter(function(r) { return r.id !== cacheId; });
+            renderCacheList();
+            if (currentCacheId === cacheId) {
+                currentCacheId = null;
+            }
+        }
+    } catch(e) { alert('Erro ao excluir: ' + e.message); }
+}
+
+async function loadFromCache(cacheId) {
+    var overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+    document.getElementById('loadingText').textContent = 'Carregando do cache...';
+    document.getElementById('loadingDetail').textContent = '';
+
+    try {
+        var resp = await fetch('/api/estudoanloc/report_cache/load?id=' + cacheId);
+        if (!resp.ok) throw new Error('Erro ao carregar cache');
+        var data = await resp.json();
+
+        reportData = data.report_data || {};
+        reportData.narratives = data.narratives || {};
+        reportData.graph_comments = data.graph_comments || {};
+        currentCacheId = data.cache_id;
+        reportChatHistory = data.chat_history || [];
+
+        renderReport(reportData);
+
+        var hasNarratives = reportData.narratives && Object.keys(reportData.narratives).length > 0;
+        updateAiStatusBar(hasNarratives, hasNarratives ? 'Claude' : null);
+
+        document.getElementById('configPanel').style.display = 'none';
+        document.getElementById('reportContent').style.display = 'block';
+        document.getElementById('toolbar').style.display = 'flex';
+        document.getElementById('btnRegenerar').style.display = 'inline-flex';
+        document.getElementById('btnChatToggle').style.display = 'flex';
+
+        // Show cache indicator with label
+        var cachedItem = allCachedReports.find(function(r) { return r.id === cacheId; });
+        var cacheLabel = (cachedItem && cachedItem.label) ? cachedItem.label : formatDateBR(data.generated_at);
+        var ind = document.getElementById('cacheIndicator');
+        ind.style.display = 'inline';
+        ind.innerHTML = '<i class="fas fa-database" style="margin-right:0.3rem;"></i>' + cacheLabel;
+
+        // Refresh list to highlight active item
+        renderCacheList();
+
+        // Restore chat history
+        initReportChat();
+        if (reportChatHistory.length > 0) {
+            reportChatHistory.forEach(function(msg) {
+                addReportBubble(msg.role, msg.role === 'assistant' ? formatReportChatMessage(msg.content) : escapeHtml(msg.content));
+            });
+        }
+
+    } catch(err) {
+        alert('Erro: ' + err.message);
+    } finally {
+        overlay.classList.remove('active');
+    }
+}
+
+async function generateReport() {
+    const year = parseInt(document.getElementById('cfgYear').value);
+    const useLlm = document.getElementById('cfgLlm').value === 'true';
+
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+    document.getElementById('loadingText').textContent = 'Gerando relat\u00f3rio...';
+    document.getElementById('loadingDetail').textContent = 'Consultando dados de todos os setores e calculando m\u00faltiplos';
+
+    try {
+        const resp = await fetch('/api/estudoanloc/generate_report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                fiscal_year: year,
+                use_llm: useLlm,
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.error || 'Erro ao gerar relat\u00f3rio');
+        }
+
+        reportData = await resp.json();
+        currentCacheId = reportData.cache_id || null;
+        reportChatHistory = [];
+
+        renderReport(reportData);
+
+        var hasNarratives = reportData.narratives && Object.keys(reportData.narratives).length > 0;
+        updateAiStatusBar(hasNarratives, hasNarratives ? 'Claude' : null);
+
+        document.getElementById('configPanel').style.display = 'none';
+        document.getElementById('reportContent').style.display = 'block';
+        document.getElementById('toolbar').style.display = 'flex';
+        document.getElementById('btnRegenerar').style.display = 'inline-flex';
+        document.getElementById('btnChatToggle').style.display = 'flex';
+
+        // Cache indicator
+        if (currentCacheId) {
+            var ind = document.getElementById('cacheIndicator');
+            ind.style.display = 'inline';
+            ind.innerHTML = '<i class="fas fa-check-circle" style="color:var(--anloc-success);margin-right:0.3rem;"></i>Salvo no cache';
+        }
+
+        // Init chat
+        initReportChat();
+
+    } catch (err) {
+        alert('Erro: ' + err.message);
+        updateAiStatusBar(false, null);
+    } finally {
+        overlay.classList.remove('active');
+    }
+}
+
+async function regenerateReport() {
+    if (!confirm('Regenerar o relat\u00f3rio? As narrativas ser\u00e3o geradas novamente pela IA.')) return;
+    // Reset and generate
+    currentCacheId = null;
+    reportChatHistory = [];
+    document.getElementById('reportContent').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('btnChatToggle').style.display = 'none';
+    await generateReport();
+}
+
+function renderReport(data) {
+    renderCover(data.metadata);
+    renderKPIs(data);
+    renderRanking(data.ranking);
+    renderRankingChart(data.ranking);
+    renderGeoChart(data.sectors);
+    renderEvolutionChart(data.sectors);
+    renderAiChartComments(data);
+    renderDestaques(data.narratives, data.sectors);
+    renderDeepDives(data.sectors, data.metadata);
+    renderNarratives(data.narratives);
+    renderReferencias(data.narratives);
+}
+
+// ===== COVER =====
+function renderCover(meta) {
+    document.getElementById('coverQuarter').textContent = meta.quarter;
+    const metaDiv = document.getElementById('coverMeta');
+    metaDiv.innerHTML = [
+        {v: meta.total_sectors, l: 'Setores'},
+        {v: meta.total_companies.toLocaleString('pt-BR'), l: 'Empresas'},
+        {v: meta.fiscal_year, l: 'Ano Fiscal'}
+    ].map(function(m) {
+        return '<div class="cover-meta-item"><div class="value">' + m.v + '</div><div class="label">' + m.l + '</div></div>';
+    }).join('');
+
+    // Data de atualiza\u00e7\u00e3o dos dados
+    var freshDiv = document.getElementById('coverFreshness');
+    if (meta.data_freshness && freshDiv) {
+        var f = meta.data_freshness;
+        var parts = [];
+        if (f.damodaran_base) parts.push('Base Damodaran: ' + formatDateBR(f.damodaran_base));
+        if (f.yahoo_market_data) parts.push('Market Cap (Yahoo Finance): ' + formatDateBR(f.yahoo_market_data));
+        if (parts.length > 0) {
+            freshDiv.innerHTML = '<i class="fas fa-sync-alt" style="margin-right:0.3rem;"></i> <strong>Atualiza\u00e7\u00e3o dos dados:</strong> ' + parts.join(' &nbsp;|&nbsp; ');
+        }
+    }
+}
+
+function formatDateBR(isoStr) {
+    if (!isoStr) return 'N/D';
+    var d = new Date(isoStr.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return isoStr;
+    return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' \u00e0s ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ===== KPIs =====
+function renderKPIs(data) {
+    const ranking = data.ranking;
+    const totalCompanies = data.metadata.total_companies;
+    const totalSectors = data.metadata.total_sectors;
+
+    // Global median of medians (EV/EBITDA)
+    const evVals = ranking.map(function(r) { return r.ev_ebitda_median; }).filter(function(v) { return v != null; });
+    const globalMedian = evVals.length > 0 ? (evVals.reduce(function(a,b){return a+b;}, 0) / evVals.length).toFixed(1) : 'N/D';
+
+    // Brazil average spread
+    const brSpreads = ranking.map(function(r) { return r.br_spread_pct; }).filter(function(v) { return v != null; });
+    const avgBrSpread = brSpreads.length > 0 ? (brSpreads.reduce(function(a,b){return a+b;}, 0) / brSpreads.length).toFixed(1) : 'N/D';
+
+    const totalBr = ranking.reduce(function(sum, r) { return sum + (r.brazil_n || 0); }, 0);
+
+    document.getElementById('kpiRow').innerHTML = [
+        {v: totalSectors, l: 'Setores Analisados', d: ''},
+        {v: totalCompanies.toLocaleString('pt-BR'), l: 'Empresas no Universo', d: 'EV > US$100M'},
+        {v: globalMedian + 'x', l: 'EV/EBITDA M\u00e9dia Global', d: 'M\u00e9dia das medianas setoriais'},
+        {v: (avgBrSpread >= 0 ? '+' : '') + avgBrSpread + '%', l: 'Spread M\u00e9dio Brasil', d: 'vs Global (EV/EBITDA)'},
+        {v: totalBr.toLocaleString('pt-BR'), l: 'Empresas Brasileiras', d: 'Na base de dados'}
+    ].map(function(k) {
+        return '<div class="col"><div class="kpi-card"><div class="kpi-value">' + k.v + '</div><div class="kpi-label">' + k.l + '</div>' +
+               (k.d ? '<div class="kpi-detail">' + k.d + '</div>' : '') + '</div></div>';
+    }).join('');
+}
+
+// ===== RANKING TABLE =====
+function renderRanking(ranking) {
+    var tbody = document.getElementById('tableRankingBody');
+    tbody.innerHTML = ranking.map(function(r) {
+        var spreadHtml = '';
+        if (r.br_spread_pct != null) {
+            var cls = r.br_spread_pct >= 0 ? 'premium' : 'discount';
+            spreadHtml = '<span class="spread-badge ' + cls + '">' + (r.br_spread_pct >= 0 ? '+' : '') + r.br_spread_pct + '%</span>';
+        } else {
+            spreadHtml = '<span style="color:var(--anloc-text-muted);">N/D</span>';
+        }
+        return '<tr>' +
+            '<td class="sector-name"><a href="#secDeepDive" class="sector-name-link" onclick="scrollToSectorDive(\'' + encodeURIComponent(r.sector) + '\')">' + r.sector + '</a></td>' +
+            '<td class="text-right">' + (r.ev_ebitda_median != null ? r.ev_ebitda_median.toFixed(1) + 'x' : 'N/D') + '</td>' +
+            '<td class="text-right">' + (r.ev_revenue_median != null ? r.ev_revenue_median.toFixed(1) + 'x' : 'N/D') + '</td>' +
+            '<td class="text-right">' + (r.br_ev_ebitda != null ? r.br_ev_ebitda.toFixed(1) + 'x' : 'N/D') + '</td>' +
+            '<td class="text-right">' + spreadHtml + '</td>' +
+            '<td class="text-right">' + r.n_companies + '</td></tr>';
+    }).join('');
+}
+
+function scrollToSectorDive(sectorEncoded) {
+    var sector = decodeURIComponent(sectorEncoded);
+    var dives = document.querySelectorAll('.sector-dive');
+    for (var i = 0; i < dives.length; i++) {
+        var nameEl = dives[i].querySelector('.sector-dive-name');
+        if (nameEl && nameEl.textContent.trim() === sector) {
+            dives[i].scrollIntoView({behavior: 'smooth', block: 'start'});
+            dives[i].style.transition = 'box-shadow 0.3s';
+            dives[i].style.boxShadow = '0 0 0 2px var(--anloc-gold)';
+            setTimeout(function(el) { el.style.boxShadow = ''; }, 2000, dives[i]);
+            break;
+        }
+    }
+}
+
+// ===== RANKING CHART =====
+function renderRankingChart(ranking) {
+    if (chartInstances.ranking) chartInstances.ranking.destroy();
+
+    var labels = ranking.map(function(r) { return r.sector; });
+    var globalVals = ranking.map(function(r) { return r.ev_ebitda_median; });
+    var brVals = ranking.map(function(r) { return r.br_ev_ebitda; });
+
+    var ctx = document.getElementById('chartRanking').getContext('2d');
+    chartInstances.ranking = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Global (Mediana)',
+                    data: globalVals,
+                    backgroundColor: 'rgba(45, 125, 210, 0.7)',
+                    borderColor: 'rgba(45, 125, 210, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Brasil (Mediana)',
+                    data: brVals,
+                    backgroundColor: 'rgba(212, 168, 67, 0.7)',
+                    borderColor: 'rgba(212, 168, 67, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e8edf3', font: { family: 'Inter' } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx2) { return ctx2.dataset.label + ': ' + (ctx2.raw != null ? ctx2.raw.toFixed(1) + 'x' : 'N/D'); }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'right',
+                    color: '#e8edf3',
+                    font: { family: 'Inter', size: 10, weight: 600 },
+                    formatter: function(v) { return v != null ? v.toFixed(1) + 'x' : ''; }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#8b9bb4', font: { family: 'Inter' } }, grid: { color: 'rgba(30,51,80,0.5)' },
+                     title: { display: true, text: 'EV/EBITDA (mediana)', color: '#8b9bb4', font: { family: 'Inter' } } },
+                y: { ticks: { color: '#e8edf3', font: { family: 'Inter', size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ===== GEO CHART =====
+function renderGeoChart(sectors) {
+    if (chartInstances.geo) chartInstances.geo.destroy();
+
+    var labels = sectors.map(function(s) { return s.sector; });
+    var globalVals = sectors.map(function(s) { return s.global && s.global.ev_ebitda ? s.global.ev_ebitda.median : null; });
+    var latamVals = sectors.map(function(s) { return s.latam && s.latam.ev_ebitda ? s.latam.ev_ebitda.median : null; });
+    var brVals = sectors.map(function(s) { return s.brazil && s.brazil.ev_ebitda ? s.brazil.ev_ebitda.median : null; });
+
+    var ctx = document.getElementById('chartGeo').getContext('2d');
+    chartInstances.geo = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Global', data: globalVals, backgroundColor: 'rgba(45, 125, 210, 0.7)', borderColor: 'rgba(45, 125, 210, 1)', borderWidth: 1, borderRadius: 3 },
+                { label: 'LATAM', data: latamVals, backgroundColor: 'rgba(52, 211, 153, 0.7)', borderColor: 'rgba(52, 211, 153, 1)', borderWidth: 1, borderRadius: 3 },
+                { label: 'Brasil', data: brVals, backgroundColor: 'rgba(212, 168, 67, 0.7)', borderColor: 'rgba(212, 168, 67, 1)', borderWidth: 1, borderRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e8edf3', font: { family: 'Inter' } } },
+                tooltip: { callbacks: { label: function(ctx2) { return ctx2.dataset.label + ': ' + (ctx2.raw != null ? ctx2.raw.toFixed(1) + 'x' : 'N/D'); } } },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#e8edf3',
+                    font: { family: 'Inter', size: 9, weight: 600 },
+                    formatter: function(v) { return v != null ? v.toFixed(1) : ''; },
+                    rotation: -45
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#8b9bb4', font: { family: 'Inter', size: 10 }, maxRotation: 45 }, grid: { display: false } },
+                y: { ticks: { color: '#8b9bb4', font: { family: 'Inter' } }, grid: { color: 'rgba(30,51,80,0.5)' },
+                     title: { display: true, text: 'EV/EBITDA (mediana)', color: '#8b9bb4', font: { family: 'Inter' } } }
+            }
+        }
+    });
+}
+
+// ===== EVOLUTION CHART =====
+function renderEvolutionChart(sectors) {
+    if (chartInstances.evolution) chartInstances.evolution.destroy();
+
+    var years = [2021, 2022, 2023, 2024, 2025];
+    var datasets = [];
+
+    sectors.forEach(function(s, idx) {
+        var evo = s.evolution || [];
+        if (evo.length === 0) return;
+        var vals = years.map(function(yr) {
+            var found = evo.find(function(e) { return e.year === yr; });
+            return found && found.global ? found.global.ev_ebitda : null;
+        });
+        // Skip sectors with no evolution data
+        if (vals.every(function(v) { return v === null; })) return;
+
+        datasets.push({
+            label: s.sector,
+            data: vals,
+            borderColor: getSectorColor(s.sector, idx),
+            backgroundColor: getSectorColor(s.sector, idx) + '33',
+            borderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.3,
+            fill: false
+        });
+    });
+
+    var ctx = document.getElementById('chartEvolution').getContext('2d');
+    chartInstances.evolution = new Chart(ctx, {
+        type: 'line',
+        data: { labels: years, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e8edf3', font: { family: 'Inter', size: 11 } }, position: 'bottom' },
+                tooltip: { callbacks: { label: function(ctx2) { return ctx2.dataset.label + ': ' + (ctx2.raw != null ? ctx2.raw.toFixed(1) + 'x' : 'N/D'); } } },
+                datalabels: {
+                    display: function(ctx3) {
+                        // Only show label on the last data point of each line
+                        return ctx3.dataIndex === ctx3.dataset.data.length - 1;
+                    },
+                    anchor: 'end',
+                    align: 'right',
+                    color: function(ctx3) { return ctx3.dataset.borderColor; },
+                    font: { family: 'Inter', size: 10, weight: 600 },
+                    formatter: function(v) { return v != null ? v.toFixed(1) + 'x' : ''; }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#8b9bb4', font: { family: 'Inter' } }, grid: { color: 'rgba(30,51,80,0.3)' } },
+                y: { ticks: { color: '#8b9bb4', font: { family: 'Inter' } }, grid: { color: 'rgba(30,51,80,0.5)' },
+                     title: { display: true, text: 'EV/EBITDA (mediana)', color: '#8b9bb4', font: { family: 'Inter' } } }
+            }
+        }
+    });
+}
+
+// ===== AI CHART CARDS (Professional 2-column) =====
+function renderAiChartComments(data) {
+    var gc = data.graph_comments || {};
+
+    // Helper: populate one AI card
+    function fillCard(key, bodyId, destaqueId, fontesId) {
+        var card = gc[key];
+        var bodyEl = document.getElementById(bodyId);
+        var destEl = document.getElementById(destaqueId);
+        var fontEl = document.getElementById(fontesId);
+        if (!bodyEl) return;
+
+        if (card && card.analise) {
+            bodyEl.innerHTML = card.analise.split('\n').filter(function(p){return p.trim();}).map(function(p){return '<p>'+p+'</p>';}).join('');
+            if (card.destaque && destEl) {
+                destEl.innerHTML = '<i class="fas fa-lightbulb"></i> ' + card.destaque;
+                destEl.style.display = 'block';
+            }
+            if (card.fontes && card.fontes.length > 0 && fontEl) {
+                fontEl.innerHTML = '<i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(card.fontes);
+                fontEl.style.display = 'block';
+            }
+        } else {
+            // Fallback: heuristic text from data
+            fillCardFallback(key, data, bodyEl);
+        }
+    }
+
+    fillCard('ranking', 'aiCardRankingBody', 'aiCardRankingDestaque', 'aiCardRankingFontes');
+    fillCard('geografia', 'aiCardGeoBody', 'aiCardGeoDestaque', 'aiCardGeoFontes');
+    fillCard('evolucao', 'aiCardEvolutionBody', 'aiCardEvolutionDestaque', 'aiCardEvolutionFontes');
+}
+
+function fillCardFallback(key, data, bodyEl) {
+    var ranking = data.ranking || [];
+    var sectors = data.sectors || [];
+    if (key === 'ranking' && ranking.length > 0) {
+        var sorted = ranking.slice().sort(function(a,b){return (b.ev_ebitda_median||0)-(a.ev_ebitda_median||0);});
+        bodyEl.innerHTML = '<p>O setor com m\u00faltiplo mais elevado \u00e9 <strong>' + sorted[0].sector + '</strong> (' + (sorted[0].ev_ebitda_median||0).toFixed(1) + 'x), enquanto <strong>' + sorted[sorted.length-1].sector + '</strong> apresenta o menor (' + (sorted[sorted.length-1].ev_ebitda_median||0).toFixed(1) + 'x).</p>';
+    } else if (key === 'geografia' && sectors.length > 0) {
+        var premiums = sectors.filter(function(s){return s.spreads && s.spreads.br_vs_global > 0;}).map(function(s){return s.sector;});
+        var discounts = sectors.filter(function(s){return s.spreads && s.spreads.br_vs_global < 0;}).map(function(s){return s.sector;});
+        var txt = '';
+        if (premiums.length > 0) txt += '<p>Setores com pr\u00eamio Brasil vs Global: ' + premiums.join(', ') + '.</p>';
+        if (discounts.length > 0) txt += '<p>Setores com desconto: ' + discounts.join(', ') + '.</p>';
+        bodyEl.innerHTML = txt || '<p><em>Dados geogr\u00e1ficos indispon\u00edveis.</em></p>';
+    } else if (key === 'evolucao' && sectors.length > 0) {
+        var expanded = [], compressed = [];
+        sectors.forEach(function(s){
+            var evo = s.evolution || [];
+            if (evo.length < 2) return;
+            var first = evo[0] && evo[0].global ? evo[0].global.ev_ebitda : null;
+            var last = evo[evo.length-1] && evo[evo.length-1].global ? evo[evo.length-1].global.ev_ebitda : null;
+            if (first && last) { if (last > first) expanded.push(s.sector); else compressed.push(s.sector); }
+        });
+        var txt = '';
+        if (expanded.length > 0) txt += '<p>Setores que expandiram m\u00faltiplos: ' + expanded.join(', ') + '.</p>';
+        if (compressed.length > 0) txt += '<p>Setores que comprimiram: ' + compressed.join(', ') + '.</p>';
+        bodyEl.innerHTML = txt || '<p><em>Evolu\u00e7\u00e3o indispon\u00edvel.</em></p>';
+    } else {
+        bodyEl.innerHTML = '<p><em>An\u00e1lise n\u00e3o gerada.</em></p>';
+    }
+}
+
+// ===== DESTAQUES SETORIAIS =====
+function renderDestaques(narratives, sectors) {
+    var container = document.getElementById('destaquesContainer');
+    if (!narratives || !narratives.destaques_setoriais || narratives.destaques_setoriais.length === 0) {
+        container.innerHTML = '<p style="color:var(--anloc-text-muted);"><em>Narrativas n\u00e3o dispon\u00edveis (LLM n\u00e3o ativado ou sem API key)</em></p>';
+        return;
+    }
+
+    // Build lookup of sector data for enrichment
+    var sectorLookup = {};
+    if (sectors) {
+        sectors.forEach(function(s) { sectorLookup[s.sector] = s; });
+    }
+
+    container.innerHTML = narratives.destaques_setoriais.map(function(d) {
+        // Metrics row from LLM data or fallback to sectors data
+        var evGlobal = d.ev_ebitda_global;
+        var evBr = d.ev_ebitda_br;
+        var spreadPct = d.spread_pct;
+        var nEmpresas = d.n_empresas;
+        var tendencia = d.tendencia;
+
+        // Fallback: enrich from sector data if LLM didn't return numbers
+        var sd = sectorLookup[d.setor];
+        if (sd && evGlobal == null) {
+            var gev = sd.global && sd.global.ev_ebitda ? sd.global.ev_ebitda : {};
+            evGlobal = gev.median;
+        }
+        if (sd && evBr == null) {
+            var bev = sd.brazil && sd.brazil.ev_ebitda ? sd.brazil.ev_ebitda : {};
+            evBr = bev.median;
+        }
+        if (sd && spreadPct == null) {
+            var sp = sd.spreads && sd.spreads.br_vs_global && sd.spreads.br_vs_global.ev_ebitda;
+            if (sp) spreadPct = sp.pct;
+        }
+        if (sd && nEmpresas == null) {
+            nEmpresas = sd.global ? sd.global.n : null;
+        }
+
+        // Metrics HTML
+        var metricsHtml = '<div class="hl-metrics">';
+        if (evGlobal != null) metricsHtml += '<div class="hl-metric"><div class="hl-metric-value">' + Number(evGlobal).toFixed(1) + 'x</div><div class="hl-metric-label">EV/EBITDA Global</div></div>';
+        if (evBr != null) metricsHtml += '<div class="hl-metric"><div class="hl-metric-value">' + Number(evBr).toFixed(1) + 'x</div><div class="hl-metric-label">EV/EBITDA Brasil</div></div>';
+        if (spreadPct != null) {
+            var spCls = spreadPct >= 0 ? 'premium' : 'discount';
+            metricsHtml += '<div class="hl-metric"><div class="hl-metric-value"><span class="spread-badge ' + spCls + '">' + (spreadPct >= 0 ? '+' : '') + Number(spreadPct).toFixed(1) + '%</span></div><div class="hl-metric-label">Spread BR</div></div>';
+        }
+        if (nEmpresas != null) metricsHtml += '<div class="hl-metric"><div class="hl-metric-value">' + nEmpresas + '</div><div class="hl-metric-label">Empresas</div></div>';
+        if (tendencia) {
+            var trendCls = tendencia === 'expans\u00e3o' ? 'up' : (tendencia === 'compress\u00e3o' ? 'down' : 'stable');
+            var trendIcon = tendencia === 'expans\u00e3o' ? 'fa-arrow-up' : (tendencia === 'compress\u00e3o' ? 'fa-arrow-down' : 'fa-minus');
+            metricsHtml += '<div class="hl-metric"><div class="hl-metric-value"><span class="hl-trend ' + trendCls + '"><i class="fas ' + trendIcon + '"></i> ' + tendencia + '</span></div><div class="hl-metric-label">Tend\u00eancia</div></div>';
+        }
+        metricsHtml += '</div>';
+
+        // Citation
+        var citacaoHtml = '';
+        if (d.citacao && d.citacao.frase) {
+            citacaoHtml = '<div class="expert-quote"><div class="quote-text">' + d.citacao.frase + '</div>' +
+                '<div class="quote-author">\u2014 ' + (d.citacao.autor || '') + (d.citacao.cargo ? ', ' + d.citacao.cargo : '') + '</div>' +
+                (d.citacao.contexto ? '<div class="quote-context">' + d.citacao.contexto + '</div>' : '') + '</div>';
+        }
+
+        // Fontes
+        var fontesHtml = '';
+        if (d.fontes && d.fontes.length > 0) {
+            fontesHtml = '<div class="narrative-footnotes"><i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(d.fontes) + '</div>';
+        }
+
+        return '<div class="highlight-card"><div class="hl-sector"><i class="fas fa-chart-bar" style="color:var(--anloc-accent);margin-right:0.4rem;"></i>' +
+               d.setor + '</div>' + metricsHtml +
+               '<div class="hl-insight">' + d.insight + '</div>' + citacaoHtml + fontesHtml + '</div>';
+    }).join('');
+}
+
+// ===== DEEP DIVE POR SETOR =====
+function renderDeepDives(sectors, metadata) {
+    var container = document.getElementById('deepDiveContainer');
+    var fiscalYear = metadata ? metadata.fiscal_year : new Date().getFullYear();
+
+    container.innerHTML = sectors.map(function(s, sIdx) {
+        var g = s.global || {};
+        var l = s.latam || {};
+        var b = s.brazil || {};
+        var gev = g.ev_ebitda || {};
+        var lev = l.ev_ebitda || {};
+        var bev = b.ev_ebitda || {};
+        var gevr = g.ev_revenue || {};
+        var levr = l.ev_revenue || {};
+        var bevr = b.ev_revenue || {};
+
+        // Geo comparison cards
+        var geoHtml = '<div class="geo-comparison">' +
+            _geoCard('Global', gev.median, gevr.median, g.n) +
+            _geoCard('LATAM', lev.median, levr.median, l.n) +
+            _geoCard('Brasil', bev.median, bevr.median, b.n) +
+            '</div>';
+
+        // Spreads
+        var sp = s.spreads || {};
+        var spreadHtml = '<div class="row mb-3">';
+        [['br_vs_global', 'Brasil vs Global'], ['br_vs_latam', 'Brasil vs LATAM'], ['latam_vs_global', 'LATAM vs Global']].forEach(function(pair) {
+            var spEv = (sp[pair[0]] || {}).ev_ebitda;
+            if (spEv) {
+                var cls = spEv.direction === 'premium' ? 'premium' : 'discount';
+                var label = spEv.direction === 'premium' ? 'Pr\u00eamio' : 'Desconto';
+                spreadHtml += '<div class="col-md-4 mb-2"><div class="stat-card text-center"><small style="color:var(--anloc-text-muted);">' +
+                    pair[1] + ' (EV/EBITDA)</small><div style="font-size:1.3rem;font-weight:700;margin:0.3rem 0;"><span class="spread-badge ' + cls + '">' +
+                    (spEv.pct >= 0 ? '+' : '') + spEv.pct + '% ' + label + '</span></div></div></div>';
+            }
+        });
+        spreadHtml += '</div>';
+
+        // Industries table with export
+        var indHtml = '';
+        if (s.by_industry && s.by_industry.length > 0) {
+            var indTableId = 'indTable_' + sIdx;
+            indHtml = '<div class="subsection-title" style="font-size:1rem;">Ind\u00fastrias</div>' +
+                '<div class="table-toolbar"><button class="btn-export" onclick="exportTableToCSV(\'' + indTableId + '\', \'industrias_' + s.sector.replace(/\s+/g,'_') + '\')"><i class="fas fa-download"></i> CSV</button></div>' +
+                '<table class="report-table" id="' + indTableId + '"><thead><tr>' +
+                '<th>Ind\u00fastria</th><th class="text-right">EV/EBITDA Global</th><th class="text-right">EV/Revenue Global</th>' +
+                '<th class="text-right">EV/EBITDA Brasil</th><th class="text-right">N</th></tr></thead><tbody>' +
+                s.by_industry.slice(0, 10).map(function(ind) {
+                    var ie = ind.ev_ebitda || {};
+                    var ir = ind.ev_revenue || {};
+                    var brIe = ind.brazil_ev_ebitda || {};
+                    return '<tr><td>' + ind.label + '</td>' +
+                        '<td class="text-right">' + (ie.median != null ? ie.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
+                        '<td class="text-right">' + (ir.median != null ? ir.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
+                        '<td class="text-right">' + (brIe.median != null ? brIe.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
+                        '<td class="text-right">' + ind.n + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        // Top BR companies with ticker links and export
+        var topBrHtml = '';
+        if (s.top_brazil_companies && s.top_brazil_companies.length > 0) {
+            var brTableId = 'brTable_' + sIdx;
+            topBrHtml = '<div class="subsection-title" style="font-size:1rem;margin-top:1.5rem;">Top Empresas Brasileiras</div>' +
+                '<div class="table-toolbar"><button class="btn-export" onclick="exportTableToCSV(\'' + brTableId + '\', \'empresas_br_' + s.sector.replace(/\s+/g,'_') + '\')"><i class="fas fa-download"></i> CSV</button></div>' +
+                '<table class="report-table" id="' + brTableId + '"><thead><tr>' +
+                '<th>Ticker</th><th>Empresa</th><th>Ind\u00fastria</th>' +
+                '<th class="text-right">EV/EBITDA</th><th class="text-right">EV/Revenue</th></tr></thead><tbody>' +
+                s.top_brazil_companies.slice(0, 8).map(function(c) {
+                    var tickerHtml = c.ticker ? '<a class="ticker-link" href="/company-analysis?code=' + encodeURIComponent(c.ticker) + '" target="_blank" title="Ver an\u00e1lise de ' + (c.company_name || c.ticker) + '">' + c.ticker + ' <i class="fas fa-external-link-alt" style="font-size:0.65rem;"></i></a>' : '';
+                    return '<tr><td><strong>' + tickerHtml + '</strong></td>' +
+                        '<td>' + (c.company_name || '') + '</td>' +
+                        '<td>' + (c.yahoo_industry || '') + '</td>' +
+                        '<td class="text-right">' + (c.ev_ebitda != null ? c.ev_ebitda.toFixed(1) + 'x' : 'N/D') + '</td>' +
+                        '<td class="text-right">' + (c.ev_revenue != null ? c.ev_revenue.toFixed(1) + 'x' : 'N/D') + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        // Deep analysis button + panel
+        var deepBtnId = 'deepBtn_' + sIdx;
+        var deepPanelId = 'deepPanel_' + sIdx;
+        var deepAnalysisHtml = '<div style="margin-top:1.5rem;text-align:center;">' +
+            '<button class="btn-deep-ai" id="' + deepBtnId + '" onclick="requestDeepAnalysis(' + sIdx + ', \'' + encodeURIComponent(s.sector) + '\', ' + fiscalYear + ')">' +
+            '<i class="fas fa-brain"></i> Aprofundar an\u00e1lise com IA</button></div>' +
+            '<div class="deep-analysis-panel" id="' + deepPanelId + '"></div>';
+
+        return '<div class="sector-dive" data-sector="' + s.sector + '"><div class="sector-dive-header">' +
+            '<div class="sector-dive-name">' + s.sector + '</div>' +
+            '<div class="sector-dive-badge">' + (g.n || 0) + ' empresas</div></div>' +
+            geoHtml + spreadHtml + indHtml + topBrHtml + deepAnalysisHtml + '</div>';
+    }).join('');
+}
+
+function _geoCard(label, evMedian, evrMedian, n) {
+    return '<div class="geo-card">' +
+        '<div class="geo-label">' + label + '</div>' +
+        '<div class="geo-value">' + (evMedian != null ? evMedian.toFixed(1) + 'x' : 'N/D') + '</div>' +
+        '<div class="geo-n">EV/EBITDA | ' + (evrMedian != null ? evrMedian.toFixed(1) + 'x' : 'N/D') + ' EV/Rev | n=' + (n || 0) + '</div></div>';
+}
+
+// ===== NARRATIVES =====
+function renderNarratives(narratives) {
+    if (!narratives) {
+        var noLlm = '<em>Narrativas n\u00e3o dispon\u00edveis. Ative o LLM e forne\u00e7a uma API key para gerar an\u00e1lises.</em>';
+        document.getElementById('narrativeResumoText').innerHTML = noLlm;
+        document.getElementById('narrativeBrasilText').innerHTML = noLlm;
+        document.getElementById('narrativeMacroText').innerHTML = noLlm;
+        document.getElementById('narrativePerspectivasText').innerHTML = noLlm;
+        return;
+    }
+
+    function nl2p(text) {
+        if (!text) return '';
+        return text.split('\n').filter(function(p) { return p.trim(); }).map(function(p) { return '<p>' + p + '</p>'; }).join('');
+    }
+
+    function renderFontes(fontesArr) {
+        if (!fontesArr || fontesArr.length === 0) return '';
+        return '<div class="narrative-footnotes"><i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(fontesArr) + '</div>';
+    }
+
+    function renderCitacoes(secao) {
+        if (!narratives.citacoes_especialistas) return '';
+        var cits = narratives.citacoes_especialistas.filter(function(c) { return c.secao === secao; });
+        if (cits.length === 0) return '';
+        return cits.map(function(c) {
+            return '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
+                '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
+                (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
+        }).join('');
+    }
+
+    document.getElementById('narrativeResumoText').innerHTML = nl2p(narratives.resumo_executivo || '') + renderCitacoes('resumo_executivo') + renderFontes(narratives.resumo_executivo_fontes);
+    document.getElementById('narrativeBrasilText').innerHTML = nl2p(narratives.analise_brasil || '') + renderCitacoes('analise_brasil') + renderFontes(narratives.analise_brasil_fontes);
+    document.getElementById('narrativeMacroText').innerHTML = nl2p(narratives.analise_macro || '') + renderCitacoes('analise_macro') + renderFontes(narratives.analise_macro_fontes);
+    document.getElementById('narrativePerspectivasText').innerHTML = nl2p(narratives.perspectivas || '') + renderCitacoes('perspectivas') + renderFontes(narratives.perspectivas_fontes);
+
+    // Global sources
+    if (narratives.fontes_contexto && narratives.fontes_contexto.length > 0) {
+        var srcText = 'Yahoo Finance, Damodaran Online, BCB. Contexto LLM: ' + renderFontesInline(narratives.fontes_contexto);
+        document.getElementById('sourcesInfo').innerHTML = srcText;
+    }
+}
+
+// ===== REFERÊNCIAS CONSOLIDADAS =====
+function renderReferencias(narratives) {
+    var container = document.getElementById('referenciasContainer');
+    var section = document.getElementById('secReferencias');
+    if (!narratives || !narratives.fontes_contexto || narratives.fontes_contexto.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+
+    // Collect all unique sources from all sections
+    var allFontes = [];
+    var seenNames = {};
+
+    function addFontes(arr, secLabel) {
+        if (!arr) return;
+        arr.forEach(function(f) {
+            var nome = typeof f === 'string' ? f : (f.nome || f.name || '');
+            var url = typeof f === 'string' ? '' : (f.url || '');
+            var tipo = typeof f === 'string' ? '' : (f.tipo || '');
+            var key = nome.toLowerCase();
+            if (!seenNames[key]) {
+                seenNames[key] = true;
+                allFontes.push({nome: nome, url: url, tipo: tipo, secao: secLabel});
+            }
+        });
+    }
+
+    addFontes(narratives.resumo_executivo_fontes, 'Resumo Executivo');
+    addFontes(narratives.analise_macro_fontes, 'An\u00e1lise Macro');
+    addFontes(narratives.analise_brasil_fontes, 'An\u00e1lise Brasil');
+    addFontes(narratives.perspectivas_fontes, 'Perspectivas');
+    addFontes(narratives.fontes_contexto, 'Geral');
+
+    // Destaques fontes
+    if (narratives.destaques_setoriais) {
+        narratives.destaques_setoriais.forEach(function(d) {
+            addFontes(d.fontes, 'Destaque: ' + d.setor);
+        });
+    }
+
+    // Group by type
+    var byType = {};
+    allFontes.forEach(function(f) {
+        var tipo = f.tipo || 'outros';
+        if (!byType[tipo]) byType[tipo] = [];
+        byType[tipo].push(f);
+    });
+
+    var typeLabels = {institucional: 'Fontes Institucionais', 'relat\u00f3rio': 'Relat\u00f3rios', dados: 'Bases de Dados', 'm\u00eddia': 'M\u00eddia', outros: 'Outras Fontes'};
+
+    var html = '';
+    Object.keys(byType).forEach(function(tipo) {
+        var label = typeLabels[tipo] || (tipo.charAt(0).toUpperCase() + tipo.slice(1));
+        html += '<div class="subsection-title" style="font-size:1rem;margin-top:1rem;">' + label + '</div>';
+        html += '<ul class="references-list">';
+        byType[tipo].forEach(function(f) {
+            var linkHtml = f.url ? '<a class="fonte-link" href="' + f.url + '" target="_blank" rel="noopener">' + f.nome + ' <i class="fas fa-external-link-alt" style="font-size:0.6rem;"></i></a>' : f.nome;
+            var typeTag = f.tipo ? '<span class="ref-type ' + f.tipo + '">' + f.tipo + '</span>' : '';
+            html += '<li><i class="fas fa-link" style="color:var(--anloc-accent);margin-right:0.5rem;font-size:0.7rem;"></i>' + linkHtml + typeTag + '</li>';
+        });
+        html += '</ul>';
+    });
+
+    container.innerHTML = html;
+}
+
+// ==============================
+// UTILITY FUNCTIONS
+// ==============================
+
+// Render fontes as clickable links (supports both string[] and {nome,url}[] formats)
+function renderFontesInline(fontesArr) {
+    if (!fontesArr || fontesArr.length === 0) return '';
+    return fontesArr.map(function(f) {
+        if (typeof f === 'string') return f;
+        var nome = f.nome || f.name || '';
+        var url = f.url || '';
+        if (url) {
+            return '<a class="fonte-link" href="' + url + '" target="_blank" rel="noopener">' + nome + '</a>';
+        }
+        return nome;
+    }).join('; ');
+}
+
+// Export any table to CSV file
+function exportTableToCSV(tableId, filename) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var rows = table.querySelectorAll('tr');
+    var csv = [];
+    rows.forEach(function(row) {
+        var cols = row.querySelectorAll('th, td');
+        var rowData = [];
+        cols.forEach(function(col) {
+            var text = col.textContent.trim().replace(/"/g, '""');
+            rowData.push('"' + text + '"');
+        });
+        csv.push(rowData.join(','));
+    });
+    var csvContent = '\uFEFF' + csv.join('\n'); // BOM for Excel UTF-8
+    var blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = (filename || 'export') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+// Request deep AI analysis for a sector
+async function requestDeepAnalysis(sectorIdx, sectorEncoded, fiscalYear) {
+    var sector = decodeURIComponent(sectorEncoded);
+    var btn = document.getElementById('deepBtn_' + sectorIdx);
+    var panel = document.getElementById('deepPanel_' + sectorIdx);
+
+    // If already loaded, just toggle visibility
+    if (panel.dataset.loaded === 'true') {
+        panel.classList.toggle('visible');
+        return;
+    }
+
+    // Disable button, show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando an\u00e1lise aprofundada...';
+
+    // Get sector data from reportData
+    var sectorData = {};
+    if (reportData && reportData.sectors) {
+        var sd = reportData.sectors.find(function(s) { return s.sector === sector; });
+        if (sd) sectorData = sd;
+    }
+
+    try {
+        var resp = await fetch('/api/estudoanloc/relatorio/sector_deep_analysis', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sector: sector,
+                sector_data: sectorData,
+                fiscal_year: fiscalYear
+            })
+        });
+
+        var data = await resp.json();
+        if (data.success && data.analysis) {
+            var a = data.analysis;
+            var html = '<h4><i class="fas fa-brain" style="margin-right:0.5rem;"></i>' + (a.titulo || 'An\u00e1lise Aprofundada: ' + sector) + '</h4>';
+
+            var sections = [
+                {key: 'panorama', title: 'Panorama Global'},
+                {key: 'analise_brasil', title: 'An\u00e1lise Brasil'},
+                {key: 'industrias_destaque', title: 'Ind\u00fastrias em Destaque'},
+                {key: 'tendencias', title: 'Tend\u00eancias'},
+                {key: 'riscos_oportunidades', title: 'Riscos e Oportunidades'},
+                {key: 'conclusao', title: 'Conclus\u00e3o'}
+            ];
+
+            sections.forEach(function(sec) {
+                if (a[sec.key]) {
+                    html += '<div class="analysis-section"><div class="analysis-section-title">' + sec.title + '</div>';
+                    html += a[sec.key].split('\n').filter(function(p){return p.trim();}).map(function(p){return '<p>'+p+'</p>';}).join('');
+                    html += '</div>';
+                }
+            });
+
+            // Expert quotes
+            if (a.citacoes && a.citacoes.length > 0) {
+                html += '<div class="analysis-section"><div class="analysis-section-title">Cita\u00e7\u00f5es de Especialistas</div>';
+                a.citacoes.forEach(function(c) {
+                    html += '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
+                        '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
+                        (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
+                });
+                html += '</div>';
+            }
+
+            // Sources
+            if (a.fontes && a.fontes.length > 0) {
+                html += '<div class="narrative-footnotes"><i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(a.fontes) + '</div>';
+            }
+
+            panel.innerHTML = html;
+            panel.dataset.loaded = 'true';
+            panel.classList.add('visible');
+
+            btn.innerHTML = '<i class="fas fa-brain"></i> An\u00e1lise aprofundada <i class="fas fa-chevron-up" style="font-size:0.7rem;margin-left:0.3rem;"></i>';
+            btn.disabled = false;
+        } else {
+            throw new Error(data.error || 'Falha ao gerar an\u00e1lise');
+        }
+    } catch (e) {
+        panel.innerHTML = '<p style="color:var(--anloc-danger);"><i class="fas fa-exclamation-triangle"></i> Erro: ' + e.message + '</p>';
+        panel.classList.add('visible');
+        btn.innerHTML = '<i class="fas fa-brain"></i> Tentar novamente';
+        btn.disabled = false;
+    }
+}
+
+// ==============================
+// REPORT CHAT
+// ==============================
+function initReportChat() {
+    var msgContainer = document.getElementById('rchatMessages');
+    msgContainer.innerHTML = '<div class="rchat-bubble system">Relat\u00f3rio carregado! Pergunte qualquer coisa sobre os dados, setores, m\u00faltiplos ou narrativas.</div>';
+}
+
+function toggleReportChat() {
+    var drawer = document.getElementById('reportChatDrawer');
+    var btn = document.getElementById('btnChatToggle');
+    drawer.classList.toggle('open');
+    btn.classList.toggle('active');
+    if (drawer.classList.contains('open')) {
+        btn.innerHTML = '<i class="fas fa-times"></i>';
+    } else {
+        btn.innerHTML = '<i class="fas fa-comments"></i>';
+    }
+}
+
+function sendReportSuggestion(chip) {
+    var text = chip.textContent;
+    document.getElementById('rchatInput').value = text;
+    sendReportChat();
+}
+
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatReportChatMessage(text) {
+    return escapeHtml(text)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .split('\n').filter(function(p){return p.trim();}).map(function(p){return '<p>'+p+'</p>';}).join('');
+}
+
+function addReportBubble(role, html, id) {
+    var container = document.getElementById('rchatMessages');
+    var div = document.createElement('div');
+    div.className = 'rchat-bubble ' + role;
+    if (id) div.id = id;
+    div.innerHTML = html;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function buildReportContext() {
+    if (!reportData) return '';
+    var parts = ['Relat\u00f3rio Estudo Anloc - M\u00faltiplos de Mercado'];
+    var meta = reportData.metadata || {};
+    parts.push('Ano fiscal: ' + meta.fiscal_year + ', Trimestre: ' + (meta.quarter || 'N/D'));
+    parts.push('Total de setores: ' + meta.total_sectors + ', Empresas: ' + meta.total_companies);
+
+    // Ranking summary
+    if (reportData.ranking) {
+        parts.push('\nRanking de setores (EV/EBITDA mediana):');
+        reportData.ranking.forEach(function(r) {
+            parts.push('- ' + r.sector + ': Global=' + (r.ev_ebitda_median||0).toFixed(1) + 'x, Brasil=' + (r.br_ev_ebitda ? r.br_ev_ebitda.toFixed(1) + 'x' : 'N/D') + ', Spread=' + (r.br_spread_pct != null ? r.br_spread_pct + '%' : 'N/D'));
+        });
+    }
+
+    // Narratives summary
+    var narr = reportData.narratives || {};
+    if (narr.resumo_executivo) parts.push('\nResumo executivo: ' + narr.resumo_executivo.substring(0, 800));
+    if (narr.analise_macro) parts.push('\nAn\u00e1lise macro: ' + narr.analise_macro.substring(0, 800));
+    if (narr.analise_brasil) parts.push('\nAn\u00e1lise Brasil: ' + narr.analise_brasil.substring(0, 800));
+    if (narr.perspectivas) parts.push('\nPerspectivas: ' + narr.perspectivas.substring(0, 800));
+
+    return parts.join('\n');
+}
+
+async function sendReportChat() {
+    var input = document.getElementById('rchatInput');
+    var message = input.value.trim();
+    if (!message) return;
+
+    input.value = '';
+    document.getElementById('rchatSendBtn').disabled = true;
+
+    addReportBubble('user', escapeHtml(message));
+    reportChatHistory.push({role: 'user', content: message});
+
+    // Typing indicator
+    var typingId = 'typing_' + Date.now();
+    addReportBubble('assistant', '<div class="rchat-typing"><span></span><span></span><span></span></div>', typingId);
+
+    try {
+        var resp = await fetch('/api/estudoanloc/relatorio/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                messages: reportChatHistory.slice(-20),
+                report_context: buildReportContext()
+            })
+        });
+
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+
+        var data = await resp.json();
+        if (data.success) {
+            reportChatHistory.push({role: 'assistant', content: data.message});
+            addReportBubble('assistant', formatReportChatMessage(data.message));
+
+            // Persist chat to cache
+            if (currentCacheId) {
+                fetch('/api/estudoanloc/report_cache/save_chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cache_id: currentCacheId,
+                        chat_history: reportChatHistory
+                    })
+                }).catch(function(){});
+            }
+        } else {
+            addReportBubble('system', 'Erro: ' + (data.error || 'Falha na comunica\u00e7\u00e3o'));
+        }
+    } catch(e) {
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        addReportBubble('system', 'Erro de conex\u00e3o: ' + e.message);
+    } finally {
+        document.getElementById('rchatSendBtn').disabled = false;
+        document.getElementById('rchatInput').focus();
+    }
+}
+
+// ==============================
+// AUTO-CHECK AI ON PAGE LOAD
+// ==============================
+(function() {
+    var statusDiv = document.getElementById('aiConfigStatus');
+    if (!statusDiv) return;
+    fetch('/api/estudoanloc/check_ai')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.connected) {
+                statusDiv.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusDiv.style.color = '#34d399';
+                statusDiv.style.border = '1px solid rgba(52, 211, 153, 0.3)';
+                statusDiv.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i> IA Conectada \u2014 ' + (data.provider || 'Claude') + '. Narrativas ser\u00e3o geradas automaticamente.';
+            } else {
+                statusDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusDiv.style.color = '#f87171';
+                statusDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right:0.4rem;"></i> IA Desconectada \u2014 ' + (data.message || 'API key n\u00e3o configurada') + '. Relat\u00f3rio ser\u00e1 gerado apenas com dados.';
+            }
+        })
+        .catch(function() {
+            statusDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+            statusDiv.style.color = '#f87171';
+            statusDiv.innerHTML = '<i class="fas fa-times-circle" style="margin-right:0.4rem;"></i> N\u00e3o foi poss\u00edvel verificar conex\u00e3o com IA.';
+        });
+
+    // Check for cached reports
+    checkCacheOnLoad();
+
+    // Year change re-checks cache
+    var yearSel = document.getElementById('cfgYear');
+    if (yearSel) {
+        yearSel.addEventListener('change', function() { checkCacheOnLoad(); });
+    }
+})();
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

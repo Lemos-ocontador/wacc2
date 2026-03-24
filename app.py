@@ -16,6 +16,21 @@ Data: 2025-09-24
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, Response, stream_with_context
 import os
 import sqlite3
+
+# Carregar variáveis de ambiente do .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Fallback: ler .env manualmente se python-dotenv não estiver instalado
+    _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if os.path.exists(_env_path):
+        with open(_env_path) as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith('#') and '=' in _line:
+                    _k, _v = _line.split('=', 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -38,6 +53,9 @@ app.config['JSON_AS_ASCII'] = False
 
 # Detectar ambiente: Google App Engine vs Local
 IS_GAE = os.environ.get('GAE_ENV', '').startswith('standard')
+
+# API Key Anthropic (Claude) - configurar via .env ou variável de ambiente
+# Exemplo: ANTHROPIC_API_KEY=sk-ant-... no arquivo .env
 
 # Path centralizado do banco de dados
 DB_PATH = os.environ.get('DB_PATH', 'data/damodaran_data_new.db')
@@ -7242,6 +7260,874 @@ IMPORTANTE: Baseie-se EXCLUSIVAMENTE nos dados fornecidos. Não invente números
     return analysis
 
 
+# ==============================================================================
+# ESTUDO ANLOC - RELAT&Oacute;RIO PERI&Oacute;DICO (Quarterly Market Study)
+# ==============================================================================
+
+LATAM_COUNTRIES = [
+    'Brazil', 'Mexico', 'Argentina', 'Chile', 'Colombia', 'Peru', 'Uruguay',
+    'Paraguay', 'Bolivia', 'Ecuador', 'Venezuela', 'Costa Rica', 'Panama',
+    'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua', 'Dominican Republic',
+    'Puerto Rico', 'Cuba'
+]
+
+
+def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max_ev_ebitda=60):
+    """Calcula estatísticas de múltiplos para um setor, segmentado por geografia."""
+    current_year = datetime.now().year
+    is_current = (fiscal_year >= current_year)
+
+    if is_current:
+        query = """
+            SELECT cbd.id as company_id, cbd.ticker, cbd.company_name,
+                   cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country as country,
+                   COALESCE(dg.sub_group, 'Other') as region,
+                   cbd.enterprise_value as ev,
+                   cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                   cfh.free_cash_flow as fcf, cfh.period_type
+            FROM company_basic_data cbd
+            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cbd.yahoo_sector = ?
+              AND cbd.enterprise_value IS NOT NULL AND cbd.enterprise_value > 0
+              AND cfh.total_revenue IS NOT NULL AND cfh.total_revenue > 0
+              AND (cfh.period_type = 'annual' OR (cfh.period_type = 'annual' AND cfh.fiscal_year = ?))
+        """
+        params = [sector, fiscal_year - 1]
+    else:
+        query = """
+            SELECT cbd.id as company_id, cbd.ticker, cbd.company_name,
+                   cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country as country,
+                   COALESCE(dg.sub_group, 'Other') as region,
+                   cfh.enterprise_value_estimated as ev,
+                   cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                   cfh.free_cash_flow as fcf, cfh.period_type
+            FROM company_basic_data cbd
+            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
+            WHERE cbd.yahoo_sector = ?
+              AND cfh.fiscal_year = ? AND cfh.period_type = 'annual'
+              AND cfh.enterprise_value_estimated IS NOT NULL AND cfh.enterprise_value_estimated > 0
+              AND cfh.total_revenue IS NOT NULL AND cfh.total_revenue > 0
+        """
+        params = [sector, fiscal_year]
+
+    df = pd.read_sql_query(query, conn, params=params)
+    if df.empty:
+        return None
+
+    if is_current:
+        type_priority = {'quarterly': 0, 'annual': 1}
+        df['_prio'] = df['period_type'].map(type_priority).fillna(2)
+        df = df.sort_values('_prio').drop_duplicates(subset=['company_id'], keep='first').drop(columns=['_prio'])
+
+    if min_ev:
+        df = df[df['ev'] >= min_ev]
+
+    df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
+    df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+    if max_ev_ebitda:
+        df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+
+    if len(df) == 0:
+        return None
+
+    def _stats(subset):
+        result = {'n': len(subset)}
+        for m in ['ev_ebitda', 'ev_revenue']:
+            vals = subset[m].dropna()
+            if len(vals) >= 1:
+                result[m] = {
+                    'median': round(float(np.median(vals)), 2),
+                    'mean': round(float(np.mean(vals)), 2),
+                    'p25': round(float(np.percentile(vals, 25)), 2),
+                    'p75': round(float(np.percentile(vals, 75)), 2),
+                    'n': int(len(vals))
+                }
+            else:
+                result[m] = None
+        return result
+
+    # Global
+    global_stats = _stats(df)
+    global_stats['label'] = 'Global'
+
+    # LATAM
+    df_latam = df[df['country'].isin(LATAM_COUNTRIES)]
+    latam_stats = _stats(df_latam) if len(df_latam) >= 2 else {'n': len(df_latam), 'ev_ebitda': None, 'ev_revenue': None}
+    latam_stats['label'] = 'LATAM'
+
+    # Brasil
+    df_br = df[df['country'] == 'Brazil']
+    br_stats = _stats(df_br) if len(df_br) >= 2 else {'n': len(df_br), 'ev_ebitda': None, 'ev_revenue': None}
+    br_stats['label'] = 'Brasil'
+
+    # Spreads
+    def _spread(local, ref, metric):
+        lv = local.get(metric, {})
+        rv = ref.get(metric, {})
+        if lv and rv and lv.get('median') and rv.get('median') and rv['median'] != 0:
+            diff = lv['median'] - rv['median']
+            pct = round((diff / abs(rv['median'])) * 100, 1)
+            return {'diff': round(diff, 2), 'pct': pct, 'direction': 'premium' if pct > 0 else 'discount'}
+        return None
+
+    spreads = {
+        'latam_vs_global': {m: _spread(latam_stats, global_stats, m) for m in ['ev_ebitda', 'ev_revenue']},
+        'br_vs_global': {m: _spread(br_stats, global_stats, m) for m in ['ev_ebitda', 'ev_revenue']},
+        'br_vs_latam': {m: _spread(br_stats, latam_stats, m) for m in ['ev_ebitda', 'ev_revenue']},
+    }
+
+    # Por industria
+    by_industry = []
+    for ind, grp in df.groupby('yahoo_industry'):
+        if len(grp) >= 2:
+            s = _stats(grp)
+            s['label'] = ind
+            # Também calcular para Brasil
+            grp_br = grp[grp['country'] == 'Brazil']
+            if len(grp_br) >= 1:
+                br_s = _stats(grp_br)
+                s['brazil_ev_ebitda'] = br_s.get('ev_ebitda')
+                s['brazil_ev_revenue'] = br_s.get('ev_revenue')
+                s['brazil_n'] = br_s['n']
+            else:
+                s['brazil_ev_ebitda'] = None
+                s['brazil_ev_revenue'] = None
+                s['brazil_n'] = 0
+            by_industry.append(s)
+    by_industry.sort(key=lambda x: x['n'], reverse=True)
+
+    # Top empresas brasileiras
+    df_br_top = df_br.dropna(subset=['ev_ebitda']).sort_values('ev_ebitda', ascending=False)
+    top_br = df_br_top.head(10)[['ticker', 'company_name', 'yahoo_industry', 'ev_ebitda', 'ev_revenue', 'ev']].to_dict('records')
+
+    return {
+        'sector': sector,
+        'global': global_stats,
+        'latam': latam_stats,
+        'brazil': br_stats,
+        'spreads': spreads,
+        'by_industry': by_industry,
+        'top_brazil_companies': top_br,
+        'total_companies': len(df)
+    }
+
+
+def _report_evolution_sector(conn, sector, year_start=2021, year_end=2025, min_ev=100_000_000, max_ev_ebitda=60):
+    """Calcula evolução temporal de múltiplos para um setor (Global, LATAM, Brasil)."""
+    results = []
+    for yr in range(year_start, year_end + 1):
+        query = """
+            SELECT cbd.id as company_id, cbd.yahoo_country as country,
+                   cfh.enterprise_value_estimated as ev,
+                   cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda
+            FROM company_basic_data cbd
+            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            WHERE cbd.yahoo_sector = ? AND cfh.fiscal_year = ? AND cfh.period_type = 'annual'
+              AND cfh.enterprise_value_estimated > 0 AND cfh.total_revenue > 0
+        """
+        df = pd.read_sql_query(query, conn, params=[sector, yr])
+        if min_ev:
+            df = df[df['ev'] >= min_ev]
+
+        df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
+        df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+        if max_ev_ebitda:
+            df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+
+        def _med(subset, metric):
+            vals = subset[metric].dropna()
+            return round(float(np.median(vals)), 2) if len(vals) >= 2 else None
+
+        yr_data = {
+            'year': yr,
+            'global': {'ev_ebitda': _med(df, 'ev_ebitda'), 'ev_revenue': _med(df, 'ev_revenue'), 'n': len(df)},
+            'latam': {'ev_ebitda': _med(df[df['country'].isin(LATAM_COUNTRIES)], 'ev_ebitda'),
+                      'ev_revenue': _med(df[df['country'].isin(LATAM_COUNTRIES)], 'ev_revenue'),
+                      'n': len(df[df['country'].isin(LATAM_COUNTRIES)])},
+            'brazil': {'ev_ebitda': _med(df[df['country'] == 'Brazil'], 'ev_ebitda'),
+                       'ev_revenue': _med(df[df['country'] == 'Brazil'], 'ev_revenue'),
+                       'n': len(df[df['country'] == 'Brazil'])}
+        }
+        results.append(yr_data)
+    return results
+
+
+@app.route('/estudoanloc/relatorio')
+def estudoanloc_relatorio_page():
+    """Página do Relatório Periódico - Estudo Anloc de Múltiplos de Mercado."""
+    return render_template('estudoanloc_relatorio.html')
+
+
+@app.route('/api/estudoanloc/check_ai', methods=['GET'])
+def api_estudoanloc_check_ai():
+    """Verifica se a API key da IA está configurada e funcional."""
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    if not api_key:
+        return jsonify({'connected': False, 'provider': None, 'message': 'API key não configurada'})
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        # Teste rápido com mensagem mínima
+        resp = client.messages.create(
+            model='claude-sonnet-4-20250514',
+            max_tokens=10,
+            messages=[{'role': 'user', 'content': 'ping'}]
+        )
+        return jsonify({'connected': True, 'provider': 'Claude (Anthropic)', 'message': 'Conectado com sucesso'})
+    except Exception as e:
+        return jsonify({'connected': False, 'provider': 'Claude (Anthropic)', 'message': f'Erro: {str(e)}'})
+
+
+@app.route('/api/estudoanloc/generate_report', methods=['POST'])
+def api_estudoanloc_generate_report():
+    """Gera dados completos do relatório periódico para todos os setores."""
+    try:
+        data = request.get_json() or {}
+        fiscal_year = data.get('fiscal_year', datetime.now().year)
+        selected_sectors = data.get('sectors', [])  # vazio = todos
+        use_llm = data.get('use_llm', True)
+        api_key = os.environ.get('ANTHROPIC_API_KEY', '') or data.get('api_key', '')
+
+        conn = get_db()
+
+        # Listar setores disponíveis
+        all_sectors = [r[0] for r in conn.execute(
+            "SELECT DISTINCT yahoo_sector FROM company_basic_data WHERE yahoo_sector IS NOT NULL ORDER BY yahoo_sector"
+        ).fetchall()]
+
+        target_sectors = selected_sectors if selected_sectors else all_sectors
+
+        # Dados por setor
+        sectors_data = []
+        for sector in target_sectors:
+            sector_stats = _report_calc_sector_stats(conn, sector, fiscal_year)
+            if sector_stats:
+                sector_stats['evolution'] = _report_evolution_sector(conn, sector)
+                sectors_data.append(sector_stats)
+
+        if not sectors_data:
+            return jsonify({'success': False, 'error': 'Sem dados disponíveis para os setores selecionados'}), 404
+
+        # Ranking geral cross-sector
+        ranking = []
+        for sd in sectors_data:
+            g = sd.get('global', {})
+            ev = g.get('ev_ebitda', {})
+            evr = g.get('ev_revenue', {})
+            ranking.append({
+                'sector': sd['sector'],
+                'ev_ebitda_median': ev.get('median') if ev else None,
+                'ev_revenue_median': evr.get('median') if evr else None,
+                'n_companies': g.get('n', 0),
+                'brazil_n': sd.get('brazil', {}).get('n', 0),
+                'br_ev_ebitda': sd.get('brazil', {}).get('ev_ebitda', {}).get('median') if sd.get('brazil', {}).get('ev_ebitda') else None,
+                'br_spread_pct': sd.get('spreads', {}).get('br_vs_global', {}).get('ev_ebitda', {}).get('pct') if sd.get('spreads', {}).get('br_vs_global', {}).get('ev_ebitda') else None
+            })
+        ranking.sort(key=lambda x: x.get('ev_ebitda_median') or 0, reverse=True)
+
+        # Gerar narrativa com Claude se solicitado
+        llm_narratives = {}
+        graph_comments = {}
+        if use_llm and api_key:
+            try:
+                llm_narratives = _generate_report_narratives(api_key, sectors_data, ranking, fiscal_year)
+            except Exception as e:
+                logger.warning(f"LLM narrative generation failed: {e}")
+            try:
+                graph_comments = _generate_graph_comments(api_key, sectors_data, ranking, fiscal_year)
+            except Exception as e:
+                logger.warning(f"Graph comments generation failed: {e}")
+
+        # Consultar datas de atualização dos dados
+        data_freshness = {}
+        try:
+            r = conn.execute("SELECT MAX(created_at) FROM damodaran_global WHERE year = ?", (fiscal_year,)).fetchone()
+            data_freshness['damodaran_base'] = r[0] if r and r[0] else None
+            r = conn.execute("SELECT MAX(updated_at) FROM company_basic_data WHERE enterprise_value IS NOT NULL").fetchone()
+            data_freshness['yahoo_market_data'] = r[0] if r and r[0] else None
+            r = conn.execute("SELECT MAX(updated_at) FROM company_basic_data").fetchone()
+            data_freshness['last_any_update'] = r[0] if r and r[0] else None
+        except Exception:
+            pass
+
+        generated_at = datetime.now().isoformat()
+        quarter = f'Q{(datetime.now().month - 1) // 3 + 1}/{datetime.now().year}'
+
+        report = {
+            'success': True,
+            'metadata': {
+                'title': f'Estudo Anloc - M\u00faltiplos de Mercado',
+                'subtitle': f'An\u00e1lise Peri\u00f3dica de Valuation por M\u00faltiplos',
+                'fiscal_year': fiscal_year,
+                'generated_at': generated_at,
+                'quarter': quarter,
+                'total_sectors': len(sectors_data),
+                'total_companies': sum(s.get('total_companies', 0) for s in sectors_data),
+                'data_freshness': data_freshness
+            },
+            'ranking': ranking,
+            'sectors': sectors_data,
+            'narratives': llm_narratives,
+            'graph_comments': graph_comments
+        }
+
+        # Salvar no cache SQLite
+        try:
+            import json as json_mod
+            cache_conn = get_db()
+            _ensure_report_cache_table()
+            report_data_json = json_mod.dumps({
+                'metadata': report['metadata'],
+                'ranking': ranking,
+                'sectors': sectors_data
+            }, ensure_ascii=False)
+            narratives_json = json_mod.dumps(llm_narratives, ensure_ascii=False) if llm_narratives else None
+            graph_json = json_mod.dumps(graph_comments, ensure_ascii=False) if graph_comments else None
+            cache_conn.execute(
+                "INSERT INTO report_cache (generated_at, fiscal_year, quarter, report_data, narratives, graph_comments) VALUES (?, ?, ?, ?, ?, ?)",
+                (generated_at, fiscal_year, quarter, report_data_json, narratives_json, graph_json)
+            )
+            cache_conn.commit()
+            # Recuperar o ID do cache inserido
+            cache_id = cache_conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+            cache_conn.close()
+            report['cache_id'] = cache_id
+        except Exception as e:
+            logger.warning(f"Falha ao salvar cache do relatório: {e}")
+
+        return jsonify(report)
+
+    except Exception as e:
+        logger.error(f"Erro generate_report: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _generate_report_narratives(api_key, sectors_data, ranking, fiscal_year):
+    """Gera narrativas analíticas usando Claude para o relatório."""
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+
+    # Preparar contexto compacto
+    ctx_lines = [f"ESTUDO DE MULTIPLOS DE MERCADO - Ano fiscal: {fiscal_year}",
+                 f"Total de setores: {len(sectors_data)}\n"]
+
+    ctx_lines.append("RANKING DE SETORES (EV/EBITDA mediana global):")
+    for r in ranking:
+        br_info = f" | Brasil: {r['br_ev_ebitda']:.1f}x (spread {r['br_spread_pct']:+.1f}%)" if r.get('br_ev_ebitda') and r.get('br_spread_pct') is not None else ""
+        ctx_lines.append(f"  {r['sector']}: {r.get('ev_ebitda_median','N/D')}x (n={r['n_companies']}){br_info}")
+
+    ctx_lines.append("\nDETALHES POR SETOR:")
+    for sd in sectors_data:
+        g = sd['global']
+        ev = g.get('ev_ebitda', {})
+        evr = g.get('ev_revenue', {})
+        ctx_lines.append(f"\n--- {sd['sector']} ({g['n']} empresas) ---")
+        if ev:
+            ctx_lines.append(f"  Global EV/EBITDA: med={ev.get('median')}x p25={ev.get('p25')}x p75={ev.get('p75')}x")
+        if evr:
+            ctx_lines.append(f"  Global EV/Revenue: med={evr.get('median')}x")
+
+        # Spreads
+        sp = sd.get('spreads', {})
+        for geo_pair, label in [('latam_vs_global', 'LATAM vs Global'), ('br_vs_global', 'Brasil vs Global'), ('br_vs_latam', 'Brasil vs LATAM')]:
+            sp_ev = sp.get(geo_pair, {}).get('ev_ebitda')
+            if sp_ev:
+                ctx_lines.append(f"  {label}: {sp_ev['pct']:+.1f}% ({sp_ev['direction']})")
+
+        # Top indústrias
+        for ind in sd.get('by_industry', [])[:5]:
+            ie = ind.get('ev_ebitda', {})
+            if ie:
+                br_txt = f" | BR: {ind['brazil_ev_ebitda'].get('median')}x" if ind.get('brazil_ev_ebitda') else ""
+                ctx_lines.append(f"  Ind: {ind['label']}: {ie.get('median')}x (n={ind['n']}){br_txt}")
+
+        # Evolução
+        evo = sd.get('evolution', [])
+        if evo:
+            evo_vals = [f"{e['year']}:{e['global'].get('ev_ebitda','?')}x" for e in evo if e['global'].get('ev_ebitda')]
+            if evo_vals:
+                ctx_lines.append(f"  Evo\u00e7\u00e3o Global EV/EBITDA: {' \u2192 '.join(evo_vals)}")
+
+    context = "\n".join(ctx_lines)
+
+    prompt = f"""Você é um analista financeiro sênior do Anloc, empresa especializada em valuation e benchmark.
+Analise os dados abaixo e gere as narrativas para o relatório periódico "Estudo Anloc de Múltiplos de Mercado".
+
+DADOS:
+{context}
+
+Gere um JSON com a seguinte estrutura (responda SOMENTE o JSON, sem markdown):
+{{
+  "resumo_executivo": "3-4 parágrafos: panorama geral dos múltiplos de mercado, quais setores estão mais caros/baratos, tendências observadas, posicionamento do Brasil vs global. Tom profissional para C-level e investidores.",
+  "resumo_executivo_fontes": [{{"nome": "Nome da fonte", "url": "https://url-da-fonte.com"}}],
+  "analise_macro": "2-3 parágrafos: análise macro dos fatores que influenciam os múltiplos atuais (juros, inflação, sentimento de mercado, ciclo econômico). Use seu conhecimento atualizado. Ao citar fatores externos, indique a fonte inline entre parênteses.",
+  "analise_macro_fontes": [{{"nome": "BCB - Taxa Selic", "url": "https://www.bcb.gov.br/controleinflacao/taxaselic"}}, {{"nome": "FED - Federal Funds Rate", "url": "https://www.federalreserve.gov/monetarypolicy/openmarket.htm"}}],
+  "analise_brasil": "2-3 parágrafos: análise específica do Brasil - desconto/prêmio em relação ao global e LATAM, fatores locais (Selic, câmbio, ambiente político), setores com maior spread. Cite fontes inline.",
+  "analise_brasil_fontes": [{{"nome": "fonte", "url": "https://..."}}],
+  "destaques_setoriais": [
+    {{
+      "setor": "nome do setor",
+      "ev_ebitda_global": 12.5,
+      "ev_ebitda_br": 8.3,
+      "ev_revenue_global": 2.1,
+      "spread_pct": -33.6,
+      "n_empresas": 450,
+      "tendencia": "expansão|compressão|estável",
+      "insight": "2-3 frases com análise profunda do setor: o que os dados revelam, fatores causais, comparações relevantes. Cite dados específicos. Comece SEMPRE pelos dados e depois tire conclusões.",
+      "citacao": {{"autor": "Nome do especialista ou entidade", "cargo": "Cargo/Instituição", "frase": "Citação relevante sobre o setor entre aspas", "contexto": "Onde/quando foi dito"}},
+      "fontes": [{{"nome": "fonte", "url": "https://..."}}]
+    }}
+  ],
+  "perspectivas": "1-2 parágrafos com perspectivas e tendências futuras para múltiplos. Cite fontes.",
+  "perspectivas_fontes": [{{"nome": "fonte", "url": "https://..."}}],
+  "citacoes_especialistas": [
+    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação marcante sobre o mercado", "contexto": "Fonte/evento/data", "secao": "resumo_executivo|analise_macro|analise_brasil|perspectivas"}}
+  ],
+  "fontes_contexto": [{{"nome": "Nome completo da fonte", "url": "https://url-da-fonte.com", "tipo": "institucional|relatório|dados|mídia"}}]
+}}
+
+IMPORTANTE:
+- Use os dados fornecidos como base. Complemente com seu conhecimento sobre macroeconomia e mercados.
+- Cite números específicos dos dados.
+- Para CADA seção, liste as fontes como objetos com nome e URL real/plausível.
+- Fontes devem ser específicas: "BCB - Relatório Focus", "FED - FOMC Minutes", "Bloomberg", "S&P Global", etc.
+- Em destaques_setoriais, preencha os campos numéricos com os dados reais do setor (extraia do contexto).
+- Em destaques_setoriais, o campo "tendencia" deve ser "expansão", "compressão" ou "estável" baseado na evolução.
+- Em destaques_setoriais, o "insight" deve COMEÇAR pelos dados concretos e DEPOIS apresentar conclusões.
+- Inclua citações de especialistas/entidades relevantes (analistas, bancos, instituições) em citacoes_especialistas.
+- Para cada destaque setorial, se possível inclua uma citação de especialista no campo "citacao".
+- Tom profissional, analítico, objetivo.
+- Português brasileiro."""
+
+    response = client.messages.create(
+        model='claude-sonnet-4-20250514',
+        max_tokens=4096,
+        system="Voc\u00ea \u00e9 um analista financeiro s\u00eanior. Responda SOMENTE com JSON v\u00e1lido, sem markdown.",
+        messages=[{'role': 'user', 'content': prompt}]
+    )
+
+    text = response.content[0].text.strip()
+    if text.startswith('```'):
+        text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        if text.startswith('json'):
+            text = text[4:]
+        text = text.strip()
+
+    import json as json_mod
+    return json_mod.loads(text)
+
+
+# ========================================================================
+# REPORT CACHE - Tabela e funções de cache para relatórios
+# ========================================================================
+
+def _ensure_report_cache_table():
+    """Cria a tabela report_cache se não existir."""
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS report_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            generated_at TEXT NOT NULL UNIQUE,
+            fiscal_year INTEGER NOT NULL,
+            quarter TEXT NOT NULL,
+            report_data TEXT NOT NULL,
+            narratives TEXT,
+            graph_comments TEXT,
+            chat_history TEXT,
+            label TEXT,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_report_cache_year
+        ON report_cache(fiscal_year, created_at DESC)
+    """)
+    # Migração: adicionar coluna label se não existir
+    try:
+        conn.execute("ALTER TABLE report_cache ADD COLUMN label TEXT")
+    except Exception:
+        pass  # Coluna já existe
+    conn.commit()
+    conn.close()
+
+# Criar tabela ao inicializar
+try:
+    _ensure_report_cache_table()
+except Exception:
+    pass
+
+
+@app.route('/api/estudoanloc/report_cache/list', methods=['GET'])
+def api_report_cache_list():
+    """Lista relatórios cacheados."""
+    fiscal_year = request.args.get('fiscal_year', type=int)
+    conn = get_db()
+    if fiscal_year:
+        rows = conn.execute(
+            "SELECT id, generated_at, fiscal_year, quarter, label FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 50",
+            (fiscal_year,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT id, generated_at, fiscal_year, quarter, label FROM report_cache ORDER BY created_at DESC LIMIT 50"
+        ).fetchall()
+    conn.close()
+    return jsonify({'success': True, 'reports': [
+        {'id': r[0], 'generated_at': r[1], 'fiscal_year': r[2], 'quarter': r[3], 'label': r[4]} for r in rows
+    ]})
+
+
+@app.route('/api/estudoanloc/report_cache/load', methods=['GET'])
+def api_report_cache_load():
+    """Carrega um relatório do cache por ID ou pelo mais recente do ano fiscal."""
+    import json as json_mod
+    cache_id = request.args.get('id', type=int)
+    fiscal_year = request.args.get('fiscal_year', type=int)
+    conn = get_db()
+    if cache_id:
+        row = conn.execute(
+            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache WHERE id = ?",
+            (cache_id,)
+        ).fetchone()
+    elif fiscal_year:
+        row = conn.execute(
+            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 1",
+            (fiscal_year,)
+        ).fetchone()
+    else:
+        row = conn.execute(
+            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache ORDER BY created_at DESC LIMIT 1"
+        ).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({'success': False, 'error': 'Nenhum relatório em cache'}), 404
+    return jsonify({
+        'success': True,
+        'cache_id': row[0],
+        'generated_at': row[1],
+        'fiscal_year': row[2],
+        'quarter': row[3],
+        'report_data': json_mod.loads(row[4]) if row[4] else {},
+        'narratives': json_mod.loads(row[5]) if row[5] else {},
+        'graph_comments': json_mod.loads(row[6]) if row[6] else {},
+        'chat_history': json_mod.loads(row[7]) if row[7] else []
+    })
+
+
+@app.route('/api/estudoanloc/report_cache/rename', methods=['POST'])
+def api_report_cache_rename():
+    """Renomeia/atribui label a um relatório cacheado."""
+    data = request.get_json() or {}
+    cache_id = data.get('cache_id')
+    label = data.get('label', '').strip()
+    if not cache_id:
+        return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
+    conn = get_db()
+    conn.execute("UPDATE report_cache SET label = ? WHERE id = ?", (label or None, cache_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/estudoanloc/report_cache/delete', methods=['POST'])
+def api_report_cache_delete():
+    """Remove um relatório do cache."""
+    data = request.get_json() or {}
+    cache_id = data.get('cache_id')
+    if not cache_id:
+        return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
+    conn = get_db()
+    conn.execute("DELETE FROM report_cache WHERE id = ?", (cache_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/estudoanloc/report_cache/save_chat', methods=['POST'])
+def api_report_cache_save_chat():
+    """Salva o histórico de chat no cache do relatório."""
+    import json as json_mod
+    data = request.get_json() or {}
+    cache_id = data.get('cache_id')
+    chat_history = data.get('chat_history', [])
+    if not cache_id:
+        return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
+    conn = get_db()
+    conn.execute("UPDATE report_cache SET chat_history = ? WHERE id = ?",
+                 (json_mod.dumps(chat_history, ensure_ascii=False), cache_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+# ========================================================================
+# CHAT DO RELATÓRIO - Endpoint com contexto completo do relatório
+# ========================================================================
+
+@app.route('/api/estudoanloc/relatorio/chat', methods=['POST'])
+def api_estudoanloc_relatorio_chat():
+    """Chat conversacional com contexto completo do relatório gerado."""
+    try:
+        data = request.get_json() or {}
+        messages = data.get('messages', [])
+        report_context = data.get('report_context', '')
+
+        if not messages:
+            return jsonify({'success': False, 'error': 'Nenhuma mensagem enviada'}), 400
+
+        api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API Key Anthropic não configurada no servidor'}), 400
+
+        system_prompt = """Você é um analista financeiro sênior do Anloc, empresa especializada em valuation e benchmark com mais de 30 anos de expertise.
+Você está no contexto de um Estudo Periódico de Múltiplos de Mercado que compara EV/EBITDA e EV/Revenue entre setores globais, LATAM e Brasil.
+
+REGRAS:
+- Responda SEMPRE em português brasileiro, de forma profissional e analítica.
+- Baseie-se nos dados do relatório fornecidos no contexto. Cite números específicos.
+- Quando usar conhecimento externo (macro, tendências), indique a fonte entre parênteses.
+- Formate com parágrafos curtos. Use **negrito** para destaques.
+- Se o usuário perguntar sobre algo fora do escopo dos dados, informe as limitações.
+- Ao final de cada resposta que use fontes externas, adicione uma linha "Fontes: ..." listando as referências."""
+
+        if report_context:
+            system_prompt += f"\n\nCONTEXTO DO RELATÓRIO (dados e narrativas gerados):\n{report_context}"
+
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        anth_messages = [{'role': msg['role'], 'content': msg['content']} for msg in messages]
+        response = client.messages.create(
+            model='claude-sonnet-4-20250514', max_tokens=4096,
+            system=system_prompt, messages=anth_messages)
+        response_text = response.content[0].text
+
+        return jsonify({'success': True, 'message': response_text})
+
+    except Exception as e:
+        logger.error(f"Erro chat relatório: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========================================================================
+# AI GRAPH COMMENTS - Análises específicas por gráfico
+# ========================================================================
+
+def _generate_graph_comments(api_key, sectors_data, ranking, fiscal_year):
+    """Gera comentários analíticos específicos para cada gráfico do relatório."""
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+
+    # Preparar dados resumidos
+    ranking_txt = "\n".join([
+        f"  {r['sector']}: Global {r.get('ev_ebitda_median','N/D')}x | BR {r.get('br_ev_ebitda','N/D')}x | Spread {r.get('br_spread_pct','N/D')}%"
+        for r in ranking
+    ])
+
+    geo_txt = ""
+    for sd in sectors_data:
+        g = sd.get('global', {}).get('ev_ebitda', {})
+        l = sd.get('latam', {}).get('ev_ebitda', {}) if sd.get('latam') else {}
+        b = sd.get('brazil', {}).get('ev_ebitda', {}) if sd.get('brazil') else {}
+        geo_txt += f"  {sd['sector']}: Global {g.get('median','?')}x | LATAM {l.get('median','?')}x | BR {b.get('median','?')}x\n"
+
+    evo_txt = ""
+    for sd in sectors_data:
+        evo = sd.get('evolution', [])
+        if evo:
+            vals = [f"{e['year']}:{e['global'].get('ev_ebitda','?')}x" for e in evo if e.get('global', {}).get('ev_ebitda')]
+            if vals:
+                evo_txt += f"  {sd['sector']}: {' → '.join(vals)}\n"
+
+    prompt = f"""Você é um analista financeiro sênior do Anloc. Analise os dados e gere comentários ESPECÍFICOS para cada gráfico.
+
+RANKING (EV/EBITDA por setor - Global vs Brasil):
+{ranking_txt}
+
+GEOGRAFIA (Global vs LATAM vs Brasil por setor):
+{geo_txt}
+
+EVOLUÇÃO (2021-2025 EV/EBITDA global por setor):
+{evo_txt}
+
+Gere um JSON (SOMENTE o JSON, sem markdown) com esta estrutura:
+{{
+  "ranking": {{
+    "titulo": "título curto e analítico para o gráfico",
+    "analise": "2-3 parágrafos analisando o ranking: quais setores estão mais caros/baratos, padrões observados, onde Brasil tem prêmio ou desconto significativo. Cite números.",
+    "destaque": "1 frase de destaque principal (insight mais importante)",
+    "fontes": [{{"nome": "Nome da fonte", "url": "https://url-da-fonte.com"}}]
+  }},
+  "geografia": {{
+    "titulo": "título curto",
+    "analise": "2-3 parágrafos: como os múltiplos se comparam entre regiões, quais setores têm maior diferencial, hipóteses para os descontos/prêmios Brasil e LATAM. Mencione fatores como risco país, liquidez, câmbio.",
+    "destaque": "1 frase de destaque",
+    "fontes": [{{"nome": "fonte", "url": "https://..."}}]
+  }},
+  "evolucao": {{
+    "titulo": "título curto",
+    "analise": "2-3 parágrafos: tendências de compressão/expansão de múltiplos 2021-2025, impacto do ciclo de juros global, quais setores foram mais resilientes e quais sofreram mais. Contextualize com eventos de mercado.",
+    "destaque": "1 frase de destaque",
+    "fontes": [{{"nome": "fonte", "url": "https://..."}}]
+  }}
+}}
+
+IMPORTANTE:
+- Cite números específicos dos dados.
+- Quando usar conhecimento externo (tendências macro, eventos), indique a fonte.
+- Tom profissional, analítico.
+- Português brasileiro."""
+
+    response = client.messages.create(
+        model='claude-sonnet-4-20250514',
+        max_tokens=4096,
+        system="Você é um analista financeiro sênior. Responda SOMENTE com JSON válido, sem markdown.",
+        messages=[{'role': 'user', 'content': prompt}]
+    )
+
+    text = response.content[0].text.strip()
+    if text.startswith('```'):
+        text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        if text.startswith('json'):
+            text = text[4:]
+        text = text.strip()
+
+    import json as json_mod
+    return json_mod.loads(text)
+
+
+# ========================================================================
+# SECTOR DEEP ANALYSIS - Análise aprofundada por setor com IA
+# ========================================================================
+
+@app.route('/api/estudoanloc/relatorio/sector_deep_analysis', methods=['POST'])
+def api_estudoanloc_sector_deep_analysis():
+    """Gera análise aprofundada de um setor específico usando IA."""
+    try:
+        data = request.get_json() or {}
+        sector_name = data.get('sector', '')
+        sector_data = data.get('sector_data', {})
+        fiscal_year = data.get('fiscal_year', datetime.now().year)
+
+        if not sector_name:
+            return jsonify({'success': False, 'error': 'Setor não especificado'}), 400
+
+        api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API key não configurada'}), 400
+
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+
+        # Construir contexto detalhado do setor
+        ctx_parts = [f"ANÁLISE APROFUNDADA DO SETOR: {sector_name}", f"Ano fiscal: {fiscal_year}\n"]
+
+        g = sector_data.get('global', {})
+        l = sector_data.get('latam', {})
+        b = sector_data.get('brazil', {})
+
+        gev = g.get('ev_ebitda', {}) if isinstance(g.get('ev_ebitda'), dict) else {}
+        gevr = g.get('ev_revenue', {}) if isinstance(g.get('ev_revenue'), dict) else {}
+        lev = l.get('ev_ebitda', {}) if isinstance(l.get('ev_ebitda'), dict) else {}
+        bev = b.get('ev_ebitda', {}) if isinstance(b.get('ev_ebitda'), dict) else {}
+
+        ctx_parts.append(f"DADOS GLOBAIS: EV/EBITDA med={gev.get('median','?')}x p25={gev.get('p25','?')}x p75={gev.get('p75','?')}x | EV/Revenue med={gevr.get('median','?')}x | n={g.get('n', 0)}")
+        ctx_parts.append(f"DADOS LATAM: EV/EBITDA med={lev.get('median','?')}x | n={l.get('n', 0)}")
+        ctx_parts.append(f"DADOS BRASIL: EV/EBITDA med={bev.get('median','?')}x | n={b.get('n', 0)}")
+
+        sp = sector_data.get('spreads', {})
+        for geo_pair, label in [('br_vs_global', 'Brasil vs Global'), ('br_vs_latam', 'Brasil vs LATAM'), ('latam_vs_global', 'LATAM vs Global')]:
+            sp_ev = sp.get(geo_pair, {}).get('ev_ebitda')
+            if sp_ev:
+                ctx_parts.append(f"SPREAD {label}: {sp_ev.get('pct', '?')}% ({sp_ev.get('direction', '?')})")
+
+        # Indústrias
+        industries = sector_data.get('by_industry', [])
+        if industries:
+            ctx_parts.append("\nINDÚSTRIAS DO SETOR:")
+            for ind in industries[:10]:
+                ie = ind.get('ev_ebitda', {})
+                br_ie = ind.get('brazil_ev_ebitda', {})
+                br_txt = f" | BR: {br_ie.get('median','?')}x" if br_ie and br_ie.get('median') else ""
+                ctx_parts.append(f"  {ind.get('label','?')}: Global {ie.get('median','?')}x (n={ind.get('n', 0)}){br_txt}")
+
+        # Top BR companies
+        top_br = sector_data.get('top_brazil_companies', [])
+        if top_br:
+            ctx_parts.append("\nTOP EMPRESAS BRASILEIRAS:")
+            for c in top_br[:10]:
+                ctx_parts.append(f"  {c.get('ticker','')} - {c.get('company_name','')}: EV/EBITDA={c.get('ev_ebitda','?')}x, EV/Rev={c.get('ev_revenue','?')}x ({c.get('yahoo_industry','')})")
+
+        # Evolução
+        evo = sector_data.get('evolution', [])
+        if evo:
+            evo_vals = [f"{e.get('year','?')}:{e.get('global',{}).get('ev_ebitda','?')}x" for e in evo if e.get('global',{}).get('ev_ebitda')]
+            if evo_vals:
+                ctx_parts.append(f"\nEVOLUÇÃO GLOBAL EV/EBITDA: {' → '.join(evo_vals)}")
+
+        context = "\n".join(ctx_parts)
+
+        prompt = f"""Você é um analista financeiro sênior do Anloc, especializado no setor {sector_name}.
+Com base nos dados abaixo, faça uma análise aprofundada e abrangente deste setor.
+
+{context}
+
+Responda SOMENTE um JSON com esta estrutura:
+{{
+  "titulo": "Título analítico para a análise do setor",
+  "panorama": "2-3 parágrafos: visão geral do setor globalmente, principais drivers de valuação, posicionamento relativo. Cite números dos dados.",
+  "analise_brasil": "2-3 parágrafos: como o Brasil se posiciona neste setor vs global/LATAM, fatores locais que impactam, empresas de destaque e seus diferenciais.",
+  "industrias_destaque": "1-2 parágrafos: quais sub-indústrias se destacam e por quê, diferenças de múltiplos entre elas.",
+  "tendencias": "1-2 parágrafos: evolução recente dos múltiplos, o que mudou e expectativas futuras para o setor.",
+  "riscos_oportunidades": "1-2 parágrafos: principais riscos e oportunidades de investimento no setor.",
+  "conclusao": "1 parágrafo: conclusão executiva com recomendação de posicionamento.",
+  "citacoes": [
+    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação relevante", "contexto": "Fonte"}}
+  ],
+  "fontes": [{{"nome": "Nome da fonte", "url": "https://url"}}]
+}}
+
+IMPORTANTE:
+- Utilize os dados fornecidos como base principal.
+- Complemente com seu conhecimento sobre o setor, tendências, players relevantes.
+- Cite números específicos dos dados.
+- Inclua 2-3 citações de analistas/especialistas/entidades relevantes para o setor.
+- Tom profissional, aprofundado, analítico.
+- Português brasileiro."""
+
+        response = client.messages.create(
+            model='claude-sonnet-4-20250514',
+            max_tokens=4096,
+            system="Você é um analista financeiro sênior especializado em valuation setorial. Responda SOMENTE com JSON válido, sem markdown.",
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+
+        text = response.content[0].text.strip()
+        if text.startswith('```'):
+            text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+            if text.endswith('```'):
+                text = text[:-3]
+            if text.startswith('json'):
+                text = text[4:]
+            text = text.strip()
+
+        import json as json_mod
+        result = json_mod.loads(text)
+        return jsonify({'success': True, 'analysis': result})
+
+    except Exception as e:
+        logger.error(f"Erro sector deep analysis: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========================================================================
+# INICIALIZAÇÃO DA APLICAÇÃO
+# ========================================================================
 if __name__ == '__main__':
     # Criar diretórios necessários
     Path("templates").mkdir(exist_ok=True)
