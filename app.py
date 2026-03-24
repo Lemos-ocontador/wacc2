@@ -76,6 +76,13 @@ else:
     CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
+# DB separado para report_cache (gravável no GAE via /tmp)
+CACHE_DB_PATH = '/tmp/report_cache.db' if IS_GAE else DB_PATH
+
+def get_cache_db():
+    """Conexão SQLite gravável para operações de cache de relatórios."""
+    return sqlite3.connect(CACHE_DB_PATH)
+
 # Configurar logging
 import logging
 logging.basicConfig(
@@ -7576,7 +7583,7 @@ def api_estudoanloc_generate_report():
         # Salvar no cache SQLite
         try:
             import json as json_mod
-            cache_conn = get_db()
+            cache_conn = get_cache_db()
             _ensure_report_cache_table()
             report_data_json = json_mod.dumps({
                 'metadata': report['metadata'],
@@ -7829,7 +7836,7 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
 def _ensure_report_cache_table():
     """Cria a tabela report_cache se não existir."""
-    conn = get_db()
+    conn = get_cache_db()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS report_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -7868,7 +7875,7 @@ except Exception:
 def api_report_cache_list():
     """Lista relatórios cacheados."""
     fiscal_year = request.args.get('fiscal_year', type=int)
-    conn = get_db()
+    conn = get_cache_db()
     if fiscal_year:
         rows = conn.execute(
             "SELECT id, generated_at, fiscal_year, quarter, label FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 50",
@@ -7891,7 +7898,7 @@ def api_report_cache_load():
     cache_id = request.args.get('id', type=int)
     fiscal_year = request.args.get('fiscal_year', type=int)
     _cols = "id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history, deep_analyses"
-    conn = get_db()
+    conn = get_cache_db()
     if cache_id:
         row = conn.execute(
             f"SELECT {_cols} FROM report_cache WHERE id = ?",
@@ -7931,7 +7938,7 @@ def api_report_cache_rename():
     label = data.get('label', '').strip()
     if not cache_id:
         return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
-    conn = get_db()
+    conn = get_cache_db()
     conn.execute("UPDATE report_cache SET label = ? WHERE id = ?", (label or None, cache_id))
     conn.commit()
     conn.close()
@@ -7945,11 +7952,15 @@ def api_report_cache_delete():
     cache_id = data.get('cache_id')
     if not cache_id:
         return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
-    conn = get_db()
-    conn.execute("DELETE FROM report_cache WHERE id = ?", (cache_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True})
+    try:
+        conn = get_cache_db()
+        conn.execute("DELETE FROM report_cache WHERE id = ?", (cache_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Erro ao excluir cache {cache_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/estudoanloc/report_cache/save_deep_analysis', methods=['POST'])
@@ -7961,7 +7972,7 @@ def api_report_cache_save_deep_analysis():
     deep_analyses = data.get('deep_analyses', {})
     if not cache_id:
         return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
-    conn = get_db()
+    conn = get_cache_db()
     conn.execute("UPDATE report_cache SET deep_analyses = ? WHERE id = ?",
                  (json_mod.dumps(deep_analyses, ensure_ascii=False), cache_id))
     conn.commit()
@@ -7978,7 +7989,7 @@ def api_report_cache_save_chat():
     chat_history = data.get('chat_history', [])
     if not cache_id:
         return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
-    conn = get_db()
+    conn = get_cache_db()
     conn.execute("UPDATE report_cache SET chat_history = ? WHERE id = ?",
                  (json_mod.dumps(chat_history, ensure_ascii=False), cache_id))
     conn.commit()
