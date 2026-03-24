@@ -204,6 +204,7 @@ class DataSourceManager:
 
     def _ensure_log_table(self):
         """Cria tabela de log de atualizações se não existir."""
+        conn = None
         try:
             conn = self._get_conn()
             conn.execute("""
@@ -232,7 +233,9 @@ class DataSourceManager:
             conn.commit()
         except Exception:
             self.read_only = True
-        conn.close()
+        finally:
+            if conn:
+                conn.close()
         logger.info("Tabela data_update_log verificada/criada")
 
     # ──────────────────────────────────────────────────────────────────────
