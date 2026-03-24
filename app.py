@@ -79,8 +79,49 @@ CACHE_DIR.mkdir(exist_ok=True)
 # DB separado para report_cache (gravável no GAE via /tmp)
 CACHE_DB_PATH = '/tmp/report_cache.db' if IS_GAE else DB_PATH
 
+# GCS persistence for report cache (GAE only)
+_GCS_BUCKET_NAME = 'dataanloc.appspot.com'
+_GCS_CACHE_BLOB = 'report_cache/report_cache.db'
+_gcs_cache_restored = False
+
+def _gcs_restore_cache():
+    """Baixa report_cache.db do GCS para /tmp no cold start do GAE."""
+    global _gcs_cache_restored
+    if _gcs_cache_restored or not IS_GAE:
+        return
+    _gcs_cache_restored = True
+    if os.path.exists(CACHE_DB_PATH):
+        return  # Already exists in /tmp
+    try:
+        from google.cloud import storage as gcs
+        client = gcs.Client()
+        bucket = client.bucket(_GCS_BUCKET_NAME)
+        blob = bucket.blob(_GCS_CACHE_BLOB)
+        if blob.exists():
+            blob.download_to_filename(CACHE_DB_PATH)
+            logger.info(f"Cache DB restaurado do GCS ({blob.size} bytes)")
+        else:
+            logger.info("Nenhum cache DB encontrado no GCS, será criado novo")
+    except Exception as e:
+        logger.warning(f"Falha ao restaurar cache do GCS: {e}")
+
+def _gcs_sync_cache():
+    """Upload report_cache.db para GCS após escritas (GAE only)."""
+    if not IS_GAE:
+        return
+    try:
+        from google.cloud import storage as gcs
+        client = gcs.Client()
+        bucket = client.bucket(_GCS_BUCKET_NAME)
+        blob = bucket.blob(_GCS_CACHE_BLOB)
+        blob.upload_from_filename(CACHE_DB_PATH)
+        logger.info("Cache DB sincronizado com GCS")
+    except Exception as e:
+        logger.warning(f"Falha ao sincronizar cache com GCS: {e}")
+
 def get_cache_db():
     """Conexão SQLite gravável para operações de cache de relatórios."""
+    _gcs_restore_cache()
     return sqlite3.connect(CACHE_DB_PATH)
 
 # Configurar logging
@@ -7803,6 +7844,7 @@ def api_estudoanloc_generate_report():
             cache_id = cache_conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             cache_conn.close()
             report['cache_id'] = cache_id
+            _gcs_sync_cache()
         except Exception as e:
             logger.warning(f"Falha ao salvar cache do relatório: {e}")
 
@@ -8201,6 +8243,7 @@ def api_report_cache_rename():
     conn.execute("UPDATE report_cache SET label = ? WHERE id = ?", (label or None, cache_id))
     conn.commit()
     conn.close()
+    _gcs_sync_cache()
     return jsonify({'success': True})
 
 
@@ -8216,6 +8259,7 @@ def api_report_cache_delete():
         conn.execute("DELETE FROM report_cache WHERE id = ?", (cache_id,))
         conn.commit()
         conn.close()
+        _gcs_sync_cache()
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Erro ao excluir cache {cache_id}: {e}")
@@ -8236,6 +8280,7 @@ def api_report_cache_save_deep_analysis():
                  (json_mod.dumps(deep_analyses, ensure_ascii=False), cache_id))
     conn.commit()
     conn.close()
+    _gcs_sync_cache()
     return jsonify({'success': True})
 
 
@@ -8253,6 +8298,7 @@ def api_report_cache_save_chat():
                  (json_mod.dumps(chat_history, ensure_ascii=False), cache_id))
     conn.commit()
     conn.close()
+    _gcs_sync_cache()
     return jsonify({'success': True})
 
 
