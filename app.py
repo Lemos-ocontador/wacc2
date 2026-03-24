@@ -7697,6 +7697,59 @@ def _validate_and_tag_urls(data_dict):
     return data_dict
 
 
+def _repair_truncated_json(text):
+    """Tenta reparar JSON truncado pelo limite de tokens do LLM."""
+    import json as json_mod
+    # Fechar strings, arrays e objetos abertos
+    fixed = text
+    # Contar delimitadores abertos
+    in_string = False
+    escape = False
+    stack = []
+    for ch in fixed:
+        if escape:
+            escape = False
+            continue
+        if ch == '\\':
+            escape = True
+            continue
+        if ch == '"' and (not stack or stack[-1] != '"'):
+            in_string = True
+            stack.append('"')
+        elif ch == '"' and stack and stack[-1] == '"':
+            in_string = False
+            stack.pop()
+        elif not in_string:
+            if ch in ('{', '['):
+                stack.append(ch)
+            elif ch == '}' and stack and stack[-1] == '{':
+                stack.pop()
+            elif ch == ']' and stack and stack[-1] == '[':
+                stack.pop()
+    # Fechar tudo que ficou aberto
+    if in_string:
+        fixed += '"'
+        if stack and stack[-1] == '"':
+            stack.pop()
+    while stack:
+        top = stack.pop()
+        if top == '{':
+            fixed += '}'
+        elif top == '[':
+            fixed += ']'
+    try:
+        return json_mod.loads(fixed)
+    except json_mod.JSONDecodeError:
+        logger.warning("JSON repair failed, returning partial result")
+        # Última tentativa: encontrar último objeto/array válido
+        for i in range(len(text), 0, -1):
+            try:
+                return json_mod.loads(text[:i] + '}' * text[:i].count('{') + ']' * text[:i].count('['))
+            except Exception:
+                continue
+        raise
+
+
 def _generate_report_narratives(api_key, sectors_data, ranking, fiscal_year):
     """Gera narrativas analíticas usando Claude para o relatório."""
     import anthropic
@@ -7807,7 +7860,7 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
     response = client.messages.create(
         model='claude-sonnet-4-20250514',
-        max_tokens=4096,
+        max_tokens=8192,
         system="Voc\u00ea \u00e9 um analista financeiro s\u00eanior. Responda SOMENTE com JSON v\u00e1lido, sem markdown.",
         messages=[{'role': 'user', 'content': prompt}]
     )
@@ -7822,7 +7875,10 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
         text = text.strip()
 
     import json as json_mod
-    result = json_mod.loads(text)
+    try:
+        result = json_mod.loads(text)
+    except json_mod.JSONDecodeError:
+        result = _repair_truncated_json(text)
     try:
         _validate_and_tag_urls(result)
     except Exception as e:
@@ -8233,7 +8289,7 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
     response = client.messages.create(
         model='claude-sonnet-4-20250514',
-        max_tokens=4096,
+        max_tokens=8192,
         system="Você é um analista financeiro sênior. Responda SOMENTE com JSON válido, sem markdown.",
         messages=[{'role': 'user', 'content': prompt}]
     )
@@ -8248,7 +8304,10 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
         text = text.strip()
 
     import json as json_mod
-    result = json_mod.loads(text)
+    try:
+        result = json_mod.loads(text)
+    except json_mod.JSONDecodeError:
+        result = _repair_truncated_json(text)
     try:
         _validate_and_tag_urls(result)
     except Exception as e:
@@ -8367,7 +8426,7 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
         response = client.messages.create(
             model='claude-sonnet-4-20250514',
-            max_tokens=4096,
+            max_tokens=8192,
             system="Você é um analista financeiro sênior especializado em valuation setorial. Responda SOMENTE com JSON válido, sem markdown.",
             messages=[{'role': 'user', 'content': prompt}]
         )
@@ -8382,7 +8441,10 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
             text = text.strip()
 
         import json as json_mod
-        result = json_mod.loads(text)
+        try:
+            result = json_mod.loads(text)
+        except json_mod.JSONDecodeError:
+            result = _repair_truncated_json(text)
         return jsonify({'success': True, 'analysis': result})
 
     except Exception as e:
