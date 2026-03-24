@@ -25,7 +25,9 @@ from pathlib import Path
 
 csv.field_size_limit(10 * 1024 * 1024)  # 10 MB – CVM gera campos grandes
 
-os.environ.setdefault("CURL_CA_BUNDLE", r"C:\cacerts\cacert.pem")
+_cacert = Path(r"C:\cacerts\cacert.pem")
+if _cacert.exists():
+    os.environ.setdefault("CURL_CA_BUNDLE", str(_cacert))
 
 import requests
 import yfinance as yf

@@ -15,6 +15,7 @@ Data: 2025-09-24
 
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, Response, stream_with_context
 import os
+import sys
 import sqlite3
 
 # Carregar variáveis de ambiente do .env
@@ -94,14 +95,21 @@ def _gcs_restore_cache():
         return  # Already exists in /tmp
     try:
         from google.cloud import storage as gcs
-        client = gcs.Client()
-        bucket = client.bucket(_GCS_BUCKET_NAME)
-        blob = bucket.blob(_GCS_CACHE_BLOB)
-        if blob.exists():
-            blob.download_to_filename(CACHE_DB_PATH)
-            logger.info(f"Cache DB restaurado do GCS ({blob.size} bytes)")
-        else:
-            logger.info("Nenhum cache DB encontrado no GCS, será criado novo")
+        # Remover cert bundle com path Windows que quebra o GCS no Linux/GAE
+        _ca = os.environ.pop('CURL_CA_BUNDLE', None)
+        _ra = os.environ.pop('REQUESTS_CA_BUNDLE', None)
+        try:
+            client = gcs.Client()
+            bucket = client.bucket(_GCS_BUCKET_NAME)
+            blob = bucket.blob(_GCS_CACHE_BLOB)
+            if blob.exists():
+                blob.download_to_filename(CACHE_DB_PATH)
+                logger.info(f"Cache DB restaurado do GCS ({blob.size} bytes)")
+            else:
+                logger.info("Nenhum cache DB encontrado no GCS, será criado novo")
+        finally:
+            if _ca: os.environ['CURL_CA_BUNDLE'] = _ca
+            if _ra: os.environ['REQUESTS_CA_BUNDLE'] = _ra
     except Exception as e:
         logger.warning(f"Falha ao restaurar cache do GCS: {e}")
 
@@ -111,11 +119,18 @@ def _gcs_sync_cache():
         return
     try:
         from google.cloud import storage as gcs
-        client = gcs.Client()
-        bucket = client.bucket(_GCS_BUCKET_NAME)
-        blob = bucket.blob(_GCS_CACHE_BLOB)
-        blob.upload_from_filename(CACHE_DB_PATH)
-        logger.info("Cache DB sincronizado com GCS")
+        # Remover cert bundle com path Windows que quebra o GCS no Linux/GAE
+        _ca = os.environ.pop('CURL_CA_BUNDLE', None)
+        _ra = os.environ.pop('REQUESTS_CA_BUNDLE', None)
+        try:
+            client = gcs.Client()
+            bucket = client.bucket(_GCS_BUCKET_NAME)
+            blob = bucket.blob(_GCS_CACHE_BLOB)
+            blob.upload_from_filename(CACHE_DB_PATH)
+            logger.info("Cache DB sincronizado com GCS")
+        finally:
+            if _ca: os.environ['CURL_CA_BUNDLE'] = _ca
+            if _ra: os.environ['REQUESTS_CA_BUNDLE'] = _ra
     except Exception as e:
         logger.warning(f"Falha ao sincronizar cache com GCS: {e}")
 
@@ -453,6 +468,78 @@ def api_data_quality_results():
             'consistency': str(consistency_file) if consistency_file else None
         }
     })
+
+
+# ── Execução do teste de qualidade via web ──
+_dq_test_process = None  # Referência global ao subprocess em execução
+_dq_progress_file = str(CACHE_DIR / '_dq_progress.json')
+
+
+@app.route('/api/run_data_quality_test', methods=['POST'])
+def api_run_data_quality_test():
+    """Inicia teste de qualidade de dados em background (subprocess)."""
+    import subprocess
+    global _dq_test_process
+
+    # Evitar execuções paralelas
+    if _dq_test_process is not None and _dq_test_process.poll() is None:
+        return jsonify({'error': 'Teste já em execução'}), 409
+
+    data = request.get_json(silent=True) or {}
+    n_random = data.get('n_random', 2)
+    # Sanitizar: inteiro entre 1 e 10
+    try:
+        n_random = max(1, min(10, int(n_random)))
+    except (ValueError, TypeError):
+        n_random = 2
+
+    # Limpar progress file
+    progress_path = Path(_dq_progress_file)
+    if progress_path.exists():
+        progress_path.unlink()
+
+    # Construir comando
+    python_exe = sys.executable
+    script_path = str(Path('scripts/test_data_quality.py').resolve())
+    cmd = [
+        python_exe, script_path,
+        '--random', str(n_random),
+        '--output', 'test_quality',
+        '--progress-file', _dq_progress_file
+    ]
+
+    _dq_test_process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=str(Path(__file__).resolve().parent)
+    )
+
+    return jsonify({'status': 'started', 'pid': _dq_test_process.pid, 'n_random': n_random})
+
+
+@app.route('/api/data_quality_progress', methods=['GET'])
+def api_data_quality_progress():
+    """Retorna progresso atual do teste de qualidade."""
+    import json as json_mod
+    global _dq_test_process
+
+    progress_path = Path(_dq_progress_file)
+
+    # Verificar se processo ainda roda
+    running = _dq_test_process is not None and _dq_test_process.poll() is None
+
+    if progress_path.exists():
+        try:
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                progress = json_mod.load(f)
+        except Exception:
+            progress = {"phase": "unknown", "pct": 0, "status": "running" if running else "unknown"}
+    else:
+        progress = {"phase": "waiting", "pct": 0, "status": "running" if running else "idle"}
+
+    progress['process_running'] = running
+    return jsonify(progress)
 
 
 # ===== ROTAS PARA GESTÃO DE FONTES DE DADOS =====
