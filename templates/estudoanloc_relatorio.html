@@ -785,6 +785,117 @@
         }
         .cache-filter-tab:hover { border-color: var(--anloc-accent); color: var(--anloc-accent); }
         .cache-filter-tab.active { background: rgba(45,125,210,0.15); border-color: var(--anloc-accent); color: var(--anloc-accent); font-weight: 600; }
+
+        /* ===== BOTÃO SCRIPT CONFIG ===== */
+        .btn-script-config {
+            background: transparent;
+            border: 1px solid rgba(212,168,67,0.3);
+            color: var(--anloc-gold);
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+        .btn-script-config:hover { background: rgba(212,168,67,0.15); border-color: var(--anloc-gold); opacity: 1; }
+
+        /* ===== MODAL SCRIPT ===== */
+        .script-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .script-modal-overlay.active { display: flex; }
+        .script-modal {
+            background: var(--anloc-navy);
+            border: 1px solid var(--anloc-gold);
+            border-radius: 12px;
+            max-width: 750px;
+            width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .script-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--anloc-border);
+        }
+        .script-modal-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--anloc-gold);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .script-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--anloc-text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .script-modal-close:hover { color: var(--anloc-danger); background: rgba(239,68,68,0.1); }
+        .script-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .script-modal-body pre {
+            background: var(--anloc-dark);
+            border: 1px solid var(--anloc-border);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--anloc-text);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        .script-section-badge {
+            display: inline-block;
+            background: rgba(45,125,210,0.15);
+            color: var(--anloc-accent);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.8rem;
+        }
+        .script-compliance-note {
+            background: rgba(245,158,11,0.08);
+            border-left: 3px solid var(--anloc-warning);
+            padding: 0.6rem 1rem;
+            border-radius: 0 6px 6px 0;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--anloc-text-muted);
+        }
+        .script-compliance-note strong { color: var(--anloc-warning); }
+        @media print { .btn-script-config, .script-modal-overlay { display: none !important; } }
     </style>
 </head>
 <body>
@@ -890,7 +1001,7 @@
             <h2 class="section-title">Resumo Executivo</h2>
             <div class="row mb-4" id="kpiRow"></div>
             <div class="narrative-block" id="narrativeResumo">
-                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise gerada por IA</div>
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise gerada por IA <button class="btn-script-config no-print" onclick="openScriptModal('resumo_executivo')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></div>
                 <div id="narrativeResumoText"><em>Gerando an&#225;lise...</em></div>
             </div>
         </section>
@@ -934,7 +1045,7 @@
                 </div>
                 <div class="graph-card-col">
                     <div class="ai-card" id="aiCardRanking">
-                        <div class="ai-card-header"><i class="fas fa-robot"></i><span class="ai-card-title">An&#225;lise do Ranking</span></div>
+                        <div class="ai-card-header"><i class="fas fa-robot"></i><span class="ai-card-title">An&#225;lise do Ranking</span> <button class="btn-script-config no-print" onclick="openScriptModal('ranking')" title="Ver script LLM"><i class="fas fa-cog"></i> Script</button></div>
                         <div class="ai-card-body" id="aiCardRankingBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
                         <div class="ai-card-destaque" id="aiCardRankingDestaque" style="display:none;"></div>
                         <div class="ai-card-fontes" id="aiCardRankingFontes" style="display:none;"></div>
@@ -977,7 +1088,7 @@
                 </div>
                 <div class="graph-card-col">
                     <div class="ai-card" id="aiCardGeo">
-                        <div class="ai-card-header"><i class="fas fa-globe-americas"></i><span class="ai-card-title">An&#225;lise Geogr&#225;fica</span></div>
+                        <div class="ai-card-header"><i class="fas fa-globe-americas"></i><span class="ai-card-title">An&#225;lise Geogr&#225;fica</span> <button class="btn-script-config no-print" onclick="openScriptModal('geografia')" title="Ver script LLM"><i class="fas fa-cog"></i> Script</button></div>
                         <div class="ai-card-body" id="aiCardGeoBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
                         <div class="ai-card-destaque" id="aiCardGeoDestaque" style="display:none;"></div>
                         <div class="ai-card-fontes" id="aiCardGeoFontes" style="display:none;"></div>
@@ -986,7 +1097,7 @@
             </div>
 
             <div class="narrative-block" id="narrativeBrasil">
-                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise Brasil &#8212; gerada por IA</div>
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise Brasil &#8212; gerada por IA <button class="btn-script-config no-print" onclick="openScriptModal('analise_brasil')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></div>
                 <div id="narrativeBrasilText"><em>Aguardando dados...</em></div>
             </div>
         </section>
@@ -997,7 +1108,7 @@
             <h2 class="section-title">Contexto Macroecon&#244;mico</h2>
             <div class="section-subtitle">Fatores que influenciam os m&#250;ltiplos atuais</div>
             <div class="narrative-block" id="narrativeMacro">
-                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise macro &#8212; gerada por IA (Claude)</div>
+                <div class="narrative-label"><i class="fas fa-robot"></i> An&#225;lise macro &#8212; gerada por IA (Claude) <button class="btn-script-config no-print" onclick="openScriptModal('analise_macro')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></div>
                 <div id="narrativeMacroText"><em>Aguardando dados...</em></div>
             </div>
         </section>
@@ -1016,7 +1127,7 @@
                 </div>
                 <div class="graph-card-col">
                     <div class="ai-card" id="aiCardEvolution">
-                        <div class="ai-card-header"><i class="fas fa-chart-line"></i><span class="ai-card-title">An&#225;lise de Evolu&#231;&#227;o</span></div>
+                        <div class="ai-card-header"><i class="fas fa-chart-line"></i><span class="ai-card-title">An&#225;lise de Evolu&#231;&#227;o</span> <button class="btn-script-config no-print" onclick="openScriptModal('evolucao')" title="Ver script LLM"><i class="fas fa-cog"></i> Script</button></div>
                         <div class="ai-card-body" id="aiCardEvolutionBody"><em>Aguardando gera&#231;&#227;o do relat&#243;rio...</em></div>
                         <div class="ai-card-destaque" id="aiCardEvolutionDestaque" style="display:none;"></div>
                         <div class="ai-card-fontes" id="aiCardEvolutionFontes" style="display:none;"></div>
@@ -1028,7 +1139,7 @@
         <!-- 07 - DESTAQUES SETORIAIS -->
         <section class="report-section" id="secDestaques">
             <div class="section-number">07 &#8212; Destaques</div>
-            <h2 class="section-title">Destaques Setoriais</h2>
+            <h2 class="section-title">Destaques Setoriais <button class="btn-script-config no-print" onclick="openScriptModal('destaques_setoriais')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></h2>
             <div class="section-subtitle">Insights espec&#237;ficos por setor gerados pela intelig&#234;ncia artificial</div>
             <div id="destaquesContainer"></div>
         </section>
@@ -1036,7 +1147,7 @@
         <!-- 08 - DEEP DIVE POR SETOR -->
         <section class="report-section" id="secDeepDive">
             <div class="section-number">08 &#8212; Deep Dive</div>
-            <h2 class="section-title">An&#225;lise por Setor</h2>
+            <h2 class="section-title">An&#225;lise por Setor <button class="btn-script-config no-print" onclick="openScriptModal('deep_analysis')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></h2>
             <div class="section-subtitle">Detalhamento com ind&#250;strias, compara&#231;&#227;o geogr&#225;fica e empresas brasileiras</div>
             <div id="deepDiveContainer"></div>
         </section>
@@ -1046,7 +1157,7 @@
             <div class="section-number">09 &#8212; Perspectivas</div>
             <h2 class="section-title">Perspectivas e Tend&#234;ncias</h2>
             <div class="narrative-block" id="narrativePerspectivas">
-                <div class="narrative-label"><i class="fas fa-robot"></i> Perspectivas &#8212; geradas por IA</div>
+                <div class="narrative-label"><i class="fas fa-robot"></i> Perspectivas &#8212; geradas por IA <button class="btn-script-config no-print" onclick="openScriptModal('perspectivas')" title="Ver script LLM desta se&#231;&#227;o"><i class="fas fa-cog"></i> Script</button></div>
                 <div id="narrativePerspectivasText"><em>Aguardando dados...</em></div>
             </div>
         </section>
@@ -1296,6 +1407,7 @@ async function saveRenameCache(cacheId) {
 }
 
 async function deleteCache(cacheId, encodedLabel) {
+    cacheId = Number(cacheId);
     var label = decodeURIComponent(encodedLabel);
     if (!confirm('Excluir o estudo "' + label + '"?\nEsta a\u00e7\u00e3o n\u00e3o pode ser desfeita.')) return;
 
@@ -1305,12 +1417,15 @@ async function deleteCache(cacheId, encodedLabel) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({cache_id: cacheId})
         });
-        if (resp.ok) {
-            allCachedReports = allCachedReports.filter(function(r) { return r.id !== cacheId; });
+        var result = await resp.json();
+        if (resp.ok && result.success) {
+            allCachedReports = allCachedReports.filter(function(r) { return Number(r.id) !== cacheId; });
             renderCacheList();
             if (currentCacheId === cacheId) {
                 currentCacheId = null;
             }
+        } else {
+            alert('Erro ao excluir: ' + (result.error || 'Erro HTTP ' + resp.status));
         }
     } catch(e) { alert('Erro ao excluir: ' + e.message); }
 }
@@ -2522,6 +2637,187 @@ async function sendReportChat() {
     }
 })();
 
+</script>
+
+<!-- MODAL - SCRIPT CONFIG -->
+<div class="script-modal-overlay no-print" id="scriptModalOverlay" onclick="if(event.target===this)closeScriptModal()">
+    <div class="script-modal">
+        <div class="script-modal-header">
+            <h3><i class="fas fa-cog"></i> <span id="scriptModalTitle">Script LLM</span></h3>
+            <button class="script-modal-close" onclick="closeScriptModal()">&times;</button>
+        </div>
+        <div class="script-modal-body">
+            <div class="script-section-badge" id="scriptModalBadge"></div>
+            <pre id="scriptModalContent"></pre>
+            <div class="script-compliance-note">
+                <strong><i class="fas fa-shield-alt"></i> Compliance:</strong>
+                N&#227;o recomendar compra/venda. N&#227;o prever pre&#231;os. N&#227;o inventar dados ou nomes.
+                Usar linguagem condicional ("sugere", "indica", "observa-se").
+                Distinguir fatos de an&#225;lise. Citar apenas fontes institucionais verific&#225;veis.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== SCRIPTS LLM POR SE&#199;&#195;O =====
+var LLM_SCRIPTS = {
+    resumo_executivo: {
+        titulo: 'Resumo Executivo',
+        secao: 'resumo_executivo',
+        script: 'CONTEXTO: Escrevendo o resumo executivo do Estudo Anloc de M\u00faltiplos.\n' +
+            'P\u00daBLICO: Diretores financeiros, investidores institucionais, analistas de M&A.\n\n' +
+            'ESTRUTURA OBRIGAT\u00d3RIA:\n' +
+            '1. Par\u00e1grafo 1: Panorama quantitativo (cite medianas, n\u00famero de empresas analisadas)\n' +
+            '2. Par\u00e1grafo 2: Setores mais caros vs mais baratos (cite EV/EBITDA de cada)\n' +
+            '3. Par\u00e1grafo 3: Posicionamento do Brasil vs Global (cite spread percentual)\n' +
+            '4. Par\u00e1grafo 4: Tend\u00eancias observadas (compress\u00e3o/expans\u00e3o de m\u00faltiplos)\n\n' +
+            'RESTRI\u00c7\u00d5ES:\n' +
+            '- N\u00c3O conclua com recomenda\u00e7\u00e3o de investimento\n' +
+            '- N\u00c3O afirme que um setor "vai subir" ou "vai cair"\n' +
+            '- SEMPRE cite o per\u00edodo dos dados (ex: "dados referentes ao ano fiscal 2026")\n' +
+            '- Use frases como "os dados indicam", "observa-se", "o m\u00faltiplo mediano sugere"\n' +
+            '- Quando citar fontes externas, use apenas relat\u00f3rios institucionais verific\u00e1veis\n' +
+            '  (BCB, FED, S&P, Moody\'s, Bloomberg, CVM, IBGE)\n\n' +
+            'FORMATO DE SA\u00cdDA:\n' +
+            '- 3-4 par\u00e1grafos\n' +
+            '- Tom: profissional, impessoal\n' +
+            '- Fontes: array de {nome, url} com URLs reais de institui\u00e7\u00f5es'
+    },
+    analise_macro: {
+        titulo: 'An\u00e1lise Macroecon\u00f4mica',
+        secao: 'analise_macro',
+        script: 'CONTEXTO: An\u00e1lise do cen\u00e1rio macroecon\u00f4mico que influencia os m\u00faltiplos.\n\n' +
+            'ESTRUTURA OBRIGAT\u00d3RIA:\n' +
+            '1. Par\u00e1grafo 1: Juros globais (FED, ECB) e impacto em valuations\n' +
+            '2. Par\u00e1grafo 2: Infla\u00e7\u00e3o, ciclo econ\u00f4mico, sentimento de mercado\n' +
+            '3. Par\u00e1grafo 3 (opcional): Fatores emergentes (geopol\u00edtica, tecnologia, regula\u00e7\u00e3o)\n\n' +
+            'RESTRI\u00c7\u00d5ES:\n' +
+            '- CITAR APENAS dados econ\u00f4micos verific\u00e1veis (taxa Selic oficial, IPCA, Fed Funds Rate)\n' +
+            '- N\u00c3O prever movimentos futuros de taxas de juros\n' +
+            '- N\u00c3O sugerir que juros altos/baixos sejam "bons" ou "ruins" para investir\n' +
+            '- USAR formula\u00e7\u00f5es como: "historicamente, ciclos de aperto monet\u00e1rio correlacionam com..."\n' +
+            '- FONTES obrigat\u00f3rias: BCB, FED, IBGE, FMI \u2014 com URLs institucionais reais\n' +
+            '- N\u00c3O referenciar relat\u00f3rios propriet\u00e1rios de bancos privados como fontes p\u00fablicas'
+    },
+    analise_brasil: {
+        titulo: 'An\u00e1lise Brasil',
+        secao: 'analise_brasil',
+        script: 'CONTEXTO: An\u00e1lise dos m\u00faltiplos no Brasil vs Global e LATAM.\n\n' +
+            'ESTRUTURA OBRIGAT\u00d3RIA:\n' +
+            '1. Quantificar desconto/pr\u00eamio Brasil vs Global (usar spread do dataset)\n' +
+            '2. Fatores locais: Selic, c\u00e2mbio (BRL/USD), ambiente regulat\u00f3rio\n' +
+            '3. Setores com maior/menor spread (citar n\u00fameros espec\u00edficos)\n\n' +
+            'RESTRI\u00c7\u00d5ES:\n' +
+            '- N\u00c3O classificar o desconto como "oportunidade de compra"\n' +
+            '- N\u00c3O sugerir que o Brasil est\u00e1 "barato" como convite a investir\n' +
+            '- USAR: "o desconto observado pode refletir [fatores espec\u00edficos]"\n' +
+            '- N\u00c3O fazer compara\u00e7\u00f5es que desqualifiquem o pa\u00eds ou a economia\n' +
+            '- N\u00c3O mencionar situa\u00e7\u00e3o pol\u00edtica sem dados concretos (PIB, infla\u00e7\u00e3o, juros)\n' +
+            '- CITAR sempre a data da taxa Selic e do c\u00e2mbio (ex: "Selic em 13.25% conforme BCB, mar/2026")'
+    },
+    destaques_setoriais: {
+        titulo: 'Destaques Setoriais',
+        secao: 'destaques_setoriais',
+        script: 'CONTEXTO: Destaque individual por setor com an\u00e1lise orientada a dados.\n\n' +
+            'ESTRUTURA POR SETOR:\n' +
+            '1. Abrir SEMPRE com dado concreto: "Healthcare apresenta EV/EBITDA mediano global de 14.2x..."\n' +
+            '2. Comparar com Brasil: "...enquanto no Brasil o m\u00faltiplo \u00e9 9.8x, desconto de 31%"\n' +
+            '3. Hip\u00f3tese anal\u00edtica: "Este desconto pode refletir..."\n' +
+            '4. Cita\u00e7\u00e3o de especialista (se dispon\u00edvel)\n\n' +
+            'RESTRI\u00c7\u00d5ES:\n' +
+            '- N\u00c3O usar "o setor \u00e9 atrativo para investimento"\n' +
+            '- N\u00c3O classificar setores como "compra" ou "venda"\n' +
+            '- CAMPO "tendencia" deve ser APENAS: "expans\u00e3o", "compress\u00e3o" ou "est\u00e1vel"\n' +
+            '  baseado em dados de evolu\u00e7\u00e3o 2021-2025 (n\u00e3o em opini\u00e3o)\n' +
+            '- CITA\u00c7\u00d5ES: Usar apenas atribui\u00e7\u00f5es verific\u00e1veis\n' +
+            '  BOM: "Segundo relat\u00f3rio do Morgan Stanley Research (2026)..."\n' +
+            '  RUIM: "Jo\u00e3o Silva, renomado analista, afirmou que..." (pessoa fict\u00edcia)\n' +
+            '- N\u00c3O inventar nomes de analistas \u2014 usar entidades (bancos, consultorias, relat\u00f3rios)'
+    },
+    ranking: {
+        titulo: 'Coment\u00e1rio do Gr\u00e1fico \u2014 Ranking',
+        secao: 'ranking (graph_comments)',
+        script: 'CONTEXTO: An\u00e1lise visual textual do gr\u00e1fico de Ranking de Setores.\n\n' +
+            'REGRAS:\n' +
+            '- Descrever quais setores est\u00e3o no topo/base. Citar valores.\n' +
+            '- N\u00c3O interpretar "barato" como "oportunidade".\n' +
+            '- Destacar discrep\u00e2ncias relevantes entre Global e Brasil.\n' +
+            '- Tom descritivo e anal\u00edtico, n\u00e3o prescritivo.\n\n' +
+            'FORMATO: JSON com titulo, analise (2-3 par\u00e1grafos), destaque (1 frase), fontes.'
+    },
+    geografia: {
+        titulo: 'Coment\u00e1rio do Gr\u00e1fico \u2014 Geografia',
+        secao: 'geografia (graph_comments)',
+        script: 'CONTEXTO: An\u00e1lise visual textual do gr\u00e1fico Geogr\u00e1fico.\n\n' +
+            'REGRAS:\n' +
+            '- Descrever diferen\u00e7as regionais (Global vs LATAM vs Brasil). Citar spreads.\n' +
+            '- N\u00c3O classificar desconto como "subvaloriza\u00e7\u00e3o injusta".\n' +
+            '- Identificar setores com maior/menor converg\u00eancia geogr\u00e1fica.\n' +
+            '- Tom descritivo e anal\u00edtico.\n\n' +
+            'FORMATO: JSON com titulo, analise (2-3 par\u00e1grafos), destaque (1 frase), fontes.'
+    },
+    evolucao: {
+        titulo: 'Coment\u00e1rio do Gr\u00e1fico \u2014 Evolu\u00e7\u00e3o',
+        secao: 'evolucao (graph_comments)',
+        script: 'CONTEXTO: An\u00e1lise visual textual do gr\u00e1fico de Evolu\u00e7\u00e3o 2021-2025.\n\n' +
+            'REGRAS:\n' +
+            '- Descrever tend\u00eancias (compress\u00e3o/expans\u00e3o). Citar mudan\u00e7as percentuais.\n' +
+            '- N\u00c3O prever continua\u00e7\u00e3o de tend\u00eancias.\n' +
+            '- Identificar setores que mais mudaram e os mais est\u00e1veis.\n' +
+            '- Relacionar com eventos macro quando pertinente.\n\n' +
+            'FORMATO: JSON com titulo, analise (2-3 par\u00e1grafos), destaque (1 frase), fontes.'
+    },
+    perspectivas: {
+        titulo: 'Perspectivas e Tend\u00eancias',
+        secao: 'perspectivas',
+        script: 'CONTEXTO: Perspectivas futuras para m\u00faltiplos de mercado.\n\n' +
+            'ESTRUTURA:\n' +
+            '- 1-2 par\u00e1grafos sobre tend\u00eancias futuras\n' +
+            '- Basear-se em dados macroecon\u00f4micos e evolu\u00e7\u00e3o recente dos m\u00faltiplos\n' +
+            '- Citar fontes institucionais\n\n' +
+            'RESTRI\u00c7\u00d5ES:\n' +
+            '- N\u00c3O fazer previs\u00f5es de pre\u00e7o ou retorno\n' +
+            '- N\u00c3O usar "vai subir", "vai cair"\n' +
+            '- USAR: "tend\u00eancias observadas sugerem", "fatores como X podem influenciar"\n' +
+            '- Focar em cen\u00e1rio macro e estrutural, n\u00e3o em timing de mercado'
+    },
+    deep_analysis: {
+        titulo: 'An\u00e1lise Profunda por Setor',
+        secao: 'sector_deep_analysis',
+        script: 'CONTEXTO: An\u00e1lise aprofundada de um setor espec\u00edfico, sob demanda.\n\n' +
+            'ESTRUTURA:\n' +
+            '1. panorama: Vis\u00e3o global do setor, drivers de valuation\n' +
+            '2. analise_brasil: Posicionamento BR, fatores locais, empresas\n' +
+            '3. industrias_destaque: Sub-ind\u00fastrias e diferen\u00e7as de m\u00faltiplos\n' +
+            '4. tendencias: Evolu\u00e7\u00e3o recente\n' +
+            '5. riscos_oportunidades: Riscos setoriais e oportunidades de mercado\n' +
+            '6. conclusao: S\u00edntese executiva\n\n' +
+            'RESTRI\u00c7\u00d5ES CR\u00cdTICAS:\n' +
+            '- Em "riscos_oportunidades": descrever riscos/oportunidades DO SETOR, n\u00e3o de investimento\n' +
+            '  BOM: "O setor enfrenta press\u00e3o regulat\u00f3ria que pode comprimir margens"\n' +
+            '  RUIM: "Recomendamos exposi\u00e7\u00e3o ao setor dado o desconto observado"\n' +
+            '- Em "conclusao": s\u00edntese anal\u00edtica, N\u00c3O recomenda\u00e7\u00e3o de posicionamento\n' +
+            '- CITA\u00c7\u00d5ES: Apenas de fontes institucionais ou porta-vozes oficiais'
+    }
+};
+
+function openScriptModal(sectionKey) {
+    var data = LLM_SCRIPTS[sectionKey];
+    if (!data) return;
+    document.getElementById('scriptModalTitle').textContent = 'Script LLM \u2014 ' + data.titulo;
+    document.getElementById('scriptModalBadge').textContent = data.secao;
+    document.getElementById('scriptModalContent').textContent = data.script;
+    document.getElementById('scriptModalOverlay').classList.add('active');
+}
+
+function closeScriptModal() {
+    document.getElementById('scriptModalOverlay').classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeScriptModal();
+});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

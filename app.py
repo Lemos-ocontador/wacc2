@@ -7604,6 +7604,92 @@ def api_estudoanloc_generate_report():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+def _validate_and_tag_urls(data_dict):
+    """Valida URLs nas narrativas/comentários gerados pela LLM.
+    Marca URLs com 'validated' e 'status' para cada fonte.
+    Remove URLs inválidas (não-HTTP) e sinaliza as que falham."""
+    import concurrent.futures
+    import urllib.request
+    import urllib.error
+
+    TRUSTED_DOMAINS = {
+        'bcb.gov.br', 'gov.br', 'federalreserve.gov', 'sec.gov', 'imf.org',
+        'worldbank.org', 'bloomberg.com', 'reuters.com', 'spglobal.com',
+        'moodys.com', 'fitchratings.com', 'ibge.gov.br', 'cvm.gov.br',
+        'b3.com.br', 'anbima.com.br', 'economist.com', 'ft.com',
+        'wsj.com', 'cnbc.com', 'valor.globo.com', 'infomoney.com.br',
+        'tradingeconomics.com', 'statista.com', 'mckinsey.com',
+        'deloitte.com', 'pwc.com', 'ey.com', 'kpmg.com',
+        'damodaran.com', 'pages.stern.nyu.edu', 'yahoo.com',
+        'ipea.gov.br', 'reit.com', 'refinitiv.com', 'iea.org',
+        'oecd.org', 'bis.org', 'goldmansachs.com', 'morganstanley.com',
+    }
+
+    # Collect all fonte arrays from the dict
+    fonte_arrays = []
+    fonte_keys = [k for k in data_dict.keys() if 'fontes' in k.lower() and isinstance(data_dict[k], list)]
+    for k in fonte_keys:
+        fonte_arrays.append((k, data_dict[k]))
+
+    # Also check destaques_setoriais fontes
+    if 'destaques_setoriais' in data_dict and isinstance(data_dict['destaques_setoriais'], list):
+        for i, d in enumerate(data_dict['destaques_setoriais']):
+            if isinstance(d, dict) and 'fontes' in d and isinstance(d['fontes'], list):
+                fonte_arrays.append((f'destaques_setoriais[{i}].fontes', d['fontes']))
+
+    # Flatten all URLs
+    all_urls = []
+    for key, arr in fonte_arrays:
+        for j, f in enumerate(arr):
+            if isinstance(f, dict) and f.get('url', '').startswith('http'):
+                all_urls.append((key, j, f))
+
+    if not all_urls:
+        return data_dict
+
+    def check_url(info):
+        key, idx, fonte = info
+        url = fonte.get('url', '')
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
+            trusted = any(domain.endswith(td) for td in TRUSTED_DOMAINS)
+        except Exception:
+            trusted = False
+
+        try:
+            req = urllib.request.Request(url, method='HEAD',
+                headers={'User-Agent': 'AnlocLinkValidator/1.0'})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                status = 'ok' if resp.status < 400 else 'error'
+        except urllib.error.HTTPError as e:
+            status = 'blocked' if e.code in (403, 405, 406) else 'error'
+        except Exception:
+            status = 'unreachable'
+
+        fonte['_validated'] = True
+        fonte['_status'] = status
+        fonte['_trusted'] = trusted
+        return (key, idx, status, trusted)
+
+    # Validate in parallel (max 8 workers, timeout-safe)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            futures = [executor.submit(check_url, u) for u in all_urls]
+            concurrent.futures.wait(futures, timeout=30)
+    except Exception as e:
+        logger.warning(f"URL validation partial failure: {e}")
+
+    # Count results for logging
+    total = len(all_urls)
+    ok = sum(1 for _, arr in fonte_arrays for f in arr if isinstance(f, dict) and f.get('_status') == 'ok')
+    errors = sum(1 for _, arr in fonte_arrays for f in arr if isinstance(f, dict) and f.get('_status') in ('error', 'unreachable'))
+    logger.info(f"URL validation: {ok}/{total} OK, {errors} errors")
+
+    return data_dict
+
+
 def _generate_report_narratives(api_key, sectors_data, ranking, fiscal_year):
     """Gera narrativas analíticas usando Claude para o relatório."""
     import anthropic
@@ -7729,7 +7815,12 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
         text = text.strip()
 
     import json as json_mod
-    return json_mod.loads(text)
+    result = json_mod.loads(text)
+    try:
+        _validate_and_tag_urls(result)
+    except Exception as e:
+        logger.warning(f"URL validation failed for narratives: {e}")
+    return result
 
 
 # ========================================================================
@@ -8146,7 +8237,12 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
         text = text.strip()
 
     import json as json_mod
-    return json_mod.loads(text)
+    result = json_mod.loads(text)
+    try:
+        _validate_and_tag_urls(result)
+    except Exception as e:
+        logger.warning(f"URL validation failed for graph_comments: {e}")
+    return result
 
 
 # ========================================================================
