@@ -1057,6 +1057,12 @@
             <h2 class="section-title">Fontes e Refer&#234;ncias</h2>
             <div class="section-subtitle">Fontes externas utilizadas nas an&#225;lises e narrativas deste relat&#243;rio</div>
             <div id="referenciasContainer"></div>
+            <div style="margin-top:1.5rem; text-align:center;">
+                <button id="btnValidateLinks" class="btn btn-outline-warning btn-sm" onclick="validateAllLinks()" style="border-radius:20px; padding:0.4rem 1.5rem;">
+                    <i class="fas fa-check-double"></i> Verificar Integridade dos Links
+                </button>
+            </div>
+            <div id="linkValidationResults" style="display:none; margin-top:1.5rem;"></div>
         </section>
 
         <!-- 11 - INSTITUCIONAL + DISCLAIMER -->
@@ -1831,9 +1837,17 @@ function renderDestaques(narratives, sectors) {
         // Citation
         var citacaoHtml = '';
         if (d.citacao && d.citacao.frase) {
+            var citCtx = '';
+            if (d.citacao.contexto) {
+                if (d.citacao.url) {
+                    citCtx = '<div class="quote-context"><a href="' + d.citacao.url + '" target="_blank" rel="noopener" style="color:var(--anloc-accent);">' + d.citacao.contexto + ' <i class="fas fa-external-link-alt" style="font-size:0.6rem;"></i></a></div>';
+                } else {
+                    citCtx = '<div class="quote-context">' + d.citacao.contexto + '</div>';
+                }
+            }
             citacaoHtml = '<div class="expert-quote"><div class="quote-text">' + d.citacao.frase + '</div>' +
                 '<div class="quote-author">\u2014 ' + (d.citacao.autor || '') + (d.citacao.cargo ? ', ' + d.citacao.cargo : '') + '</div>' +
-                (d.citacao.contexto ? '<div class="quote-context">' + d.citacao.contexto + '</div>' : '') + '</div>';
+                citCtx + '</div>';
         }
 
         // Fontes
@@ -1991,9 +2005,17 @@ function renderNarratives(narratives) {
         var cits = narratives.citacoes_especialistas.filter(function(c) { return c.secao === secao; });
         if (cits.length === 0) return '';
         return cits.map(function(c) {
+            var ctxHtml = '';
+            if (c.contexto) {
+                if (c.url) {
+                    ctxHtml = '<div class="quote-context"><a href="' + c.url + '" target="_blank" rel="noopener" style="color:var(--anloc-accent);">' + c.contexto + ' <i class="fas fa-external-link-alt" style="font-size:0.6rem;"></i></a></div>';
+                } else {
+                    ctxHtml = '<div class="quote-context">' + c.contexto + '</div>';
+                }
+            }
             return '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
                 '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
-                (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
+                ctxHtml + '</div>';
         }).join('');
     }
 
@@ -2094,6 +2116,106 @@ function renderFontesInline(fontesArr) {
     }).join('; ');
 }
 
+// ===== VALIDAÇÃO DE LINKS =====
+function collectAllUrls() {
+    var urls = [];
+    var seen = {};
+    if (!reportData || !reportData.narratives) return urls;
+    var n = reportData.narratives;
+    function addFromArr(arr) {
+        if (!arr) return;
+        arr.forEach(function(f) {
+            var nome = typeof f === 'string' ? f : (f.nome || f.name || '');
+            var url = typeof f === 'string' ? '' : (f.url || '');
+            if (url && !seen[url]) {
+                seen[url] = true;
+                urls.push({nome: nome, url: url});
+            }
+        });
+    }
+    addFromArr(n.resumo_executivo_fontes);
+    addFromArr(n.analise_macro_fontes);
+    addFromArr(n.analise_brasil_fontes);
+    addFromArr(n.perspectivas_fontes);
+    addFromArr(n.fontes_contexto);
+    if (n.destaques_setoriais) {
+        n.destaques_setoriais.forEach(function(d) { addFromArr(d.fontes); });
+    }
+    // Deep analyses fontes
+    if (reportData.deep_analyses) {
+        Object.values(reportData.deep_analyses).forEach(function(da) {
+            if (da && da.fontes) addFromArr(da.fontes);
+        });
+    }
+    return urls;
+}
+
+function validateAllLinks() {
+    var urls = collectAllUrls();
+    if (urls.length === 0) {
+        alert('Nenhum link encontrado para validar.');
+        return;
+    }
+    var btn = document.getElementById('btnValidateLinks');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando ' + urls.length + ' links...';
+    var container = document.getElementById('linkValidationResults');
+    container.style.display = 'block';
+    container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Validando links...</div>';
+
+    fetch('/api/estudoanloc/relatorio/validate_links', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({urls: urls})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-double"></i> Verificar Integridade dos Links';
+        if (!data.success) {
+            container.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Erro na validação') + '</div>';
+            return;
+        }
+        var s = data.summary;
+        var statusIcons = {ok: '✅', blocked: '⚠️', error: '❌', unreachable: '❌', invalid: '❌', unknown: '❓'};
+        var statusLabels = {ok: 'Acessível', blocked: 'Bloqueado (pode existir)', error: 'Erro', unreachable: 'Inacessível', invalid: 'URL inválida', unknown: 'Desconhecido'};
+        var statusColors = {ok: '#28a745', blocked: '#ffc107', error: '#dc3545', unreachable: '#dc3545', invalid: '#dc3545', unknown: '#6c757d'};
+
+        var html = '<div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:1rem; border:1px solid rgba(212,168,67,0.3);">';
+        html += '<h5 style="color:var(--anloc-gold); margin-bottom:1rem;"><i class="fas fa-shield-alt"></i> Resultado da Verificação de Links</h5>';
+        html += '<div class="row text-center mb-3">';
+        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#28a745;">' + s.ok + '</div><small>Acessíveis</small></div>';
+        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#ffc107;">' + s.blocked + '</div><small>Bloqueados</small></div>';
+        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#dc3545;">' + s.errors + '</div><small>Com Erro</small></div>';
+        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:var(--anloc-accent);">' + s.trusted_domains + '</div><small>Domínios Confiáveis</small></div>';
+        html += '</div>';
+
+        if (data.results.length > 0) {
+            html += '<table class="table table-sm" style="font-size:0.8rem; color:#ccc;">';
+            html += '<thead><tr><th>Status</th><th>Fonte</th><th>URL</th><th>Domínio Confiável</th></tr></thead><tbody>';
+            data.results.forEach(function(r) {
+                var icon = statusIcons[r.status] || '❓';
+                var label = statusLabels[r.status] || r.status;
+                var color = statusColors[r.status] || '#6c757d';
+                html += '<tr>';
+                html += '<td style="color:' + color + ';">' + icon + ' ' + label + '</td>';
+                html += '<td>' + (r.nome || '-') + '</td>';
+                html += '<td><a href="' + r.url + '" target="_blank" rel="noopener" style="color:var(--anloc-accent); word-break:break-all;">' + r.url + '</a></td>';
+                html += '<td>' + (r.trusted_domain ? '✅ Sim' : '⚠️ Não') + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-double"></i> Verificar Integridade dos Links';
+        container.innerHTML = '<div class="alert alert-danger">Erro: ' + err.message + '</div>';
+    });
+}
+
 // Export any table to CSV file
 function exportTableToCSV(tableId, filename) {
     var table = document.getElementById(tableId);
@@ -2142,9 +2264,17 @@ function renderDeepAnalysisHtml(a, sector) {
     if (a.citacoes && a.citacoes.length > 0) {
         html += '<div class="analysis-section"><div class="analysis-section-title">Cita\u00e7\u00f5es de Especialistas</div>';
         a.citacoes.forEach(function(c) {
+            var ctxHtml = '';
+            if (c.contexto) {
+                if (c.url) {
+                    ctxHtml = '<div class="quote-context"><a href="' + c.url + '" target="_blank" rel="noopener" style="color:var(--anloc-accent);">' + c.contexto + ' <i class="fas fa-external-link-alt" style="font-size:0.6rem;"></i></a></div>';
+                } else {
+                    ctxHtml = '<div class="quote-context">' + c.contexto + '</div>';
+                }
+            }
             html += '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
                 '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
-                (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
+                ctxHtml + '</div>';
         });
         html += '</div>';
     }

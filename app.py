@@ -7676,14 +7676,14 @@ Gere um JSON com a seguinte estrutura (responda SOMENTE o JSON, sem markdown):
       "n_empresas": 450,
       "tendencia": "expansão|compressão|estável",
       "insight": "2-3 frases com análise profunda do setor: o que os dados revelam, fatores causais, comparações relevantes. Cite dados específicos. Comece SEMPRE pelos dados e depois tire conclusões.",
-      "citacao": {{"autor": "Nome do especialista ou entidade", "cargo": "Cargo/Instituição", "frase": "Citação relevante sobre o setor entre aspas", "contexto": "Onde/quando foi dito"}},
+      "citacao": {{"autor": "Nome do especialista ou entidade", "cargo": "Cargo/Instituição", "frase": "Citação relevante sobre o setor entre aspas", "contexto": "Onde/quando foi dito", "url": "https://url-da-fonte.com"}},
       "fontes": [{{"nome": "fonte", "url": "https://..."}}]
     }}
   ],
   "perspectivas": "1-2 parágrafos com perspectivas e tendências futuras para múltiplos. Cite fontes.",
   "perspectivas_fontes": [{{"nome": "fonte", "url": "https://..."}}],
   "citacoes_especialistas": [
-    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação marcante sobre o mercado", "contexto": "Fonte/evento/data", "secao": "resumo_executivo|analise_macro|analise_brasil|perspectivas"}}
+    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação marcante sobre o mercado", "contexto": "Fonte/evento/data", "url": "https://url-da-fonte-original.com", "secao": "resumo_executivo|analise_macro|analise_brasil|perspectivas"}}
   ],
   "fontes_contexto": [{{"nome": "Nome completo da fonte", "url": "https://url-da-fonte.com", "tipo": "institucional|relatório|dados|mídia"}}]
 }}
@@ -7699,7 +7699,18 @@ IMPORTANTE:
 - Inclua citações de especialistas/entidades relevantes (analistas, bancos, instituições) em citacoes_especialistas.
 - Para cada destaque setorial, se possível inclua uma citação de especialista no campo "citacao".
 - Tom profissional, analítico, objetivo.
-- Português brasileiro."""
+- Português brasileiro.
+
+DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
+- NÃO recomendar compra ou venda de ativos. NÃO sugerir investimentos ou alocação de portfólio.
+- NÃO usar termos como: "recomendamos", "invista em", "compre", "venda", "oportunidade imperdível", "preço-alvo".
+- NÃO gerar previsões de preço ou retorno garantido. NÃO afirmar que algo "vai subir" ou "vai cair".
+- NÃO inventar dados, números ou estatísticas que não estejam no dataset fornecido.
+- NÃO inventar nomes de analistas individuais. Atribuir citações a ENTIDADES (bancos, consultorias, relatórios institucionais).
+- NÃO mencionar nomes de pessoas físicas, exceto porta-vozes oficiais em citações verificáveis (CEO em earnings call, etc.).
+- Use linguagem condicional: "os dados indicam", "sugere", "observa-se", "pode refletir".
+- Distinguir explicitamente entre fatos (dados) e interpretação analítica.
+- Este material é informativo e educacional. Não constitui recomendação de investimento."""
 
     response = client.messages.create(
         model='claude-sonnet-4-20250514',
@@ -7884,6 +7895,107 @@ def api_report_cache_save_chat():
     return jsonify({'success': True})
 
 
+@app.route('/api/estudoanloc/relatorio/validate_links', methods=['POST'])
+def api_estudoanloc_validate_links():
+    """Valida URLs citadas nas narrativas do relatório via HTTP HEAD requests."""
+    import concurrent.futures
+    import urllib.request
+    import urllib.error
+
+    data = request.get_json() or {}
+    urls = data.get('urls', [])
+    if not urls or not isinstance(urls, list):
+        return jsonify({'success': False, 'error': 'Lista de URLs obrigatória'}), 400
+
+    # Limitar a 50 URLs por chamada para evitar abuso
+    urls = urls[:50]
+
+    # Domínios institucionais conhecidos (confiáveis)
+    TRUSTED_DOMAINS = {
+        'bcb.gov.br', 'gov.br', 'federalreserve.gov', 'sec.gov', 'imf.org',
+        'worldbank.org', 'bloomberg.com', 'reuters.com', 'spglobal.com',
+        'moodys.com', 'fitchratings.com', 'ibge.gov.br', 'cvm.gov.br',
+        'b3.com.br', 'anbima.com.br', 'economist.com', 'ft.com',
+        'wsj.com', 'cnbc.com', 'valor.globo.com', 'infomoney.com.br',
+        'tradingeconomics.com', 'statista.com', 'mckinsey.com',
+        'deloitte.com', 'pwc.com', 'ey.com', 'kpmg.com',
+        'damodaran.com', 'pages.stern.nyu.edu', 'yahoo.com',
+    }
+
+    def validate_url(url_info):
+        """Valida uma URL individual."""
+        url = url_info.get('url', '')
+        nome = url_info.get('nome', '')
+        result = {'url': url, 'nome': nome, 'status': 'unknown', 'code': 0, 'trusted_domain': False}
+
+        if not url or not url.startswith('http'):
+            result['status'] = 'invalid'
+            result['message'] = 'URL inválida ou ausente'
+            return result
+
+        # Verificar domínio confiável
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
+            for td in TRUSTED_DOMAINS:
+                if domain.endswith(td):
+                    result['trusted_domain'] = True
+                    break
+        except Exception:
+            pass
+
+        try:
+            req = urllib.request.Request(url, method='HEAD',
+                headers={'User-Agent': 'AnlocLinkValidator/1.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result['code'] = resp.status
+                result['status'] = 'ok' if resp.status < 400 else 'error'
+        except urllib.error.HTTPError as e:
+            result['code'] = e.code
+            # 403/405 podem significar que o site bloqueia HEAD mas existe
+            if e.code in (403, 405, 406):
+                result['status'] = 'blocked'
+                result['message'] = 'Site bloqueia verificação automática'
+            else:
+                result['status'] = 'error'
+                result['message'] = f'HTTP {e.code}'
+        except urllib.error.URLError as e:
+            result['status'] = 'unreachable'
+            result['message'] = 'Site inacessível'
+        except Exception as e:
+            result['status'] = 'error'
+            result['message'] = str(e)[:100]
+
+        return result
+
+    # Verificar em paralelo (max 10 workers)
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_map = {executor.submit(validate_url, u): u for u in urls}
+        for future in concurrent.futures.as_completed(future_map):
+            results.append(future.result())
+
+    # Estatísticas
+    total = len(results)
+    ok_count = sum(1 for r in results if r['status'] == 'ok')
+    blocked_count = sum(1 for r in results if r['status'] == 'blocked')
+    error_count = sum(1 for r in results if r['status'] in ('error', 'unreachable', 'invalid'))
+    trusted_count = sum(1 for r in results if r['trusted_domain'])
+
+    return jsonify({
+        'success': True,
+        'summary': {
+            'total': total,
+            'ok': ok_count,
+            'blocked': blocked_count,
+            'errors': error_count,
+            'trusted_domains': trusted_count
+        },
+        'results': sorted(results, key=lambda r: (r['status'] != 'error', r['status'] != 'unreachable', r['status']))
+    })
+
+
 # ========================================================================
 # CHAT DO RELATÓRIO - Endpoint com contexto completo do relatório
 # ========================================================================
@@ -7912,7 +8024,15 @@ REGRAS:
 - Quando usar conhecimento externo (macro, tendências), indique a fonte entre parênteses.
 - Formate com parágrafos curtos. Use **negrito** para destaques.
 - Se o usuário perguntar sobre algo fora do escopo dos dados, informe as limitações.
-- Ao final de cada resposta que use fontes externas, adicione uma linha "Fontes: ..." listando as referências."""
+- Ao final de cada resposta que use fontes externas, adicione uma linha "Fontes: ..." listando as referências.
+
+DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
+- NÃO recomendar compra ou venda de ativos. NÃO sugerir investimentos ou alocação de portfólio.
+- Se perguntado sobre investimento, responda: "Este relatório é informativo. Para decisões de investimento, consulte profissional habilitado (CVM)."
+- Se perguntado sobre previsão de preço: "Não possuímos capacidade preditiva. Os dados refletem o momento atual do mercado."
+- RECUSAR responder sobre: recomendações de compra/venda, previsões de preço/retorno, comparação com ofertas de corretoras.
+- NÃO inventar dados ou citações de pessoas. Usar linguagem condicional ("os dados indicam", "sugere").
+- Este material é informativo e educacional. Não constitui recomendação de investimento."""
 
         if report_context:
             system_prompt += f"\n\nCONTEXTO DO RELATÓRIO (dados e narrativas gerados):\n{report_context}"
@@ -7999,7 +8119,15 @@ IMPORTANTE:
 - Cite números específicos dos dados.
 - Quando usar conhecimento externo (tendências macro, eventos), indique a fonte.
 - Tom profissional, analítico.
-- Português brasileiro."""
+- Português brasileiro.
+
+DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
+- NÃO recomendar compra ou venda de ativos. NÃO sugerir investimentos.
+- NÃO interpretar desconto como "oportunidade de compra" ou "subvalorização injusta".
+- NÃO prever continuação de tendências. Descrever o observado, não o futuro.
+- NÃO usar linguagem sensacionalista ("disparou", "desabou").
+- Use linguagem condicional: "os dados indicam", "observa-se", "pode refletir".
+- Este material é informativo e não constitui recomendação de investimento."""
 
     response = client.messages.create(
         model='claude-sonnet-4-20250514',
@@ -8104,10 +8232,10 @@ Responda SOMENTE um JSON com esta estrutura:
   "analise_brasil": "2-3 parágrafos: como o Brasil se posiciona neste setor vs global/LATAM, fatores locais que impactam, empresas de destaque e seus diferenciais.",
   "industrias_destaque": "1-2 parágrafos: quais sub-indústrias se destacam e por quê, diferenças de múltiplos entre elas.",
   "tendencias": "1-2 parágrafos: evolução recente dos múltiplos, o que mudou e expectativas futuras para o setor.",
-  "riscos_oportunidades": "1-2 parágrafos: principais riscos e oportunidades de investimento no setor.",
-  "conclusao": "1 parágrafo: conclusão executiva com recomendação de posicionamento.",
+  "riscos_oportunidades": "1-2 parágrafos: principais riscos e oportunidades DO SETOR (não de investimento). Descreva fatores que podem impactar margens, crescimento e múltiplos.",
+  "conclusao": "1 parágrafo: síntese executiva analítica do posicionamento atual do setor. NÃO recomendar posição comprada/vendida.",
   "citacoes": [
-    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação relevante", "contexto": "Fonte"}}
+    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação relevante", "contexto": "Fonte", "url": "https://url-da-fonte.com"}}
   ],
   "fontes": [{{"nome": "Nome da fonte", "url": "https://url"}}]
 }}
@@ -8116,9 +8244,19 @@ IMPORTANTE:
 - Utilize os dados fornecidos como base principal.
 - Complemente com seu conhecimento sobre o setor, tendências, players relevantes.
 - Cite números específicos dos dados.
-- Inclua 2-3 citações de analistas/especialistas/entidades relevantes para o setor.
+- Inclua 2-3 citações de entidades/instituições relevantes para o setor (NÃO inventar nomes de analistas individuais).
 - Tom profissional, aprofundado, analítico.
-- Português brasileiro."""
+- Português brasileiro.
+
+DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
+- NÃO recomendar compra ou venda de ativos. NÃO sugerir investimentos ou alocação.
+- Em "riscos_oportunidades": descrever riscos e oportunidades DO SETOR, não de investimento.
+- Em "conclusao": síntese analítica, NÃO recomendação de posicionamento comprado/vendido.
+- NÃO usar termos como: "recomendamos", "invista em", "preço-alvo", "compre", "venda".
+- NÃO inventar dados ou estatísticas ausentes do dataset.
+- NÃO inventar citações de pessoas físicas. Atribuir a entidades verificáveis.
+- Use linguagem condicional: "os dados indicam", "sugere", "pode refletir".
+- Este material é informativo e não constitui recomendação de investimento."""
 
         response = client.messages.create(
             model='claude-sonnet-4-20250514',
