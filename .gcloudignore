@@ -35,8 +35,8 @@ data/*.csv
 data/*.xlsx
 data/*.xls
 
-# TEMPORÁRIO: DB ignorado durante atualização — remover após deploy
-data/damodaran_data_new.db
+# IMPORTANTE: NÃO ignorar o banco SQLite principal
+# O arquivo data/damodaran_data_new.db SERÁ deployado com a app
 
 # Arquivos de lock do SQLite (WAL mode) — nunca deployar
 *.db-shm
