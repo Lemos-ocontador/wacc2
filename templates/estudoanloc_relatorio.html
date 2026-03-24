@@ -1323,6 +1323,7 @@ async function loadFromCache(cacheId) {
         reportData = data.report_data || {};
         reportData.narratives = data.narratives || {};
         reportData.graph_comments = data.graph_comments || {};
+        reportData.deep_analyses = data.deep_analyses || {};
         currentCacheId = data.cache_id;
         reportChatHistory = data.chat_history || [];
 
@@ -1938,6 +1939,23 @@ function renderDeepDives(sectors, metadata) {
             '<div class="sector-dive-badge">' + (g.n || 0) + ' empresas</div></div>' +
             geoHtml + spreadHtml + indHtml + topBrHtml + deepAnalysisHtml + '</div>';
     }).join('');
+
+    // Restaurar análises profundas já salvas
+    if (reportData && reportData.deep_analyses) {
+        sectors.forEach(function(s, sIdx) {
+            var saved = reportData.deep_analyses[s.sector];
+            if (saved) {
+                var panel = document.getElementById('deepPanel_' + sIdx);
+                var btn = document.getElementById('deepBtn_' + sIdx);
+                if (panel && btn) {
+                    panel.innerHTML = renderDeepAnalysisHtml(saved, s.sector);
+                    panel.dataset.loaded = 'true';
+                    panel.classList.add('visible');
+                    btn.innerHTML = '<i class="fas fa-brain"></i> An\u00e1lise aprofundada <i class="fas fa-chevron-up" style="font-size:0.7rem;margin-left:0.3rem;"></i>';
+                }
+            }
+        });
+    }
 }
 
 function _geoCard(label, evMedian, evrMedian, n) {
@@ -2100,6 +2118,44 @@ function exportTableToCSV(tableId, filename) {
     URL.revokeObjectURL(link.href);
 }
 
+// Render deep analysis HTML from analysis object
+function renderDeepAnalysisHtml(a, sector) {
+    var html = '<h4><i class="fas fa-brain" style="margin-right:0.5rem;"></i>' + (a.titulo || 'An\u00e1lise Aprofundada: ' + sector) + '</h4>';
+
+    var sections = [
+        {key: 'panorama', title: 'Panorama Global'},
+        {key: 'analise_brasil', title: 'An\u00e1lise Brasil'},
+        {key: 'industrias_destaque', title: 'Ind\u00fastrias em Destaque'},
+        {key: 'tendencias', title: 'Tend\u00eancias'},
+        {key: 'riscos_oportunidades', title: 'Riscos e Oportunidades'},
+        {key: 'conclusao', title: 'Conclus\u00e3o'}
+    ];
+
+    sections.forEach(function(sec) {
+        if (a[sec.key]) {
+            html += '<div class="analysis-section"><div class="analysis-section-title">' + sec.title + '</div>';
+            html += a[sec.key].split('\n').filter(function(p){return p.trim();}).map(function(p){return '<p>'+p+'</p>';}).join('');
+            html += '</div>';
+        }
+    });
+
+    if (a.citacoes && a.citacoes.length > 0) {
+        html += '<div class="analysis-section"><div class="analysis-section-title">Cita\u00e7\u00f5es de Especialistas</div>';
+        a.citacoes.forEach(function(c) {
+            html += '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
+                '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
+                (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
+        });
+        html += '</div>';
+    }
+
+    if (a.fontes && a.fontes.length > 0) {
+        html += '<div class="narrative-footnotes"><i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(a.fontes) + '</div>';
+    }
+
+    return html;
+}
+
 // Request deep AI analysis for a sector
 async function requestDeepAnalysis(sectorIdx, sectorEncoded, fiscalYear) {
     var sector = decodeURIComponent(sectorEncoded);
@@ -2137,44 +2193,24 @@ async function requestDeepAnalysis(sectorIdx, sectorEncoded, fiscalYear) {
         var data = await resp.json();
         if (data.success && data.analysis) {
             var a = data.analysis;
-            var html = '<h4><i class="fas fa-brain" style="margin-right:0.5rem;"></i>' + (a.titulo || 'An\u00e1lise Aprofundada: ' + sector) + '</h4>';
 
-            var sections = [
-                {key: 'panorama', title: 'Panorama Global'},
-                {key: 'analise_brasil', title: 'An\u00e1lise Brasil'},
-                {key: 'industrias_destaque', title: 'Ind\u00fastrias em Destaque'},
-                {key: 'tendencias', title: 'Tend\u00eancias'},
-                {key: 'riscos_oportunidades', title: 'Riscos e Oportunidades'},
-                {key: 'conclusao', title: 'Conclus\u00e3o'}
-            ];
-
-            sections.forEach(function(sec) {
-                if (a[sec.key]) {
-                    html += '<div class="analysis-section"><div class="analysis-section-title">' + sec.title + '</div>';
-                    html += a[sec.key].split('\n').filter(function(p){return p.trim();}).map(function(p){return '<p>'+p+'</p>';}).join('');
-                    html += '</div>';
-                }
-            });
-
-            // Expert quotes
-            if (a.citacoes && a.citacoes.length > 0) {
-                html += '<div class="analysis-section"><div class="analysis-section-title">Cita\u00e7\u00f5es de Especialistas</div>';
-                a.citacoes.forEach(function(c) {
-                    html += '<div class="expert-quote"><div class="quote-text">' + c.frase + '</div>' +
-                        '<div class="quote-author">\u2014 ' + (c.autor || '') + (c.cargo ? ', ' + c.cargo : '') + '</div>' +
-                        (c.contexto ? '<div class="quote-context">' + c.contexto + '</div>' : '') + '</div>';
-                });
-                html += '</div>';
-            }
-
-            // Sources
-            if (a.fontes && a.fontes.length > 0) {
-                html += '<div class="narrative-footnotes"><i class="fas fa-bookmark"></i> Fontes: ' + renderFontesInline(a.fontes) + '</div>';
-            }
-
-            panel.innerHTML = html;
+            panel.innerHTML = renderDeepAnalysisHtml(a, sector);
             panel.dataset.loaded = 'true';
             panel.classList.add('visible');
+
+            // Persistir no reportData e no cache
+            if (!reportData.deep_analyses) reportData.deep_analyses = {};
+            reportData.deep_analyses[sector] = a;
+            if (currentCacheId) {
+                fetch('/api/estudoanloc/report_cache/save_deep_analysis', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cache_id: currentCacheId,
+                        deep_analyses: reportData.deep_analyses
+                    })
+                }).catch(function(){});
+            }
 
             btn.innerHTML = '<i class="fas fa-brain"></i> An\u00e1lise aprofundada <i class="fas fa-chevron-up" style="font-size:0.7rem;margin-left:0.3rem;"></i>';
             btn.disabled = false;

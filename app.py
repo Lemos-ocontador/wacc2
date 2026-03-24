@@ -7746,11 +7746,12 @@ def _ensure_report_cache_table():
         CREATE INDEX IF NOT EXISTS idx_report_cache_year
         ON report_cache(fiscal_year, created_at DESC)
     """)
-    # Migração: adicionar coluna label se não existir
-    try:
-        conn.execute("ALTER TABLE report_cache ADD COLUMN label TEXT")
-    except Exception:
-        pass  # Coluna já existe
+    # Migrações: adicionar colunas se não existirem
+    for col in ['label TEXT', 'deep_analyses TEXT']:
+        try:
+            conn.execute(f"ALTER TABLE report_cache ADD COLUMN {col}")
+        except Exception:
+            pass  # Coluna já existe
     conn.commit()
     conn.close()
 
@@ -7787,20 +7788,21 @@ def api_report_cache_load():
     import json as json_mod
     cache_id = request.args.get('id', type=int)
     fiscal_year = request.args.get('fiscal_year', type=int)
+    _cols = "id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history, deep_analyses"
     conn = get_db()
     if cache_id:
         row = conn.execute(
-            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache WHERE id = ?",
+            f"SELECT {_cols} FROM report_cache WHERE id = ?",
             (cache_id,)
         ).fetchone()
     elif fiscal_year:
         row = conn.execute(
-            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 1",
+            f"SELECT {_cols} FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 1",
             (fiscal_year,)
         ).fetchone()
     else:
         row = conn.execute(
-            "SELECT id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history FROM report_cache ORDER BY created_at DESC LIMIT 1"
+            f"SELECT {_cols} FROM report_cache ORDER BY created_at DESC LIMIT 1"
         ).fetchone()
     conn.close()
     if not row:
@@ -7814,7 +7816,8 @@ def api_report_cache_load():
         'report_data': json_mod.loads(row[4]) if row[4] else {},
         'narratives': json_mod.loads(row[5]) if row[5] else {},
         'graph_comments': json_mod.loads(row[6]) if row[6] else {},
-        'chat_history': json_mod.loads(row[7]) if row[7] else []
+        'chat_history': json_mod.loads(row[7]) if row[7] else [],
+        'deep_analyses': json_mod.loads(row[8]) if row[8] else {}
     })
 
 
@@ -7842,6 +7845,23 @@ def api_report_cache_delete():
         return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
     conn = get_db()
     conn.execute("DELETE FROM report_cache WHERE id = ?", (cache_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/estudoanloc/report_cache/save_deep_analysis', methods=['POST'])
+def api_report_cache_save_deep_analysis():
+    """Salva as análises profundas no cache do relatório."""
+    import json as json_mod
+    data = request.get_json() or {}
+    cache_id = data.get('cache_id')
+    deep_analyses = data.get('deep_analyses', {})
+    if not cache_id:
+        return jsonify({'success': False, 'error': 'cache_id obrigatório'}), 400
+    conn = get_db()
+    conn.execute("UPDATE report_cache SET deep_analyses = ? WHERE id = ?",
+                 (json_mod.dumps(deep_analyses, ensure_ascii=False), cache_id))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
