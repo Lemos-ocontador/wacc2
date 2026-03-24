@@ -1,0 +1,418 @@
+{
+  "_description": "Catálogo curado de fontes com URLs verificadas. Usado pelo sistema de narrativas para mapear nomes de fontes a URLs reais.",
+  "_updated": "2026-03-24",
+  "sources": {
+    "BCB - Taxa Selic": {
+      "url": "https://www.bcb.gov.br/controleinflacao/taxaselic",
+      "domain": "bcb.gov.br",
+      "tipo": "institucional"
+    },
+    "BCB - Relatório Focus": {
+      "url": "https://www.bcb.gov.br/publicacoes/focus",
+      "domain": "bcb.gov.br",
+      "tipo": "relatório"
+    },
+    "BCB - SGS": {
+      "url": "https://www3.bcb.gov.br/sgspub/",
+      "domain": "bcb.gov.br",
+      "tipo": "dados"
+    },
+    "BCB - Relatório de Inflação": {
+      "url": "https://www.bcb.gov.br/publicacoes/ri",
+      "domain": "bcb.gov.br",
+      "tipo": "relatório"
+    },
+    "BCB - Relatório de Estabilidade Financeira": {
+      "url": "https://www.bcb.gov.br/publicacoes/ref",
+      "domain": "bcb.gov.br",
+      "tipo": "relatório"
+    },
+    "Banco Central do Brasil": {
+      "url": "https://www.bcb.gov.br/",
+      "domain": "bcb.gov.br",
+      "tipo": "institucional"
+    },
+    "FED - Federal Funds Rate": {
+      "url": "https://www.federalreserve.gov/monetarypolicy/openmarket.htm",
+      "domain": "federalreserve.gov",
+      "tipo": "institucional"
+    },
+    "FED - FOMC Minutes": {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "domain": "federalreserve.gov",
+      "tipo": "institucional"
+    },
+    "Federal Reserve": {
+      "url": "https://www.federalreserve.gov/",
+      "domain": "federalreserve.gov",
+      "tipo": "institucional"
+    },
+    "Federal Reserve - FOMC Statements": {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "domain": "federalreserve.gov",
+      "tipo": "institucional"
+    },
+    "FRED - Federal Reserve Economic Data": {
+      "url": "https://fred.stlouisfed.org/",
+      "domain": "fred.stlouisfed.org",
+      "tipo": "dados"
+    },
+    "IBGE": {
+      "url": "https://www.ibge.gov.br/",
+      "domain": "ibge.gov.br",
+      "tipo": "institucional"
+    },
+    "IBGE - PIB": {
+      "url": "https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais.html",
+      "domain": "ibge.gov.br",
+      "tipo": "dados"
+    },
+    "IBGE - IPCA": {
+      "url": "https://www.ibge.gov.br/estatisticas/economicas/precos-e-custos.html",
+      "domain": "ibge.gov.br",
+      "tipo": "dados"
+    },
+    "CVM": {
+      "url": "https://www.gov.br/cvm/",
+      "domain": "gov.br",
+      "tipo": "institucional"
+    },
+    "B3": {
+      "url": "https://www.b3.com.br/",
+      "domain": "b3.com.br",
+      "tipo": "institucional"
+    },
+    "B3 - Empresas Listadas": {
+      "url": "https://www.b3.com.br/pt_br/produtos-e-servicos/negociacao/renda-variavel/empresas-listadas.htm",
+      "domain": "b3.com.br",
+      "tipo": "dados"
+    },
+    "ANBIMA": {
+      "url": "https://www.anbima.com.br/",
+      "domain": "anbima.com.br",
+      "tipo": "institucional"
+    },
+    "ANBIMA - Boletim de Mercado de Capitais": {
+      "url": "https://www.anbima.com.br/",
+      "domain": "anbima.com.br",
+      "tipo": "relatório"
+    },
+    "IPEA": {
+      "url": "https://www.ipea.gov.br/",
+      "domain": "ipea.gov.br",
+      "tipo": "institucional"
+    },
+    "IPEA - Carta de Conjuntura": {
+      "url": "https://www.ipea.gov.br/cartadeconjuntura/",
+      "domain": "ipea.gov.br",
+      "tipo": "relatório"
+    },
+    "IMF - World Economic Outlook": {
+      "url": "https://www.imf.org/en/Publications/WEO",
+      "domain": "imf.org",
+      "tipo": "relatório"
+    },
+    "IMF": {
+      "url": "https://www.imf.org/",
+      "domain": "imf.org",
+      "tipo": "institucional"
+    },
+    "World Bank": {
+      "url": "https://www.worldbank.org/",
+      "domain": "worldbank.org",
+      "tipo": "institucional"
+    },
+    "OECD": {
+      "url": "https://www.oecd.org/",
+      "domain": "oecd.org",
+      "tipo": "institucional"
+    },
+    "BIS - Bank for International Settlements": {
+      "url": "https://www.bis.org/",
+      "domain": "bis.org",
+      "tipo": "institucional"
+    },
+    "Bloomberg": {
+      "url": "https://www.bloomberg.com/",
+      "domain": "bloomberg.com",
+      "tipo": "mídia"
+    },
+    "Bloomberg Terminal": {
+      "url": "https://www.bloomberg.com/professional/",
+      "domain": "bloomberg.com",
+      "tipo": "dados"
+    },
+    "Reuters": {
+      "url": "https://www.reuters.com/",
+      "domain": "reuters.com",
+      "tipo": "mídia"
+    },
+    "S&P Global": {
+      "url": "https://www.spglobal.com/",
+      "domain": "spglobal.com",
+      "tipo": "dados"
+    },
+    "S&P Capital IQ": {
+      "url": "https://www.spglobal.com/marketintelligence/",
+      "domain": "spglobal.com",
+      "tipo": "dados"
+    },
+    "Moody's": {
+      "url": "https://www.moodys.com/",
+      "domain": "moodys.com",
+      "tipo": "dados"
+    },
+    "Fitch Ratings": {
+      "url": "https://www.fitchratings.com/",
+      "domain": "fitchratings.com",
+      "tipo": "dados"
+    },
+    "Refinitiv": {
+      "url": "https://www.lseg.com/en/data-analytics",
+      "domain": "lseg.com",
+      "tipo": "dados"
+    },
+    "Damodaran Online": {
+      "url": "https://pages.stern.nyu.edu/~adamodar/",
+      "domain": "pages.stern.nyu.edu",
+      "tipo": "dados"
+    },
+    "Damodaran - ERP": {
+      "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+      "domain": "pages.stern.nyu.edu",
+      "tipo": "dados"
+    },
+    "Yahoo Finance": {
+      "url": "https://finance.yahoo.com/",
+      "domain": "finance.yahoo.com",
+      "tipo": "dados"
+    },
+    "Goldman Sachs Research": {
+      "url": "https://www.goldmansachs.com/insights/",
+      "domain": "goldmansachs.com",
+      "tipo": "relatório"
+    },
+    "Morgan Stanley Research": {
+      "url": "https://www.morganstanley.com/ideas/",
+      "domain": "morganstanley.com",
+      "tipo": "relatório"
+    },
+    "Morgan Stanley - Global Strategy": {
+      "url": "https://www.morganstanley.com/ideas/",
+      "domain": "morganstanley.com",
+      "tipo": "relatório"
+    },
+    "J.P. Morgan Research": {
+      "url": "https://www.jpmorgan.com/insights",
+      "domain": "jpmorgan.com",
+      "tipo": "relatório"
+    },
+    "McKinsey": {
+      "url": "https://www.mckinsey.com/",
+      "domain": "mckinsey.com",
+      "tipo": "relatório"
+    },
+    "McKinsey Global Institute": {
+      "url": "https://www.mckinsey.com/mgi/overview",
+      "domain": "mckinsey.com",
+      "tipo": "relatório"
+    },
+    "Deloitte": {
+      "url": "https://www.deloitte.com/",
+      "domain": "deloitte.com",
+      "tipo": "relatório"
+    },
+    "PwC": {
+      "url": "https://www.pwc.com/",
+      "domain": "pwc.com",
+      "tipo": "relatório"
+    },
+    "EY": {
+      "url": "https://www.ey.com/",
+      "domain": "ey.com",
+      "tipo": "relatório"
+    },
+    "KPMG": {
+      "url": "https://kpmg.com/",
+      "domain": "kpmg.com",
+      "tipo": "relatório"
+    },
+    "The Economist": {
+      "url": "https://www.economist.com/",
+      "domain": "economist.com",
+      "tipo": "mídia"
+    },
+    "Financial Times": {
+      "url": "https://www.ft.com/",
+      "domain": "ft.com",
+      "tipo": "mídia"
+    },
+    "Wall Street Journal": {
+      "url": "https://www.wsj.com/",
+      "domain": "wsj.com",
+      "tipo": "mídia"
+    },
+    "CNBC": {
+      "url": "https://www.cnbc.com/",
+      "domain": "cnbc.com",
+      "tipo": "mídia"
+    },
+    "Valor Econômico": {
+      "url": "https://valor.globo.com/",
+      "domain": "valor.globo.com",
+      "tipo": "mídia"
+    },
+    "InfoMoney": {
+      "url": "https://www.infomoney.com.br/",
+      "domain": "infomoney.com.br",
+      "tipo": "mídia"
+    },
+    "Trading Economics": {
+      "url": "https://tradingeconomics.com/",
+      "domain": "tradingeconomics.com",
+      "tipo": "dados"
+    },
+    "Statista": {
+      "url": "https://www.statista.com/",
+      "domain": "statista.com",
+      "tipo": "dados"
+    },
+    "SEC - EDGAR": {
+      "url": "https://www.sec.gov/cgi-bin/browse-edgar",
+      "domain": "sec.gov",
+      "tipo": "institucional"
+    },
+    "ANEEL": {
+      "url": "https://www.gov.br/aneel/",
+      "domain": "gov.br",
+      "tipo": "institucional"
+    },
+    "ANEEL - Agência Nacional de Energia Elétrica": {
+      "url": "https://www.gov.br/aneel/",
+      "domain": "gov.br",
+      "tipo": "institucional"
+    },
+    "ANP - Agência Nacional do Petróleo": {
+      "url": "https://www.gov.br/anp/",
+      "domain": "gov.br",
+      "tipo": "institucional"
+    },
+    "ANP - Boletim de Produção": {
+      "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/publicacoes/boletins-anp",
+      "domain": "gov.br",
+      "tipo": "relatório"
+    },
+    "EPE - Balanço Energético Nacional": {
+      "url": "https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/BEN-Series-Historicas-Completas",
+      "domain": "epe.gov.br",
+      "tipo": "dados"
+    },
+    "IEA - International Energy Agency": {
+      "url": "https://www.iea.org/",
+      "domain": "iea.org",
+      "tipo": "institucional"
+    },
+    "IEA - World Energy Outlook": {
+      "url": "https://www.iea.org/reports/world-energy-outlook-2024",
+      "domain": "iea.org",
+      "tipo": "relatório"
+    },
+    "Gartner": {
+      "url": "https://www.gartner.com/",
+      "domain": "gartner.com",
+      "tipo": "relatório"
+    },
+    "Gartner - IT Spending Forecast": {
+      "url": "https://www.gartner.com/en/newsroom",
+      "domain": "gartner.com",
+      "tipo": "relatório"
+    },
+    "CBIC - Câmara Brasileira da Indústria da Construção": {
+      "url": "https://cbic.org.br/",
+      "domain": "cbic.org.br",
+      "tipo": "institucional"
+    },
+    "CBIC - Indicadores do Mercado Imobiliário": {
+      "url": "https://cbic.org.br/indicadores/",
+      "domain": "cbic.org.br",
+      "tipo": "dados"
+    },
+    "SECOVI-SP": {
+      "url": "https://www.secovi.com.br/",
+      "domain": "secovi.com.br",
+      "tipo": "institucional"
+    },
+    "ABECIP": {
+      "url": "https://www.abecip.org.br/",
+      "domain": "abecip.org.br",
+      "tipo": "institucional"
+    },
+    "ABES - Associação Brasileira das Empresas de Software": {
+      "url": "https://www.abes.org.br/",
+      "domain": "abes.org.br",
+      "tipo": "institucional"
+    },
+    "Bank of America Global Research": {
+      "url": "https://business.bofa.com/en-us/content/market-strategies-insights.html",
+      "domain": "bofa.com",
+      "tipo": "relatório"
+    },
+    "Anloc Valuation Database": {
+      "url": "https://dataanloc.rj.r.appspot.com/",
+      "domain": "dataanloc.rj.r.appspot.com",
+      "tipo": "dados"
+    },
+    "Anloc - Base de Dados de Múltiplos": {
+      "url": "https://dataanloc.rj.r.appspot.com/",
+      "domain": "dataanloc.rj.r.appspot.com",
+      "tipo": "dados"
+    }
+  },
+  "domain_fallbacks": {
+    "bcb.gov.br": "https://www.bcb.gov.br/",
+    "federalreserve.gov": "https://www.federalreserve.gov/",
+    "fred.stlouisfed.org": "https://fred.stlouisfed.org/",
+    "ibge.gov.br": "https://www.ibge.gov.br/",
+    "gov.br": "https://www.gov.br/",
+    "b3.com.br": "https://www.b3.com.br/",
+    "anbima.com.br": "https://www.anbima.com.br/",
+    "ipea.gov.br": "https://www.ipea.gov.br/",
+    "imf.org": "https://www.imf.org/",
+    "worldbank.org": "https://www.worldbank.org/",
+    "oecd.org": "https://www.oecd.org/",
+    "bis.org": "https://www.bis.org/",
+    "bloomberg.com": "https://www.bloomberg.com/",
+    "reuters.com": "https://www.reuters.com/",
+    "spglobal.com": "https://www.spglobal.com/",
+    "moodys.com": "https://www.moodys.com/",
+    "fitchratings.com": "https://www.fitchratings.com/",
+    "pages.stern.nyu.edu": "https://pages.stern.nyu.edu/~adamodar/",
+    "finance.yahoo.com": "https://finance.yahoo.com/",
+    "goldmansachs.com": "https://www.goldmansachs.com/insights/",
+    "morganstanley.com": "https://www.morganstanley.com/ideas/",
+    "jpmorgan.com": "https://www.jpmorgan.com/insights",
+    "mckinsey.com": "https://www.mckinsey.com/",
+    "deloitte.com": "https://www.deloitte.com/",
+    "pwc.com": "https://www.pwc.com/",
+    "ey.com": "https://www.ey.com/",
+    "kpmg.com": "https://kpmg.com/",
+    "economist.com": "https://www.economist.com/",
+    "ft.com": "https://www.ft.com/",
+    "wsj.com": "https://www.wsj.com/",
+    "cnbc.com": "https://www.cnbc.com/",
+    "valor.globo.com": "https://valor.globo.com/",
+    "infomoney.com.br": "https://www.infomoney.com.br/",
+    "tradingeconomics.com": "https://tradingeconomics.com/",
+    "statista.com": "https://www.statista.com/",
+    "sec.gov": "https://www.sec.gov/",
+    "epe.gov.br": "https://www.epe.gov.br/",
+    "iea.org": "https://www.iea.org/",
+    "gartner.com": "https://www.gartner.com/",
+    "cbic.org.br": "https://cbic.org.br/",
+    "secovi.com.br": "https://www.secovi.com.br/",
+    "abecip.org.br": "https://www.abecip.org.br/",
+    "abes.org.br": "https://www.abes.org.br/",
+    "bofa.com": "https://business.bofa.com/",
+    "cvm.gov.br": "https://www.gov.br/cvm/"
+  }
+}

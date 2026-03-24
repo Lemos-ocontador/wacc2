@@ -1970,12 +1970,12 @@ def api_company_profile():
 
         conn = get_db()
 
-        # 1) company_basic_data — tenta yahoo_code, google_finance_code, ou company_name contendo o code
+        # 1) company_basic_data — tenta yahoo_code, ticker, ou company_name contendo o code
         row = None
         cols = None
         for sql in [
             "SELECT * FROM company_basic_data WHERE yahoo_code = ?",
-            "SELECT * FROM company_basic_data WHERE google_finance_code = ?",
+            "SELECT * FROM company_basic_data WHERE ticker = ?",
             "SELECT * FROM company_basic_data WHERE company_name LIKE ?",
         ]:
             param = code if 'LIKE' not in sql else f'%{code}%'
@@ -3255,7 +3255,7 @@ def api_historico_summary():
             base_params.extend(items)
 
         has_filter = len(base_conds) > 0
-        join_cbd = "JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id"
+        join_cbd = "JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code"
 
         if has_filter:
             where_base = " AND " + " AND ".join(base_conds)
@@ -3420,7 +3420,7 @@ def api_historico_filter_options():
             where = " AND ".join(conds)
             query = f"""SELECT {col_expr}, COUNT(DISTINCT cfh.yahoo_code) as cnt
                        FROM company_financials_historical cfh
-                       JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                       JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                        WHERE {where}
                        GROUP BY {col_expr} ORDER BY {col_expr}"""
             cur.execute(query, params)
@@ -3489,7 +3489,7 @@ def api_historico_search():
 
         where_clause = " AND ".join(filter_conds)
         base_from = """FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id"""
 
         # Total count
@@ -3582,7 +3582,7 @@ def api_historico_sector_evolution():
                    MEDIAN(cfh.{metric}) AS med_value,
                    COUNT(*) AS n
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cfh.period_type = 'annual'
               AND cbd.yahoo_sector IS NOT NULL
               AND cfh.{metric} IS NOT NULL
@@ -3672,7 +3672,7 @@ def api_historico_sectors_list():
         cur = conn.execute("""
             SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.yahoo_code) AS n
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cbd.yahoo_sector IS NOT NULL AND cfh.period_type = 'annual'
             GROUP BY cbd.yahoo_sector ORDER BY n DESC
         """)
@@ -3755,7 +3755,7 @@ def api_historico_drill_companies():
         count_query = f"""
             SELECT COUNT(DISTINCT cfh.yahoo_code)
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             {where}
         """
         cur = conn.execute(count_query, params)
@@ -3771,7 +3771,7 @@ def api_historico_drill_companies():
                    MIN(cfh.fiscal_year) AS min_year,
                    MAX(cfh.fiscal_year) AS max_year
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             {where}
             GROUP BY cfh.yahoo_code
@@ -3830,7 +3830,7 @@ def api_historico_drill_year_detail():
             SELECT cfh.yahoo_code, cfh.company_name, cfh.{metric} AS value,
                    cbd.yahoo_sector, cbd.yahoo_country, cfh.original_currency
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cfh.yahoo_code IN ({placeholders})
               AND cfh.fiscal_year = ?
               AND cfh.period_type = 'annual'
@@ -3908,7 +3908,7 @@ def api_historico_consolidated():
                 SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
                        dg.sub_group AS damodaran_region
                 FROM company_financials_historical cfh
-                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.yahoo_code IN ({placeholders})
                 ORDER BY cfh.fiscal_year, cfh.yahoo_code
@@ -3919,7 +3919,7 @@ def api_historico_consolidated():
                 SELECT cfh.*, cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country,
                        dg.sub_group AS damodaran_region
                 FROM company_financials_historical cfh
-                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.yahoo_code IN ({placeholders}) AND cfh.period_type = ?
                 ORDER BY cfh.fiscal_year, cfh.yahoo_code
@@ -4106,7 +4106,7 @@ def api_analise_setor_filters():
         cur.execute("""
             SELECT cbd.yahoo_sector, COUNT(DISTINCT cfh.company_basic_data_id) AS n
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cbd.yahoo_sector IS NOT NULL AND cfh.period_type = 'annual'
             GROUP BY cbd.yahoo_sector ORDER BY n DESC
         """)
@@ -4116,7 +4116,7 @@ def api_analise_setor_filters():
         cur.execute("""
             SELECT cbd.yahoo_country, COUNT(DISTINCT cfh.company_basic_data_id) AS n
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cbd.yahoo_country IS NOT NULL AND cbd.yahoo_country != '' AND cfh.period_type = 'annual'
             GROUP BY cbd.yahoo_country ORDER BY n DESC
         """)
@@ -4146,7 +4146,7 @@ def api_analise_setor_filters():
         cur.execute("""
             SELECT dg.sic_desc, COUNT(DISTINCT cfh.company_basic_data_id) AS n
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             JOIN damodaran_global dg ON dg.ticker = cbd.ticker
             WHERE dg.sic_desc IS NOT NULL AND dg.sic_desc != '' AND cfh.period_type = 'annual'
             GROUP BY dg.sic_desc ORDER BY n DESC
@@ -4256,7 +4256,7 @@ def api_analise_setor_data():
                    COUNT(*) AS num_records,
                    {metric_sql}
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             {sic_join}
             WHERE {where}
             GROUP BY {group_col}, cfh.fiscal_year
@@ -4386,7 +4386,7 @@ def api_analise_setor_detail():
 
         # Total count
         count_q = f"""SELECT COUNT(*) FROM company_financials_historical cfh
-                      JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                      JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                       {sic_join_detail}
                       WHERE {where}"""
         total = conn.execute(count_q, params).fetchone()[0]
@@ -4397,7 +4397,7 @@ def api_analise_setor_detail():
         query = f"""
             SELECT cfh.yahoo_code, cfh.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
                    cbd.yahoo_country, cfh.fiscal_year, cfh.original_currency,
-                   cfh.total_revenue, cfh.ebit, cfh.ebitda, cfh.net_income,
+                   cfh.total_revenue, cfh.ebit, COALESCE(cfh.normalized_ebitda, cfh.ebitda) AS ebitda, cfh.net_income,
                    cfh.free_cash_flow, cfh.total_debt, cfh.stockholders_equity,
                    cfh.enterprise_value_estimated, cfh.market_cap_estimated,
                    cfh.total_revenue_usd, cfh.ebit_usd, cfh.ebitda_usd,
@@ -4407,7 +4407,7 @@ def api_analise_setor_detail():
                    cfh.debt_equity, cfh.debt_ebitda, cfh.capex_revenue,
                    cfh.fcf_revenue_ratio, cfh.interest_expense, cfh.tax_provision
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             {sic_join_detail}
             WHERE {where}
             ORDER BY {sort_col} {order_dir} NULLS LAST
@@ -5260,17 +5260,17 @@ def api_estudoanloc_cross_sector():
                            q.total_revenue_ttm AS revenue,
                            q.ebitda_ttm AS ebitda,
                            q.free_cash_flow_ttm AS fcf,
-                           cbd.enterprise_value AS ev,
-                           CASE WHEN q.fx_rate_to_usd > 0 THEN cbd.enterprise_value * q.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           q.enterprise_value_estimated AS ev,
+                           q.enterprise_value_usd AS ev_usd,
                            'TTM' AS src
                     FROM company_financials_historical q
-                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON q.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                     WHERE q.period_type = 'quarterly'
                       AND q.ttm_quarters_count >= 4
                       AND q.total_revenue_ttm IS NOT NULL
                       AND q.ebitda_ttm IS NOT NULL
-                      AND cbd.enterprise_value IS NOT NULL
+                      AND q.enterprise_value_estimated IS NOT NULL
                       AND cbd.yahoo_sector IS NOT NULL
                       AND q.id IN (
                           SELECT MAX(q2.id) FROM company_financials_historical q2
@@ -5286,15 +5286,15 @@ def api_estudoanloc_cross_sector():
                            cfh.total_revenue AS revenue,
                            cfh.normalized_ebitda AS ebitda,
                            cfh.free_cash_flow AS fcf,
-                           cbd.enterprise_value AS ev,
-                           CASE WHEN cfh.fx_rate_to_usd > 0 THEN cbd.enterprise_value * cfh.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           cfh.enterprise_value_estimated AS ev,
+                           cfh.enterprise_value_usd AS ev_usd,
                            'Annual' AS src
                     FROM company_financials_historical cfh
-                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                     WHERE cfh.period_type = 'annual'
                       AND cfh.fiscal_year = ?
-                      AND cbd.enterprise_value IS NOT NULL
+                      AND cfh.enterprise_value_estimated IS NOT NULL
                       AND cbd.yahoo_sector IS NOT NULL
                       AND cfh.total_revenue IS NOT NULL
                       AND cfh.normalized_ebitda IS NOT NULL
@@ -5318,7 +5318,7 @@ def api_estudoanloc_cross_sector():
                        cfh.enterprise_value_usd AS ev_usd,
                        'Annual' AS src
                 FROM company_financials_historical cfh
-                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.period_type = 'annual'
                   AND cfh.fiscal_year = ?
@@ -5492,7 +5492,7 @@ def api_estudoanloc_calculate():
         if is_current_multiples:
             # --- MODO MÚLTIPLOS ATUAIS (FY corrente/futuro) ---
             # Financeiros: TTM mais recente (Q2025/Q2026) || Annual do ano anterior
-            # EV: cbd.enterprise_value (EV de mercado atual)
+            # EV: cfh.enterprise_value_estimated (mesma moeda que financials)
             # 1a) TTM: busca último quarterly com TTM completo (fiscal_year mais recente)
             params_ttm = [min_ttm_quarters, sector]
             if selected_industries:
@@ -5519,20 +5519,18 @@ def api_estudoanloc_calculate():
                        q.ebitda_ttm AS ebitda,
                        q.ebitda_ttm AS ebitda_raw,
                        q.free_cash_flow_ttm AS fcf,
-                       cbd.enterprise_value AS ev,
-                       CASE WHEN q.fx_rate_to_usd IS NOT NULL AND q.fx_rate_to_usd > 0
-                            THEN cbd.enterprise_value * q.fx_rate_to_usd
-                            ELSE NULL END AS ev_usd,
+                       q.enterprise_value_estimated AS ev,
+                       q.enterprise_value_usd AS ev_usd,
                        q.total_revenue_usd AS revenue_usd,
                        q.ebitda_usd AS ebitda_usd,
                        q.free_cash_flow_usd AS fcf_usd,
                        'Current+TTM' AS data_source
                 FROM company_financials_historical q
                 JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
-                JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON q.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE q.period_type = 'quarterly'
-                  AND cbd.enterprise_value IS NOT NULL
+                  AND q.enterprise_value_estimated IS NOT NULL
                   {industry_filter}
             """
             df_ttm = pd.read_sql_query(ttm_sql, conn, params=params_ttm)
@@ -5552,23 +5550,20 @@ def api_estudoanloc_calculate():
                        dg.sub_group AS region,
                        cfh.total_revenue AS revenue,
                        cfh.normalized_ebitda AS ebitda,
-                       cfh.ebitda AS ebitda_raw,
                        cfh.free_cash_flow AS fcf,
-                       cbd.enterprise_value AS ev,
-                       CASE WHEN cfh.fx_rate_to_usd IS NOT NULL AND cfh.fx_rate_to_usd > 0
-                            THEN cbd.enterprise_value * cfh.fx_rate_to_usd
-                            ELSE NULL END AS ev_usd,
+                       cfh.enterprise_value_estimated AS ev,
+                       cfh.enterprise_value_usd AS ev_usd,
                        cfh.total_revenue_usd AS revenue_usd,
                        cfh.ebitda_usd AS ebitda_usd,
                        cfh.free_cash_flow_usd AS fcf_usd,
                        'Current+FY{prev_year}' AS data_source
                 FROM company_financials_historical cfh
-                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.period_type = 'annual'
                   AND cfh.fiscal_year = ?
                   AND cbd.yahoo_sector = ?
-                  AND cbd.enterprise_value IS NOT NULL
+                  AND cfh.enterprise_value_estimated IS NOT NULL
                   {industry_filter}
             """
             df_annual = pd.read_sql_query(annual_sql, conn, params=params_annual)
@@ -5590,7 +5585,6 @@ def api_estudoanloc_calculate():
                        dg.sub_group AS region,
                        cfh.total_revenue AS revenue,
                        cfh.normalized_ebitda AS ebitda,
-                       cfh.ebitda AS ebitda_raw,
                        cfh.free_cash_flow AS fcf,
                        cfh.enterprise_value_estimated AS ev,
                        cfh.enterprise_value_usd AS ev_usd,
@@ -5599,7 +5593,7 @@ def api_estudoanloc_calculate():
                        cfh.free_cash_flow_usd AS fcf_usd,
                        'Annual' AS data_source
                 FROM company_financials_historical cfh
-                JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cfh.period_type = 'annual'
                   AND cfh.fiscal_year = ?
@@ -5642,7 +5636,7 @@ def api_estudoanloc_calculate():
                            'TTM' AS data_source
                     FROM company_financials_historical q
                     JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
-                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON q.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                     WHERE q.period_type = 'quarterly'
                       AND q.fiscal_year = ?
@@ -5954,15 +5948,14 @@ def api_estudoanloc_evolution():
                     SELECT q.company_basic_data_id AS cid,
                            cbd.yahoo_country AS country, dg.sub_group AS region,
                            q.total_revenue_ttm AS revenue, q.ebitda_ttm AS ebitda,
-                           q.free_cash_flow_ttm AS fcf, cbd.enterprise_value AS ev,
-                           CASE WHEN q.fx_rate_to_usd IS NOT NULL AND q.fx_rate_to_usd > 0
-                                THEN cbd.enterprise_value * q.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           q.free_cash_flow_ttm AS fcf, q.enterprise_value_estimated AS ev,
+                           q.enterprise_value_usd AS ev_usd,
                            'Current+TTM' AS data_source
                     FROM company_financials_historical q
                     JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
-                    JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON q.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
-                    WHERE q.period_type = 'quarterly' AND cbd.enterprise_value IS NOT NULL
+                    WHERE q.period_type = 'quarterly' AND q.enterprise_value_estimated IS NOT NULL
                     {industry_filter}
                 """
                 df_t = pd.read_sql_query(ttm_evo_sql, conn, params=params_ttm_evo)
@@ -5976,15 +5969,14 @@ def api_estudoanloc_evolution():
                     SELECT cfh.company_basic_data_id AS cid,
                            cbd.yahoo_country AS country, dg.sub_group AS region,
                            cfh.total_revenue AS revenue, cfh.normalized_ebitda AS ebitda,
-                           cfh.free_cash_flow AS fcf, cbd.enterprise_value AS ev,
-                           CASE WHEN cfh.fx_rate_to_usd IS NOT NULL AND cfh.fx_rate_to_usd > 0
-                                THEN cbd.enterprise_value * cfh.fx_rate_to_usd ELSE NULL END AS ev_usd,
+                           cfh.free_cash_flow AS fcf, cfh.enterprise_value_estimated AS ev,
+                           cfh.enterprise_value_usd AS ev_usd,
                            'Current+FY{prev_year}' AS data_source
                     FROM company_financials_historical cfh
-                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                     WHERE cfh.period_type = 'annual' AND cfh.fiscal_year = ? AND cbd.yahoo_sector = ?
-                      AND cbd.enterprise_value IS NOT NULL
+                      AND cfh.enterprise_value_estimated IS NOT NULL
                     {industry_filter}
                 """
                 df_a = pd.read_sql_query(annual_evo_sql, conn, params=params_a_evo)
@@ -6003,7 +5995,7 @@ def api_estudoanloc_evolution():
                            cfh.free_cash_flow AS fcf, cfh.enterprise_value_estimated AS ev,
                            cfh.enterprise_value_usd AS ev_usd, 'Annual' AS data_source
                     FROM company_financials_historical cfh
-                    JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+                    JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
                     LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                     WHERE cfh.period_type = 'annual' AND cfh.fiscal_year = ? AND cbd.yahoo_sector = ?
                     {industry_filter}
@@ -6033,7 +6025,7 @@ def api_estudoanloc_evolution():
                                q.enterprise_value_usd AS ev_usd, 'TTM' AS data_source
                         FROM company_financials_historical q
                         JOIN latest_q lq ON q.company_basic_data_id = lq.cid AND q.period_date = lq.max_date
-                        JOIN company_basic_data cbd ON q.company_basic_data_id = cbd.id
+                        JOIN company_basic_data cbd ON q.yahoo_code = cbd.yahoo_code
                         LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                         WHERE q.period_type = 'quarterly' AND q.fiscal_year = ? AND q.ttm_quarters_count >= ?
                         {industry_filter}
@@ -6122,7 +6114,7 @@ def api_estudoanloc_company_detail():
         # Histórico anual
         annual_rows = conn.execute("""
             SELECT cfh.fiscal_year,
-                   cfh.total_revenue, cfh.ebitda, cfh.normalized_ebitda, cfh.free_cash_flow,
+                   cfh.total_revenue, COALESCE(cfh.normalized_ebitda, cfh.ebitda) AS ebitda, cfh.free_cash_flow,
                    cfh.enterprise_value_estimated AS ev, cfh.enterprise_value_usd AS ev_usd,
                    cfh.total_revenue_usd, cfh.ebitda_usd, cfh.free_cash_flow_usd,
                    cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents AS total_cash
@@ -6131,7 +6123,7 @@ def api_estudoanloc_company_detail():
             ORDER BY cfh.fiscal_year
         """, [cid]).fetchall()
 
-        annual_cols = ['fiscal_year', 'revenue', 'ebitda', 'normalized_ebitda', 'fcf',
+        annual_cols = ['fiscal_year', 'revenue', 'ebitda', 'fcf',
                        'ev', 'ev_usd', 'revenue_usd', 'ebitda_usd', 'fcf_usd',
                        'net_income', 'total_debt', 'total_cash']
         annual = []
@@ -6140,7 +6132,7 @@ def api_estudoanloc_company_detail():
             # Calcular múltiplos
             ev = d['ev']
             rev = d['revenue']
-            ebitda = d['normalized_ebitda'] or d['ebitda']
+            ebitda = d['ebitda']
             fcf = d['fcf']
             d['ev_ebitda'] = round(ev / ebitda, 2) if ev and ebitda and ebitda > 0 else None
             d['ev_revenue'] = round(ev / rev, 2) if ev and rev and rev > 0 else None
@@ -6225,7 +6217,7 @@ def api_estudoanloc_companies_multiyear():
                    cfh.total_revenue_usd AS revenue_usd,
                    cfh.ebitda_usd, cfh.free_cash_flow_usd AS fcf_usd
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             WHERE cfh.period_type = 'annual'
               AND cbd.yahoo_sector = ?
@@ -6342,7 +6334,7 @@ def api_estudoanloc_companies_full():
                    cfh.enterprise_value_usd AS ev_usd,
                    cfh.fx_rate_to_usd
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             WHERE cfh.period_type = 'annual'
               AND cbd.yahoo_sector = ?
@@ -6396,7 +6388,7 @@ def api_estudoanloc_companies_full():
                    cfh.enterprise_value_usd AS ev_usd,
                    cfh.fx_rate_to_usd
             FROM company_financials_historical cfh
-            JOIN company_basic_data cbd ON cfh.company_basic_data_id = cbd.id
+            JOIN company_basic_data cbd ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             WHERE cfh.period_type = 'quarterly'
               AND cbd.yahoo_sector = ?
@@ -6730,17 +6722,17 @@ def api_estudoanloc_insights_llm():
                 SELECT cbd.id as company_id, cbd.ticker, cbd.company_name, cbd.yahoo_sector,
                        cbd.yahoo_industry, cbd.yahoo_country as country,
                        COALESCE(dg.sub_group, 'Other') as region,
-                       cbd.enterprise_value as ev,
+                       cfh.enterprise_value_estimated as ev,
                        cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
                        cfh.free_cash_flow as fcf,
                        cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents as cash,
                        cfh.fiscal_year, cfh.period_type
                 FROM company_basic_data cbd
-                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cbd.yahoo_sector = ?
-                  AND cbd.enterprise_value IS NOT NULL
-                  AND cbd.enterprise_value > 0
+                  AND cfh.enterprise_value_estimated IS NOT NULL
+                  AND cfh.enterprise_value_estimated > 0
                   AND cfh.total_revenue IS NOT NULL
                   AND cfh.total_revenue > 0
                   AND (cfh.period_type = 'annual' OR (cfh.period_type = 'annual' AND cfh.fiscal_year = ?))
@@ -6757,7 +6749,7 @@ def api_estudoanloc_insights_llm():
                        cfh.net_income, cfh.total_debt, cfh.cash_and_equivalents as cash,
                        cfh.fiscal_year, cfh.period_type
                 FROM company_basic_data cbd
-                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cbd.yahoo_sector = ?
                   AND cfh.fiscal_year = ?
@@ -6957,7 +6949,7 @@ def api_estudoanloc_evolution_data():
                        cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
                        cfh.free_cash_flow as fcf
                 FROM company_basic_data cbd
-                JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
                 LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
                 WHERE cbd.yahoo_sector = ?
                   AND cfh.fiscal_year = ?
@@ -7334,14 +7326,14 @@ def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max
             SELECT cbd.id as company_id, cbd.ticker, cbd.company_name,
                    cbd.yahoo_sector, cbd.yahoo_industry, cbd.yahoo_country as country,
                    COALESCE(dg.sub_group, 'Other') as region,
-                   cbd.enterprise_value as ev,
+                   cfh.enterprise_value_estimated as ev,
                    cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
                    cfh.free_cash_flow as fcf, cfh.period_type
             FROM company_basic_data cbd
-            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             WHERE cbd.yahoo_sector = ?
-              AND cbd.enterprise_value IS NOT NULL AND cbd.enterprise_value > 0
+              AND cfh.enterprise_value_estimated IS NOT NULL AND cfh.enterprise_value_estimated > 0
               AND cfh.total_revenue IS NOT NULL AND cfh.total_revenue > 0
               AND (cfh.period_type = 'annual' OR (cfh.period_type = 'annual' AND cfh.fiscal_year = ?))
         """
@@ -7355,7 +7347,7 @@ def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max
                    cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
                    cfh.free_cash_flow as fcf, cfh.period_type
             FROM company_basic_data cbd
-            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
             LEFT JOIN damodaran_global dg ON cbd.damodaran_company_id = dg.id
             WHERE cbd.yahoo_sector = ?
               AND cfh.fiscal_year = ? AND cfh.period_type = 'annual'
@@ -7535,15 +7527,16 @@ def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max
 
 
 def _report_evolution_sector(conn, sector, year_start=2021, year_end=2025, min_ev=100_000_000, max_ev_ebitda=60):
-    """Calcula evolução temporal de múltiplos para um setor (Global, LATAM, Brasil)."""
+    """Calcula evolução temporal de múltiplos para um setor (Global, LATAM, Brasil) + por indústria."""
     results = []
     for yr in range(year_start, year_end + 1):
         query = """
             SELECT cbd.id as company_id, cbd.yahoo_country as country,
+                   cbd.yahoo_industry as industry,
                    cfh.enterprise_value_estimated as ev,
                    cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda
             FROM company_basic_data cbd
-            JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+            JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
             WHERE cbd.yahoo_sector = ? AND cfh.fiscal_year = ? AND cfh.period_type = 'annual'
               AND cfh.enterprise_value_estimated > 0 AND cfh.total_revenue > 0
         """
@@ -7570,6 +7563,17 @@ def _report_evolution_sector(conn, sector, year_start=2021, year_end=2025, min_e
                        'ev_revenue': _med(df[df['country'] == 'Brazil'], 'ev_revenue'),
                        'n': len(df[df['country'] == 'Brazil'])}
         }
+        # Por indústria
+        by_industry = {}
+        for ind in df['industry'].dropna().unique():
+            sub = df[df['industry'] == ind]
+            if len(sub) >= 2:
+                by_industry[ind] = {
+                    'ev_ebitda': _med(sub, 'ev_ebitda'),
+                    'ev_revenue': _med(sub, 'ev_revenue'),
+                    'n': len(sub)
+                }
+        yr_data['by_industry'] = by_industry
         results.append(yr_data)
     return results
 
@@ -7629,6 +7633,154 @@ def api_estudoanloc_relatorio_sectors_industries():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/estudoanloc/relatorio/companies_detail', methods=['POST'])
+def api_estudoanloc_relatorio_companies_detail():
+    """Retorna dados no nível empresa para drill-down e export detalhado.
+    Campos retornados: somente os exibidos no estudo (ticker, empresa, indústria, país, múltiplos)."""
+    try:
+        data = request.get_json() or {}
+        sector = data.get('sector', '')
+        industry = data.get('industry', '')
+        country = data.get('country', '')
+        fiscal_year = int(data.get('fiscal_year', datetime.now().year))
+        filters = data.get('filters', {})
+        # Setores específicos (lista) ou '*' para todos
+        sectors_list = data.get('sectors', [])
+        all_sectors = (sector == '*' or bool(sectors_list))
+
+        min_ev = float(filters.get('min_ev', 100_000_000))
+        max_ev_ebitda = float(filters.get('max_ev_ebitda', 60))
+        require_positive_ebitda = filters.get('require_positive_ebitda', True)
+        selected_industries = filters.get('selected_industries')
+        manual_excluded = filters.get('manual_excluded_tickers', [])
+
+        conn = get_db()
+        current_year = datetime.now().year
+        is_current = (fiscal_year >= current_year)
+
+        # ev, revenue, ebitda necessários para cálculo dos múltiplos mas NÃO exportados
+        if is_current:
+            query = """
+                SELECT cbd.ticker, cbd.company_name,
+                       cbd.yahoo_sector as sector,
+                       cbd.yahoo_industry, cbd.yahoo_country as country,
+                       cfh.enterprise_value_estimated as ev,
+                       cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                       cfh.period_type
+                FROM company_basic_data cbd
+                JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
+                WHERE cfh.enterprise_value_estimated IS NOT NULL AND cfh.enterprise_value_estimated > 0
+                  AND cfh.total_revenue IS NOT NULL AND cfh.total_revenue > 0
+                  AND (cfh.period_type = 'annual' OR (cfh.period_type = 'annual' AND cfh.fiscal_year = ?))
+            """
+            params = [fiscal_year - 1]
+            if all_sectors and sectors_list:
+                placeholders = ','.join(['?'] * len(sectors_list))
+                query += f" AND cbd.yahoo_sector IN ({placeholders})"
+                params.extend(sectors_list)
+            elif not all_sectors and sector:
+                query += " AND cbd.yahoo_sector = ?"
+                params.append(sector)
+            elif not all_sectors and not sector:
+                return jsonify({'success': False, 'error': 'Setor obrigatório'}), 400
+        else:
+            query = """
+                SELECT cbd.ticker, cbd.company_name,
+                       cbd.yahoo_sector as sector,
+                       cbd.yahoo_industry, cbd.yahoo_country as country,
+                       cfh.enterprise_value_estimated as ev,
+                       cfh.total_revenue as revenue, cfh.normalized_ebitda as ebitda,
+                       cfh.period_type
+                FROM company_basic_data cbd
+                JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
+                WHERE cfh.fiscal_year = ? AND cfh.period_type = 'annual'
+                  AND cfh.enterprise_value_estimated IS NOT NULL AND cfh.enterprise_value_estimated > 0
+                  AND cfh.total_revenue IS NOT NULL AND cfh.total_revenue > 0
+            """
+            params = [fiscal_year]
+            if all_sectors and sectors_list:
+                placeholders = ','.join(['?'] * len(sectors_list))
+                query += f" AND cbd.yahoo_sector IN ({placeholders})"
+                params.extend(sectors_list)
+            elif not all_sectors and sector:
+                query += " AND cbd.yahoo_sector = ?"
+                params.append(sector)
+            elif not all_sectors and not sector:
+                return jsonify({'success': False, 'error': 'Setor obrigatório'}), 400
+
+        df = pd.read_sql_query(query, conn, params=params)
+        if df.empty:
+            return jsonify({'success': True, 'companies': [], 'total': 0})
+
+        if is_current:
+            type_priority = {'quarterly': 0, 'annual': 1}
+            df['_prio'] = df['period_type'].map(type_priority).fillna(2)
+            df = df.sort_values('_prio').drop_duplicates(subset=['ticker'], keep='first').drop(columns=['_prio'])
+
+        # Aplicar mesmos filtros do relatório
+        if selected_industries:
+            df = df[df['yahoo_industry'].isin(selected_industries)]
+        if manual_excluded:
+            manual_set = set(t.upper().strip() for t in manual_excluded)
+            def _not_excluded(t):
+                t_upper = t.upper().strip()
+                if t_upper in manual_set:
+                    return False
+                if ':' in t_upper and t_upper.split(':', 1)[1] in manual_set:
+                    return False
+                return True
+            df = df[df['ticker'].apply(_not_excluded)]
+        if min_ev:
+            df = df[df['ev'] >= min_ev]
+
+        # Calcular múltiplos
+        df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
+        df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+
+        if require_positive_ebitda:
+            df = df[(df['ebitda'] > 0) & df['ebitda'].notna()]
+
+        if max_ev_ebitda:
+            df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+
+        # Filtrar por indústria específica (drill-down)
+        if industry:
+            df = df[df['yahoo_industry'] == industry]
+
+        # Filtrar por país (drill-down geográfico)
+        if country:
+            df = df[df['country'] == country]
+
+        df = df.sort_values('ev', ascending=False)
+
+        # Retornar APENAS campos exibidos no estudo
+        companies = []
+        for _, row in df.iterrows():
+            c = {
+                'ticker': row['ticker'],
+                'company_name': row['company_name'],
+                'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''),
+                'ev_ebitda': round(float(row['ev_ebitda']), 2) if pd.notna(row.get('ev_ebitda')) else None,
+                'ev_revenue': round(float(row['ev_revenue']), 2) if pd.notna(row.get('ev_revenue')) else None,
+            }
+            if all_sectors:
+                c['sector'] = row.get('sector', '')
+            companies.append(c)
+
+        return jsonify({
+            'success': True,
+            'companies': companies,
+            'total': len(companies),
+            'sector': sector,
+            'industry': industry or 'Todas',
+            'country': country or 'Global'
+        })
+    except Exception as e:
+        logger.error(f"Erro companies_detail: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/estudoanloc/relatorio/company_lookup', methods=['POST'])
 def api_estudoanloc_relatorio_company_lookup():
     """Busca dados detalhados de empresas para o chat do relatório."""
@@ -7650,22 +7802,22 @@ def api_estudoanloc_relatorio_company_lookup():
             where_clause = ' OR '.join(f'({c})' for c in conditions)
             rows = conn.execute(f"""
                 SELECT cbd.ticker, cbd.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
-                       cbd.yahoo_country, cbd.enterprise_value, cbd.market_cap,
+                       cbd.yahoo_country, cfh.enterprise_value_estimated, cbd.market_cap,
                        cfh.total_revenue, cfh.normalized_ebitda, cfh.free_cash_flow,
                        cfh.period_type, cfh.fiscal_year
                 FROM company_basic_data cbd
-                LEFT JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
                 WHERE ({where_clause})
                 ORDER BY cfh.fiscal_year DESC
             """, params_list).fetchall()
         elif search_term:
             rows = conn.execute("""
                 SELECT cbd.ticker, cbd.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
-                       cbd.yahoo_country, cbd.enterprise_value, cbd.market_cap,
+                       cbd.yahoo_country, cfh.enterprise_value_estimated, cbd.market_cap,
                        cfh.total_revenue, cfh.normalized_ebitda, cfh.free_cash_flow,
                        cfh.period_type, cfh.fiscal_year
                 FROM company_basic_data cbd
-                LEFT JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                LEFT JOIN company_financials_historical cfh ON cfh.yahoo_code = cbd.yahoo_code
                 WHERE (cbd.ticker LIKE ? OR cbd.company_name LIKE ?)
                 ORDER BY cfh.fiscal_year DESC
                 LIMIT 50
@@ -7835,9 +7987,10 @@ def api_estudoanloc_generate_report():
             narratives_json = json_mod.dumps(llm_narratives, ensure_ascii=False) if llm_narratives else None
             graph_json = json_mod.dumps(graph_comments, ensure_ascii=False) if graph_comments else None
             excluded_json = json_mod.dumps(all_excluded, ensure_ascii=False) if all_excluded else None
+            filters_json = json_mod.dumps(report['metadata'].get('filters_applied', {}), ensure_ascii=False)
             cache_conn.execute(
-                "INSERT INTO report_cache (generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, excluded_tickers) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (generated_at, fiscal_year, quarter, report_data_json, narratives_json, graph_json, excluded_json)
+                "INSERT INTO report_cache (generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, excluded_tickers, filters_applied) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (generated_at, fiscal_year, quarter, report_data_json, narratives_json, graph_json, excluded_json, filters_json)
             )
             cache_conn.commit()
             # Recuperar o ID do cache inserido
@@ -7855,90 +8008,144 @@ def api_estudoanloc_generate_report():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def _validate_and_tag_urls(data_dict):
-    """Valida URLs nas narrativas/comentários gerados pela LLM.
-    Marca URLs com 'validated' e 'status' para cada fonte.
-    Remove URLs inválidas (não-HTTP) e sinaliza as que falham."""
-    import concurrent.futures
-    import urllib.request
-    import urllib.error
+def _load_curated_sources():
+    """Carrega catálogo de fontes curadas com URLs verificadas."""
+    import json as json_mod
+    catalog_path = os.path.join(os.path.dirname(__file__), 'data', 'curated_sources.json')
+    try:
+        with open(catalog_path, 'r', encoding='utf-8') as f:
+            catalog = json_mod.load(f)
+        return catalog.get('sources', {}), catalog.get('domain_fallbacks', {})
+    except Exception as e:
+        logger.warning(f"Falha ao carregar catálogo de fontes: {e}")
+        return {}, {}
 
-    TRUSTED_DOMAINS = {
-        'bcb.gov.br', 'gov.br', 'federalreserve.gov', 'sec.gov', 'imf.org',
-        'worldbank.org', 'bloomberg.com', 'reuters.com', 'spglobal.com',
-        'moodys.com', 'fitchratings.com', 'ibge.gov.br', 'cvm.gov.br',
-        'b3.com.br', 'anbima.com.br', 'economist.com', 'ft.com',
-        'wsj.com', 'cnbc.com', 'valor.globo.com', 'infomoney.com.br',
-        'tradingeconomics.com', 'statista.com', 'mckinsey.com',
-        'deloitte.com', 'pwc.com', 'ey.com', 'kpmg.com',
-        'damodaran.com', 'pages.stern.nyu.edu', 'yahoo.com',
-        'ipea.gov.br', 'reit.com', 'refinitiv.com', 'iea.org',
-        'oecd.org', 'bis.org', 'goldmansachs.com', 'morganstanley.com',
-    }
 
-    # Collect all fonte arrays from the dict
+def _normalize_source_name(name):
+    """Normaliza nome de fonte para matching flexível."""
+    import re
+    import unicodedata
+    if not name:
+        return ''
+    # Remove acentos
+    n = unicodedata.normalize('NFKD', name)
+    n = ''.join(c for c in n if not unicodedata.combining(c))
+    n = n.strip().lower()
+    n = re.sub(r'\s*[-–—]\s*', ' - ', n)
+    n = re.sub(r'\s+', ' ', n)
+    return n
+
+
+def _find_curated_match(nome, url, sources_catalog, domain_fallbacks):
+    """Tenta encontrar fonte no catálogo curado.
+    Retorna (url_resolvida, trusted, source) ou (None, False, None)."""
+    from urllib.parse import urlparse
+
+    nome_norm = _normalize_source_name(nome)
+
+    # 1) Match exato por nome
+    for cat_name, cat_info in sources_catalog.items():
+        if _normalize_source_name(cat_name) == nome_norm:
+            return cat_info['url'], True, cat_name
+
+    # 2) Match parcial (nome contém ou é contido no catálogo)
+    for cat_name, cat_info in sources_catalog.items():
+        cn = _normalize_source_name(cat_name)
+        if len(nome_norm) > 3 and len(cn) > 3:
+            if nome_norm in cn or cn in nome_norm:
+                return cat_info['url'], True, cat_name
+
+    # 3) Fallback por domínio da URL original (se a IA inventou o path)
+    if url and url.startswith('http'):
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower().lstrip('www.')
+            for fb_domain, fb_url in domain_fallbacks.items():
+                if domain.endswith(fb_domain) or fb_domain.endswith(domain):
+                    return fb_url, True, None
+        except Exception:
+            pass
+
+    return None, False, None
+
+
+def _resolve_and_validate_urls(data_dict):
+    """Resolve URLs das fontes usando catálogo curado.
+    - Fontes com match no catálogo recebem URL verificada
+    - Fontes sem match: URL removida, mantém só o nome
+    - Marca cada fonte com _verified (catálogo) e _status"""
+    sources_catalog, domain_fallbacks = _load_curated_sources()
+
+    # Coletar todos os arrays de fontes
     fonte_arrays = []
     fonte_keys = [k for k in data_dict.keys() if 'fontes' in k.lower() and isinstance(data_dict[k], list)]
     for k in fonte_keys:
         fonte_arrays.append((k, data_dict[k]))
 
-    # Also check destaques_setoriais fontes
     if 'destaques_setoriais' in data_dict and isinstance(data_dict['destaques_setoriais'], list):
         for i, d in enumerate(data_dict['destaques_setoriais']):
             if isinstance(d, dict) and 'fontes' in d and isinstance(d['fontes'], list):
                 fonte_arrays.append((f'destaques_setoriais[{i}].fontes', d['fontes']))
 
-    # Flatten all URLs
-    all_urls = []
+    stats = {'curated': 0, 'domain_fallback': 0, 'unverified': 0, 'total': 0}
+
     for key, arr in fonte_arrays:
-        for j, f in enumerate(arr):
-            if isinstance(f, dict) and f.get('url', '').startswith('http'):
-                all_urls.append((key, j, f))
+        for f in arr:
+            if not isinstance(f, dict):
+                continue
+            stats['total'] += 1
+            nome = f.get('nome', f.get('name', ''))
+            url_original = f.get('url', '')
 
-    if not all_urls:
-        return data_dict
+            resolved_url, trusted, matched_name = _find_curated_match(
+                nome, url_original, sources_catalog, domain_fallbacks
+            )
 
-    def check_url(info):
-        key, idx, fonte = info
-        url = fonte.get('url', '')
-        try:
-            from urllib.parse import urlparse
-            parsed = urlparse(url)
-            domain = parsed.netloc.lower()
-            trusted = any(domain.endswith(td) for td in TRUSTED_DOMAINS)
-        except Exception:
-            trusted = False
+            if resolved_url and matched_name:
+                # Match direto no catálogo
+                f['url'] = resolved_url
+                f['_verified'] = True
+                f['_status'] = 'curated'
+                f['_trusted'] = True
+                stats['curated'] += 1
+            elif resolved_url:
+                # Fallback por domínio → usar URL raiz do domínio
+                f['url'] = resolved_url
+                f['_verified'] = False
+                f['_status'] = 'domain_fallback'
+                f['_trusted'] = True
+                stats['domain_fallback'] += 1
+            else:
+                # Sem match → remover URL inventada, manter só o nome
+                f['url'] = ''
+                f['_verified'] = False
+                f['_status'] = 'unverified'
+                f['_trusted'] = False
+                stats['unverified'] += 1
 
-        try:
-            req = urllib.request.Request(url, method='HEAD',
-                headers={'User-Agent': 'AnlocLinkValidator/1.0'})
-            with urllib.request.urlopen(req, timeout=8) as resp:
-                status = 'ok' if resp.status < 400 else 'error'
-        except urllib.error.HTTPError as e:
-            status = 'blocked' if e.code in (403, 405, 406) else 'error'
-        except Exception:
-            status = 'unreachable'
+    # Também processar citações de especialistas
+    if 'citacoes_especialistas' in data_dict and isinstance(data_dict['citacoes_especialistas'], list):
+        for cit in data_dict['citacoes_especialistas']:
+            if isinstance(cit, dict) and cit.get('url'):
+                nome_cit = cit.get('autor', '') + ' ' + cit.get('cargo', '')
+                resolved_url, trusted, _ = _find_curated_match(
+                    nome_cit, cit['url'], sources_catalog, domain_fallbacks
+                )
+                if resolved_url:
+                    cit['url'] = resolved_url
+                else:
+                    cit['url'] = ''
 
-        fonte['_validated'] = True
-        fonte['_status'] = status
-        fonte['_trusted'] = trusted
-        return (key, idx, status, trusted)
-
-    # Validate in parallel (max 8 workers, timeout-safe)
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-            futures = [executor.submit(check_url, u) for u in all_urls]
-            concurrent.futures.wait(futures, timeout=30)
-    except Exception as e:
-        logger.warning(f"URL validation partial failure: {e}")
-
-    # Count results for logging
-    total = len(all_urls)
-    ok = sum(1 for _, arr in fonte_arrays for f in arr if isinstance(f, dict) and f.get('_status') == 'ok')
-    errors = sum(1 for _, arr in fonte_arrays for f in arr if isinstance(f, dict) and f.get('_status') in ('error', 'unreachable'))
-    logger.info(f"URL validation: {ok}/{total} OK, {errors} errors")
+    logger.info(f"Source resolution: {stats['curated']} curated, "
+                f"{stats['domain_fallback']} domain fallback, "
+                f"{stats['unverified']} unverified (URL removed) / {stats['total']} total")
 
     return data_dict
+
+
+def _validate_and_tag_urls(data_dict):
+    """Wrapper de compatibilidade - agora usa catálogo curado."""
+    return _resolve_and_validate_urls(data_dict)
 
 
 def _repair_truncated_json(text):
@@ -8051,11 +8258,11 @@ DADOS:
 Gere um JSON com a seguinte estrutura (responda SOMENTE o JSON, sem markdown):
 {{
   "resumo_executivo": "3-4 parágrafos: panorama geral dos múltiplos de mercado, quais setores estão mais caros/baratos, tendências observadas, posicionamento do Brasil vs global. Tom profissional para C-level e investidores.",
-  "resumo_executivo_fontes": [{{"nome": "Nome da fonte", "url": "https://url-da-fonte.com"}}],
+  "resumo_executivo_fontes": [{{"nome": "Nome da fonte"}}],
   "analise_macro": "2-3 parágrafos: análise macro dos fatores que influenciam os múltiplos atuais (juros, inflação, sentimento de mercado, ciclo econômico). Use seu conhecimento atualizado. Ao citar fatores externos, indique a fonte inline entre parênteses.",
-  "analise_macro_fontes": [{{"nome": "BCB - Taxa Selic", "url": "https://www.bcb.gov.br/controleinflacao/taxaselic"}}, {{"nome": "FED - Federal Funds Rate", "url": "https://www.federalreserve.gov/monetarypolicy/openmarket.htm"}}],
+  "analise_macro_fontes": [{{"nome": "BCB - Taxa Selic"}}, {{"nome": "FED - Federal Funds Rate"}}],
   "analise_brasil": "2-3 parágrafos: análise específica do Brasil - desconto/prêmio em relação ao global e LATAM, fatores locais (Selic, câmbio, ambiente político), setores com maior spread. Cite fontes inline.",
-  "analise_brasil_fontes": [{{"nome": "fonte", "url": "https://..."}}],
+  "analise_brasil_fontes": [{{"nome": "fonte"}}],
   "destaques_setoriais": [
     {{
       "setor": "nome do setor",
@@ -8066,23 +8273,24 @@ Gere um JSON com a seguinte estrutura (responda SOMENTE o JSON, sem markdown):
       "n_empresas": 450,
       "tendencia": "expansão|compressão|estável",
       "insight": "2-3 frases com análise profunda do setor: o que os dados revelam, fatores causais, comparações relevantes. Cite dados específicos. Comece SEMPRE pelos dados e depois tire conclusões.",
-      "citacao": {{"autor": "Nome do especialista ou entidade", "cargo": "Cargo/Instituição", "frase": "Citação relevante sobre o setor entre aspas", "contexto": "Onde/quando foi dito", "url": "https://url-da-fonte.com"}},
-      "fontes": [{{"nome": "fonte", "url": "https://..."}}]
+      "citacao": {{"autor": "Nome do especialista ou entidade", "cargo": "Cargo/Instituição", "frase": "Citação relevante sobre o setor entre aspas", "contexto": "Onde/quando foi dito"}},
+      "fontes": [{{"nome": "fonte"}}]
     }}
   ],
   "perspectivas": "1-2 parágrafos com perspectivas e tendências futuras para múltiplos. Cite fontes.",
-  "perspectivas_fontes": [{{"nome": "fonte", "url": "https://..."}}],
+  "perspectivas_fontes": [{{"nome": "fonte"}}],
   "citacoes_especialistas": [
-    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação marcante sobre o mercado", "contexto": "Fonte/evento/data", "url": "https://url-da-fonte-original.com", "secao": "resumo_executivo|analise_macro|analise_brasil|perspectivas"}}
+    {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação marcante sobre o mercado", "contexto": "Fonte/evento/data", "secao": "resumo_executivo|analise_macro|analise_brasil|perspectivas"}}
   ],
-  "fontes_contexto": [{{"nome": "Nome completo da fonte", "url": "https://url-da-fonte.com", "tipo": "institucional|relatório|dados|mídia"}}]
+  "fontes_contexto": [{{"nome": "Nome completo da fonte", "tipo": "institucional|relatório|dados|mídia"}}]
 }}
 
 IMPORTANTE:
 - Use os dados fornecidos como base. Complemente com seu conhecimento sobre macroeconomia e mercados.
 - Cite números específicos dos dados.
-- Para CADA seção, liste as fontes como objetos com nome e URL real/plausível.
-- Fontes devem ser específicas: "BCB - Relatório Focus", "FED - FOMC Minutes", "Bloomberg", "S&P Global", etc.
+- Para CADA seção, liste as fontes como objetos com APENAS o campo "nome". NÃO inclua URLs — elas serão preenchidas automaticamente pelo sistema a partir de um catálogo verificado.
+- Use nomes de fontes reconhecidas e específicas, preferencialmente deste catálogo: "BCB - Taxa Selic", "BCB - Relatório Focus", "BCB - SGS", "BCB - Relatório de Inflação", "FED - Federal Funds Rate", "FED - FOMC Minutes", "FRED - Federal Reserve Economic Data", "IBGE", "IBGE - PIB", "IBGE - IPCA", "CVM", "B3", "B3 - Empresas Listadas", "ANBIMA", "IPEA", "IPEA - Carta de Conjuntura", "IMF - World Economic Outlook", "World Bank", "OECD", "Bloomberg", "Reuters", "S&P Global", "S&P Capital IQ", "Moody's", "Fitch Ratings", "Refinitiv", "Damodaran Online", "Yahoo Finance", "Goldman Sachs Research", "Morgan Stanley Research", "J.P. Morgan Research", "McKinsey", "McKinsey Global Institute", "Deloitte", "PwC", "EY", "KPMG", "The Economist", "Financial Times", "Wall Street Journal", "CNBC", "Valor Econômico", "InfoMoney", "Trading Economics", "Statista", "ANEEL", "ANP - Agência Nacional do Petróleo", "EPE - Balanço Energético Nacional", "IEA - International Energy Agency", "Gartner", "CBIC", "ABECIP", "ABES", "Bank of America Global Research", "Anloc Valuation Database".
+- Você pode usar nomes que não estejam no catálogo se necessário, mas prefira os listados acima.
 - Em destaques_setoriais, preencha os campos numéricos com os dados reais do setor (extraia do contexto).
 - Em destaques_setoriais, o campo "tendencia" deve ser "expansão", "compressão" ou "estável" baseado na evolução.
 - Em destaques_setoriais, o "insight" deve COMEÇAR pelos dados concretos e DEPOIS apresentar conclusões.
@@ -8156,7 +8364,7 @@ def _ensure_report_cache_table():
         ON report_cache(fiscal_year, created_at DESC)
     """)
     # Migrações: adicionar colunas se não existirem
-    for col in ['label TEXT', 'deep_analyses TEXT', 'excluded_tickers TEXT']:
+    for col in ['label TEXT', 'deep_analyses TEXT', 'excluded_tickers TEXT', 'filters_applied TEXT']:
         try:
             conn.execute(f"ALTER TABLE report_cache ADD COLUMN {col}")
         except Exception:
@@ -8175,19 +8383,21 @@ except Exception:
 def api_report_cache_list():
     """Lista relatórios cacheados."""
     fiscal_year = request.args.get('fiscal_year', type=int)
+    import json as json_mod
     conn = get_cache_db()
     if fiscal_year:
         rows = conn.execute(
-            "SELECT id, generated_at, fiscal_year, quarter, label FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 50",
+            "SELECT id, generated_at, fiscal_year, quarter, label, filters_applied FROM report_cache WHERE fiscal_year = ? ORDER BY created_at DESC LIMIT 50",
             (fiscal_year,)
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT id, generated_at, fiscal_year, quarter, label FROM report_cache ORDER BY created_at DESC LIMIT 50"
+            "SELECT id, generated_at, fiscal_year, quarter, label, filters_applied FROM report_cache ORDER BY created_at DESC LIMIT 50"
         ).fetchall()
     conn.close()
     return jsonify({'success': True, 'reports': [
-        {'id': r[0], 'generated_at': r[1], 'fiscal_year': r[2], 'quarter': r[3], 'label': r[4]} for r in rows
+        {'id': r[0], 'generated_at': r[1], 'fiscal_year': r[2], 'quarter': r[3], 'label': r[4],
+         'filters_applied': json_mod.loads(r[5]) if r[5] else None} for r in rows
     ]})
 
 
@@ -8304,7 +8514,7 @@ def api_report_cache_save_chat():
 
 @app.route('/api/estudoanloc/relatorio/validate_links', methods=['POST'])
 def api_estudoanloc_validate_links():
-    """Valida URLs citadas nas narrativas do relatório via HTTP HEAD requests."""
+    """Valida URLs citadas nas narrativas do relatório via catálogo curado + HTTP HEAD."""
     import concurrent.futures
     import urllib.request
     import urllib.error
@@ -8314,39 +8524,46 @@ def api_estudoanloc_validate_links():
     if not urls or not isinstance(urls, list):
         return jsonify({'success': False, 'error': 'Lista de URLs obrigatória'}), 400
 
-    # Limitar a 50 URLs por chamada para evitar abuso
     urls = urls[:50]
 
-    # Domínios institucionais conhecidos (confiáveis)
-    TRUSTED_DOMAINS = {
-        'bcb.gov.br', 'gov.br', 'federalreserve.gov', 'sec.gov', 'imf.org',
-        'worldbank.org', 'bloomberg.com', 'reuters.com', 'spglobal.com',
-        'moodys.com', 'fitchratings.com', 'ibge.gov.br', 'cvm.gov.br',
-        'b3.com.br', 'anbima.com.br', 'economist.com', 'ft.com',
-        'wsj.com', 'cnbc.com', 'valor.globo.com', 'infomoney.com.br',
-        'tradingeconomics.com', 'statista.com', 'mckinsey.com',
-        'deloitte.com', 'pwc.com', 'ey.com', 'kpmg.com',
-        'damodaran.com', 'pages.stern.nyu.edu', 'yahoo.com',
-    }
+    sources_catalog, domain_fallbacks = _load_curated_sources()
 
     def validate_url(url_info):
         """Valida uma URL individual."""
         url = url_info.get('url', '')
         nome = url_info.get('nome', '')
-        result = {'url': url, 'nome': nome, 'status': 'unknown', 'code': 0, 'trusted_domain': False}
+        result = {'url': url, 'nome': nome, 'status': 'unknown', 'code': 0,
+                  'trusted_domain': False, 'curated': False}
 
         if not url or not url.startswith('http'):
-            result['status'] = 'invalid'
-            result['message'] = 'URL inválida ou ausente'
+            # Sem URL = fonte não mapeada no catálogo (só nome)
+            if nome:
+                resolved_url, trusted, matched = _find_curated_match(nome, '', sources_catalog, domain_fallbacks)
+                if resolved_url:
+                    result['url'] = resolved_url
+                    result['status'] = 'curated'
+                    result['trusted_domain'] = True
+                    result['curated'] = True
+                    return result
+            result['status'] = 'no_url'
+            result['message'] = 'Fonte sem URL (não mapeada no catálogo)'
             return result
+
+        # Verificar se URL é do catálogo curado
+        for cat_name, cat_info in sources_catalog.items():
+            if cat_info['url'] == url:
+                result['status'] = 'curated'
+                result['trusted_domain'] = True
+                result['curated'] = True
+                return result
 
         # Verificar domínio confiável
         try:
             from urllib.parse import urlparse
             parsed = urlparse(url)
             domain = parsed.netloc.lower()
-            for td in TRUSTED_DOMAINS:
-                if domain.endswith(td):
+            for fd in domain_fallbacks:
+                if domain.endswith(fd):
                     result['trusted_domain'] = True
                     break
         except Exception:
@@ -8360,14 +8577,13 @@ def api_estudoanloc_validate_links():
                 result['status'] = 'ok' if resp.status < 400 else 'error'
         except urllib.error.HTTPError as e:
             result['code'] = e.code
-            # 403/405 podem significar que o site bloqueia HEAD mas existe
             if e.code in (403, 405, 406):
                 result['status'] = 'blocked'
                 result['message'] = 'Site bloqueia verificação automática'
             else:
                 result['status'] = 'error'
                 result['message'] = f'HTTP {e.code}'
-        except urllib.error.URLError as e:
+        except urllib.error.URLError:
             result['status'] = 'unreachable'
             result['message'] = 'Site inacessível'
         except Exception as e:
@@ -8376,7 +8592,6 @@ def api_estudoanloc_validate_links():
 
         return result
 
-    # Verificar em paralelo (max 10 workers)
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_map = {executor.submit(validate_url, u): u for u in urls}
@@ -8385,21 +8600,26 @@ def api_estudoanloc_validate_links():
 
     # Estatísticas
     total = len(results)
+    curated_count = sum(1 for r in results if r['status'] == 'curated')
     ok_count = sum(1 for r in results if r['status'] == 'ok')
     blocked_count = sum(1 for r in results if r['status'] == 'blocked')
-    error_count = sum(1 for r in results if r['status'] in ('error', 'unreachable', 'invalid'))
+    error_count = sum(1 for r in results if r['status'] in ('error', 'unreachable'))
+    no_url_count = sum(1 for r in results if r['status'] == 'no_url')
     trusted_count = sum(1 for r in results if r['trusted_domain'])
 
     return jsonify({
         'success': True,
         'summary': {
             'total': total,
+            'curated': curated_count,
             'ok': ok_count,
             'blocked': blocked_count,
             'errors': error_count,
+            'no_url': no_url_count,
             'trusted_domains': trusted_count
         },
-        'results': sorted(results, key=lambda r: (r['status'] != 'error', r['status'] != 'unreachable', r['status']))
+        'results': sorted(results, key=lambda r: (r['status'] != 'error', r['status'] != 'unreachable',
+                                                    r['status'] != 'no_url', r['status']))
     })
 
 
@@ -8631,17 +8851,56 @@ def api_estudoanloc_sector_deep_analysis():
             for c in top_br[:10]:
                 ctx_parts.append(f"  {c.get('ticker','')} - {c.get('company_name','')}: EV/EBITDA={c.get('ev_ebitda','?')}x, EV/Rev={c.get('ev_revenue','?')}x ({c.get('yahoo_industry','')})")
 
-        # Evolução
+        # Evolução temporal detalhada
         evo = sector_data.get('evolution', [])
         if evo:
-            evo_vals = [f"{e.get('year','?')}:{e.get('global',{}).get('ev_ebitda','?')}x" for e in evo if e.get('global',{}).get('ev_ebitda')]
-            if evo_vals:
-                ctx_parts.append(f"\nEVOLUÇÃO GLOBAL EV/EBITDA: {' → '.join(evo_vals)}")
+            ctx_parts.append("\nEVOLUÇÃO TEMPORAL DOS MÚLTIPLOS:")
+            # Linha resumo global
+            evo_global = [f"{e.get('year','?')}:{e.get('global',{}).get('ev_ebitda','?')}x" for e in evo if e.get('global',{}).get('ev_ebitda')]
+            evo_global_rev = [f"{e.get('year','?')}:{e.get('global',{}).get('ev_revenue','?')}x" for e in evo if e.get('global',{}).get('ev_revenue')]
+            if evo_global:
+                ctx_parts.append(f"  Global EV/EBITDA: {' → '.join(evo_global)}")
+            if evo_global_rev:
+                ctx_parts.append(f"  Global EV/Revenue: {' → '.join(evo_global_rev)}")
+            # LATAM e Brasil
+            evo_latam = [f"{e.get('year','?')}:{e.get('latam',{}).get('ev_ebitda','?')}x" for e in evo if e.get('latam',{}).get('ev_ebitda')]
+            evo_br = [f"{e.get('year','?')}:{e.get('brazil',{}).get('ev_ebitda','?')}x" for e in evo if e.get('brazil',{}).get('ev_ebitda')]
+            if evo_latam:
+                ctx_parts.append(f"  LATAM EV/EBITDA: {' → '.join(evo_latam)}")
+            if evo_br:
+                ctx_parts.append(f"  Brasil EV/EBITDA: {' → '.join(evo_br)}")
+            # Evolução por indústria — listar cada uma com série de valores
+            industries_seen = {}
+            for e in evo:
+                yr = e.get('year', '?')
+                for ind_name, ind_vals in (e.get('by_industry') or {}).items():
+                    ev_v = ind_vals.get('ev_ebitda')
+                    if ev_v is not None:
+                        if ind_name not in industries_seen:
+                            industries_seen[ind_name] = {}
+                        industries_seen[ind_name][yr] = ev_v
+            if industries_seen:
+                years_ordered = sorted({e.get('year') for e in evo if e.get('year')})
+                ctx_parts.append("  Por indústria (EV/EBITDA):")
+                for ind_name, yr_vals in sorted(industries_seen.items()):
+                    serie = ' → '.join([f"{yr}:{yr_vals[yr]:.1f}x" if yr in yr_vals else f"{yr}:N/D" for yr in years_ordered])
+                    ctx_parts.append(f"    {ind_name}: {serie}")
+            # Cálculo de variação global no período
+            global_vals = [(e.get('year'), e.get('global',{}).get('ev_ebitda')) for e in evo if e.get('global',{}).get('ev_ebitda') is not None]
+            if len(global_vals) >= 2:
+                global_vals.sort(key=lambda x: x[0])
+                first_yr, first_val = global_vals[0]
+                last_yr, last_val = global_vals[-1]
+                if first_val and first_val != 0:
+                    delta_pct = round((last_val - first_val) / first_val * 100, 1)
+                    direction = "compressão" if delta_pct < 0 else "expansão"
+                    ctx_parts.append(f"  Variação global no período ({first_yr}→{last_yr}): {delta_pct:+.1f}% ({direction} de múltiplos)")
 
         context = "\n".join(ctx_parts)
 
         prompt = f"""Você é um analista financeiro sênior do Anloc, especializado no setor {sector_name}.
-Com base nos dados abaixo, faça uma análise aprofundada e abrangente deste setor.
+Com base nos dados abaixo, faça uma análise aprofundada e abrangente deste setor. Os dados incluem estatísticas atuais por geografia e \
+também a série histórica de evolução dos múltiplos por ano e por indústria — use ambos em sua análise.
 
 {context}
 
@@ -8649,11 +8908,11 @@ Responda SOMENTE um JSON com esta estrutura:
 {{
   "titulo": "Título analítico para a análise do setor",
   "panorama": "2-3 parágrafos: visão geral do setor globalmente, principais drivers de valuação, posicionamento relativo. Cite números dos dados.",
-  "analise_brasil": "2-3 parágrafos: como o Brasil se posiciona neste setor vs global/LATAM, fatores locais que impactam, empresas de destaque e seus diferenciais.",
-  "industrias_destaque": "1-2 parágrafos: quais sub-indústrias se destacam e por quê, diferenças de múltiplos entre elas.",
-  "tendencias": "1-2 parágrafos: evolução recente dos múltiplos, o que mudou e expectativas futuras para o setor.",
+  "analise_brasil": "2-3 parágrafos: como o Brasil se posiciona neste setor vs global/LATAM, fatores locais que impactam, empresas de destaque e seus diferenciais. Inclua a evolução dos múltiplos brasileiros no período se disponível.",
+  "industrias_destaque": "2-3 parágrafos: quais sub-indústrias se destacam e por quê, diferenças de múltiplos entre elas. Analise a TENDÊNCIA TEMPORAL de cada indústria — quais comprimiram ou expandiram múltiplos ao longo do período disponível e por quê.",
+  "tendencias": "2-3 parágrafos: analise em detalhes a EVOLUÇÃO TEMPORAL dos múltiplos usando os dados fornecidos. Identifique a direção da tendência (compressão ou expansão), quais anos foram de inflexão e possíveis drivers macroeconômicos ou setoriais. Considere diferenças de trajetória entre indústrias.",
   "riscos_oportunidades": "1-2 parágrafos: principais riscos e oportunidades DO SETOR (não de investimento). Descreva fatores que podem impactar margens, crescimento e múltiplos.",
-  "conclusao": "1 parágrafo: síntese executiva analítica do posicionamento atual do setor. NÃO recomendar posição comprada/vendida.",
+  "conclusao": "1 parágrafo: síntese executiva analítica do posicionamento atual do setor e sua trajetória recente. NÃO recomendar posição comprada/vendida.",
   "citacoes": [
     {{"autor": "Nome", "cargo": "Cargo/Instituição", "frase": "Citação relevante", "contexto": "Fonte", "url": "https://url-da-fonte.com"}}
   ],
@@ -8661,9 +8920,10 @@ Responda SOMENTE um JSON com esta estrutura:
 }}
 
 IMPORTANTE:
-- Utilize os dados fornecidos como base principal.
+- Utilize os dados fornecidos como base principal, especialmente a série temporal.
 - Complemente com seu conhecimento sobre o setor, tendências, players relevantes.
-- Cite números específicos dos dados.
+- Cite números específicos dos dados (anos, valores de múltiplos, variações percentuais).
+- Para "tendencias" e "industrias_destaque": use OBRIGATORIAMENTE os dados de evolução temporal fornecidos.
 - Inclua 2-3 citações de entidades/instituições relevantes para o setor (NÃO inventar nomes de analistas individuais).
 - Tom profissional, aprofundado, analítico.
 - Português brasileiro.

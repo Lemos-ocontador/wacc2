@@ -310,10 +310,10 @@
         .excluded-ticker-tag .remove-tag { cursor: pointer; opacity: 0.7; }
         .excluded-ticker-tag .remove-tag:hover { opacity: 1; }
         .excluded-card {
-            display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem;
+            display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem;
             background: rgba(212,168,67,0.1); border: 1px solid rgba(212,168,67,0.3);
-            border-radius: 8px; margin-top: 0.8rem; cursor: pointer; font-size: 0.9rem;
-            color: var(--anloc-text); transition: all 0.2s;
+            border-radius: 6px; cursor: pointer; font-size: 0.78rem;
+            color: var(--anloc-text); transition: all 0.2s; white-space: nowrap;
         }
         .excluded-card:hover { background: rgba(212,168,67,0.2); }
         /* ===== EXCLUDED MODAL ===== */
@@ -717,6 +717,9 @@
         /* ===== FONTES CLICÁVEIS ===== */
         .fonte-link { color: var(--anloc-accent); text-decoration: none; transition: 0.2s; }
         .fonte-link:hover { color: var(--anloc-gold); text-decoration: underline; }
+        .fonte-link.fonte-verified { color: #28a745; }
+        .fonte-link.fonte-verified:hover { color: #34d058; }
+        .fonte-text-only { color: #8899aa; font-style: italic; font-size: 0.92em; }
         .references-section { margin-top: 2rem; }
         .references-list { list-style: none; padding: 0; }
         .references-list li { padding: 0.4rem 0; border-bottom: 1px solid rgba(30,51,80,0.3); font-size: 0.85rem; }
@@ -840,6 +843,7 @@
         .cache-item-info { flex: 1; min-width: 0; }
         .cache-item-label { font-size: 0.85rem; font-weight: 600; color: var(--anloc-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cache-item-meta { font-size: 0.72rem; color: var(--anloc-text-muted); margin-top: 0.1rem; }
+        .cache-item-filters { font-size: 0.68rem; color: var(--anloc-gold); margin-top: 0.15rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cache-item-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
         .cache-item-btn {
             background: transparent;
@@ -1024,6 +1028,11 @@
         <button class="btn-anloc-outline" onclick="location.reload()">
             <i class="fas fa-redo"></i> Novo Relat&#243;rio
         </button>
+        <div id="excludedTickersCard" class="excluded-card" style="display:none;cursor:pointer;" onclick="openExcludedModal()">
+            <i class="fas fa-filter" style="color:var(--anloc-gold);"></i>
+            <span id="excludedTickersCount">0</span> empresas n&#227;o consideradas
+            <i class="fas fa-external-link-alt" style="font-size:0.75rem;margin-left:0.3rem;opacity:0.6;"></i>
+        </div>
     </div>
 </div>
 
@@ -1136,13 +1145,6 @@
             <i class="fas fa-rocket"></i> Gerar Relat&#243;rio Completo
         </button>
 
-        <!-- CARD: empresas excluídas (aparece após gerar relatório se houver excluídos) -->
-        <div id="excludedTickersCard" class="excluded-card" style="display:none;" onclick="openExcludedModal()">
-            <i class="fas fa-filter" style="color:var(--anloc-gold);"></i>
-            <span id="excludedTickersCount">0</span> empresas n&#227;o consideradas
-            <i class="fas fa-external-link-alt" style="font-size:0.75rem;margin-left:0.3rem;opacity:0.6;"></i>
-        </div>
-
         <!-- LISTA DE ESTUDOS ANTERIORES -->
         <div class="cache-list-panel" id="cacheListPanel" style="display:none;">
             <div class="cache-list-header" id="cacheListHeader" onclick="toggleCacheList()">
@@ -1189,6 +1191,42 @@
                     </tr>
                 </thead>
                 <tbody id="excludedTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Drill-Down Empresas -->
+<div class="excluded-modal-overlay" id="drilldownModalOverlay" style="display:none;" onclick="if(event.target===this)closeDrilldownModal()">
+    <div class="excluded-modal">
+        <div class="excluded-modal-header">
+            <h3 id="drilldownModalTitle"><i class="fas fa-search-plus" style="color:var(--anloc-gold);margin-right:0.5rem;"></i> Detalhamento</h3>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button class="btn-filter-action" onclick="exportDrilldownCSV()" title="Exportar CSV"><i class="fas fa-download"></i> CSV</button>
+                <button class="excluded-modal-close" onclick="closeDrilldownModal()">&times;</button>
+            </div>
+        </div>
+        <div class="excluded-modal-summary" id="drilldownModalSummary"></div>
+        <div class="excluded-modal-filters">
+            <input type="text" id="drilldownSearchInput" placeholder="Buscar ticker ou empresa..." oninput="filterDrilldownTable()">
+        </div>
+        <div class="excluded-modal-body">
+            <div id="drilldownLoading" style="text-align:center;padding:2rem;display:none;">
+                <i class="fas fa-spinner fa-spin" style="font-size:1.5rem;color:var(--anloc-gold);"></i>
+                <div style="margin-top:0.5rem;color:var(--anloc-text-muted);">Carregando dados...</div>
+            </div>
+            <table class="report-table" id="drilldownTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Empresa</th>
+                        <th>Ind&#250;stria</th>
+                        <th>Pa&#237;s</th>
+                        <th class="text-right">EV/EBITDA</th>
+                        <th class="text-right">EV/Revenue</th>
+                    </tr>
+                </thead>
+                <tbody id="drilldownTableBody"></tbody>
             </table>
         </div>
     </div>
@@ -1269,7 +1307,8 @@
 
             <div style="overflow-x:auto;margin-top:2rem;">
                 <div class="table-toolbar">
-                    <button class="btn-export" onclick="exportTableToCSV('tableRanking', 'ranking_setores')"><i class="fas fa-download"></i> CSV</button>
+                    <button class="btn-export" onclick="exportTableToCSV('tableRanking', 'ranking_setores')"><i class="fas fa-download"></i> Consolidado</button>
+                    <button class="btn-export" onclick="exportRankingDetailed()" title="Exportar todas as empresas de todos os setores"><i class="fas fa-file-csv"></i> Detalhado</button>
                 </div>
                 <table class="report-table" id="tableRanking">
                     <thead>
@@ -1348,6 +1387,8 @@
                     </div>
                 </div>
             </div>
+            <!-- Tabela Evolução por Indústria -->
+            <div id="evolutionIndustryContainer" style="margin-top:1.5rem;"></div>
         </section>
 
         <!-- 07 - DESTAQUES SETORIAIS -->
@@ -1555,11 +1596,35 @@ function renderCacheList() {
         var displayLabel = r.label || r.quarter || ('Estudo ' + r.fiscal_year);
         var dateStr = formatDateBR(r.generated_at);
         var isActive = currentCacheId === r.id;
+
+        // Build filters summary
+        var filterParts = [];
+        var fa = r.filters_applied;
+        if (fa) {
+            if (fa.selected_sectors && fa.selected_sectors.length > 0) {
+                filterParts.push(fa.selected_sectors.length + ' setor' + (fa.selected_sectors.length > 1 ? 'es' : ''));
+            } else {
+                filterParts.push('Todos os setores');
+            }
+            if (fa.min_ev > 0) filterParts.push('EV&ge;' + (fa.min_ev >= 1e9 ? (fa.min_ev/1e9) + 'B' : (fa.min_ev/1e6) + 'M'));
+            if (fa.max_ev_ebitda > 0) filterParts.push('Teto ' + fa.max_ev_ebitda + 'x');
+            if (fa.require_positive_ebitda) filterParts.push('EBITDA+');
+            if (fa.excluded_tickers_manual && fa.excluded_tickers_manual.length > 0) filterParts.push(fa.excluded_tickers_manual.length + ' excl.');
+        }
+        var filtersSummary = filterParts.length > 0 ? filterParts.join(' &middot; ') : '';
+
+        // Sectors tooltip
+        var sectorsTooltip = '';
+        if (fa && fa.selected_sectors && fa.selected_sectors.length > 0 && fa.selected_sectors.length <= 5) {
+            sectorsTooltip = ' title="' + fa.selected_sectors.join(', ') + '"';
+        }
+
         return '<div class="cache-item' + (isActive ? ' active' : '') + '" id="cacheItem_' + r.id + '">' +
             '<div class="cache-item-icon"><i class="fas fa-file-alt"></i></div>' +
             '<div class="cache-item-info">' +
                 '<div class="cache-item-label" id="cacheLabel_' + r.id + '">' + displayLabel + '</div>' +
                 '<div class="cache-item-meta"><i class="fas fa-calendar-alt" style="margin-right:0.2rem;"></i>' + dateStr + ' &middot; ' + r.fiscal_year + ' &middot; ' + (r.quarter || '') + '</div>' +
+                (filtersSummary ? '<div class="cache-item-filters"' + sectorsTooltip + '><i class="fas fa-sliders-h" style="margin-right:0.25rem;opacity:0.6;"></i>' + filtersSummary + '</div>' : '') +
             '</div>' +
             '<div class="cache-item-actions">' +
                 '<button class="cache-item-btn load-btn" title="Carregar este estudo" onclick="loadFromCache(' + r.id + ')"><i class="fas fa-folder-open"></i></button>' +
@@ -2044,6 +2109,7 @@ function renderReport(data) {
     renderRankingChart(data.ranking);
     renderGeoChart(data.sectors);
     renderEvolutionChart(data.sectors);
+    renderEvolutionIndustryTables(data.sectors);
     renderAiChartComments(data);
     renderDestaques(data.narratives, data.sectors);
     renderDeepDives(data.sectors, data.metadata);
@@ -2122,8 +2188,8 @@ function renderRanking(ranking) {
         } else {
             spreadHtml = '<span style="color:var(--anloc-text-muted);">N/D</span>';
         }
-        return '<tr>' +
-            '<td class="sector-name"><a href="#secDeepDive" class="sector-name-link" onclick="scrollToSectorDive(\'' + encodeURIComponent(r.sector) + '\')">' + r.sector + '</a></td>' +
+        return '<tr style="cursor:pointer;" onclick="openDrilldown(\'' + encodeURIComponent(r.sector) + '\', \'\', \'\', \'Setor: ' + r.sector.replace(/'/g,'') + '\')" title="Clique para ver empresas">' +
+            '<td class="sector-name"><a href="#secDeepDive" class="sector-name-link" onclick="event.stopPropagation();scrollToSectorDive(\'' + encodeURIComponent(r.sector) + '\')">' + r.sector + '</a></td>' +
             '<td class="text-right">' + (r.ev_ebitda_median != null ? r.ev_ebitda_median.toFixed(1) + 'x' : 'N/D') + '</td>' +
             '<td class="text-right">' + (r.ev_revenue_median != null ? r.ev_revenue_median.toFixed(1) + 'x' : 'N/D') + '</td>' +
             '<td class="text-right">' + (r.br_ev_ebitda != null ? r.br_ev_ebitda.toFixed(1) + 'x' : 'N/D') + '</td>' +
@@ -2314,6 +2380,70 @@ function renderEvolutionChart(sectors) {
     });
 }
 
+function renderEvolutionIndustryTables(sectors) {
+    var container = document.getElementById('evolutionIndustryContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    sectors.forEach(function(s) {
+        var evo = s.evolution || [];
+        if (evo.length === 0) return;
+
+        // Collect all industries across all years
+        var indSet = {};
+        evo.forEach(function(yr) {
+            var bi = yr.by_industry || {};
+            Object.keys(bi).forEach(function(ind) { indSet[ind] = true; });
+        });
+        var industries = Object.keys(indSet).sort();
+        if (industries.length === 0) return;
+
+        var years = evo.map(function(e) { return e.year; });
+
+        // Build EV/EBITDA table
+        var html = '<div class="chart-container" style="margin-top:1rem;">';
+        html += '<div class="chart-title">EV/EBITDA Mediana por Ind&#250;stria &#8212; ' + s.sector + '</div>';
+        html += '<div style="overflow-x:auto;"><table class="ind-table" style="width:100%;font-size:0.82rem;">';
+        html += '<thead><tr><th style="text-align:left;">Ind&#250;stria</th>';
+        years.forEach(function(yr) { html += '<th style="text-align:center;">' + yr + '</th>'; });
+        html += '<th style="text-align:center;">&#916;</th></tr></thead><tbody>';
+
+        industries.forEach(function(ind) {
+            html += '<tr><td>' + ind + '</td>';
+            var first = null, last = null;
+            years.forEach(function(yr) {
+                var found = evo.find(function(e) { return e.year === yr; });
+                var bi = found && found.by_industry ? found.by_industry[ind] : null;
+                var val = bi ? bi.ev_ebitda : null;
+                if (val !== null && first === null) first = val;
+                if (val !== null) last = val;
+                html += '<td style="text-align:center;">' + (val !== null ? val.toFixed(1) + 'x' : '<span style="color:#555;">&#8212;</span>') + '</td>';
+            });
+            // Delta
+            if (first !== null && last !== null && first !== 0) {
+                var delta = ((last - first) / Math.abs(first) * 100).toFixed(0);
+                var color = delta > 0 ? '#e74c3c' : (delta < 0 ? '#2ecc71' : '#8b9bb4');
+                html += '<td style="text-align:center;color:' + color + ';font-weight:600;">' + (delta > 0 ? '+' : '') + delta + '%</td>';
+            } else {
+                html += '<td style="text-align:center;color:#555;">&#8212;</td>';
+            }
+            html += '</tr>';
+        });
+
+        // Sector total row
+        html += '<tr style="border-top:2px solid var(--anloc-gold);font-weight:600;"><td>' + s.sector + ' (Total)</td>';
+        years.forEach(function(yr) {
+            var found = evo.find(function(e) { return e.year === yr; });
+            var val = found && found.global ? found.global.ev_ebitda : null;
+            html += '<td style="text-align:center;color:var(--anloc-gold);">' + (val !== null ? val.toFixed(1) + 'x' : '&#8212;') + '</td>';
+        });
+        html += '<td></td></tr>';
+
+        html += '</tbody></table></div></div>';
+        container.innerHTML += html;
+    });
+}
+
 // ===== AI CHART CARDS (Professional 2-column) =====
 function renderAiChartComments(data) {
     var gc = data.graph_comments || {};
@@ -2500,12 +2630,17 @@ function renderDeepDives(sectors, metadata) {
         });
         spreadHtml += '</div>';
 
-        // Industries table with export
+        // Industries table with export + drill-down
         var indHtml = '';
         if (s.by_industry && s.by_industry.length > 0) {
             var indTableId = 'indTable_' + sIdx;
+            var sectorSafe = s.sector.replace(/\s+/g,'_');
+            var sectorEnc = encodeURIComponent(s.sector);
             indHtml = '<div class="subsection-title" style="font-size:1rem;">Ind\u00fastrias</div>' +
-                '<div class="table-toolbar"><button class="btn-export" onclick="exportTableToCSV(\'' + indTableId + '\', \'industrias_' + s.sector.replace(/\s+/g,'_') + '\')"><i class="fas fa-download"></i> CSV</button></div>' +
+                '<div class="table-toolbar">' +
+                '<button class="btn-export" onclick="exportTableToCSV(\'' + indTableId + '\', \'industrias_' + sectorSafe + '\')"><i class="fas fa-download"></i> Consolidado</button>' +
+                '<button class="btn-export" onclick="openDrilldown(\'' + sectorEnc + '\', \'\', \'\', \'Todas ind\u00fastrias: ' + s.sector.replace(/'/g,'') + '\')"><i class="fas fa-file-csv"></i> Detalhado</button>' +
+                '</div>' +
                 '<table class="report-table" id="' + indTableId + '"><thead><tr>' +
                 '<th>Ind\u00fastria</th><th class="text-right">EV/EBITDA Global</th><th class="text-right">EV/Revenue Global</th>' +
                 '<th class="text-right">EV/EBITDA Brasil</th><th class="text-right">N</th></tr></thead><tbody>' +
@@ -2513,7 +2648,9 @@ function renderDeepDives(sectors, metadata) {
                     var ie = ind.ev_ebitda || {};
                     var ir = ind.ev_revenue || {};
                     var brIe = ind.brazil_ev_ebitda || {};
-                    return '<tr><td>' + ind.label + '</td>' +
+                    var indEnc = encodeURIComponent(ind.label);
+                    return '<tr style="cursor:pointer;" onclick="openDrilldown(\'' + sectorEnc + '\', \'' + indEnc + '\', \'\', \'' + ind.label.replace(/'/g,'') + ' (' + s.sector.replace(/'/g,'') + ')\')" title="Clique para ver empresas">' +
+                        '<td>' + ind.label + '</td>' +
                         '<td class="text-right">' + (ie.median != null ? ie.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
                         '<td class="text-right">' + (ir.median != null ? ir.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
                         '<td class="text-right">' + (brIe.median != null ? brIe.median.toFixed(1) + 'x' : 'N/D') + '</td>' +
@@ -2521,12 +2658,17 @@ function renderDeepDives(sectors, metadata) {
                 }).join('') + '</tbody></table>';
         }
 
-        // Top BR companies with ticker links and export
+        // Top BR companies with ticker links and export + drill-down
         var topBrHtml = '';
         if (s.top_brazil_companies && s.top_brazil_companies.length > 0) {
             var brTableId = 'brTable_' + sIdx;
+            var sectorSafe2 = s.sector.replace(/\s+/g,'_');
+            var sectorEnc2 = encodeURIComponent(s.sector);
             topBrHtml = '<div class="subsection-title" style="font-size:1rem;margin-top:1.5rem;">Top Empresas Brasileiras</div>' +
-                '<div class="table-toolbar"><button class="btn-export" onclick="exportTableToCSV(\'' + brTableId + '\', \'empresas_br_' + s.sector.replace(/\s+/g,'_') + '\')"><i class="fas fa-download"></i> CSV</button></div>' +
+                '<div class="table-toolbar">' +
+                '<button class="btn-export" onclick="exportTableToCSV(\'' + brTableId + '\', \'empresas_br_' + sectorSafe2 + '\')"><i class="fas fa-download"></i> Consolidado</button>' +
+                '<button class="btn-export" onclick="openDrilldown(\'' + sectorEnc2 + '\', \'\', \'Brazil\', \'Empresas brasileiras: ' + s.sector.replace(/'/g,'') + '\')"><i class="fas fa-file-csv"></i> Detalhado</button>' +
+                '</div>' +
                 '<table class="report-table" id="' + brTableId + '"><thead><tr>' +
                 '<th>Ticker</th><th>Empresa</th><th>Ind\u00fastria</th>' +
                 '<th class="text-right">EV/EBITDA</th><th class="text-right">EV/Revenue</th></tr></thead><tbody>' +
@@ -2709,10 +2851,14 @@ function renderFontesInline(fontesArr) {
         if (typeof f === 'string') return f;
         var nome = f.nome || f.name || '';
         var url = f.url || '';
+        var verified = f._verified || f._status === 'curated';
         if (url) {
-            return '<a class="fonte-link" href="' + url + '" target="_blank" rel="noopener">' + nome + '</a>';
+            var cls = verified ? 'fonte-link fonte-verified' : 'fonte-link';
+            var icon = verified ? '<i class="fas fa-check-circle" style="font-size:0.7em;margin-right:2px;color:#28a745;"></i>' : '';
+            return '<a class="' + cls + '" href="' + url + '" target="_blank" rel="noopener">' + icon + nome + '</a>';
         }
-        return nome;
+        // Sem URL = fonte não mapeada, exibir só texto
+        return '<span class="fonte-text-only" title="Fonte sem link verificado">' + nome + '</span>';
     }).join('; ');
 }
 
@@ -2777,17 +2923,18 @@ function validateAllLinks() {
             return;
         }
         var s = data.summary;
-        var statusIcons = {ok: '✅', blocked: '⚠️', error: '❌', unreachable: '❌', invalid: '❌', unknown: '❓'};
-        var statusLabels = {ok: 'Acessível', blocked: 'Bloqueado (pode existir)', error: 'Erro', unreachable: 'Inacessível', invalid: 'URL inválida', unknown: 'Desconhecido'};
-        var statusColors = {ok: '#28a745', blocked: '#ffc107', error: '#dc3545', unreachable: '#dc3545', invalid: '#dc3545', unknown: '#6c757d'};
+        var statusIcons = {curated: '🔒', ok: '✅', blocked: '⚠️', error: '❌', unreachable: '❌', no_url: '📝', unknown: '❓'};
+        var statusLabels = {curated: 'Catálogo Verificado', ok: 'Acessível', blocked: 'Bloqueado (pode existir)', error: 'Erro', unreachable: 'Inacessível', no_url: 'Sem link (só nome)', unknown: 'Desconhecido'};
+        var statusColors = {curated: '#28a745', ok: '#17a2b8', blocked: '#ffc107', error: '#dc3545', unreachable: '#dc3545', no_url: '#8899aa', unknown: '#6c757d'};
 
         var html = '<div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:1rem; border:1px solid rgba(212,168,67,0.3);">';
         html += '<h5 style="color:var(--anloc-gold); margin-bottom:1rem;"><i class="fas fa-shield-alt"></i> Resultado da Verificação de Links</h5>';
         html += '<div class="row text-center mb-3">';
-        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#28a745;">' + s.ok + '</div><small>Acessíveis</small></div>';
-        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#ffc107;">' + s.blocked + '</div><small>Bloqueados</small></div>';
-        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:#dc3545;">' + s.errors + '</div><small>Com Erro</small></div>';
-        html += '<div class="col-3"><div style="font-size:1.5rem; font-weight:700; color:var(--anloc-accent);">' + s.trusted_domains + '</div><small>Domínios Confiáveis</small></div>';
+        html += '<div class="col"><div style="font-size:1.5rem; font-weight:700; color:#28a745;">' + (s.curated || 0) + '</div><small>🔒 Verificadas</small></div>';
+        html += '<div class="col"><div style="font-size:1.5rem; font-weight:700; color:#17a2b8;">' + s.ok + '</div><small>✅ Acessíveis</small></div>';
+        html += '<div class="col"><div style="font-size:1.5rem; font-weight:700; color:#ffc107;">' + s.blocked + '</div><small>⚠️ Bloqueadas</small></div>';
+        html += '<div class="col"><div style="font-size:1.5rem; font-weight:700; color:#dc3545;">' + s.errors + '</div><small>❌ Erro</small></div>';
+        html += '<div class="col"><div style="font-size:1.5rem; font-weight:700; color:#8899aa;">' + (s.no_url || 0) + '</div><small>📝 Sem link</small></div>';
         html += '</div>';
 
         if (data.results.length > 0) {
@@ -2838,6 +2985,183 @@ function exportTableToCSV(tableId, filename) {
     link.download = (filename || 'export') + '_' + new Date().toISOString().slice(0,10) + '.csv';
     link.click();
     URL.revokeObjectURL(link.href);
+}
+
+// ===== DRILL-DOWN MODAL =====
+var _drilldownData = []; // cache dos dados carregados
+
+function _getCurrentFilters() {
+    var f = {};
+    var minEvEl = document.getElementById('filterMinEV');
+    var maxEvEl = document.getElementById('filterMaxEvEbitda');
+    var posEbitdaEl = document.getElementById('filterPositiveEbitda');
+    if (minEvEl) f.min_ev = parseFloat(minEvEl.value) * 1e6 || 100000000;
+    if (maxEvEl) f.max_ev_ebitda = parseFloat(maxEvEl.value) || 60;
+    if (posEbitdaEl) f.require_positive_ebitda = posEbitdaEl.checked;
+
+    // Indústrias selecionadas
+    var chips = document.querySelectorAll('.industry-chip.selected');
+    if (chips.length > 0) {
+        f.selected_industries = [];
+        chips.forEach(function(c) { f.selected_industries.push(c.dataset.industry); });
+    }
+
+    // Tickers excluídos
+    if (window.manualExcludedTickers && window.manualExcludedTickers.length > 0) {
+        f.manual_excluded_tickers = window.manualExcludedTickers;
+    }
+    return f;
+}
+
+function openDrilldown(sector, industry, country, title) {
+    // Decodificar parâmetros que podem vir URL-encoded dos onclick
+    try { sector = decodeURIComponent(sector || ''); } catch(e) {}
+    try { industry = decodeURIComponent(industry || ''); } catch(e) {}
+    try { country = decodeURIComponent(country || ''); } catch(e) {}
+
+    var overlay = document.getElementById('drilldownModalOverlay');
+    var titleEl = document.getElementById('drilldownModalTitle');
+    var summary = document.getElementById('drilldownModalSummary');
+    var loading = document.getElementById('drilldownLoading');
+    var table = document.getElementById('drilldownTable');
+    var tbody = document.getElementById('drilldownTableBody');
+
+    titleEl.innerHTML = '<i class="fas fa-search-plus" style="color:var(--anloc-gold);margin-right:0.5rem;"></i> ' + (title || sector);
+    summary.innerHTML = '';
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    loading.style.display = 'block';
+    overlay.style.display = 'flex';
+    _drilldownData = [];
+
+    var fiscalYear = reportData && reportData.metadata ? reportData.metadata.fiscal_year : new Date().getFullYear();
+
+    fetch('/api/estudoanloc/relatorio/companies_detail', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sector: sector,
+            industry: industry || '',
+            country: country || '',
+            fiscal_year: fiscalYear,
+            filters: _getCurrentFilters()
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        loading.style.display = 'none';
+        if (!data.success || !data.companies.length) {
+            summary.innerHTML = '<span style="color:var(--anloc-text-muted);">Nenhuma empresa encontrada.</span>';
+            return;
+        }
+        _drilldownData = data.companies;
+        summary.innerHTML = '<span><strong>' + data.total + '</strong> empresas</span>' +
+            '<span>Setor: <strong>' + data.sector + '</strong></span>' +
+            (data.industry !== 'Todas' ? '<span>Ind\u00fastria: <strong>' + data.industry + '</strong></span>' : '') +
+            (data.country !== 'Global' ? '<span>Pa\u00eds: <strong>' + data.country + '</strong></span>' : '');
+        _renderDrilldownRows(data.companies);
+        table.style.display = '';
+    })
+    .catch(function(err) {
+        loading.style.display = 'none';
+        summary.innerHTML = '<span style="color:var(--anloc-danger);">Erro: ' + err.message + '</span>';
+    });
+}
+
+function _renderDrilldownRows(companies) {
+    var tbody = document.getElementById('drilldownTableBody');
+    tbody.innerHTML = companies.map(function(c) {
+        var tickerLink = c.ticker ? '<a class="ticker-link" href="/company-analysis?code=' + encodeURIComponent(c.ticker) + '" target="_blank">' + c.ticker + ' <i class="fas fa-external-link-alt" style="font-size:0.6rem;"></i></a>' : '';
+        return '<tr>' +
+            '<td><strong>' + tickerLink + '</strong></td>' +
+            '<td>' + (c.company_name || '') + '</td>' +
+            '<td>' + (c.industry || '') + '</td>' +
+            '<td>' + (c.country || '') + '</td>' +
+            '<td class="text-right">' + (c.ev_ebitda != null ? c.ev_ebitda.toFixed(1) + 'x' : 'N/D') + '</td>' +
+            '<td class="text-right">' + (c.ev_revenue != null ? c.ev_revenue.toFixed(1) + 'x' : 'N/D') + '</td></tr>';
+    }).join('');
+}
+
+function filterDrilldownTable() {
+    var term = (document.getElementById('drilldownSearchInput').value || '').toLowerCase();
+    if (!term) { _renderDrilldownRows(_drilldownData); return; }
+    var filtered = _drilldownData.filter(function(c) {
+        return (c.ticker || '').toLowerCase().indexOf(term) >= 0 ||
+               (c.company_name || '').toLowerCase().indexOf(term) >= 0;
+    });
+    _renderDrilldownRows(filtered);
+}
+
+function closeDrilldownModal() {
+    document.getElementById('drilldownModalOverlay').style.display = 'none';
+    document.getElementById('drilldownSearchInput').value = '';
+}
+
+function exportDrilldownCSV() {
+    if (!_drilldownData.length) return;
+    var hasSector = _drilldownData[0] && _drilldownData[0].sector;
+    var header = hasSector ? '"Setor","Ticker","Empresa","Ind\u00fastria","Pa\u00eds","EV/EBITDA","EV/Revenue"'
+        : '"Ticker","Empresa","Ind\u00fastria","Pa\u00eds","EV/EBITDA","EV/Revenue"';
+    var rows = _drilldownData.map(function(c) {
+        var base = '"' + (c.ticker || '') + '","' + (c.company_name || '').replace(/"/g, '""') + '","' +
+            (c.industry || '').replace(/"/g, '""') + '","' + (c.country || '') + '",' +
+            (c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) : '') + ',' +
+            (c.ev_revenue != null ? c.ev_revenue.toFixed(2) : '');
+        return hasSector ? '"' + (c.sector || '').replace(/"/g, '""') + '",' + base : base;
+    });
+    var csv = '\uFEFF' + header + '\n' + rows.join('\n');
+    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'detalhado_empresas_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+function exportRankingDetailed() {
+    if (!reportData || !reportData.ranking) return;
+    var sectors = reportData.ranking.map(function(s) { return s.sector; });
+    var fiscalYear = reportData.metadata ? reportData.metadata.fiscal_year : new Date().getFullYear();
+    var btn = event.target.closest('button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...'; }
+
+    fetch('/api/estudoanloc/relatorio/companies_detail', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sector: '*',
+            sectors: sectors,
+            fiscal_year: fiscalYear,
+            filters: _getCurrentFilters()
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-csv"></i> Detalhado'; }
+        if (!data.success || !data.companies.length) {
+            alert('Nenhuma empresa encontrada.');
+            return;
+        }
+        var header = '"Setor","Ticker","Empresa","Ind\u00fastria","Pa\u00eds","EV/EBITDA","EV/Revenue"';
+        var rows = data.companies.map(function(c) {
+            return '"' + (c.sector || '').replace(/"/g, '""') + '","' +
+                (c.ticker || '') + '","' + (c.company_name || '').replace(/"/g, '""') + '","' +
+                (c.industry || '').replace(/"/g, '""') + '","' + (c.country || '') + '",' +
+                (c.ev_ebitda != null ? c.ev_ebitda.toFixed(2) : '') + ',' +
+                (c.ev_revenue != null ? c.ev_revenue.toFixed(2) : '');
+        });
+        var csv = '\uFEFF' + header + '\n' + rows.join('\n');
+        var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'ranking_detalhado_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    })
+    .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-csv"></i> Detalhado'; }
+        alert('Erro ao exportar: ' + err.message);
+    });
 }
 
 // Render deep analysis HTML from analysis object
