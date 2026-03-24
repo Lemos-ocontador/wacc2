@@ -109,10 +109,10 @@
       "wacc_component": "Beta, D/E Ratio, Tax Rate",
       "update_frequency": "Anual",
       "extraction_method": "Web Scraping + Excel Download",
-      "description": "Dados financeiros de empresas globais (globalcompfirms{year}.xlsx)",
+      "description": "Dados financeiros de empresas globais incluindo financeiras (globalcompfirms{year}.xlsx) - base completa com ~48,000 empresas",
       "api_available": false,
       "requires_auth": false,
-      "notes": "Já implementado no sistema atual. Dados de 40,000+ empresas."
+      "notes": "Base completa (globalcompfirms2026.xlsx) com 48,156 empresas incluindo setores financeiros (bancos, seguradoras, corretoras, asset management). Base anterior (globalcompnonfinfirms) excluía ~5,200 empresas financeiras."
     },
     {
       "name": "Damodaran Size Premiums",

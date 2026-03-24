@@ -7279,10 +7279,14 @@ LATAM_COUNTRIES = [
 ]
 
 
-def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max_ev_ebitda=60):
-    """Calcula estatísticas de múltiplos para um setor, segmentado por geografia."""
+def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max_ev_ebitda=60,
+                               require_positive_ebitda=True, selected_industries=None,
+                               manual_excluded_tickers=None):
+    """Calcula estatísticas de múltiplos para um setor, segmentado por geografia.
+    Retorna também lista de tickers excluídos com motivo."""
     current_year = datetime.now().year
     is_current = (fiscal_year >= current_year)
+    excluded_tickers = []
 
     if is_current:
         query = """
@@ -7328,13 +7332,80 @@ def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max
         df['_prio'] = df['period_type'].map(type_priority).fillna(2)
         df = df.sort_values('_prio').drop_duplicates(subset=['company_id'], keep='first').drop(columns=['_prio'])
 
+    # --- Filtro: indústrias selecionadas ---
+    if selected_industries:
+        mask_ind = ~df['yahoo_industry'].isin(selected_industries)
+        for _, row in df[mask_ind].iterrows():
+            excluded_tickers.append({
+                'ticker': row['ticker'], 'company_name': row['company_name'],
+                'sector': sector, 'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''), 'motivo': 'Indústria não selecionada',
+                'detalhe': f"Indústria: {row.get('yahoo_industry', 'N/D')}"
+            })
+        df = df[df['yahoo_industry'].isin(selected_industries)]
+
+    # --- Filtro: exclusão manual de tickers ---
+    if manual_excluded_tickers:
+        manual_set = set(t.upper().strip() for t in manual_excluded_tickers)
+        # Match both full ticker (e.g. NasdaqGS:AAPL) and short ticker (e.g. AAPL)
+        def _ticker_in_manual(t):
+            t_upper = t.upper().strip()
+            if t_upper in manual_set:
+                return True
+            # Also check the part after colon (exchange prefix)
+            if ':' in t_upper:
+                short = t_upper.split(':', 1)[1]
+                if short in manual_set:
+                    return True
+            return False
+        mask_manual = df['ticker'].apply(_ticker_in_manual)
+        for _, row in df[mask_manual].iterrows():
+            excluded_tickers.append({
+                'ticker': row['ticker'], 'company_name': row['company_name'],
+                'sector': sector, 'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''), 'motivo': 'Exclusão manual',
+                'detalhe': 'Removido manualmente pelo usuário'
+            })
+        df = df[~mask_manual]
+
+    # --- Filtro: EV mínimo ---
     if min_ev:
-        df = df[df['ev'] >= min_ev]
+        mask_ev = df['ev'] < min_ev
+        for _, row in df[mask_ev].iterrows():
+            excluded_tickers.append({
+                'ticker': row['ticker'], 'company_name': row['company_name'],
+                'sector': sector, 'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''), 'motivo': f'EV < USD {min_ev/1e6:.0f}M',
+                'detalhe': f"EV: USD {row['ev']/1e6:.1f}M < mínimo USD {min_ev/1e6:.0f}M"
+            })
+        df = df[~mask_ev]
 
     df['ev_ebitda'] = np.where((df['ebitda'] > 0) & (df['ev'] > 0), df['ev'] / df['ebitda'], np.nan)
     df['ev_revenue'] = np.where(df['revenue'] > 0, df['ev'] / df['revenue'], np.nan)
+
+    # --- Filtro: EBITDA positivo obrigatório ---
+    if require_positive_ebitda:
+        mask_neg_ebitda = (df['ebitda'] <= 0) | df['ebitda'].isna()
+        for _, row in df[mask_neg_ebitda].iterrows():
+            excluded_tickers.append({
+                'ticker': row['ticker'], 'company_name': row['company_name'],
+                'sector': sector, 'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''), 'motivo': 'EBITDA ≤ 0',
+                'detalhe': f"EBITDA: {row['ebitda']:.0f}" if pd.notna(row.get('ebitda')) else 'EBITDA: N/D'
+            })
+        df = df[~mask_neg_ebitda]
+
+    # --- Filtro: Teto EV/EBITDA ---
     if max_ev_ebitda:
-        df.loc[df['ev_ebitda'] > max_ev_ebitda, 'ev_ebitda'] = np.nan
+        mask_ceiling = df['ev_ebitda'] > max_ev_ebitda
+        for _, row in df[mask_ceiling].iterrows():
+            excluded_tickers.append({
+                'ticker': row['ticker'], 'company_name': row['company_name'],
+                'sector': sector, 'industry': row.get('yahoo_industry', ''),
+                'country': row.get('country', ''), 'motivo': f'EV/EBITDA > {max_ev_ebitda}x',
+                'detalhe': f"EV/EBITDA: {row['ev_ebitda']:.1f}x > teto {max_ev_ebitda}x"
+            })
+        df.loc[mask_ceiling, 'ev_ebitda'] = np.nan
 
     if len(df) == 0:
         return None
@@ -7417,7 +7488,8 @@ def _report_calc_sector_stats(conn, sector, fiscal_year, min_ev=100_000_000, max
         'spreads': spreads,
         'by_industry': by_industry,
         'top_brazil_companies': top_br,
-        'total_companies': len(df)
+        'total_companies': len(df),
+        'excluded_tickers': excluded_tickers
     }
 
 
@@ -7487,6 +7559,100 @@ def api_estudoanloc_check_ai():
         return jsonify({'connected': False, 'provider': 'Claude (Anthropic)', 'message': f'Erro: {str(e)}'})
 
 
+@app.route('/api/estudoanloc/relatorio/sectors_industries', methods=['GET'])
+def api_estudoanloc_relatorio_sectors_industries():
+    """Lista setores e indústrias disponíveis para filtros do relatório."""
+    try:
+        conn = get_db()
+        rows = conn.execute("""
+            SELECT DISTINCT cbd.yahoo_sector, cbd.yahoo_industry
+            FROM company_basic_data cbd
+            WHERE cbd.yahoo_sector IS NOT NULL AND cbd.yahoo_industry IS NOT NULL
+            ORDER BY cbd.yahoo_sector, cbd.yahoo_industry
+        """).fetchall()
+        conn.close()
+
+        sectors_map = {}
+        for sector, industry in rows:
+            if sector not in sectors_map:
+                sectors_map[sector] = []
+            sectors_map[sector].append(industry)
+
+        return jsonify({
+            'success': True,
+            'sectors': sorted(sectors_map.keys()),
+            'industries_by_sector': sectors_map
+        })
+    except Exception as e:
+        logger.error(f"Erro sectors_industries: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/estudoanloc/relatorio/company_lookup', methods=['POST'])
+def api_estudoanloc_relatorio_company_lookup():
+    """Busca dados detalhados de empresas para o chat do relatório."""
+    try:
+        data = request.get_json() or {}
+        tickers = data.get('tickers', [])
+        search_term = data.get('search', '').strip()
+
+        conn = get_db()
+        results = []
+
+        if tickers:
+            # Build conditions to match both full (NasdaqGS:AAPL) and short (AAPL) tickers
+            conditions = []
+            params_list = []
+            for t in tickers:
+                conditions.append("cbd.ticker = ? OR cbd.ticker LIKE ?")
+                params_list.extend([t, f'%:{t}'])
+            where_clause = ' OR '.join(f'({c})' for c in conditions)
+            rows = conn.execute(f"""
+                SELECT cbd.ticker, cbd.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
+                       cbd.yahoo_country, cbd.enterprise_value, cbd.market_cap,
+                       cfh.total_revenue, cfh.normalized_ebitda, cfh.free_cash_flow,
+                       cfh.period_type, cfh.fiscal_year
+                FROM company_basic_data cbd
+                LEFT JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                WHERE ({where_clause})
+                ORDER BY cfh.fiscal_year DESC
+            """, params_list).fetchall()
+        elif search_term:
+            rows = conn.execute("""
+                SELECT cbd.ticker, cbd.company_name, cbd.yahoo_sector, cbd.yahoo_industry,
+                       cbd.yahoo_country, cbd.enterprise_value, cbd.market_cap,
+                       cfh.total_revenue, cfh.normalized_ebitda, cfh.free_cash_flow,
+                       cfh.period_type, cfh.fiscal_year
+                FROM company_basic_data cbd
+                LEFT JOIN company_financials_historical cfh ON cfh.company_basic_data_id = cbd.id
+                WHERE (cbd.ticker LIKE ? OR cbd.company_name LIKE ?)
+                ORDER BY cfh.fiscal_year DESC
+                LIMIT 50
+            """, (f'%{search_term}%', f'%{search_term}%')).fetchall()
+        else:
+            conn.close()
+            return jsonify({'success': True, 'companies': []})
+
+        for r in rows:
+            ev = r[5] or 0
+            ebitda = r[8] or 0
+            revenue = r[7] or 0
+            results.append({
+                'ticker': r[0], 'company_name': r[1], 'sector': r[2], 'industry': r[3],
+                'country': r[4], 'enterprise_value': ev, 'market_cap': r[6],
+                'revenue': revenue, 'ebitda': ebitda, 'fcf': r[9],
+                'period_type': r[10], 'fiscal_year': r[11],
+                'ev_ebitda': round(ev / ebitda, 2) if ebitda > 0 and ev > 0 else None,
+                'ev_revenue': round(ev / revenue, 2) if revenue > 0 and ev > 0 else None
+            })
+        conn.close()
+
+        return jsonify({'success': True, 'companies': results})
+    except Exception as e:
+        logger.error(f"Erro company_lookup: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/estudoanloc/generate_report', methods=['POST'])
 def api_estudoanloc_generate_report():
     """Gera dados completos do relatório periódico para todos os setores."""
@@ -7496,6 +7662,15 @@ def api_estudoanloc_generate_report():
         selected_sectors = data.get('sectors', [])  # vazio = todos
         use_llm = data.get('use_llm', True)
         api_key = os.environ.get('ANTHROPIC_API_KEY', '') or data.get('api_key', '')
+
+        # Filtros avançados
+        filters = data.get('filters', {})
+        min_ev = filters.get('min_ev', 100_000_000)
+        max_ev_ebitda = filters.get('max_ev_ebitda', 60)
+        require_positive_ebitda = filters.get('require_positive_ebitda', True)
+        selected_industries = filters.get('selected_industries', None)  # None = todas
+        manual_excluded_tickers = filters.get('excluded_tickers', [])
+        evolution_years = filters.get('evolution_years', None)  # None = default 2021-2025
 
         conn = get_db()
 
@@ -7508,10 +7683,26 @@ def api_estudoanloc_generate_report():
 
         # Dados por setor
         sectors_data = []
+        all_excluded = []
         for sector in target_sectors:
-            sector_stats = _report_calc_sector_stats(conn, sector, fiscal_year)
+            sector_stats = _report_calc_sector_stats(
+                conn, sector, fiscal_year,
+                min_ev=min_ev, max_ev_ebitda=max_ev_ebitda,
+                require_positive_ebitda=require_positive_ebitda,
+                selected_industries=selected_industries,
+                manual_excluded_tickers=manual_excluded_tickers
+            )
             if sector_stats:
-                sector_stats['evolution'] = _report_evolution_sector(conn, sector)
+                # Coletar excluídos e remover da lista de dados do setor
+                sector_excluded = sector_stats.pop('excluded_tickers', [])
+                all_excluded.extend(sector_excluded)
+                # Evolução temporal
+                year_start = min(evolution_years) if evolution_years else 2021
+                year_end = max(evolution_years) if evolution_years else 2025
+                sector_stats['evolution'] = _report_evolution_sector(
+                    conn, sector, year_start=year_start, year_end=year_end,
+                    min_ev=min_ev, max_ev_ebitda=max_ev_ebitda
+                )
                 sectors_data.append(sector_stats)
 
         if not sectors_data:
@@ -7572,12 +7763,22 @@ def api_estudoanloc_generate_report():
                 'quarter': quarter,
                 'total_sectors': len(sectors_data),
                 'total_companies': sum(s.get('total_companies', 0) for s in sectors_data),
-                'data_freshness': data_freshness
+                'data_freshness': data_freshness,
+                'filters_applied': {
+                    'min_ev': min_ev,
+                    'max_ev_ebitda': max_ev_ebitda,
+                    'require_positive_ebitda': require_positive_ebitda,
+                    'selected_sectors': selected_sectors if selected_sectors else None,
+                    'selected_industries': selected_industries,
+                    'excluded_tickers_manual': manual_excluded_tickers,
+                    'evolution_years': evolution_years
+                }
             },
             'ranking': ranking,
             'sectors': sectors_data,
             'narratives': llm_narratives,
-            'graph_comments': graph_comments
+            'graph_comments': graph_comments,
+            'excluded_tickers': all_excluded
         }
 
         # Salvar no cache SQLite
@@ -7592,9 +7793,10 @@ def api_estudoanloc_generate_report():
             }, ensure_ascii=False)
             narratives_json = json_mod.dumps(llm_narratives, ensure_ascii=False) if llm_narratives else None
             graph_json = json_mod.dumps(graph_comments, ensure_ascii=False) if graph_comments else None
+            excluded_json = json_mod.dumps(all_excluded, ensure_ascii=False) if all_excluded else None
             cache_conn.execute(
-                "INSERT INTO report_cache (generated_at, fiscal_year, quarter, report_data, narratives, graph_comments) VALUES (?, ?, ?, ?, ?, ?)",
-                (generated_at, fiscal_year, quarter, report_data_json, narratives_json, graph_json)
+                "INSERT INTO report_cache (generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, excluded_tickers) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (generated_at, fiscal_year, quarter, report_data_json, narratives_json, graph_json, excluded_json)
             )
             cache_conn.commit()
             # Recuperar o ID do cache inserido
@@ -7912,7 +8114,7 @@ def _ensure_report_cache_table():
         ON report_cache(fiscal_year, created_at DESC)
     """)
     # Migrações: adicionar colunas se não existirem
-    for col in ['label TEXT', 'deep_analyses TEXT']:
+    for col in ['label TEXT', 'deep_analyses TEXT', 'excluded_tickers TEXT']:
         try:
             conn.execute(f"ALTER TABLE report_cache ADD COLUMN {col}")
         except Exception:
@@ -7953,7 +8155,7 @@ def api_report_cache_load():
     import json as json_mod
     cache_id = request.args.get('id', type=int)
     fiscal_year = request.args.get('fiscal_year', type=int)
-    _cols = "id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history, deep_analyses"
+    _cols = "id, generated_at, fiscal_year, quarter, report_data, narratives, graph_comments, chat_history, deep_analyses, excluded_tickers"
     conn = get_cache_db()
     if cache_id:
         row = conn.execute(
@@ -7982,7 +8184,8 @@ def api_report_cache_load():
         'narratives': json_mod.loads(row[5]) if row[5] else {},
         'graph_comments': json_mod.loads(row[6]) if row[6] else {},
         'chat_history': json_mod.loads(row[7]) if row[7] else [],
-        'deep_analyses': json_mod.loads(row[8]) if row[8] else {}
+        'deep_analyses': json_mod.loads(row[8]) if row[8] else {},
+        'excluded_tickers': json_mod.loads(row[9]) if row[9] else []
     })
 
 
@@ -8165,6 +8368,7 @@ def api_estudoanloc_relatorio_chat():
         data = request.get_json() or {}
         messages = data.get('messages', [])
         report_context = data.get('report_context', '')
+        company_context = data.get('company_context', '')
 
         if not messages:
             return jsonify({'success': False, 'error': 'Nenhuma mensagem enviada'}), 400
@@ -8183,6 +8387,7 @@ REGRAS:
 - Formate com parágrafos curtos. Use **negrito** para destaques.
 - Se o usuário perguntar sobre algo fora do escopo dos dados, informe as limitações.
 - Ao final de cada resposta que use fontes externas, adicione uma linha "Fontes: ..." listando as referências.
+- Se dados de empresas específicas estiverem no contexto, use-os para explicar distorções, outliers ou comparações setoriais.
 
 DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 - NÃO recomendar compra ou venda de ativos. NÃO sugerir investimentos ou alocação de portfólio.
@@ -8194,6 +8399,9 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
         if report_context:
             system_prompt += f"\n\nCONTEXTO DO RELATÓRIO (dados e narrativas gerados):\n{report_context}"
+
+        if company_context:
+            system_prompt += f"\n\nDADOS DE EMPRESAS ESPECÍFICAS (da base de dados):\n{company_context}"
 
         import anthropic
         client = anthropic.Anthropic(api_key=api_key)

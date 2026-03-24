@@ -252,6 +252,110 @@
         }
         .config-panel input:focus, .config-panel select:focus { outline: none; border-color: var(--anloc-gold); }
 
+        /* ===== FILTER COMPONENTS ===== */
+        .btn-filter-action {
+            background: rgba(45,125,210,0.15); border: 1px solid rgba(45,125,210,0.3);
+            color: var(--anloc-accent); border-radius: 6px; padding: 0.2rem 0.5rem;
+            font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-filter-action:hover { background: rgba(45,125,210,0.3); color: #fff; }
+        .sectors-filter-container {
+            max-height: 200px; overflow-y: auto; background: rgba(10,22,40,0.5);
+            border: 1px solid var(--anloc-border); border-radius: 8px; padding: 0.4rem;
+            display: flex; flex-wrap: wrap; gap: 0.3rem;
+        }
+        .sectors-filter-container::-webkit-scrollbar { width: 6px; }
+        .sectors-filter-container::-webkit-scrollbar-thumb { background: var(--anloc-border); border-radius: 3px; }
+        .sector-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem;
+            background: rgba(45,125,210,0.15); border: 1px solid rgba(45,125,210,0.3);
+            border-radius: 16px; font-size: 0.78rem; color: var(--anloc-text); cursor: pointer;
+            transition: all 0.2s; user-select: none;
+        }
+        .sector-chip.active { background: rgba(45,125,210,0.35); border-color: var(--anloc-accent); }
+        .sector-chip:hover { background: rgba(45,125,210,0.25); }
+        .sector-chip .chip-count { font-size: 0.7rem; opacity: 0.6; }
+        .industries-filter-container {
+            max-height: 150px; overflow-y: auto; background: rgba(10,22,40,0.5);
+            border: 1px solid var(--anloc-border); border-radius: 8px; padding: 0.4rem;
+            display: flex; flex-wrap: wrap; gap: 0.3rem;
+        }
+        .industries-filter-container::-webkit-scrollbar { width: 6px; }
+        .industries-filter-container::-webkit-scrollbar-thumb { background: var(--anloc-border); border-radius: 3px; }
+        .ind-chip {
+            display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.2rem 0.5rem;
+            background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+            border-radius: 12px; font-size: 0.75rem; color: var(--anloc-text); cursor: pointer;
+            transition: all 0.2s; user-select: none;
+        }
+        .ind-chip.active { background: rgba(52,211,153,0.25); border-color: #34d399; }
+        .ind-chip:hover { background: rgba(52,211,153,0.2); }
+        .evolution-years-row {
+            display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem;
+        }
+        .evo-year-chip {
+            padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; cursor: pointer;
+            border: 1px solid var(--anloc-border); background: rgba(10,22,40,0.5);
+            color: var(--anloc-text-muted); transition: all 0.2s; user-select: none;
+        }
+        .evo-year-chip.active { background: rgba(212,168,67,0.2); border-color: var(--anloc-gold); color: var(--anloc-gold); }
+        .excluded-tickers-list {
+            display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; min-height: 0;
+        }
+        .excluded-ticker-tag {
+            display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem;
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px; font-size: 0.78rem; color: #ef4444;
+        }
+        .excluded-ticker-tag .remove-tag { cursor: pointer; opacity: 0.7; }
+        .excluded-ticker-tag .remove-tag:hover { opacity: 1; }
+        .excluded-card {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem;
+            background: rgba(212,168,67,0.1); border: 1px solid rgba(212,168,67,0.3);
+            border-radius: 8px; margin-top: 0.8rem; cursor: pointer; font-size: 0.9rem;
+            color: var(--anloc-text); transition: all 0.2s;
+        }
+        .excluded-card:hover { background: rgba(212,168,67,0.2); }
+        /* ===== EXCLUDED MODAL ===== */
+        .excluded-modal-overlay {
+            position: fixed; inset: 0; background: rgba(10,22,40,0.85); z-index: 3000;
+            display: flex; justify-content: center; align-items: center; padding: 2rem;
+        }
+        .excluded-modal {
+            background: var(--anloc-card); border: 1px solid var(--anloc-border); border-radius: 16px;
+            width: 95%; max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .excluded-modal-header {
+            display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid var(--anloc-border);
+        }
+        .excluded-modal-header h3 { margin: 0; font-size: 1.1rem; }
+        .excluded-modal-close { background: none; border: none; color: var(--anloc-text-muted); font-size: 1.5rem; cursor: pointer; }
+        .excluded-modal-close:hover { color: var(--anloc-text); }
+        .excluded-modal-summary {
+            padding: 0.8rem 1.5rem; background: rgba(10,22,40,0.5); font-size: 0.85rem;
+            color: var(--anloc-text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap;
+        }
+        .excluded-modal-filters {
+            padding: 0.6rem 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .excluded-modal-filters input, .excluded-modal-filters select {
+            background: var(--anloc-dark); border: 1px solid var(--anloc-border); color: var(--anloc-text);
+            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem;
+        }
+        .excluded-modal-body {
+            flex: 1; overflow-y: auto; padding: 0 1.5rem 1.5rem;
+        }
+        .excluded-modal-body .report-table { font-size: 0.82rem; }
+        .excluded-modal-body .report-table th { position: sticky; top: 0; z-index: 1; }
+        .btn-reinclude {
+            background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.3);
+            color: #34d399; border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.75rem;
+            cursor: pointer; white-space: nowrap;
+        }
+        .btn-reinclude:hover { background: rgba(52,211,153,0.3); }
+
         /* ===== LOADING ===== */
         .loading-overlay {
             display: none;
@@ -940,7 +1044,7 @@
         </p>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label>Ano Fiscal</label>
                 <select id="cfgYear">
                     <option value="2026" selected>2026 (Atual)</option>
@@ -949,22 +1053,95 @@
                     <option value="2023">2023</option>
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label>EV M&#237;nimo (USD)</label>
+                <select id="cfgMinEv">
+                    <option value="0">Sem filtro</option>
+                    <option value="50000000">USD 50M</option>
+                    <option value="100000000" selected>USD 100M</option>
+                    <option value="500000000">USD 500M</option>
+                    <option value="1000000000">USD 1B</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Teto EV/EBITDA</label>
+                <select id="cfgMaxEvEbitda">
+                    <option value="0">Sem teto</option>
+                    <option value="30">30x</option>
+                    <option value="60" selected>60x</option>
+                    <option value="100">100x</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:0.6rem;">
+            <div class="col-md-4">
                 <label>An&#225;lise LLM (Claude)</label>
                 <select id="cfgLlm">
                     <option value="true" selected>Sim - Gerar narrativas com IA</option>
                     <option value="false">N&#227;o - Apenas dados</option>
                 </select>
             </div>
+            <div class="col-md-4">
+                <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                    <input type="checkbox" id="cfgRequirePositiveEbitda" checked style="width:auto;margin:0;">
+                    Exigir EBITDA positivo
+                </label>
+            </div>
+            <div class="col-md-4">
+                <label>Anos para Evolu&#231;&#227;o</label>
+                <div id="cfgEvolutionYears" class="evolution-years-row"></div>
+            </div>
         </div>
 
-        <div id="aiConfigStatus" style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.5rem;font-size:0.85rem;background:rgba(30,51,80,0.5);color:var(--anloc-text-muted);">
+        <!-- SETORES E INDÚSTRIAS -->
+        <div style="margin-top:1rem;border-top:1px solid rgba(45,125,210,0.2);padding-top:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <label style="margin:0;font-weight:600;"><i class="fas fa-layer-group" style="margin-right:0.3rem;color:var(--anloc-gold);"></i> Setores e Ind&#250;strias</label>
+                <div style="display:flex;gap:0.4rem;">
+                    <button class="btn-filter-action" onclick="selectAllSectors(true)" title="Selecionar todos"><i class="fas fa-check-double"></i> Todos</button>
+                    <button class="btn-filter-action" onclick="selectAllSectors(false)" title="Desmarcar todos"><i class="fas fa-times"></i> Nenhum</button>
+                </div>
+            </div>
+            <div id="cfgSectorsContainer" class="sectors-filter-container">
+                <div style="color:var(--anloc-text-muted);font-size:0.85rem;padding:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Carregando setores...</div>
+            </div>
+            <div id="cfgIndustriesPanel" style="display:none;margin-top:0.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                    <label style="margin:0;font-size:0.85rem;color:var(--anloc-text-muted);">Ind&#250;strias do setor selecionado:</label>
+                    <div style="display:flex;gap:0.4rem;">
+                        <button class="btn-filter-action" onclick="selectAllIndustries(true)"><i class="fas fa-check-double"></i></button>
+                        <button class="btn-filter-action" onclick="selectAllIndustries(false)"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div id="cfgIndustriesContainer" class="industries-filter-container"></div>
+            </div>
+        </div>
+
+        <!-- EXCLUSÃO MANUAL DE TICKERS -->
+        <div style="margin-top:1rem;border-top:1px solid rgba(45,125,210,0.2);padding-top:1rem;">
+            <label style="font-weight:600;"><i class="fas fa-ban" style="margin-right:0.3rem;color:var(--anloc-danger);"></i> Excluir Tickers Manualmente</label>
+            <div style="display:flex;gap:0.4rem;margin-top:0.3rem;">
+                <input type="text" id="cfgExcludeTicker" placeholder="Ex: AAPL, MSFT, PETR4" style="flex:1;font-size:0.85rem;">
+                <button class="btn-filter-action" onclick="addExcludedTicker()" style="padding:0.3rem 0.8rem;"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="cfgExcludedTickersList" class="excluded-tickers-list"></div>
+        </div>
+
+        <div id="aiConfigStatus" style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;font-size:0.85rem;background:rgba(30,51,80,0.5);color:var(--anloc-text-muted);">
             <i class="fas fa-circle-notch fa-spin" style="margin-right:0.4rem;"></i> Verificando conex&#227;o com IA...
         </div>
 
-        <button class="btn-anloc" style="width:100%;padding:0.8rem;font-size:1rem;margin-top:1rem;" onclick="generateReport()">
+        <button class="btn-anloc" style="width:100%;padding:0.8rem;font-size:1rem;margin-top:0.5rem;" onclick="generateReport()">
             <i class="fas fa-rocket"></i> Gerar Relat&#243;rio Completo
         </button>
+
+        <!-- CARD: empresas excluídas (aparece após gerar relatório se houver excluídos) -->
+        <div id="excludedTickersCard" class="excluded-card" style="display:none;" onclick="openExcludedModal()">
+            <i class="fas fa-filter" style="color:var(--anloc-gold);"></i>
+            <span id="excludedTickersCount">0</span> empresas n&#227;o consideradas
+            <i class="fas fa-external-link-alt" style="font-size:0.75rem;margin-left:0.3rem;opacity:0.6;"></i>
+        </div>
 
         <!-- LISTA DE ESTUDOS ANTERIORES -->
         <div class="cache-list-panel" id="cacheListPanel" style="display:none;">
@@ -976,6 +1153,43 @@
             </div>
             <div class="cache-filter-tabs" id="cacheFilterTabs"></div>
             <div class="cache-list-body" id="cacheListBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Tickers Excluídos -->
+<div class="excluded-modal-overlay" id="excludedModalOverlay" style="display:none;" onclick="if(event.target===this)closeExcludedModal()">
+    <div class="excluded-modal">
+        <div class="excluded-modal-header">
+            <h3><i class="fas fa-filter" style="color:var(--anloc-gold);margin-right:0.5rem;"></i> Empresas N&#227;o Consideradas</h3>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button class="btn-filter-action" onclick="exportExcludedCSV()" title="Exportar CSV"><i class="fas fa-download"></i> CSV</button>
+                <button class="excluded-modal-close" onclick="closeExcludedModal()">&times;</button>
+            </div>
+        </div>
+        <div class="excluded-modal-summary" id="excludedModalSummary"></div>
+        <div class="excluded-modal-filters">
+            <input type="text" id="excludedSearchInput" placeholder="Buscar ticker ou empresa..." oninput="filterExcludedTable()" style="flex:1;">
+            <select id="excludedFilterMotivo" onchange="filterExcludedTable()">
+                <option value="">Todos os motivos</option>
+            </select>
+        </div>
+        <div class="excluded-modal-body">
+            <table class="report-table" id="excludedTable">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Empresa</th>
+                        <th>Setor</th>
+                        <th>Ind&#250;stria</th>
+                        <th>Pa&#237;s</th>
+                        <th>Motivo</th>
+                        <th>Detalhe</th>
+                        <th>A&#231;&#227;o</th>
+                    </tr>
+                </thead>
+                <tbody id="excludedTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -1282,6 +1496,9 @@ let reportData = null;
 let chartInstances = {};
 let currentCacheId = null;
 let reportChatHistory = [];
+let allExcludedTickers = [];
+let manualExcludedTickers = [];
+let sectorsIndustriesData = null; // {sectors:[], industries_by_sector:{}}
 
 function getSectorColor(sector, idx) {
     return SECTOR_COLORS[sector] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
@@ -1448,6 +1665,10 @@ async function loadFromCache(cacheId) {
         currentCacheId = data.cache_id;
         reportChatHistory = data.chat_history || [];
 
+        // Restore excluded tickers
+        allExcludedTickers = data.excluded_tickers || [];
+        updateExcludedCard();
+
         renderReport(reportData);
 
         var hasNarratives = reportData.narratives && Object.keys(reportData.narratives).length > 0;
@@ -1484,14 +1705,265 @@ async function loadFromCache(cacheId) {
     }
 }
 
+// ==============================
+// FILTER MANAGEMENT: Sectors, Industries, Evolution Years, Manual Exclusions
+// ==============================
+async function loadSectorsIndustries() {
+    try {
+        var resp = await fetch('/api/estudoanloc/relatorio/sectors_industries');
+        var data = await resp.json();
+        if (!data.success) return;
+        sectorsIndustriesData = data;
+        renderSectorChips(data.sectors);
+    } catch(e) {
+        document.getElementById('cfgSectorsContainer').innerHTML = '<div style="color:var(--anloc-danger);font-size:0.85rem;">Erro ao carregar setores</div>';
+    }
+}
+
+function renderSectorChips(sectors) {
+    var container = document.getElementById('cfgSectorsContainer');
+    container.innerHTML = sectors.map(function(s) {
+        var indCount = (sectorsIndustriesData && sectorsIndustriesData.industries_by_sector[s]) ? sectorsIndustriesData.industries_by_sector[s].length : 0;
+        return '<div class="sector-chip active" data-sector="' + s + '" onclick="toggleSectorChip(this)">' +
+            '<input type="checkbox" checked style="display:none;">' +
+            s + ' <span class="chip-count">(' + indCount + ')</span></div>';
+    }).join('');
+}
+
+function toggleSectorChip(el) {
+    el.classList.toggle('active');
+    var cb = el.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = el.classList.contains('active');
+    // If only one sector is selected or being clicked, show its industries
+    var activeSectors = getSelectedSectors();
+    if (activeSectors.length === 1 && el.classList.contains('active')) {
+        showIndustriesForSector(activeSectors[0]);
+    } else if (activeSectors.length === 0 || activeSectors.length > 3) {
+        document.getElementById('cfgIndustriesPanel').style.display = 'none';
+    } else {
+        showIndustriesForSectors(activeSectors);
+    }
+}
+
+function getSelectedSectors() {
+    var chips = document.querySelectorAll('#cfgSectorsContainer .sector-chip.active');
+    return Array.from(chips).map(function(c) { return c.dataset.sector; });
+}
+
+function selectAllSectors(selectAll) {
+    var chips = document.querySelectorAll('#cfgSectorsContainer .sector-chip');
+    chips.forEach(function(c) {
+        if (selectAll) c.classList.add('active');
+        else c.classList.remove('active');
+        var cb = c.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = selectAll;
+    });
+    document.getElementById('cfgIndustriesPanel').style.display = 'none';
+}
+
+function showIndustriesForSector(sector) {
+    showIndustriesForSectors([sector]);
+}
+
+function showIndustriesForSectors(sectors) {
+    if (!sectorsIndustriesData) return;
+    var panel = document.getElementById('cfgIndustriesPanel');
+    var container = document.getElementById('cfgIndustriesContainer');
+    var allIndustries = [];
+    sectors.forEach(function(s) {
+        var inds = sectorsIndustriesData.industries_by_sector[s] || [];
+        inds.forEach(function(ind) {
+            if (allIndustries.indexOf(ind) === -1) allIndustries.push(ind);
+        });
+    });
+    allIndustries.sort();
+    if (allIndustries.length === 0) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    container.innerHTML = allIndustries.map(function(ind) {
+        return '<div class="ind-chip active" data-industry="' + ind + '" onclick="this.classList.toggle(\'active\')">' + ind + '</div>';
+    }).join('');
+}
+
+function getSelectedIndustries() {
+    var panel = document.getElementById('cfgIndustriesPanel');
+    if (panel.style.display === 'none') return null; // null = todas
+    var chips = document.querySelectorAll('#cfgIndustriesContainer .ind-chip.active');
+    if (chips.length === 0) return null;
+    var all = document.querySelectorAll('#cfgIndustriesContainer .ind-chip');
+    if (chips.length === all.length) return null; // todos selecionados = sem filtro
+    return Array.from(chips).map(function(c) { return c.dataset.industry; });
+}
+
+function selectAllIndustries(selectAll) {
+    var chips = document.querySelectorAll('#cfgIndustriesContainer .ind-chip');
+    chips.forEach(function(c) {
+        if (selectAll) c.classList.add('active');
+        else c.classList.remove('active');
+    });
+}
+
+function buildEvolutionYearChips() {
+    var container = document.getElementById('cfgEvolutionYears');
+    var currentYear = new Date().getFullYear();
+    var years = [];
+    for (var y = currentYear - 5; y <= currentYear; y++) years.push(y);
+    container.innerHTML = years.map(function(y) {
+        var isActive = (y >= currentYear - 4); // últimos 5 anos por padrão
+        return '<div class="evo-year-chip' + (isActive ? ' active' : '') + '" data-year="' + y + '" onclick="this.classList.toggle(\'active\')">' + y + '</div>';
+    }).join('');
+}
+
+function getEvolutionYears() {
+    var chips = document.querySelectorAll('#cfgEvolutionYears .evo-year-chip.active');
+    if (chips.length === 0) return null;
+    return Array.from(chips).map(function(c) { return parseInt(c.dataset.year); });
+}
+
+// Manual ticker exclusion
+function addExcludedTicker() {
+    var input = document.getElementById('cfgExcludeTicker');
+    var val = input.value.trim().toUpperCase();
+    if (!val) return;
+    // Support comma-separated
+    var tickers = val.split(/[,;\s]+/).filter(function(t) { return t.length > 0; });
+    tickers.forEach(function(t) {
+        if (manualExcludedTickers.indexOf(t) === -1) manualExcludedTickers.push(t);
+    });
+    input.value = '';
+    renderManualExcludedTags();
+}
+
+function removeManualExcludedTicker(ticker) {
+    manualExcludedTickers = manualExcludedTickers.filter(function(t) { return t !== ticker; });
+    renderManualExcludedTags();
+}
+
+function renderManualExcludedTags() {
+    var container = document.getElementById('cfgExcludedTickersList');
+    container.innerHTML = manualExcludedTickers.map(function(t) {
+        return '<span class="excluded-ticker-tag">' + t + ' <span class="remove-tag" onclick="removeManualExcludedTicker(\'' + t + '\')">&times;</span></span>';
+    }).join('');
+}
+
+// ==============================
+// EXCLUDED TICKERS MODAL
+// ==============================
+function updateExcludedCard() {
+    var card = document.getElementById('excludedTickersCard');
+    if (allExcludedTickers.length > 0) {
+        card.style.display = 'flex';
+        document.getElementById('excludedTickersCount').textContent = allExcludedTickers.length;
+    } else {
+        card.style.display = 'none';
+    }
+}
+
+function openExcludedModal() {
+    if (allExcludedTickers.length === 0) return;
+    var overlay = document.getElementById('excludedModalOverlay');
+    overlay.style.display = 'flex';
+
+    // Summary
+    var motivos = {};
+    allExcludedTickers.forEach(function(t) {
+        motivos[t.motivo] = (motivos[t.motivo] || 0) + 1;
+    });
+    var summaryHtml = Object.keys(motivos).map(function(m) {
+        return '<span><strong>' + motivos[m] + '</strong> ' + m + '</span>';
+    }).join('');
+    document.getElementById('excludedModalSummary').innerHTML = '<span><strong>' + allExcludedTickers.length + '</strong> total</span>' + summaryHtml;
+
+    // Motivo filter
+    var sel = document.getElementById('excludedFilterMotivo');
+    sel.innerHTML = '<option value="">Todos os motivos</option>' + Object.keys(motivos).map(function(m) {
+        return '<option value="' + m + '">' + m + ' (' + motivos[m] + ')</option>';
+    }).join('');
+
+    renderExcludedTable(allExcludedTickers);
+}
+
+function closeExcludedModal() {
+    document.getElementById('excludedModalOverlay').style.display = 'none';
+}
+
+function filterExcludedTable() {
+    var search = (document.getElementById('excludedSearchInput').value || '').toLowerCase();
+    var motivo = document.getElementById('excludedFilterMotivo').value;
+    var filtered = allExcludedTickers.filter(function(t) {
+        var matchSearch = !search || (t.ticker || '').toLowerCase().indexOf(search) >= 0 || (t.company_name || '').toLowerCase().indexOf(search) >= 0;
+        var matchMotivo = !motivo || t.motivo === motivo;
+        return matchSearch && matchMotivo;
+    });
+    renderExcludedTable(filtered);
+}
+
+function renderExcludedTable(items) {
+    var tbody = document.getElementById('excludedTableBody');
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--anloc-text-muted);">Nenhum resultado</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map(function(t, idx) {
+        return '<tr>' +
+            '<td><strong>' + (t.ticker || 'N/D') + '</strong></td>' +
+            '<td>' + (t.company_name || '') + '</td>' +
+            '<td>' + (t.sector || '') + '</td>' +
+            '<td style="font-size:0.78rem;">' + (t.industry || '') + '</td>' +
+            '<td>' + (t.country || '') + '</td>' +
+            '<td><span style="background:rgba(212,168,67,0.15);padding:0.15rem 0.4rem;border-radius:4px;font-size:0.78rem;">' + (t.motivo || '') + '</span></td>' +
+            '<td style="font-size:0.78rem;">' + (t.detalhe || '') + '</td>' +
+            '<td><button class="btn-reinclude" onclick="reincludeExcluded(' + idx + ')" title="Reverter exclus\u00e3o"><i class="fas fa-undo"></i></button></td>' +
+            '</tr>';
+    }).join('');
+}
+
+function reincludeExcluded(idx) {
+    var item = allExcludedTickers[idx];
+    if (!item) return;
+    // If it was manual exclusion, remove from manualExcludedTickers
+    if (item.motivo === 'Exclus\u00e3o manual') {
+        manualExcludedTickers = manualExcludedTickers.filter(function(t) { return t.toUpperCase() !== (item.ticker || '').toUpperCase(); });
+        renderManualExcludedTags();
+    }
+    allExcludedTickers.splice(idx, 1);
+    updateExcludedCard();
+    if (allExcludedTickers.length === 0) closeExcludedModal();
+    else openExcludedModal(); // refresh
+}
+
+function exportExcludedCSV() {
+    if (allExcludedTickers.length === 0) return;
+    var header = ['Ticker', 'Empresa', 'Setor', 'Ind\u00fastria', 'Pa\u00eds', 'Motivo', 'Detalhe'];
+    var rows = allExcludedTickers.map(function(t) {
+        return [t.ticker, t.company_name, t.sector, t.industry, t.country, t.motivo, t.detalhe].map(function(v) {
+            return '"' + (v || '').toString().replace(/"/g, '""') + '"';
+        }).join(',');
+    });
+    var csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
+    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'tickers_excluidos_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+}
+
 async function generateReport() {
     const year = parseInt(document.getElementById('cfgYear').value);
     const useLlm = document.getElementById('cfgLlm').value === 'true';
 
+    // Collect filters
+    const minEv = parseInt(document.getElementById('cfgMinEv').value) || 0;
+    const maxEvEbitda = parseInt(document.getElementById('cfgMaxEvEbitda').value) || 0;
+    const requirePositiveEbitda = document.getElementById('cfgRequirePositiveEbitda').checked;
+    const selectedSectors = getSelectedSectors();
+    const allSectors = sectorsIndustriesData ? sectorsIndustriesData.sectors : [];
+    const selectedIndustries = getSelectedIndustries();
+    const evolutionYears = getEvolutionYears();
+
     const overlay = document.getElementById('loadingOverlay');
     overlay.classList.add('active');
     document.getElementById('loadingText').textContent = 'Gerando relat\u00f3rio...';
-    document.getElementById('loadingDetail').textContent = 'Consultando dados de todos os setores e calculando m\u00faltiplos';
+    document.getElementById('loadingDetail').textContent = 'Consultando dados de ' + selectedSectors.length + ' setores e calculando m\u00faltiplos';
 
     try {
         const resp = await fetch('/api/estudoanloc/generate_report', {
@@ -1500,6 +1972,15 @@ async function generateReport() {
             body: JSON.stringify({
                 fiscal_year: year,
                 use_llm: useLlm,
+                sectors: (selectedSectors.length < allSectors.length) ? selectedSectors : [],
+                filters: {
+                    min_ev: minEv || 0,
+                    max_ev_ebitda: maxEvEbitda || 0,
+                    require_positive_ebitda: requirePositiveEbitda,
+                    selected_industries: selectedIndustries,
+                    excluded_tickers: manualExcludedTickers,
+                    evolution_years: evolutionYears
+                }
             })
         });
 
@@ -1511,6 +1992,10 @@ async function generateReport() {
         reportData = await resp.json();
         currentCacheId = reportData.cache_id || null;
         reportChatHistory = [];
+
+        // Handle excluded tickers
+        allExcludedTickers = reportData.excluded_tickers || [];
+        updateExcludedCard();
 
         renderReport(reportData);
 
@@ -2558,14 +3043,41 @@ async function sendReportChat() {
     var typingId = 'typing_' + Date.now();
     addReportBubble('assistant', '<div class="rchat-typing"><span></span><span></span><span></span></div>', typingId);
 
+    // Detect ticker-like patterns in user message and look up company data
+    var companyContext = null;
+    var tickerMatches = message.match(/\b[A-Z]{1,5}(?:\.[A-Z]{1,2})?\b/g);
+    if (tickerMatches && tickerMatches.length > 0 && tickerMatches.length <= 20) {
+        // Filter out common English words that look like tickers
+        var stopWords = ['I','A','O','E','DO','DA','DE','OS','AS','NO','NA','EM','SE','OU','QUE','COM','POR','THE','AND','FOR','BUT','NOT','YOU','ALL','CAN','HAD','HER','WAS','ONE','OUR','OUT','ARE','HAS','HIS','HOW','ITS','MAY','NEW','NOW','OLD','SEE','WAY','WHO','DID','GET','HAS','HIM','LET','SAY','SHE','TOO','USE','VS','EV','TTM','USD','BRL','PIB','EUA'];
+        var tickers = tickerMatches.filter(function(t) { return stopWords.indexOf(t) === -1 && t.length >= 2; });
+        if (tickers.length > 0) {
+            try {
+                var lookupResp = await fetch('/api/estudoanloc/relatorio/company_lookup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tickers: tickers})
+                });
+                var lookupData = await lookupResp.json();
+                if (lookupData.success && lookupData.companies && lookupData.companies.length > 0) {
+                    companyContext = lookupData.companies;
+                }
+            } catch(e) { /* ignore lookup errors */ }
+        }
+    }
+
     try {
+        var chatBody = {
+            messages: reportChatHistory.slice(-20),
+            report_context: buildReportContext()
+        };
+        if (companyContext) {
+            chatBody.company_context = companyContext;
+        }
+
         var resp = await fetch('/api/estudoanloc/relatorio/chat', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                messages: reportChatHistory.slice(-20),
-                report_context: buildReportContext()
-            })
+            body: JSON.stringify(chatBody)
         });
 
         var typing = document.getElementById(typingId);
@@ -2604,6 +3116,18 @@ async function sendReportChat() {
 // AUTO-CHECK AI ON PAGE LOAD
 // ==============================
 (function() {
+    // Always run these regardless of AI status div
+    checkCacheOnLoad();
+    loadSectorsIndustries();
+    buildEvolutionYearChips();
+
+    // Year change re-checks cache
+    var yearSel = document.getElementById('cfgYear');
+    if (yearSel) {
+        yearSel.addEventListener('change', function() { checkCacheOnLoad(); });
+    }
+
+    // AI status check
     var statusDiv = document.getElementById('aiConfigStatus');
     if (!statusDiv) return;
     fetch('/api/estudoanloc/check_ai')
@@ -2626,15 +3150,6 @@ async function sendReportChat() {
             statusDiv.style.color = '#f87171';
             statusDiv.innerHTML = '<i class="fas fa-times-circle" style="margin-right:0.4rem;"></i> N\u00e3o foi poss\u00edvel verificar conex\u00e3o com IA.';
         });
-
-    // Check for cached reports
-    checkCacheOnLoad();
-
-    // Year change re-checks cache
-    var yearSel = document.getElementById('cfgYear');
-    if (yearSel) {
-        yearSel.addEventListener('change', function() { checkCacheOnLoad(); });
-    }
 })();
 
 </script>

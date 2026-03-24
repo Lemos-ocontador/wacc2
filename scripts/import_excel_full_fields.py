@@ -220,7 +220,7 @@ def update_columns(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Importa todos os campos do Excel para damodaran_global.')
-    parser.add_argument('--excel-path', default='data/damodaran_data/globalcompnonfinfirms2026.xlsx')
+    parser.add_argument('--excel-path', default='data/damodaran_data/globalcompfirms2026.xlsx')
     parser.add_argument('--db-path', default='data/damodaran_db.db')
     parser.add_argument('--mapping-csv', default='data/mapeamento_campos_damodaran_20250926_235026.csv')
     parser.add_argument('--batch-size', type=int, default=500)

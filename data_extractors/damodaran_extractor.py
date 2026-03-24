@@ -37,7 +37,9 @@ class DamodaranExtractor(BaseExtractor):
             'industry_betas_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/betas.xls',
             'market_risk_premium_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls',
             'cost_of_capital_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/wacc.xls',
-            'size_premium_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/spearn.xls'
+            'size_premium_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/spearn.xls',
+            'global_companies_all_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/globalcompfirms2026.xlsx',
+            'global_companies_nonfin_excel': 'https://pages.stern.nyu.edu/~adamodar/pc/datasets/globalcompnonfinfirms2026.xlsx',
         }
     
     def extract_data(self, data_type: str, **kwargs) -> Dict[str, Any]:
