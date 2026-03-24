@@ -7,8 +7,12 @@ app.yaml
 
 # Bancos de dados (muito grandes para GitHub)
 *.db
+*.db-shm
+*.db-wal
 data/damodaran_data/
 data/*.db
+data/*.db-shm
+data/*.db-wal
 data/*backup*
 damodaran_data_new.db
 
