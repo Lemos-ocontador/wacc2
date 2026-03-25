@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Dados — Empresas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f97316;
+        }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        .nav-bar { background: #1e293b; border-bottom: 1px solid var(--card-border); padding: 8px 0; margin-bottom: 0; }
+        .nav-bar a {
+            color: var(--text-secondary); text-decoration: none; padding: 6px 16px;
+            border-radius: 6px; font-size: 0.85em; transition: all 0.2s;
+        }
+        .nav-bar a:hover, .nav-bar a.active { color: white; background: rgba(59,130,246,0.2); }
+
+        /* HEADER */
+        .page-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%);
+            padding: 28px 0; margin-bottom: 24px; border-bottom: 3px solid var(--accent-purple);
+        }
+        .page-header h1 { font-size: 1.5em; font-weight: 700; margin: 0; }
+        .page-header .subtitle { font-size: 0.85em; opacity: 0.8; margin-top: 4px; }
+
+        /* SUMMARY GRID */
+        .summary-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .summary-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 14px; text-align: center;
+        }
+        .summary-card .num { font-size: 1.6em; font-weight: 800; line-height: 1; }
+        .summary-card .lbl { font-size: 0.7em; color: var(--text-secondary); margin-top: 4px; }
+
+        /* FILTROS */
+        .filters-panel {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 18px; margin-bottom: 20px;
+        }
+        .filters-panel label { font-size: 0.75em; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-select, .form-control {
+            background: #0f172a; border: 1px solid var(--card-border); color: var(--text-primary);
+            font-size: 0.85em; border-radius: 8px;
+        }
+        .form-select:focus, .form-control:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); background: #0f172a; color: var(--text-primary); }
+        .form-select option { background: #1e293b; }
+        .filter-count { font-size: 0.8em; color: var(--accent-cyan); font-weight: 700; }
+
+        /* GRID DE JOBS */
+        .job-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 18px; margin-bottom: 14px;
+            transition: all 0.3s; position: relative; overflow: hidden; cursor: pointer;
+        }
+        .job-card::before {
+            content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+            width: 4px; background: var(--job-color, var(--accent-blue));
+        }
+        .job-card:hover { border-color: var(--job-color, var(--accent-blue)); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .job-card.running { border-color: var(--accent-yellow); animation: pulse-border 1.5s infinite; }
+        .job-card.completed { border-color: var(--accent-green); }
+        .job-card.error { border-color: var(--accent-red); }
+        .job-card.disabled { opacity: 0.5; pointer-events: none; }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234,179,8,0.2); }
+            50% { box-shadow: 0 0 0 6px rgba(234,179,8,0.1); }
+        }
+
+        .job-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1em; color: white; flex-shrink: 0;
+        }
+        .job-title { font-weight: 700; font-size: 0.9em; }
+        .job-desc { font-size: 0.75em; color: var(--text-secondary); margin-top: 2px; }
+        .job-stats {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;
+        }
+        .job-stat {
+            background: rgba(255,255,255,0.03); border-radius: 6px; padding: 6px 8px; text-align: center;
+        }
+        .job-stat .val { font-size: 0.95em; font-weight: 700; }
+        .job-stat .lbl { font-size: 0.6em; color: var(--text-secondary); text-transform: uppercase; }
+
+        .btn-run-job {
+            background: transparent; border: 1px solid var(--card-border);
+            color: var(--text-secondary); padding: 5px 14px; border-radius: 8px;
+            font-size: 0.78em; cursor: pointer; transition: all 0.2s; font-weight: 600;
+        }
+        .btn-run-job:hover { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-run-job:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-run-job.active {
+            background: rgba(234,179,8,0.15); border-color: var(--accent-yellow); color: var(--accent-yellow);
+        }
+
+        /* CHECKBOX JOB */
+        .job-checkbox {
+            width: 18px; height: 18px; cursor: pointer;
+            background: #0f172a; border: 1px solid var(--card-border);
+            flex-shrink: 0; margin-top: 10px;
+        }
+        .job-checkbox:checked { background-color: var(--accent-blue); border-color: var(--accent-blue); }
+        .job-checkbox:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+        .btn-run-selected {
+            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            border: none; color: white; font-weight: 700; padding: 6px 16px;
+            border-radius: 8px; font-size: 0.82em; transition: all 0.3s;
+        }
+        .btn-run-selected:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,197,94,0.3); color: white; }
+        .btn-run-selected:disabled { opacity: 0.5; transform: none; }
+
+        /* PROGRESS GLOBAL */
+        .global-progress {
+            display: none; background: var(--card-bg); border: 1px solid var(--accent-yellow);
+            border-radius: 12px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(234,179,8,0.1);
+        }
+        .progress { height: 8px; background: #334155; border-radius: 4px; }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.4s ease; border-radius: 4px;
+        }
+
+        /* PIPELINE */
+        .pipeline-steps {
+            display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 12px 0;
+        }
+        .pipeline-step {
+            font-size: 0.7em; padding: 4px 10px; border-radius: 16px;
+            background: rgba(255,255,255,0.05); color: var(--text-secondary);
+            border: 1px solid var(--card-border); white-space: nowrap;
+        }
+        .pipeline-step.active { background: rgba(234,179,8,0.15); color: var(--accent-yellow); border-color: var(--accent-yellow); }
+        .pipeline-step.done { background: rgba(34,197,94,0.15); color: var(--accent-green); border-color: var(--accent-green); }
+        .pipeline-step.error { background: rgba(239,68,68,0.15); color: var(--accent-red); border-color: var(--accent-red); }
+        .pipeline-arrow { color: var(--text-secondary); font-size: 0.7em; }
+
+        /* BOTÃO PIPELINE */
+        .btn-pipeline {
+            background: linear-gradient(135deg, var(--accent-purple), #6d28d9);
+            border: none; color: white; font-weight: 700; padding: 10px 24px;
+            border-radius: 10px; font-size: 0.9em; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(139,92,246,0.3);
+        }
+        .btn-pipeline:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139,92,246,0.4); color: white; }
+        .btn-pipeline:disabled { opacity: 0.6; transform: none; box-shadow: none; }
+
+        /* HISTORY TABLE */
+        .history-section {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 20px; margin-top: 24px;
+        }
+        .history-table { font-size: 0.78em; width: 100%; }
+        .history-table th {
+            color: var(--text-secondary); font-weight: 600; text-transform: uppercase;
+            font-size: 0.85em; letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--card-border); padding: 8px;
+        }
+        .history-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+
+        /* BADGE STATUS */
+        .badge-status { font-size: 0.75em; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+        .badge-running { background: rgba(234,179,8,0.15); color: var(--accent-yellow); }
+        .badge-completed { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+        .badge-error { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .badge-pending { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+
+        /* SPINNER */
+        .spinner-sm {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent-yellow);
+            border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Tabs */
+        .tab-btns { display: flex; gap: 4px; margin-bottom: 16px; }
+        .tab-btn {
+            background: transparent; border: 1px solid var(--card-border);
+            color: var(--text-secondary); padding: 6px 16px; border-radius: 8px;
+            font-size: 0.8em; cursor: pointer; transition: all 0.2s;
+        }
+        .tab-btn:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+        .tab-btn.active { background: rgba(59,130,246,0.15); border-color: var(--accent-blue); color: var(--accent-blue); font-weight: 700; }
+
+        @media (max-width: 768px) {
+            .summary-bar { grid-template-columns: repeat(2, 1fr); }
+            .job-stats { grid-template-columns: 1fr; }
+            .pipeline-steps { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV BAR -->
+<div class="nav-bar">
+    <div class="container">
+        <a href="/"><i class="fas fa-home"></i> Início</a>
+        <a href="/wacc"><i class="fas fa-calculator"></i> WACC</a>
+        <a href="/company-analysis"><i class="fas fa-building"></i> Empresas</a>
+        <a href="/data-updates"><i class="fas fa-database"></i> Bases WACC</a>
+        <a href="/company-data-management" class="active"><i class="fas fa-industry"></i> Dados Empresas</a>
+    </div>
+</div>
+
+<!-- HEADER -->
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1><i class="fas fa-industry"></i> Gerenciamento de Dados — Empresas</h1>
+                <div class="subtitle">Atualização cadastral, financeira e de preços • Pipeline completo com dependências</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn-pipeline" id="btn-pipeline" onclick="startPipeline()">
+                    <i class="fas fa-play"></i> Pipeline Completo
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="btn-cancel" style="display:none; border-radius:10px; padding:10px 18px;" onclick="cancelJob()">
+                    <i class="fas fa-stop"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- SUMÁRIO -->
+    <div class="summary-bar" id="summary-bar">
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-blue);" id="stat-total">--</div>
+            <div class="lbl">Total Empresas</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-green);" id="stat-yahoo">--</div>
+            <div class="lbl">Com Yahoo Code</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-cyan);" id="stat-annual">--</div>
+            <div class="lbl">Com Dados Anuais</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-purple);" id="stat-quarterly">--</div>
+            <div class="lbl">Com Dados Trimestrais</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-yellow);" id="stat-ttm">--</div>
+            <div class="lbl">TTM Calculado</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-orange);" id="stat-historical">--</div>
+            <div class="lbl">Registros Históricos</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-green);" id="stat-mcap">--</div>
+            <div class="lbl">Com Market Cap</div>
+        </div>
+        <div class="summary-card">
+            <div class="num" style="color: var(--accent-red);" id="stat-prices">--</div>
+            <div class="lbl">Hist. Preços</div>
+        </div>
+    </div>
+
+    <!-- PIPELINE VISUAL -->
+    <div class="pipeline-steps" id="pipeline-vis">
+        <span class="pipeline-step" data-step="discover">1. Descoberta</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="basic_data">2. Cadastral Yahoo</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="historical_annual">3. Financeiro Anual</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="historical_quarterly">4. Financeiro Trimestral</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="calculate_ttm">5. TTM</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="recalculate_ratios">6. Ratios</span>
+        <span class="pipeline-arrow"><i class="fas fa-chevron-right"></i></span>
+        <span class="pipeline-step" data-step="recalculate_fx">7. FX Rates</span>
+    </div>
+
+    <!-- PROGRESS GLOBAL -->
+    <div class="global-progress" id="global-progress">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong style="font-size: 0.9em;">
+                <span class="spinner-sm" id="progress-spinner"></span>
+                <span id="progress-title">Executando...</span>
+            </strong>
+            <span style="font-size: 0.85em; color: var(--text-secondary);" id="progress-pct">0%</span>
+        </div>
+        <div class="progress mb-2">
+            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+        </div>
+        <div style="font-size: 0.8em; color: var(--text-secondary);">
+            <span id="progress-phase">Iniciando...</span>
+            <span class="float-end" id="progress-counts"></span>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-panel" id="filters-panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0" style="font-size: 0.9em;"><i class="fas fa-filter"></i> Filtros</h6>
+            <div>
+                <span class="filter-count" id="filter-count">Todas as empresas</span>
+                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetFilters()" style="font-size: 0.7em; border-radius: 6px;">
+                    <i class="fas fa-times"></i> Limpar
+                </button>
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label>Setor (Yahoo)</label>
+                <select class="form-select form-select-sm" id="filter-sector" onchange="onFilterChange()">
+                    <option value="">Todos os setores</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>Indústria (Yahoo)</label>
+                <select class="form-select form-select-sm" id="filter-industry" onchange="onFilterChange()">
+                    <option value="">Todas as indústrias</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>País</label>
+                <select class="form-select form-select-sm" id="filter-country" onchange="onFilterChange()">
+                    <option value="">Todos os países</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Status</label>
+                <select class="form-select form-select-sm" id="filter-status" onchange="onFilterChange()">
+                    <option value="">Todos</option>
+                    <option value="no_basic">Sem dados cadastrais</option>
+                    <option value="no_annual">Sem dados anuais</option>
+                    <option value="no_quarterly">Sem dados trimestrais</option>
+                    <option value="no_mcap">Sem Market Cap</option>
+                    <option value="outdated">Desatualizado (>30d)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Workers / RPS</label>
+                <div class="d-flex gap-1">
+                    <input type="number" class="form-control form-control-sm" id="opt-workers" value="3" min="1" max="10" style="width: 50%;">
+                    <input type="number" class="form-control form-control-sm" id="opt-rps" value="2" min="1" max="5" style="width: 50%;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-btns" style="flex-wrap: wrap;">
+        <button class="tab-btn active" onclick="switchTab('jobs')" id="tab-jobs"><i class="fas fa-tasks"></i> Tipos de Atualização</button>
+        <button class="tab-btn" onclick="switchTab('history')" id="tab-history"><i class="fas fa-history"></i> Histórico de Jobs</button>
+        <div class="ms-auto d-flex gap-2 align-items-center" id="multi-run-area" style="display: none;">
+            <span style="font-size: 0.8em; color: var(--text-secondary);" id="selected-count">0 selecionados</span>
+            <button class="btn-run-selected" id="btn-run-selected" onclick="startSelectedJobs()">
+                <i class="fas fa-play"></i> Executar Selecionados
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB: JOBS -->
+    <div id="panel-jobs">
+        <div class="row" id="jobs-container">
+            <!-- Preenchido via JS -->
+        </div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div id="panel-history" style="display: none;">
+        <div class="history-section" style="margin-top: 0;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-size: 1em;"><i class="fas fa-history"></i> Histórico de Jobs</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadHistory()" style="font-size: 0.75em;">
+                    <i class="fas fa-refresh"></i> Atualizar
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Filtros</th>
+                            <th>Total</th>
+                            <th>OK</th>
+                            <th>Erros</th>
+                            <th>Início</th>
+                            <th>Duração</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <tr><td colspan="9" class="text-center" style="color: var(--text-secondary);">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// DEFINIÇÃO DOS TIPOS DE JOB
+// ══════════════════════════════════════════════════════════════════════════
+const JOB_TYPES = [
+    {
+        id: 'discover_tickers',
+        name: 'Descobrir Novos Tickers',
+        desc: 'Busca tickers ainda não cadastrados (Damodaran Excel, ETF Holdings, Screener)',
+        icon: 'fas fa-search-plus',
+        color: '#06b6d4',
+        category: 'discovery',
+    },
+    {
+        id: 'basic_data',
+        name: 'Dados Cadastrais Yahoo',
+        desc: 'Nome, setor, indústria, about, market cap, EV, moeda, funcionários',
+        icon: 'fas fa-id-card',
+        color: '#3b82f6',
+        category: 'fetch',
+    },
+    {
+        id: 'prices',
+        name: 'Preços & Market Cap',
+        desc: 'Cotação atual, volume, Market Cap e Enterprise Value diários',
+        icon: 'fas fa-chart-line',
+        color: '#22c55e',
+        category: 'fetch',
+    },
+    {
+        id: 'historical_annual',
+        name: 'Financeiro Anual',
+        desc: 'Income Statement, Balance Sheet, Cash Flow — período anual via Yahoo Finance',
+        icon: 'fas fa-file-invoice-dollar',
+        color: '#f97316',
+        category: 'fetch',
+    },
+    {
+        id: 'historical_quarterly',
+        name: 'Financeiro Trimestral',
+        desc: 'Income Statement, Balance Sheet, Cash Flow — período trimestral via Yahoo Finance',
+        icon: 'fas fa-calendar-alt',
+        color: '#eab308',
+        category: 'fetch',
+    },
+    {
+        id: 'calculate_ttm',
+        name: 'Calcular TTM',
+        desc: 'Trailing Twelve Months a partir dos dados trimestrais',
+        icon: 'fas fa-calculator',
+        color: '#8b5cf6',
+        category: 'calc',
+        dependency: 'historical_quarterly',
+    },
+    {
+        id: 'recalculate_ratios',
+        name: 'Recalcular Ratios',
+        desc: 'Indicadores financeiros: margens, liquidez, alavancagem, ROE, ROA',
+        icon: 'fas fa-percentage',
+        color: '#ec4899',
+        category: 'calc',
+        dependency: 'calculate_ttm',
+    },
+    {
+        id: 'recalculate_fx',
+        name: 'Taxas de Câmbio',
+        desc: 'Converte valores para USD usando taxas atuais do BCB/FRED',
+        icon: 'fas fa-exchange-alt',
+        color: '#14b8a6',
+        category: 'calc',
+        dependency: 'recalculate_ratios',
+    },
+];
+
+// Pipeline order for full pipeline
+const PIPELINE_ORDER = [
+    'discover_tickers', 'basic_data', 'historical_annual',
+    'historical_quarterly', 'calculate_ttm', 'recalculate_ratios', 'recalculate_fx'
+];
+
+let currentStats = {};
+let isRunning = false;
+let pollTimer = null;
+let jobQueue = [];
+let jobQueueIndex = 0;
+let allIndustries = [];
+let sectorIndustriesMap = {};
+
+// ══════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    renderJobCards();
+    loadStats();
+    loadFilters();
+    loadHistory();
+    // Poll for active job
+    checkActiveJob();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════════════════════
+async function loadStats() {
+    try {
+        const resp = await fetch('/api/company-updates/stats');
+        const data = await resp.json();
+        if (!data.success) return;
+        currentStats = data.stats;
+        document.getElementById('stat-total').textContent = fmt(data.stats.total_companies);
+        document.getElementById('stat-yahoo').textContent = fmt(data.stats.with_yahoo_code);
+        document.getElementById('stat-annual').textContent = fmt(data.stats.companies_with_annual);
+        document.getElementById('stat-quarterly').textContent = fmt(data.stats.companies_with_quarterly);
+        document.getElementById('stat-ttm').textContent = fmt(data.stats.with_ttm);
+        document.getElementById('stat-historical').textContent = fmt(data.stats.total_historical);
+        document.getElementById('stat-mcap').textContent = fmt(data.stats.with_market_cap);
+        document.getElementById('stat-prices').textContent = fmt(data.stats.price_history_count);
+        updateJobStatCards(data.stats);
+    } catch (err) {
+        console.error('Erro ao carregar stats:', err);
+    }
+}
+
+function updateJobStatCards(stats) {
+    // Update counts on each job card using gaps and completed from filtered stats or global
+    const gaps = stats.gaps || {
+        'basic_data': stats.total_companies - stats.with_about,
+        'historical_annual': stats.with_yahoo_code - stats.companies_with_annual,
+        'historical_quarterly': stats.with_yahoo_code - stats.companies_with_quarterly,
+        'prices': stats.with_yahoo_code - stats.with_market_cap,
+    };
+    const completed = stats.completed || {
+        'basic_data': stats.with_about,
+        'prices': stats.with_market_cap,
+        'historical_annual': stats.companies_with_annual,
+        'historical_quarterly': stats.companies_with_quarterly,
+        'calculate_ttm': stats.with_ttm,
+    };
+    Object.entries(gaps).forEach(([jobId, gap]) => {
+        const el = document.getElementById(`gap-${jobId}`);
+        if (el) el.textContent = fmt(Math.max(0, gap));
+    });
+    Object.entries(completed).forEach(([jobId, count]) => {
+        const el = document.getElementById(`ok-${jobId}`);
+        if (el) el.textContent = fmt(count);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════════════════════════
+async function loadFilters() {
+    try {
+        const resp = await fetch('/api/company-updates/filters');
+        const data = await resp.json();
+        if (!data.success) return;
+
+        allIndustries = data.filters.industries || [];
+        sectorIndustriesMap = data.filters.sector_industries || {};
+
+        populateSelect('filter-sector', data.filters.sectors, data.filters.sector_counts);
+        populateSelect('filter-industry', allIndustries);
+        populateSelect('filter-country', data.filters.countries);
+    } catch (err) {
+        console.error('Erro ao carregar filtros:', err);
+    }
+}
+
+function populateSelect(id, items, counts) {
+    const sel = document.getElementById(id);
+    const first = sel.options[0];
+    sel.innerHTML = '';
+    sel.appendChild(first);
+    items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = counts ? `${item} (${counts[item] || 0})` : item;
+        sel.appendChild(opt);
+    });
+}
+
+function getFilters() {
+    return {
+        sector: document.getElementById('filter-sector').value,
+        industry: document.getElementById('filter-industry').value,
+        country: document.getElementById('filter-country').value,
+        status: document.getElementById('filter-status').value,
+        workers: parseInt(document.getElementById('opt-workers').value) || 3,
+        max_rps: parseInt(document.getElementById('opt-rps').value) || 2,
+    };
+}
+
+async function onFilterChange() {
+    // Cascade: filtrar indústrias pelo setor selecionado
+    const sectorVal = document.getElementById('filter-sector').value;
+    const industrySel = document.getElementById('filter-industry');
+    const prevIndustry = industrySel.value;
+    if (sectorVal && sectorIndustriesMap[sectorVal]) {
+        populateSelect('filter-industry', sectorIndustriesMap[sectorVal]);
+        if (sectorIndustriesMap[sectorVal].includes(prevIndustry)) {
+            industrySel.value = prevIndustry;
+        }
+    } else if (!sectorVal) {
+        populateSelect('filter-industry', allIndustries);
+    }
+
+    const f = getFilters();
+    const hasFilt = f.sector || f.industry || f.country || f.status;
+    if (!hasFilt) {
+        document.getElementById('filter-count').textContent = 'Todas as empresas';
+        // Reload global stats to reset card numbers
+        loadStats();
+        return;
+    }
+    try {
+        const qs = new URLSearchParams();
+        if (f.sector) qs.set('sector', f.sector);
+        if (f.industry) qs.set('industry', f.industry);
+        if (f.country) qs.set('country', f.country);
+
+        // Fetch filtered stats for summary cards AND job cards
+        const resp = await fetch('/api/company-updates/filtered-stats?' + qs.toString());
+        const data = await resp.json();
+        if (data.success) {
+            const s = data.stats;
+            document.getElementById('filter-count').textContent = `${fmt(s.total)} empresas filtradas`;
+            // Update summary bar
+            document.getElementById('stat-total').textContent = fmt(s.total);
+            document.getElementById('stat-yahoo').textContent = fmt(s.with_yahoo);
+            document.getElementById('stat-annual').textContent = fmt(s.with_annual);
+            document.getElementById('stat-quarterly').textContent = fmt(s.with_quarterly);
+            document.getElementById('stat-ttm').textContent = fmt(s.with_ttm);
+            document.getElementById('stat-historical').textContent = fmt(s.total_historical);
+            document.getElementById('stat-mcap').textContent = fmt(s.with_mcap);
+            // Update job card numbers
+            updateJobStatCards(s);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function resetFilters() {
+    document.getElementById('filter-sector').value = '';
+    document.getElementById('filter-country').value = '';
+    document.getElementById('filter-status').value = '';
+    // Restaurar todas as indústrias
+    populateSelect('filter-industry', allIndustries);
+    document.getElementById('filter-industry').value = '';
+    document.getElementById('filter-count').textContent = 'Todas as empresas';
+    loadStats(); // Restore global numbers
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RENDER JOB CARDS
+// ══════════════════════════════════════════════════════════════════════════
+function renderJobCards() {
+    const container = document.getElementById('jobs-container');
+    container.innerHTML = '';
+
+    JOB_TYPES.forEach(jt => {
+        const depNote = jt.dependency
+            ? `<div style="font-size:0.65em; color:var(--accent-yellow); margin-top:6px;"><i class="fas fa-link"></i> Depende de: ${JOB_TYPES.find(j=>j.id===jt.dependency)?.name || jt.dependency}</div>`
+            : '';
+
+        const isCalc = jt.category === 'calc';
+        const gapStat = !isCalc
+            ? `<div class="job-stat"><div class="val" style="color:var(--accent-red);" id="gap-${jt.id}">--</div><div class="lbl">Faltantes</div></div>`
+            : `<div class="job-stat"><div class="val" style="color:var(--text-secondary);">--</div><div class="lbl">Auto</div></div>`;
+
+        const col = document.createElement('div');
+        col.className = 'col-lg-6';
+        col.innerHTML = `
+            <div class="job-card" id="card-${jt.id}" style="--job-color: ${jt.color};">
+                <div class="d-flex align-items-start gap-3">
+                    <input class="form-check-input job-checkbox" type="checkbox" id="chk-${jt.id}" value="${jt.id}" onchange="onJobSelectionChange()">
+                    <div class="job-icon" style="background: ${jt.color};">
+                        <i class="${jt.icon}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="job-title">${jt.name}</div>
+                        <div class="job-desc">${jt.desc}</div>
+                        ${depNote}
+                    </div>
+                    <button class="btn-run-job" id="btn-${jt.id}" onclick="startJob('${jt.id}')">
+                        <i class="fas fa-play"></i> Executar
+                    </button>
+                </div>
+                <div class="job-stats">
+                    <div class="job-stat">
+                        <div class="val" style="color:var(--accent-green);" id="ok-${jt.id}">--</div>
+                        <div class="lbl">Completos</div>
+                    </div>
+                    ${gapStat}
+                    <div class="job-stat">
+                        <div class="val" style="color:var(--text-secondary);" id="last-${jt.id}">--</div>
+                        <div class="lbl">Último Run</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(col);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MULTI-SELECT JOBS
+// ══════════════════════════════════════════════════════════════════════════
+function onJobSelectionChange() {
+    const checked = document.querySelectorAll('.job-checkbox:checked');
+    const area = document.getElementById('multi-run-area');
+    const countEl = document.getElementById('selected-count');
+    if (checked.length > 0) {
+        area.style.display = 'flex';
+        countEl.textContent = `${checked.length} selecionado${checked.length > 1 ? 's' : ''}`;
+    } else {
+        area.style.display = 'none';
+    }
+}
+
+function startSelectedJobs() {
+    if (isRunning) {
+        alert('Já existe um job em execução. Aguarde ou cancele.');
+        return;
+    }
+    const checked = document.querySelectorAll('.job-checkbox:checked');
+    if (checked.length === 0) {
+        alert('Selecione ao menos um tipo de atualização.');
+        return;
+    }
+    jobQueue = Array.from(checked).map(c => c.value);
+    jobQueueIndex = 0;
+    startJob(jobQueue[0]);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// START JOB
+// ══════════════════════════════════════════════════════════════════════════
+async function startJob(jobType) {
+    if (isRunning) {
+        alert('Já existe um job em execução. Aguarde ou cancele.');
+        return;
+    }
+
+    const filters = getFilters();
+    const btn = document.getElementById(`btn-${jobType}`);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span>';
+
+    try {
+        const resp = await fetch('/api/company-updates/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ job_type: jobType, filters }),
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            isRunning = true;
+            showProgress(jobType);
+            startPolling();
+        } else {
+            alert('Erro: ' + (data.error || 'desconhecido'));
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Executar';
+        }
+    } catch (err) {
+        alert('Erro de conexão: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play"></i> Executar';
+    }
+}
+
+async function startPipeline() {
+    if (isRunning) {
+        alert('Já existe um job em execução. Aguarde ou cancele.');
+        return;
+    }
+
+    const filters = getFilters();
+
+    try {
+        const resp = await fetch('/api/company-updates/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ job_type: 'full_pipeline', filters }),
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            isRunning = true;
+            showProgress('full_pipeline');
+            startPolling();
+        } else {
+            alert('Erro: ' + (data.error || 'desconhecido'));
+        }
+    } catch (err) {
+        alert('Erro de conexão: ' + err.message);
+    }
+}
+
+async function cancelJob() {
+    try {
+        await fetch('/api/company-updates/cancel', { method: 'POST' });
+        endJob('cancelled');
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PROGRESS POLLING
+// ══════════════════════════════════════════════════════════════════════════
+function showProgress(jobType) {
+    const prog = document.getElementById('global-progress');
+    prog.style.display = 'block';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-pct').textContent = '0%';
+    document.getElementById('progress-phase').textContent = 'Iniciando...';
+    document.getElementById('progress-counts').textContent = '';
+    if (jobQueue.length > 1) {
+        document.getElementById('progress-title').textContent = `[${jobQueueIndex + 1}/${jobQueue.length}] Executando: ${getJobName(jobType)}`;
+    } else {
+        document.getElementById('progress-title').textContent = `Executando: ${getJobName(jobType)}`;
+    }
+    document.getElementById('btn-cancel').style.display = '';
+    document.getElementById('btn-pipeline').disabled = true;
+
+    // Highlight pipeline step
+    const step = document.querySelector(`.pipeline-step[data-step="${jobType}"]`);
+    if (step) step.classList.add('active');
+
+    // Highlight card
+    const card = document.getElementById(`card-${jobType}`);
+    if (card) card.classList.add('running');
+
+    // Disable all run buttons
+    document.querySelectorAll('.btn-run-job').forEach(b => b.disabled = true);
+}
+
+function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollProgress, 1500);
+}
+
+async function pollProgress() {
+    try {
+        const resp = await fetch('/api/company-updates/progress');
+        const data = await resp.json();
+        if (!data.success || !data.progress) return;
+
+        const p = data.progress;
+        document.getElementById('progress-bar').style.width = p.pct + '%';
+        document.getElementById('progress-pct').textContent = p.pct + '%';
+        document.getElementById('progress-phase').textContent = p.phase || '';
+
+        if (p.total > 0) {
+            document.getElementById('progress-counts').textContent =
+                `${fmt(p.current || 0)} / ${fmt(p.total)} • OK: ${fmt(p.success || 0)} • Erros: ${fmt(p.errors || 0)}`;
+        }
+
+        if (p.status === 'completed' || p.status === 'error' || p.status === 'cancelled') {
+            endJob(p.status, p);
+        }
+    } catch (err) {
+        console.error('Poll error:', err);
+    }
+}
+
+function endJob(status, p) {
+    isRunning = false;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+    // Fila: auto-iniciar próximo job se disponível
+    if (status === 'completed' && jobQueue.length > 0 && jobQueueIndex + 1 < jobQueue.length) {
+        jobQueueIndex++;
+        const nextJob = jobQueue[jobQueueIndex];
+        // Marcar card anterior como concluído
+        document.querySelectorAll('.job-card.running').forEach(c => {
+            c.classList.remove('running');
+            c.classList.add('completed');
+        });
+        const prevStep = document.querySelector(`.pipeline-step[data-step="${jobQueue[jobQueueIndex-1]}"]`);
+        if (prevStep) { prevStep.classList.remove('active'); prevStep.classList.add('done'); }
+        document.getElementById('progress-phase').innerHTML =
+            `<i class="fas fa-check-circle" style="color:var(--accent-green);"></i> Concluído [${jobQueueIndex}/${jobQueue.length}]! Próximo: ${getJobName(nextJob)}...`;
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-bar').style.background = 'var(--accent-green)';
+        setTimeout(() => {
+            document.getElementById('progress-bar').style.background = '';
+            startJob(nextJob);
+        }, 1500);
+        return;
+    }
+    // Limpar fila se terminou
+    if (jobQueue.length > 0) {
+        jobQueue = [];
+        jobQueueIndex = 0;
+        document.querySelectorAll('.job-checkbox:checked').forEach(c => { c.checked = false; });
+        onJobSelectionChange();
+    }
+
+    const bar = document.getElementById('progress-bar');
+    const phase = document.getElementById('progress-phase');
+
+    if (status === 'completed') {
+        bar.style.width = '100%';
+        bar.style.background = 'var(--accent-green)';
+        phase.innerHTML = '<i class="fas fa-check-circle" style="color:var(--accent-green);"></i> Concluído!';
+        if (p && p.duration) phase.innerHTML += ` (${p.duration}s)`;
+    } else if (status === 'error') {
+        bar.style.background = 'var(--accent-red)';
+        phase.innerHTML = '<i class="fas fa-times-circle" style="color:var(--accent-red);"></i> Erro';
+    } else {
+        phase.innerHTML = '<i class="fas fa-ban" style="color:var(--text-secondary);"></i> Cancelado';
+    }
+
+    document.getElementById('progress-spinner').style.display = 'none';
+    document.getElementById('btn-cancel').style.display = 'none';
+    document.getElementById('btn-pipeline').disabled = false;
+
+    // Re-enable all buttons
+    document.querySelectorAll('.btn-run-job').forEach(b => {
+        b.disabled = false;
+        b.innerHTML = '<i class="fas fa-play"></i> Executar';
+    });
+
+    // Remove running class from cards
+    document.querySelectorAll('.job-card.running').forEach(c => c.classList.remove('running'));
+
+    // Clear pipeline step highlights
+    document.querySelectorAll('.pipeline-step.active').forEach(s => {
+        s.classList.remove('active');
+        s.classList.add(status === 'completed' ? 'done' : (status === 'error' ? 'error' : ''));
+    });
+
+    // Refresh data
+    setTimeout(() => {
+        loadStats();
+        loadHistory();
+        // Reset progress bar style after delay
+        setTimeout(() => {
+            bar.style.background = '';
+            document.getElementById('progress-spinner').style.display = '';
+        }, 3000);
+    }, 500);
+
+    // Hide progress after 8s
+    setTimeout(() => {
+        document.getElementById('global-progress').style.display = 'none';
+    }, 8000);
+}
+
+async function checkActiveJob() {
+    try {
+        const resp = await fetch('/api/company-updates/progress');
+        const data = await resp.json();
+        if (data.success && data.progress && data.progress.status === 'running') {
+            isRunning = true;
+            showProgress(data.progress.job_type);
+            startPolling();
+            // Update with current values
+            pollProgress();
+        }
+    } catch (err) { /* ignore */ }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════════════════════════════════
+async function loadHistory() {
+    try {
+        const resp = await fetch('/api/company-updates/history');
+        const data = await resp.json();
+        if (!data.success) return;
+
+        const tbody = document.getElementById('history-body');
+        if (!data.jobs || data.jobs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-secondary);">Nenhum job executado ainda</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        data.jobs.forEach(j => {
+            const statusHtml = {
+                'completed': '<span class="badge-status badge-completed"><i class="fas fa-check"></i> OK</span>',
+                'running': '<span class="badge-status badge-running"><i class="fas fa-spinner fa-spin"></i> Executando</span>',
+                'error': '<span class="badge-status badge-error"><i class="fas fa-times"></i> Erro</span>',
+                'cancelled': '<span class="badge-status badge-pending"><i class="fas fa-ban"></i> Cancelado</span>',
+                'pending': '<span class="badge-status badge-pending"><i class="fas fa-clock"></i> Pendente</span>',
+            }[j.status] || j.status;
+
+            const filters = j.filters ? formatFilters(j.filters) : '--';
+            const duration = j.duration ? j.duration.toFixed(1) + 's' : '--';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${j.id}</td>
+                <td><strong>${getJobName(j.job_type)}</strong></td>
+                <td>${statusHtml}</td>
+                <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${filters}</td>
+                <td>${fmt(j.total || 0)}</td>
+                <td style="color:var(--accent-green);">${fmt(j.success || 0)}</td>
+                <td style="color:var(--accent-red);">${fmt(j.errors || 0)}</td>
+                <td>${formatDT(j.started_at)}</td>
+                <td>${duration}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Also update last run info on job cards
+        data.jobs.forEach(j => {
+            const el = document.getElementById(`last-${j.job_type}`);
+            if (el && j.started_at) el.textContent = formatDT(j.started_at).split(' ')[0];
+            const okEl = document.getElementById(`ok-${j.job_type}`);
+            if (okEl && j.success) okEl.textContent = fmt(j.success);
+        });
+    } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+    document.getElementById('panel-jobs').style.display = tab === 'jobs' ? '' : 'none';
+    document.getElementById('panel-history').style.display = tab === 'history' ? '' : 'none';
+    document.getElementById('tab-jobs').classList.toggle('active', tab === 'jobs');
+    document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+    if (tab === 'history') loadHistory();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+function fmt(n) {
+    if (n === null || n === undefined || n === '--') return '--';
+    return Number(n).toLocaleString('pt-BR');
+}
+
+function getJobName(jobType) {
+    const jt = JOB_TYPES.find(j => j.id === jobType);
+    return jt ? jt.name : jobType;
+}
+
+function formatDT(isoStr) {
+    if (!isoStr || isoStr === '--') return '--';
+    try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+            + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } catch { return isoStr; }
+}
+
+function formatFilters(filtersJson) {
+    try {
+        const f = typeof filtersJson === 'string' ? JSON.parse(filtersJson) : filtersJson;
+        const parts = [];
+        if (f.sector) parts.push(f.sector);
+        if (f.industry) parts.push(f.industry);
+        if (f.country) parts.push(f.country);
+        if (f.status) parts.push(f.status);
+        return parts.length ? parts.join(', ') : 'Sem filtros';
+    } catch { return filtersJson; }
+}
+</script>
+</body>
+</html>

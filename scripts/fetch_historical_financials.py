@@ -336,6 +336,7 @@ def get_target_companies(db_path: Path, args) -> list[dict]:
                cbd.yahoo_industry, cbd.yahoo_country, cbd.currency
         FROM company_basic_data cbd
         WHERE cbd.yahoo_code IS NOT NULL AND cbd.yahoo_code != ''
+          AND COALESCE(cbd.yahoo_no_data, 0) = 0
     """
     params = []
 
@@ -733,24 +734,33 @@ _FIELD_NAMES_SQL = "company_basic_data_id, yahoo_code, company_name, period_type
 _PLACEHOLDERS_SQL = ", ".join(["?"] * (4 + len(FIELDS)))
 
 
-def _flush_buffer(db_path: Path):
+def _flush_buffer(db_path: Path, _max_retries: int = 5):
     """Grava o buffer acumulado no banco em uma única transação."""
     with _db_lock:
         if not _write_buffer:
             return
         batch = list(_write_buffer)
         _write_buffer.clear()
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    cursor = conn.cursor()
-    cursor.executemany(f"""
-        INSERT OR REPLACE INTO company_financials_historical
-        ({_FIELD_NAMES_SQL})
-        VALUES ({_PLACEHOLDERS_SQL})
-    """, batch)
-    conn.commit()
-    conn.close()
+    for attempt in range(_max_retries):
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=30)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            cursor = conn.cursor()
+            cursor.executemany(f"""
+                INSERT OR REPLACE INTO company_financials_historical
+                ({_FIELD_NAMES_SQL})
+                VALUES ({_PLACEHOLDERS_SQL})
+            """, batch)
+            conn.commit()
+            conn.close()
+            return
+        except sqlite3.OperationalError as e:
+            if "locked" in str(e) and attempt < _max_retries - 1:
+                logger.warning(f"DB locked, retry {attempt+1}/{_max_retries}...")
+                time.sleep(2 * (attempt + 1))
+            else:
+                raise
 
 
 def save_financials(db_path: Path, company: dict, data: dict, period_type: str):

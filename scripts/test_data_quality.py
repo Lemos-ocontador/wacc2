@@ -9,6 +9,7 @@ Uso:
   python scripts/test_data_quality.py --quick            # Amostra reduzida (2 por grupo)
   python scripts/test_data_quality.py --ticker AAPL      # Testa ticker específico
   python scripts/test_data_quality.py --output report    # Salva CSV em cache/
+  python scripts/test_data_quality.py --random 3         # 3 tickers aleatórios por grupo do DB
 
 Métricas comparadas (DB vs YF live):
   - Total Revenue, EBITDA, Net Income, Operating Income
@@ -23,7 +24,9 @@ Critérios de outlier:
 """
 
 import argparse
+import json
 import os
+import random
 import sys
 import sqlite3
 import time
@@ -511,6 +514,54 @@ def test_internal_consistency() -> list[dict]:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Seleção aleatória de tickers do DB
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_random_tickers_from_db(n_per_group: int) -> list[str]:
+    """Seleciona N tickers aleatórios por grupo (setor|país) do banco de dados."""
+    conn = sqlite3.connect(str(DB_PATH))
+    rows = conn.execute("""
+        SELECT DISTINCT cfh.yahoo_code, cbd.yahoo_sector, cbd.yahoo_country
+        FROM company_financials_historical cfh
+        JOIN company_basic_data cbd ON cbd.id = cfh.company_basic_data_id
+        WHERE cfh.period_type = 'annual'
+          AND cfh.yahoo_code IS NOT NULL
+          AND cbd.yahoo_sector IS NOT NULL
+          AND cbd.yahoo_country IS NOT NULL
+    """).fetchall()
+    conn.close()
+
+    groups = {}
+    for yahoo_code, sector, country in rows:
+        key = f"{sector}|{country}"
+        groups.setdefault(key, []).append(yahoo_code)
+
+    tickers = []
+    for group_key in sorted(groups.keys()):
+        pool = groups[group_key]
+        sample_size = min(n_per_group, len(pool))
+        tickers.extend(random.sample(pool, sample_size))
+
+    random.shuffle(tickers)
+    return tickers
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Progresso para integração web
+# ══════════════════════════════════════════════════════════════════════════════
+
+def write_progress(progress_file: str | None, data: dict):
+    """Escreve progresso em arquivo JSON para polling pela web UI."""
+    if not progress_file:
+        return
+    try:
+        with open(progress_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -518,12 +569,25 @@ def main():
     parser = argparse.ArgumentParser(description="Teste de qualidade de dados EstudoAnloc")
     parser.add_argument("--quick", action="store_true", help="Amostra reduzida (2 por grupo)")
     parser.add_argument("--ticker", type=str, help="Testar ticker específico")
+    parser.add_argument("--random", type=int, metavar="N", help="N tickers aleatórios por grupo do DB")
     parser.add_argument("--output", type=str, help="Nome base para CSV de saída")
     parser.add_argument("--z-threshold", type=float, default=3.0, help="Z-score threshold para outliers")
     parser.add_argument("--skip-yf", action="store_true", help="Pular comparação com Yahoo (só consistência interna)")
+    parser.add_argument("--progress-file", type=str, help="Arquivo JSON para escrever progresso (integração web)")
     args = parser.parse_args()
 
     all_results = []
+    progress_file = args.progress_file
+
+    write_progress(progress_file, {
+        "phase": "consistency",
+        "phase_label": "Consistência Interna",
+        "pct": 0,
+        "current_ticker": None,
+        "ticker_index": 0,
+        "ticker_total": 0,
+        "status": "running"
+    })
 
     # ── Fase 1: Consistência interna ──
     print("\n" + "=" * 80)
@@ -545,6 +609,7 @@ def main():
         print("\n✅ Nenhum problema de consistência interna encontrado!")
 
     if args.skip_yf:
+        write_progress(progress_file, {"phase": "done", "pct": 100, "status": "completed"})
         return
 
     # ── Fase 2: Comparação com Yahoo Finance ──
@@ -555,6 +620,9 @@ def main():
     # Montar lista de tickers
     if args.ticker:
         tickers_to_test = [args.ticker]
+    elif args.random:
+        tickers_to_test = get_random_tickers_from_db(args.random)
+        print(f"\n🎲 Modo aleatório: {args.random} tickers por grupo do DB")
     else:
         tickers_to_test = []
         for group_key, group_tickers in SAMPLE_TICKERS.items():
@@ -570,6 +638,17 @@ def main():
         rps = i / elapsed if elapsed > 0 else 0
         eta = (total - i) / rps / 60 if rps > 0 else 0
         print(f"\n[{i}/{total}] {ticker} ({rps:.1f} t/s, ETA {eta:.0f}min)...")
+
+        write_progress(progress_file, {
+            "phase": "comparison",
+            "phase_label": "Comparação DB vs Yahoo Finance",
+            "pct": round(i / total * 80) + 10,  # 10-90%
+            "current_ticker": ticker,
+            "ticker_index": i,
+            "ticker_total": total,
+            "eta_min": round(eta, 1),
+            "status": "running"
+        })
 
         try:
             results = compare_ticker(ticker)
@@ -599,6 +678,16 @@ def main():
     print(f"  FASE 3: ANÁLISE DE OUTLIERS (z > {args.z_threshold}σ)")
     print("=" * 80)
 
+    write_progress(progress_file, {
+        "phase": "outliers",
+        "phase_label": "Análise de Outliers",
+        "pct": 92,
+        "current_ticker": None,
+        "ticker_index": total,
+        "ticker_total": total,
+        "status": "running"
+    })
+
     outlier_df = analyze_outliers(all_results, z_threshold=args.z_threshold)
 
     # ── Fase 4: Relatório ──
@@ -627,6 +716,16 @@ def main():
             issues_path = CACHE_DIR / f"{base}_consistency_{ts}.csv"
             issues_df.to_csv(str(issues_path), index=False, encoding="utf-8-sig")
             print(f"💾 Consistência salva em: {issues_path}")
+
+    write_progress(progress_file, {
+        "phase": "done",
+        "phase_label": "Concluído",
+        "pct": 100,
+        "current_ticker": None,
+        "ticker_index": total,
+        "ticker_total": total,
+        "status": "completed"
+    })
 
 
 if __name__ == "__main__":

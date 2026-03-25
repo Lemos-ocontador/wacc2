@@ -162,6 +162,60 @@
         transform: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
+
+    /* ── Run Test Panel ── */
+    .run-panel {
+        background: linear-gradient(135deg, #0f3460, #1a1a2e);
+        border-radius: 16px;
+        padding: 24px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    .run-panel .btn-run {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 12px 32px;
+        border-radius: 30px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    .run-panel .btn-run:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(39,174,96,0.4); }
+    .run-panel .btn-run:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+
+    .progress-container {
+        background: rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+        display: none;
+    }
+    .progress-container.active { display: block; }
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.15);
+        overflow: hidden;
+        margin: 12px 0;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #2ecc71, #27ae60);
+        transition: width 0.5s ease;
+        width: 0%;
+    }
+    .progress-ticker {
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+        color: #2ecc71;
+        font-weight: 600;
+    }
+    .progress-meta {
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
     
     @media (max-width: 768px) {
         .quality-hero { padding: 24px; }
@@ -190,6 +244,43 @@
         <div class="text-end">
             <span id="overallGrade" class="badge fs-4 p-3" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);">--</span>
             <div class="mt-1" style="font-size: 0.8rem; opacity: 0.7;">Nota Geral</div>
+        </div>
+    </div>
+</div>
+
+<!-- Run Test Panel -->
+<div class="run-panel" id="runPanel">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h6 class="mb-1 fw-bold"><i class="fas fa-play-circle me-2"></i>Executar Novo Teste</h6>
+            <div style="font-size: 0.85rem; opacity: 0.7;">Seleciona tickers aleatórios do banco e compara com Yahoo Finance ao vivo</div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <label for="nRandom" style="font-size: 0.82rem; white-space: nowrap;">Tickers/grupo:</label>
+                <select id="nRandom" class="form-select form-select-sm" style="width: 70px; background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2);">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <button id="btnRunTest" class="btn btn-run" onclick="startTest()">
+                <i class="fas fa-flask me-2"></i>Executar Teste
+            </button>
+        </div>
+    </div>
+    <div class="progress-container" id="progressContainer">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span id="progressPhase" style="font-size: 0.85rem;">Iniciando...</span>
+            <span id="progressPct" class="fw-bold">0%</span>
+        </div>
+        <div class="progress-bar-custom">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="progress-ticker" id="progressTicker"></span>
+            <span class="progress-meta" id="progressMeta"></span>
         </div>
     </div>
 </div>
@@ -322,7 +413,13 @@
 </div>
 
 <script>
+let progressInterval = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    loadResults();
+});
+
+function loadResults() {
     fetch('/api/data_quality_results')
         .then(r => {
             if (!r.ok) throw new Error('Nenhum resultado de teste encontrado');
@@ -334,11 +431,112 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="text-center">
                     <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
                     <h5>Nenhum resultado de teste encontrado</h5>
-                    <p class="text-muted">Execute o script de teste primeiro:</p>
-                    <code>python scripts/test_data_quality.py --quick --output test_quality</code>
+                    <p class="text-muted">Clique em "Executar Teste" acima para iniciar.</p>
                 </div>`;
         });
-});
+}
+
+function startTest() {
+    const btn = document.getElementById('btnRunTest');
+    const nRandom = document.getElementById('nRandom').value;
+    const container = document.getElementById('progressContainer');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Executando...';
+    container.classList.add('active');
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressPct').textContent = '0%';
+    document.getElementById('progressPhase').textContent = 'Iniciando teste...';
+    document.getElementById('progressTicker').textContent = '';
+    document.getElementById('progressMeta').textContent = '';
+
+    fetch('/api/run_data_quality_test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ n_random: parseInt(nRandom) })
+    })
+    .then(r => {
+        if (r.status === 409) throw new Error('already_running');
+        if (!r.ok) throw new Error('Erro ao iniciar teste');
+        return r.json();
+    })
+    .then(data => {
+        progressInterval = setInterval(pollProgress, 1500);
+    })
+    .catch(err => {
+        if (err.message === 'already_running') {
+            // Já em execução, iniciar polling
+            progressInterval = setInterval(pollProgress, 1500);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-flask me-2"></i>Executar Teste';
+            container.classList.remove('active');
+            alert('Erro ao iniciar teste: ' + err.message);
+        }
+    });
+}
+
+function pollProgress() {
+    fetch('/api/data_quality_progress')
+        .then(r => r.json())
+        .then(data => {
+            const bar = document.getElementById('progressBar');
+            const pctEl = document.getElementById('progressPct');
+            const phaseEl = document.getElementById('progressPhase');
+            const tickerEl = document.getElementById('progressTicker');
+            const metaEl = document.getElementById('progressMeta');
+
+            const pct = data.pct || 0;
+            bar.style.width = pct + '%';
+            pctEl.textContent = pct + '%';
+
+            if (data.phase_label) {
+                phaseEl.textContent = data.phase_label;
+            }
+
+            if (data.current_ticker) {
+                tickerEl.textContent = data.current_ticker;
+                metaEl.textContent = `${data.ticker_index || 0}/${data.ticker_total || 0}` +
+                    (data.eta_min ? ` · ETA ${data.eta_min} min` : '');
+            } else {
+                tickerEl.textContent = '';
+                metaEl.textContent = '';
+            }
+
+            if (data.status === 'completed' || (!data.process_running && data.pct >= 100)) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+                onTestComplete();
+            }
+        })
+        .catch(() => {});
+}
+
+function onTestComplete() {
+    const btn = document.getElementById('btnRunTest');
+    const container = document.getElementById('progressContainer');
+    const phaseEl = document.getElementById('progressPhase');
+    const bar = document.getElementById('progressBar');
+    const pctEl = document.getElementById('progressPct');
+
+    bar.style.width = '100%';
+    bar.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+    pctEl.textContent = '100%';
+    phaseEl.innerHTML = '<i class="fas fa-check-circle me-1"></i>Teste concluído! Atualizando dashboard...';
+
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flask me-2"></i>Executar Teste';
+        // Mostrar loading e recarregar dados
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        document.getElementById('loadingOverlay').innerHTML = `
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="text-muted">Carregando novos resultados...</div>`;
+        loadResults();
+        // Esconder painel de progresso após carregar
+        setTimeout(() => { container.classList.remove('active'); }, 2000);
+    }, 1500);
+}
 
 function render(data) {
     document.getElementById('loadingOverlay').style.display = 'none';

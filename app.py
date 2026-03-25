@@ -9198,6 +9198,125 @@ DIRETRIZES DE COMPLIANCE (OBRIGATÓRIAS):
 
 
 # ========================================================================
+# GERENCIAMENTO DE DADOS DE EMPRESAS
+# ========================================================================
+
+@app.route('/company-data-management')
+def company_data_management_page():
+    """Página de gerenciamento de dados de empresas."""
+    return render_template('company_data_management.html')
+
+
+@app.route('/api/company-updates/stats', methods=['GET'])
+def api_company_updates_stats():
+    """Retorna estatísticas do banco de dados de empresas."""
+    try:
+        from company_update_manager import get_database_stats, ensure_update_tables
+        ensure_update_tables()
+        stats = get_database_stats()
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Erro company stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/filters', methods=['GET'])
+def api_company_updates_filters():
+    """Retorna opções de filtro para empresas."""
+    try:
+        from company_update_manager import get_filter_options
+        filters = get_filter_options()
+        return jsonify({'success': True, 'filters': filters})
+    except Exception as e:
+        logger.error(f"Erro company filters: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/count', methods=['GET'])
+def api_company_updates_count():
+    """Conta empresas afetadas pelos filtros."""
+    try:
+        from company_update_manager import count_affected
+        job_type = request.args.get('job_type', 'basic_data')
+        filters = {
+            'sector': request.args.get('sector', ''),
+            'industry': request.args.get('industry', ''),
+            'country': request.args.get('country', ''),
+        }
+        count = count_affected(job_type, filters)
+        return jsonify({'success': True, 'count': count})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/filtered-stats', methods=['GET'])
+def api_company_updates_filtered_stats():
+    """Retorna estatísticas filtradas por setor/indústria/país para todos os tipos de job."""
+    try:
+        from company_update_manager import get_filtered_stats
+        filters = {
+            'sector': request.args.get('sector', ''),
+            'industry': request.args.get('industry', ''),
+            'country': request.args.get('country', ''),
+        }
+        stats = get_filtered_stats(filters)
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        logger.error(f"Erro filtered stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/start', methods=['POST'])
+def api_company_updates_start():
+    """Inicia um job de atualização de dados."""
+    try:
+        from company_update_manager import start_job, ensure_update_tables
+        ensure_update_tables()
+        data = request.get_json()
+        job_type = data.get('job_type', '')
+        filters = data.get('filters', {})
+        result = start_job(job_type, filters)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Erro start job: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/progress', methods=['GET'])
+def api_company_updates_progress():
+    """Retorna o progresso do job ativo."""
+    try:
+        from company_update_manager import get_progress
+        progress = get_progress()
+        return jsonify({'success': True, 'progress': progress})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/cancel', methods=['POST'])
+def api_company_updates_cancel():
+    """Cancela o job ativo."""
+    try:
+        from company_update_manager import cancel_job
+        result = cancel_job()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/company-updates/history', methods=['GET'])
+def api_company_updates_history():
+    """Retorna histórico de jobs."""
+    try:
+        from company_update_manager import get_database_stats, ensure_update_tables
+        ensure_update_tables()
+        stats = get_database_stats()
+        return jsonify({'success': True, 'jobs': stats.get('recent_jobs', [])})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========================================================================
 # INICIALIZAÇÃO DA APLICAÇÃO
 # ========================================================================
 if __name__ == '__main__':

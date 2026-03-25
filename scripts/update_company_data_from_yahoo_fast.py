@@ -151,8 +151,9 @@ def fetch_candidates(
     limit: int | None,
     exchanges: list[str] | None,
     force: bool,
+    extra_filters: dict | None = None,
 ) -> list[tuple[int, str | None, str | None, str | None]]:
-    where = "WHERE yahoo_code IS NOT NULL AND TRIM(yahoo_code) != ''"
+    where = "WHERE yahoo_code IS NOT NULL AND TRIM(yahoo_code) != '' AND COALESCE(yahoo_no_data, 0) = 0"
     params: list[str] = []
 
     if not force:
@@ -165,6 +166,17 @@ def fetch_candidates(
             params.append(f"{ex}:%")
         if conditions:
             where += f" AND ({' OR '.join(conditions)})"
+
+    if extra_filters:
+        if extra_filters.get("sector"):
+            where += " AND yahoo_sector = ?"
+            params.append(extra_filters["sector"])
+        if extra_filters.get("industry"):
+            where += " AND industry = ?"
+            params.append(extra_filters["industry"])
+        if extra_filters.get("country"):
+            where += " AND country = ?"
+            params.append(extra_filters["country"])
 
     sql = f"""
         SELECT id, yahoo_code, ticker, company_name
@@ -235,6 +247,9 @@ def main() -> None:
     parser.add_argument("--max-rps", type=float, default=5.0,
                         help="Máximo de requisições por segundo (padrão: 5)")
     parser.add_argument("--exchanges", type=str, default="")
+    parser.add_argument("--sector", type=str, default="", help="Filtrar por Yahoo sector")
+    parser.add_argument("--industry", type=str, default="", help="Filtrar por Yahoo industry")
+    parser.add_argument("--country", type=str, default="", help="Filtrar por country")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--dta-referencia", type=str, default="")
     args = parser.parse_args()
@@ -252,7 +267,14 @@ def main() -> None:
     _rate_limiter = RateLimiter(args.max_rps)
 
     exchanges = [x.strip() for x in args.exchanges.split(",") if x.strip()] if args.exchanges else None
-    rows = fetch_candidates(conn, args.limit, exchanges, args.force)
+    extra_filters = {}
+    if args.sector:
+        extra_filters["sector"] = args.sector
+    if args.industry:
+        extra_filters["industry"] = args.industry
+    if args.country:
+        extra_filters["country"] = args.country
+    rows = fetch_candidates(conn, args.limit, exchanges, args.force, extra_filters)
 
     if not rows:
         print("Nenhum registro elegível.")
